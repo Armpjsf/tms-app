@@ -41,7 +41,8 @@ import { RevenueForecastChart } from "@/components/analytics/revenue-forecast-ch
 import { ActivityFeed } from "@/components/dashboard/activity-feed"
 
 import { PremiumCard } from "@/components/ui/premium-card"
-import { BarChart3, TrendingUp, Truck, ShieldAlert, Layers, Trophy, Star, Zap, Activity } from "lucide-react"
+import { BarChart3, TrendingUp, Truck, ShieldAlert, Layers, Trophy, Star, Zap, Activity, Users } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface DriverStats {
   name: string
@@ -70,10 +71,10 @@ interface PriorityData {
   revenueTrend: Array<{ month: string; actual: number; target: number }>
   forecastData: Array<{ month: string; actual: number; forecast: number }>
   exeKPIs: {
-    efficiency: number
-    utilization: number
-    onTimeRate: number
-    safetyScore: number
+    revenue: { current: number; previous: number; growth: number; target?: number; attainment?: number }
+    profit:  { current: number; previous: number; growth: number }
+    margin:  { current: number; growth: number; target?: number }
+    revenue_pipeline?: number
   }
   opStats: Record<string, number>
   statusDist: Array<{ name: string; value: number; color: string }>
@@ -86,32 +87,34 @@ interface SecondaryData {
   topCustomers: Array<{ name: string; revenue: number }>
   subPerf: Array<{ name: string; rating: number }>
   routes: Array<{ id: string; start: string; end: string; efficiency: number }>
-  billing: {
-    arAging: Record<string, number>
-    totalInvoiced: number
-  }
-  fuel: {
-    consumption: number
-    avgPrice: number
-    anomalies: any[]
-  }
-  maintenance: {
-    upcoming: any[]
-    fleetHealth: number
-  }
+  billing: any
+  fuel: any
+  maintenance: any
   safety: {
-    incidents: number
-    riskScore: number
+    sos: {
+      total: number
+      active: number
+      resolved: number
+      byReason: { reason: string; count: number }[]
+      recentAlerts: { id: string; vehicle: string; driver: string; reason: string; time: string }[]
+    }
+    pod: {
+      totalCompleted: number
+      withPhoto: number
+      withSignature: number
+      complianceRate: number
+    }
   }
   workforce: {
-    activeDrivers: number
-    pendingTraining: any[]
+    kpis: { totalBox: number; activeToday: number; licenseExpiring: number; licenseExpired: number }
+    topPerformers: { name: string; revenue: number; jobCount: number; successRate: number }[]
+    driversWithIssues: { id: string; name: string; issue: string; daysAuth: number }[]
   }
   esgStats: any
   delayRootCause: any[]
 }
 
-import { Tabs, TabsContent, List as TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const SectionSkeleton = () => (
     <div className="w-full h-[300px] bg-muted/10 animate-pulse rounded-2xl border border-border/5 flex items-center justify-center">
@@ -170,12 +173,13 @@ export function DashboardContent({
               ])
               results = { topCustomers, billing }
             } else if (tab === 'operations') {
-              const [fuel, routes, delayRootCause] = await Promise.all([
+              const [fuel, routes, delayRootCause, maintenance] = await Promise.all([
                 getFuelAnalytics(startDate, endDate),
                 getRouteEfficiency(startDate, endDate, branchId),
-                getDelayRootCause(startDate, endDate, branchId)
+                getDelayRootCause(startDate, endDate, branchId),
+                getMaintenanceSchedule()
               ])
-              results = { fuel, routes, delayRootCause }
+              results = { fuel, routes, delayRootCause, maintenance }
             } else if (tab === 'drivers') {
               const [workforce, driverLeaderboard] = await Promise.all([
                 getWorkforceAnalytics(startDate, endDate, branchId),
@@ -231,9 +235,16 @@ export function DashboardContent({
     routes = [],
     billing = { arAging: {}, totalInvoiced: 0 } as any,
     fuel = { totalLiters: 0, totalCost: 0, anomalies: [] } as any,
-    maintenance = { upcoming: [], fleetHealth: 0, overdue: [] } as any,
-    safety = { incidents: 0, riskScore: 0 } as any,
-    workforce = { activeDrivers: 0, totalDrivers: 0 } as any,
+    maintenance = { upcoming: [], overdue: [], dueSoon: [], activeRepairs: 0, completedThisMonth: 0, totalCostThisMonth: 0, vehicleHealthSummary: [] } as any,
+    safety = {
+      sos: { total: 0, active: 0, resolved: 0, byReason: [], recentAlerts: [] },
+      pod: { totalCompleted: 0, withPhoto: 0, withSignature: 0, complianceRate: 0 }
+    } as any,
+    workforce = {
+      kpis: { totalBox: 0, activeToday: 0, licenseExpiring: 0, licenseExpired: 0 },
+      topPerformers: [],
+      driversWithIssues: []
+    } as any,
     esgStats = { co2Saved: 0, treesSaved: 0, fuelSaved: 0 } as any,
     delayRootCause = [],
   } = secondary ?? {}
@@ -292,7 +303,7 @@ export function DashboardContent({
                                 {
                                     title: t('dashboard.tactical_flux'),
                                     icon: "layers",
-                                    href: "/admin/jobs",
+                                    href: "/planning",
                                     metrics: [
                                         { label: t('dashboard.sync_success'), value: `${(opStats as any).fleet?.onTimeDelivery?.toFixed(1) || 0}%`, status: (opStats as any).fleet?.onTimeDelivery > 90 ? 'good' : 'warning' },
                                         { label: t('dashboard.current_pipeline'), value: statusDist.reduce((a: number, b: any) => a + (Number(b.value) || 0), 0), status: 'good' }
@@ -301,7 +312,7 @@ export function DashboardContent({
                                 {
                                     title: t('dashboard.asset_readiness'),
                                     icon: "truck",
-                                    href: "/admin/vehicles/dashboard",
+                                    href: "/vehicles",
                                     metrics: [
                                         { label: t('dashboard.fleet_capacity'), value: `${(opStats as any).fleet?.utilization?.toFixed(1) || 0}%`, status: (opStats as any).fleet?.utilization > 70 ? 'good' : 'warning' },
                                         { 
@@ -336,13 +347,8 @@ export function DashboardContent({
                         </PremiumCard>
                     </div>
 
-                    <div className="col-span-12 lg:col-span-12">
-                         <FinancialSummaryCards 
-                            revenue={financials.totalRevenue}
-                            profit={financials.totalProfit}
-                            margin={financials.margin}
-                            growth={financials.growth}
-                        />
+                    <div className="col-span-12">
+                         <FinancialSummaryCards data={exeKPIs as any} />
                     </div>
 
                     <PremiumCard className="col-span-12 lg:col-span-8 p-6 bg-background border border-border/5 rounded-2xl shadow-xl overflow-hidden relative group">
@@ -375,16 +381,103 @@ export function DashboardContent({
                          </PremiumCard>
                     </div>
 
-                    <div className="col-span-12 lg:col-span-8">
-                        {loadingPrimary ? <SectionSkeleton /> : <RevenueTrendChart data={revenueTrend} />}
+                    {/* Driver Leaderboard — unique to overview, data from priority batch */}
+                    <div className="col-span-12 lg:col-span-6">
+                        <PremiumCard className="h-full bg-background border border-border/5 p-0 overflow-hidden rounded-2xl shadow-xl">
+                            <div className="px-5 py-4 border-b border-border/5 bg-black/20 flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-1.5 bg-amber-600 rounded-lg text-white shrink-0">
+                                        <Trophy size={13} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-black text-foreground uppercase">{t('dashboard.operator_elite')}</h3>
+                                        <p className="text-[9px] text-amber-400 uppercase font-semibold tracking-wide">{t('dashboard.high_yield_performance_metrics')}</p>
+                                    </div>
+                                </div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            </div>
+                            <div className="divide-y divide-white/[0.04]">
+                                {(driverLeaderboard as any[]).length === 0 ? (
+                                    <div className="py-12 text-center">
+                                        <Users size={32} strokeWidth={1} className="mx-auto mb-3 text-muted-foreground/30" />
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.performance_data_recalibrating')}</p>
+                                    </div>
+                                ) : (driverLeaderboard as any[]).slice(0, 5).map((d: any, i: number) => (
+                                    <div key={i} className="px-5 py-3 flex items-center justify-between group hover:bg-muted/20 transition-colors border-l-2 border-transparent hover:border-amber-500/50">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className={cn(
+                                                "w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black shrink-0 border",
+                                                i === 0 ? "bg-amber-500/20 border-amber-500/30 text-amber-300" : "bg-background border-border/20 text-muted-foreground"
+                                            )}>#{i + 1}</div>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-black text-foreground uppercase truncate">{d.name || d.driverName || 'Driver'}</p>
+                                                <p className="text-[9px] text-emerald-400 font-semibold truncate">
+                                                    {d.jobCount || d.trips || 0} {t('dashboard.missions_completed_prefix')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right shrink-0 ml-3">
+                                            <p className="text-sm font-black text-foreground tabular-nums">
+                                                ฿{Math.round((d.revenue || d.earnings || 0) / 1000)}K
+                                            </p>
+                                            <p className="text-[9px] text-muted-foreground opacity-50 uppercase">yield</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </PremiumCard>
                     </div>
 
-                    <div className="col-span-12 lg:col-span-4">
-                        {loadingPrimary ? <SectionSkeleton /> : (
-                            <div className="h-full">
-                                <RevenueForecastChart data={forecastData} />
+                    {/* Vehicle Profitability — unique to overview, data from priority batch */}
+                    <div className="col-span-12 lg:col-span-6">
+                        <PremiumCard className="h-full bg-background border border-border/5 p-0 overflow-hidden rounded-2xl shadow-xl">
+                            <div className="px-5 py-4 border-b border-border/5 bg-black/20 flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-1.5 bg-blue-600 rounded-lg text-white shrink-0">
+                                        <Truck size={13} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-black text-foreground uppercase">{t('dashboard.asset_readiness')}</h3>
+                                        <p className="text-[9px] text-blue-400 uppercase font-semibold tracking-wide">{t('dashboard.fleet_capacity')}</p>
+                                    </div>
+                                </div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                             </div>
-                        )}
+                            <div className="divide-y divide-white/[0.04]">
+                                {(vehicleProfitability as any[]).length === 0 ? (
+                                    <div className="py-12 text-center">
+                                        <Truck size={32} strokeWidth={1} className="mx-auto mb-3 text-muted-foreground/30" />
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.performance_data_recalibrating')}</p>
+                                    </div>
+                                ) : (vehicleProfitability as any[]).slice(0, 5).map((v: any, i: number) => {
+                                    const maxProfit = Math.max(...(vehicleProfitability as any[]).map((x: any) => x.netProfit || 0), 1)
+                                    const pct = Math.max(0, Math.min(((v.netProfit || 0) / maxProfit) * 100, 100))
+                                    return (
+                                        <div key={i} className="px-5 py-3 group hover:bg-muted/20 transition-colors border-l-2 border-transparent hover:border-blue-500/50">
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <div className="w-7 h-7 rounded-lg bg-background border border-border/20 flex items-center justify-center text-[9px] font-black text-foreground shrink-0">
+                                                        {(v.plate || 'N/A').slice(0, 2)}
+                                                    </div>
+                                                    <p className="text-sm font-black text-foreground uppercase truncate">{v.plate}</p>
+                                                </div>
+                                                <div className="text-right shrink-0 ml-3">
+                                                    <p className={cn("text-sm font-black tabular-nums", (v.netProfit || 0) >= 0 ? 'text-foreground' : 'text-rose-400')}>
+                                                        ฿{Math.round(Math.abs(v.netProfit || 0) / 1000)}K
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="h-1 bg-muted/30 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-700"
+                                                    style={{ width: `${pct}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </PremiumCard>
                     </div>
                 </div>
             </TabsContent>

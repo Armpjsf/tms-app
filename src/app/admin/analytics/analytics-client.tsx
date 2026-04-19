@@ -5,6 +5,7 @@ import Link from "next/link"
 import { AlertTriangle, ArrowLeft, ShieldAlert, BarChart3, Zap } from "lucide-react"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { MonthFilter } from "@/components/analytics/month-filter"
+import { Suspense } from "react"
 
 interface AnalyticsClientProps {
   overdueCount: number
@@ -81,9 +82,13 @@ export function AnalyticsClient({ overdueCount, isSuperAdmin }: AnalyticsClientP
           </div>
 
           <div className="flex flex-wrap items-center gap-6">
-            <div className="bg-muted/50 border border-border/5 p-2 rounded-3xl backdrop-blur-3xl flex items-center gap-2">
+            <Suspense fallback={
+              <div className="flex items-center gap-1 h-10 px-4 rounded-2xl bg-black/30 border border-white/5 animate-pulse">
+                <div className="w-32 h-3 bg-muted/40 rounded-full" />
+              </div>
+            }>
               <MonthFilter />
-            </div>
+            </Suspense>
             <div className="px-8 py-5 bg-primary/10 rounded-3xl border-2 border-primary/20 flex items-center gap-4">
               <div className="w-3 h-3 rounded-full bg-primary animate-ping" />
               <span className="text-base font-bold font-black text-primary uppercase tracking-[0.4em]">{t('analytics.live_feed')}</span>

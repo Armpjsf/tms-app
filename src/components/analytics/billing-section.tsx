@@ -2,221 +2,295 @@
 
 import { PremiumCard } from "@/components/ui/premium-card"
 import { BillingAnalytics } from "@/lib/supabase/billing-analytics"
-import { Wallet, Percent, FileText, AlertCircle, Clock, ArrowRightLeft, ShieldCheck, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import {
+  Wallet, Percent, FileText, AlertCircle, Clock, ArrowRightLeft,
+  ShieldCheck, ArrowUpRight, ArrowDownRight, TrendingDown
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
 
-const ComparisonIndicator = ({ current, previous }: { current: number, previous: number }) => {
-  if (!previous || previous === 0) return null
-  const diff = ((current - previous) / previous) * 100
-  const isIncrease = diff > 0
-  
-  return (
-    <div className={cn(
-      "flex items-center gap-1 text-[10px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full border",
-      isIncrease ? "text-rose-400 border-rose-500/20 bg-rose-500/5" : "text-emerald-400 border-emerald-500/20 bg-emerald-500/5"
-    )}>
-      {isIncrease ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-      {Math.abs(diff).toFixed(1)}%
-    </div>
-  )
+function formatCompact(n: number): string {
+  const abs = Math.abs(n)
+  const sign = n < 0 ? '-' : ''
+  if (abs >= 1_000_000) return `${sign}฿${(abs / 1_000_000).toFixed(1)}M`
+  if (abs >= 1_000)     return `${sign}฿${(abs / 1_000).toFixed(0)}K`
+  return `${sign}฿${Math.round(abs).toLocaleString('th-TH')}`
 }
 
 export function BillingSection({ data }: { data: BillingAnalytics }) {
   const { t } = useLanguage()
   const { accountsReceivable, accountsPayable, collectionRate } = data
-  
-  // Max value for aging bars
+
   const maxAging = Math.max(
-    accountsReceivable.aging['0-30'] || 0, 
-    accountsReceivable.aging['31-60'] || 0, 
-    accountsReceivable.aging['61-90'] || 0, 
-    accountsReceivable.aging['90+'] || 0
+    accountsReceivable.aging['0-30']  || 0,
+    accountsReceivable.aging['31-60'] || 0,
+    accountsReceivable.aging['61-90'] || 0,
+    accountsReceivable.aging['90+']   || 0,
   ) || 1
 
+  const criticalAmt = accountsReceivable.aging['90+'] || 0
+  const isCritical  = criticalAmt > 50_000
+  const isWarning   = criticalAmt > 0 && !isCritical
+
   return (
-    <div className="space-y-10">
-      {/* Sub-Section Header */}
+    <div className="space-y-6">
+
+      {/* ── Section Title ── */}
       <div className="flex items-center gap-3">
         <div className="p-2 bg-background rounded-xl text-emerald-400 shadow-lg border border-slate-800">
-          <Wallet size={18} />
+          <Wallet size={16} />
         </div>
-        <h3 className="text-xl font-black text-foreground tracking-tight uppercase premium-text-gradient">{t('billing.registry_header')}</h3>
+        <h3 className="text-lg font-black text-foreground uppercase tracking-tight premium-text-gradient">
+          {t('billing.registry_header')}
+        </h3>
       </div>
 
-      {/* KPI Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* AR Card */}
-        <PremiumCard className="bg-background border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
-            <div className="flex items-center justify-between mb-6 relative z-10">
-              <div className="space-y-1">
-                <span className="text-blue-400 text-base font-bold font-black uppercase italic">{t('billing.accounts_receivable')}</span>
-                <p className="text-base font-bold text-muted-foreground font-bold uppercase italic">{t('billing.asset_exposure')}</p>
+      {/* ── 4-Card KPI Grid ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+
+        {/* AR */}
+        <PremiumCard className="relative overflow-hidden p-0 border border-border/10 border-l-[3px] border-l-blue-500 bg-background/60 backdrop-blur-sm group hover:shadow-[0_0_25px_rgba(59,130,246,0.1)] transition-shadow duration-500">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/6 to-transparent pointer-events-none" />
+          <div className="p-4 flex flex-col gap-2.5 relative z-10">
+            <div className="flex items-start gap-2.5">
+              <div className="p-1.5 rounded-lg bg-blue-500/15 border border-blue-500/20 text-blue-400 shrink-0 group-hover:scale-110 transition-transform duration-300">
+                <FileText size={13} strokeWidth={2.5} />
               </div>
-              <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500 shadow-lg shadow-blue-500/10">
-                <FileText size={16} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-black text-blue-400 uppercase leading-tight truncate">{t('billing.accounts_receivable')}</p>
+                <p className="text-[9px] text-muted-foreground leading-tight opacity-50 truncate">{t('billing.asset_exposure')}</p>
               </div>
             </div>
-            <div className="flex items-center justify-between relative z-10">
-                <div className="text-3xl font-black text-foreground tracking-tighter">฿{accountsReceivable.totalOutstanding.toLocaleString()}</div>
-                <ComparisonIndicator current={accountsReceivable.totalOutstanding} previous={accountsReceivable.totalOutstanding * 1.05} />
+            <div className="flex items-end justify-between gap-2">
+              <span className="text-[1.65rem] font-black text-foreground tracking-tight leading-none">
+                {formatCompact(accountsReceivable.totalOutstanding)}
+              </span>
+              <span className="text-[9px] text-muted-foreground shrink-0 font-medium">
+                {accountsReceivable.invoiceCount} {t('billing.active_entities')}
+              </span>
             </div>
-            <div className="flex items-center gap-2 mt-4 opacity-50 relative z-10">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                <p className="text-base font-bold text-muted-foreground font-black uppercase italic">{accountsReceivable.invoiceCount} {t('billing.active_entities')}</p>
+            <div className="flex items-center gap-1.5 pt-0.5 border-t border-border/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+              <p className="text-[9px] text-blue-400 font-semibold uppercase truncate opacity-70">{t('billing.active_entities')}</p>
             </div>
+          </div>
         </PremiumCard>
 
-        {/* AP Card */}
-        <PremiumCard className="bg-background border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
-            <div className="flex items-center justify-between mb-6 relative z-10">
-              <div className="space-y-1">
-                <span className="text-indigo-400 text-base font-bold font-black uppercase italic">{t('billing.accounts_payable')}</span>
-                <p className="text-base font-bold text-muted-foreground font-bold uppercase italic">{t('billing.liability_registry')}</p>
+        {/* AP */}
+        <PremiumCard className="relative overflow-hidden p-0 border border-border/10 border-l-[3px] border-l-indigo-500 bg-background/60 backdrop-blur-sm group hover:shadow-[0_0_25px_rgba(99,102,241,0.1)] transition-shadow duration-500">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/6 to-transparent pointer-events-none" />
+          <div className="p-4 flex flex-col gap-2.5 relative z-10">
+            <div className="flex items-start gap-2.5">
+              <div className="p-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/20 text-indigo-400 shrink-0 group-hover:scale-110 transition-transform duration-300">
+                <ArrowRightLeft size={13} strokeWidth={2.5} />
               </div>
-              <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 shadow-lg shadow-indigo-500/10">
-                <ArrowRightLeft size={16} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-black text-indigo-400 uppercase leading-tight truncate">{t('billing.accounts_payable')}</p>
+                <p className="text-[9px] text-muted-foreground leading-tight opacity-50 truncate">{t('billing.liability_registry')}</p>
               </div>
             </div>
-            <div className="flex items-center justify-between relative z-10">
-                <div className="text-3xl font-black text-foreground tracking-tighter">฿{accountsPayable.totalOutstanding.toLocaleString()}</div>
-                <ComparisonIndicator current={accountsPayable.totalOutstanding} previous={accountsPayable.totalOutstanding * 0.92} />
+            <div className="flex items-end justify-between gap-2">
+              <span className="text-[1.65rem] font-black text-foreground tracking-tight leading-none">
+                {formatCompact(accountsPayable.totalOutstanding)}
+              </span>
+              <span className="text-[9px] text-muted-foreground shrink-0 font-medium">
+                {accountsPayable.paymentCount} {t('billing.pending_disbursements')}
+              </span>
             </div>
-            <div className="flex items-center gap-2 mt-4 opacity-50 relative z-10">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                <p className="text-base font-bold text-muted-foreground font-black uppercase italic">{accountsPayable.paymentCount} {t('billing.pending_disbursements')}</p>
+            <div className="flex items-center gap-1.5 pt-0.5 border-t border-border/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+              <p className="text-[9px] text-indigo-400 font-semibold uppercase truncate opacity-70">{t('billing.pending_disbursements')}</p>
             </div>
+          </div>
         </PremiumCard>
 
         {/* Collection Rate */}
-        <PremiumCard className="bg-background border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
-            <div className="flex items-center justify-between mb-6 relative z-10">
-               <div className="space-y-1">
-                <span className="text-emerald-400 text-base font-bold font-black uppercase italic">{t('billing.collection_rate')}</span>
-                <p className="text-base font-bold text-muted-foreground font-bold uppercase italic">{t('billing.yield_conversion')}</p>
+        <PremiumCard className="relative overflow-hidden p-0 border border-border/10 border-l-[3px] border-l-emerald-500 bg-background/60 backdrop-blur-sm group hover:shadow-[0_0_25px_rgba(16,185,129,0.1)] transition-shadow duration-500">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/6 to-transparent pointer-events-none" />
+          <div className="p-4 flex flex-col gap-2.5 relative z-10">
+            <div className="flex items-start gap-2.5">
+              <div className="p-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform duration-300">
+                <Percent size={13} strokeWidth={2.5} />
               </div>
-              <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 shadow-lg shadow-emerald-500/10">
-                <Percent size={16} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-black text-emerald-400 uppercase leading-tight truncate">{t('billing.collection_rate')}</p>
+                <p className="text-[9px] text-muted-foreground leading-tight opacity-50 truncate">{t('billing.yield_conversion')}</p>
               </div>
             </div>
-            <div className="text-3xl font-black text-foreground tracking-tighter relative z-10">{collectionRate.toFixed(1)}%</div>
-            <div className="flex items-center gap-2 mt-4 relative z-10">
-                <div className="w-full bg-card rounded-full h-1 overflow-hidden border border-border/5">
-                    <div className={cn(
-                        "h-full rounded-full transition-all duration-1000",
-                        collectionRate > 90 ? "bg-emerald-500" : collectionRate > 70 ? "bg-amber-500" : "bg-rose-500"
-                    )} style={{ width: `${collectionRate}%` }} />
-                </div>
+            <div className="flex items-end justify-between gap-2">
+              <span className="text-[1.65rem] font-black text-foreground tracking-tight leading-none">
+                {collectionRate.toFixed(1)}%
+              </span>
+              <span className={cn(
+                "text-[9px] font-bold shrink-0 px-1.5 py-0.5 rounded-full border",
+                collectionRate > 90
+                  ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                  : collectionRate > 70
+                    ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                    : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+              )}>
+                {collectionRate > 90 ? '✓ ดี' : collectionRate > 70 ? '⚠ ปานกลาง' : '✗ ต่ำ'}
+              </span>
             </div>
+            <div className="pt-0.5">
+              <div className="h-[3px] bg-muted/40 rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-1000",
+                    collectionRate > 90
+                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-300'
+                      : collectionRate > 70
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-300'
+                        : 'bg-gradient-to-r from-rose-600 to-rose-400'
+                  )}
+                  style={{ width: `${Math.min(collectionRate, 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
         </PremiumCard>
 
-         {/* Overdue Alert - TRAFFIC LIGHT */}
-         <PremiumCard className={cn(
-             "border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem] transition-all duration-500",
-             accountsReceivable.aging['90+'] > 50000 ? "bg-red-600 text-white" : accountsReceivable.aging['90+'] > 0 ? "bg-amber-600 text-white" : "bg-background text-foreground"
-         )}>
-            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-            <div className="flex items-center justify-between mb-6 relative z-10">
-              <div className="space-y-1">
-                <span className="font-bold font-black uppercase italic">{t('billing.critical_exposure')}</span>
-                <p className={cn("text-[10px] font-bold uppercase italic", accountsReceivable.aging['90+'] > 0 ? "text-white/60" : "text-muted-foreground")}>{t('billing.strategic_risk')}</p>
+        {/* Critical Overdue */}
+        <PremiumCard className={cn(
+          "relative overflow-hidden p-0 border border-l-[3px] transition-all duration-500 group",
+          isCritical
+            ? "bg-rose-950/80 border-border/10 border-l-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.2)]"
+            : isWarning
+              ? "bg-amber-950/40 border-border/10 border-l-amber-500"
+              : "bg-background/60 border-border/10 border-l-slate-600 backdrop-blur-sm"
+        )}>
+          <div className={cn(
+            "absolute inset-0 bg-gradient-to-br to-transparent pointer-events-none",
+            isCritical ? 'from-rose-500/10' : isWarning ? 'from-amber-500/6' : 'from-muted/5'
+          )} />
+          <div className="p-4 flex flex-col gap-2.5 relative z-10">
+            <div className="flex items-start gap-2.5">
+              <div className={cn(
+                "p-1.5 rounded-lg border shrink-0 group-hover:scale-110 transition-transform duration-300",
+                isCritical
+                  ? "bg-rose-500/20 border-rose-500/30 text-rose-300"
+                  : isWarning
+                    ? "bg-amber-500/20 border-amber-500/30 text-amber-300"
+                    : "bg-muted/20 border-border/20 text-muted-foreground"
+              )}>
+                <AlertCircle size={13} strokeWidth={2.5} />
               </div>
-              <div className="p-2 bg-muted/80 rounded-xl text-slate-900 shadow-lg">
-                <AlertCircle size={16} />
+              <div className="min-w-0 flex-1">
+                <p className={cn(
+                  "text-[11px] font-black uppercase leading-tight truncate",
+                  isCritical ? 'text-rose-300' : isWarning ? 'text-amber-300' : 'text-muted-foreground'
+                )}>{t('billing.critical_exposure')}</p>
+                <p className="text-[9px] text-muted-foreground leading-tight opacity-50 truncate">{t('billing.strategic_risk')}</p>
               </div>
             </div>
-            <div className="text-3xl font-black tracking-tighter relative z-10 animate-pulse">฿{accountsReceivable.aging['90+'].toLocaleString()}</div>
-            <div className="flex items-center gap-2 mt-4 relative z-10">
-                    <div className="flex items-center gap-1">
-                        <Clock size={10} strokeWidth={3} /> {t('billing.recovery_required')}
-                    </div>
+            <div className="flex items-end justify-between gap-2">
+              <span className={cn(
+                "text-[1.65rem] font-black tracking-tight leading-none",
+                isCritical || isWarning ? 'text-foreground' : 'text-muted-foreground/30'
+              )}>
+                {formatCompact(criticalAmt)}
+              </span>
+              {(isCritical || isWarning) && (
+                <span className="text-[9px] font-bold text-rose-300 shrink-0 flex items-center gap-1 animate-pulse">
+                  <Clock size={9} /> {t('billing.recovery_required')}
+                </span>
+              )}
             </div>
+            <div className={cn(
+              "text-[9px] uppercase font-semibold tracking-wide pt-0.5 border-t",
+              isCritical ? 'text-rose-400 border-rose-500/20' : isWarning ? 'text-amber-400 border-amber-500/20' : 'text-muted-foreground/40 border-border/5'
+            )}>
+              {isCritical ? '⚠ ต้องดำเนินการทันที' : isWarning ? '⚡ ติดตามหนี้ด่วน' : '✓ ไม่มีหนี้เกินกำหนด'}
+            </div>
+          </div>
         </PremiumCard>
       </div>
 
-      {/* Charts & Lists Elite Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* ── Charts Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
         {/* AR Aging Timeline */}
-        <PremiumCard className="bg-muted/50 border border-border/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-border/5 bg-gradient-to-r from-blue-500/20 via-blue-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
-              <div className="flex items-center gap-3 relative z-10">
-                <div className="p-2 bg-blue-600 rounded-xl text-white">
-                  <Clock size={16} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-foreground tracking-tight">{t('billing.ar_aging')}</h3>
-                   <p className="text-blue-400 text-base font-bold font-bold uppercase">{t('billing.temporal_exposure')}</p>
-                </div>
-              </div>
-           </div>
-           <div className="p-10 space-y-8">
-              {Object.entries(accountsReceivable.aging).map(([range, amount]) => (
-                <div key={range} className="space-y-3">
-                  <div className="flex justify-between items-end">
-                     <span className="text-base font-bold font-black text-muted-foreground uppercase">{range} {t('billing.days_exposure')}</span>
-                     <span className="text-lg font-black text-foreground tracking-tighter italic shadow-sm bg-muted/50 px-3 py-1 rounded-lg">฿{amount.toLocaleString()}</span>
+        <PremiumCard className="bg-muted/30 border border-border/10 p-0 overflow-hidden rounded-2xl">
+          <div className="px-5 py-4 border-b border-border/5 bg-black/20 flex items-center gap-3">
+            <div className="p-1.5 bg-blue-600 rounded-lg text-white shrink-0">
+              <Clock size={13} />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-foreground">{t('billing.ar_aging')}</h3>
+              <p className="text-[9px] text-blue-400 uppercase font-semibold tracking-wide">{t('billing.temporal_exposure')}</p>
+            </div>
+          </div>
+          <div className="p-5 space-y-4">
+            {Object.entries(accountsReceivable.aging).map(([range, amount]) => {
+              const pct = (amount / (maxAging as number)) * 100
+              const colorBar =
+                range === '90+'   ? 'bg-gradient-to-r from-rose-600 to-rose-400'
+                : range === '61-90' ? 'bg-gradient-to-r from-orange-500 to-amber-400'
+                : range === '31-60' ? 'bg-gradient-to-r from-amber-400 to-yellow-300'
+                : 'bg-gradient-to-r from-blue-500 to-blue-300'
+              return (
+                <div key={range} className="space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wide">
+                      {range} {t('billing.days_exposure')}
+                    </span>
+                    <span className="text-[13px] font-black text-foreground tabular-nums shrink-0">
+                      {formatCompact(amount as number)}
+                    </span>
                   </div>
-                  <div className="h-2 w-full bg-muted/50 rounded-full overflow-hidden border border-border/10 p-0.5">
-                     <div 
-                        className={cn(
-                            "h-full rounded-full transition-all duration-700 shadow-sm",
-                            range === '90+' ? 'bg-gradient-to-r from-red-600 to-rose-500 animate-pulse' :
-                            range === '61-90' ? 'bg-gradient-to-r from-orange-500 to-amber-400' :
-                            range === '31-60' ? 'bg-gradient-to-r from-amber-400 to-yellow-300' : 
-                            'bg-gradient-to-r from-blue-600 to-blue-400'
-                        )}
-                        style={{ width: `${(amount / (maxAging as number)) * 100}%` }}
-                     />
+                  <div className="h-1.5 w-full bg-muted/40 rounded-full overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all duration-700", colorBar, range === '90+' && 'animate-pulse')}
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
                 </div>
-              ))}
-           </div>
+              )
+            })}
+          </div>
         </PremiumCard>
 
-        {/* Recent Strategic Unpaid */}
-        <PremiumCard className="bg-muted/50 border border-border/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-border/5 bg-gradient-to-r from-rose-500/20 via-rose-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
-              <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent pointer-events-none" />
-              <div className="flex items-center gap-3 relative z-10">
-                <div className="p-2 bg-rose-600 rounded-xl text-white shadow-lg shadow-rose-500/20">
-                  <AlertCircle size={16} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-foreground tracking-tight">{t('billing.critical_log')}</h3>
-                   <p className="text-rose-400 text-base font-bold font-bold uppercase">{t('billing.recovery_assets')}</p>
-                </div>
+        {/* Recent Unpaid */}
+        <PremiumCard className="bg-muted/30 border border-border/10 p-0 overflow-hidden rounded-2xl">
+          <div className="px-5 py-4 border-b border-border/5 bg-black/20 flex items-center gap-3">
+            <div className="p-1.5 bg-rose-600 rounded-lg text-white shrink-0">
+              <AlertCircle size={13} />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-foreground">{t('billing.critical_log')}</h3>
+              <p className="text-[9px] text-rose-400 uppercase font-semibold tracking-wide">{t('billing.recovery_assets')}</p>
+            </div>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {accountsReceivable.recentUnpaid.length === 0 ? (
+              <div className="p-10 text-center">
+                <ShieldCheck size={36} strokeWidth={1} className="mx-auto mb-3 text-emerald-500/40" />
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('billing.minimal_exposure')}</p>
               </div>
-           </div>
-           <div className="p-0">
-              <div className="divide-y divide-white/5">
-                {accountsReceivable.recentUnpaid.length === 0 ? (
-                    <div className="p-20 text-center">
-                        <ShieldCheck size={48} strokeWidth={1} className="mx-auto mb-4 text-emerald-100" />
-                         <p className="text-base font-bold font-black text-muted-foreground uppercase">{t('billing.minimal_exposure')}</p>
-                    </div>
-                ) : (
-                    accountsReceivable.recentUnpaid.map((inv) => (
-                        <div key={inv.id} className="p-8 flex items-center justify-between group/inv hover:bg-muted/50 transition-all border-l-4 border-transparent hover:border-rose-500">
-                            <div>
-                                <div className="text-foreground font-black text-xl tracking-tight group-hover/inv:text-rose-400 transition-colors uppercase">{inv.customer}</div>
-                                 <div className="text-base font-bold text-rose-400 font-black mt-2 bg-rose-500/10 px-2 py-1 rounded-md w-fit italic border border-rose-500/20 uppercase">
-                                   {t('billing.exposure_relative')}: {inv.daysOverdue} Days
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-xl font-black text-foreground tracking-tighter">฿{inv.amount.toLocaleString()}</div>
-                                 <div className="text-base font-bold text-muted-foreground font-black mt-1 uppercase italic">ENTITY_ID: {inv.id}</div>
-                            </div>
-                        </div>
-                    ))
-                )}
-              </div>
-           </div>
+            ) : (
+              accountsReceivable.recentUnpaid.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="px-5 py-3.5 flex items-center justify-between group hover:bg-rose-500/5 transition-colors border-l-2 border-transparent hover:border-rose-500/50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-black text-foreground uppercase truncate group-hover:text-rose-400 transition-colors">
+                      {inv.customer}
+                    </p>
+                    <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20 uppercase">
+                      <TrendingDown size={8} /> {t('billing.exposure_relative')}: {inv.daysOverdue}d
+                    </span>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <p className="text-base font-black text-foreground tabular-nums">{formatCompact(inv.amount)}</p>
+                    <p className="text-[9px] text-muted-foreground font-medium opacity-50">#{inv.id}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </PremiumCard>
+
       </div>
     </div>
   )

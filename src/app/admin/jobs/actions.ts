@@ -66,7 +66,6 @@ export async function adminUpdateJobStatus(jobId: string, newStatus: string, not
   // No console.error or console.log statements
 
   revalidatePath(`/admin/jobs/${jobId}`)
-  revalidatePath('/admin/jobs')
   revalidatePath('/planning')
   
   return { success: true, message: 'Job status updated successfully' }

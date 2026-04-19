@@ -6,219 +6,266 @@ import { Wrench, AlertTriangle, CheckCircle2, Truck, Activity, Clock, ShieldChec
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
 
+function formatCompact(n: number): string {
+  const abs = Math.abs(n)
+  if (abs >= 1_000_000) return `฿${(abs / 1_000_000).toFixed(1)}M`
+  if (abs >= 1_000)     return `฿${(abs / 1_000).toFixed(0)}K`
+  return `฿${Math.round(abs).toLocaleString('th-TH')}`
+}
+
 export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) {
   const { t } = useLanguage()
-  const { overdue, dueSoon, activeRepairs, completedThisMonth, totalCostThisMonth, vehicleHealthSummary } = data
+  const {
+    overdue = [],
+    dueSoon = [],
+    activeRepairs = 0,
+    completedThisMonth = 0,
+    totalCostThisMonth = 0,
+    vehicleHealthSummary = [],
+  } = data || {}
+
+  const safeCost = Number(totalCostThisMonth) || 0
+  const hasCritical = overdue.length > 0
 
   return (
-    <div className="space-y-10">
-      {/* Sub-Section Header */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-background rounded-xl text-amber-500 shadow-lg border border-slate-800">
-            <Wrench size={18} />
-          </div>
-          <h3 className="text-xl font-black text-foreground tracking-tight uppercase premium-text-gradient">{t('common.maintenance_protocol')}</h3>
+    <div className="space-y-6">
+
+      {/* ── Section Title ── */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-background rounded-xl text-amber-500 shadow-lg border border-slate-800">
+          <Wrench size={16} />
         </div>
+        <h3 className="text-lg font-black text-foreground uppercase tracking-tight premium-text-gradient">
+          {t('common.maintenance_protocol')}
+        </h3>
+      </div>
 
-      {/* KPI Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* ── 4-Card KPI Grid ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+
         {/* Active Repairs */}
-        <PremiumCard className="bg-background border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
-            <div className="flex items-center justify-between mb-6 relative z-10">
-              <div className="space-y-1">
-                <span className="text-blue-400 text-base font-bold font-black uppercase italic">{t('dashboard.active_hangar')}</span>
-                <p className="text-base font-bold text-muted-foreground font-bold uppercase italic">{t('dashboard.live_repair_log')}</p>
+        <PremiumCard className="relative overflow-hidden p-0 border border-border/10 border-l-[3px] border-l-blue-500 bg-background/60 backdrop-blur-sm group hover:shadow-[0_0_25px_rgba(59,130,246,0.1)] transition-shadow duration-500">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/6 to-transparent pointer-events-none" />
+          <div className="p-4 flex flex-col gap-2.5 relative z-10">
+            <div className="flex items-start gap-2.5">
+              <div className="p-1.5 rounded-lg bg-blue-500/15 border border-blue-500/20 text-blue-400 shrink-0 group-hover:scale-110 transition-transform duration-300">
+                <Wrench size={13} strokeWidth={2.5} />
               </div>
-              <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500 shadow-lg shadow-blue-500/10">
-                <Wrench size={16} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-black text-blue-400 uppercase leading-tight truncate">{t('dashboard.active_hangar')}</p>
+                <p className="text-[9px] text-muted-foreground leading-tight opacity-50 truncate">{t('dashboard.live_repair_log')}</p>
               </div>
             </div>
-            <div className="text-3xl font-black text-foreground tracking-tighter relative z-10">{activeRepairs} {t('dashboard.assets_label')}</div>
-            <div className="flex items-center gap-2 mt-4 relative z-10">
+            <div className="flex items-end justify-between gap-2">
+              <span className="text-[1.65rem] font-black text-foreground tracking-tight leading-none">
+                {activeRepairs}
+              </span>
+              <span className="text-[9px] text-blue-400 font-semibold shrink-0 uppercase flex items-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                <p className="text-base font-bold text-blue-400 font-black uppercase italic">{t('dashboard.mission_inactive')}</p>
+                {t('dashboard.assets_label')}
+              </span>
             </div>
+            <p className="text-[9px] text-blue-400 font-semibold uppercase opacity-60 truncate">{t('dashboard.mission_inactive')}</p>
+          </div>
         </PremiumCard>
 
-        {/* Critical Maintenance */}
+        {/* Critical — Overdue */}
         <PremiumCard className={cn(
-             "border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem] transition-all duration-500",
-             overdue.length > 0 ? "bg-red-600 text-white" : "bg-background text-foreground"
+          "relative overflow-hidden p-0 border border-l-[3px] transition-all duration-500 group",
+          hasCritical
+            ? "bg-rose-950/80 border-border/10 border-l-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.2)]"
+            : "bg-background/60 border-border/10 border-l-slate-600 backdrop-blur-sm"
         )}>
-            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-            <div className="flex items-center justify-between mb-6 relative z-10">
-              <div className="space-y-1">
-                <span className={cn("text-base font-bold font-black uppercase italic", overdue.length > 0 ? "text-white/90" : "text-muted-foreground")}>
-                    {t('dashboard.overdue_exposure')}
+          <div className={cn(
+            "absolute inset-0 bg-gradient-to-br to-transparent pointer-events-none",
+            hasCritical ? 'from-rose-500/10' : 'from-muted/5'
+          )} />
+          <div className="p-4 flex flex-col gap-2.5 relative z-10">
+            <div className="flex items-start gap-2.5">
+              <div className={cn(
+                "p-1.5 rounded-lg border shrink-0 group-hover:scale-110 transition-transform duration-300",
+                hasCritical
+                  ? "bg-rose-500/20 border-rose-500/30 text-rose-300"
+                  : "bg-muted/20 border-border/20 text-muted-foreground"
+              )}>
+                <AlertTriangle size={13} strokeWidth={2.5} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className={cn(
+                  "text-[11px] font-black uppercase leading-tight truncate",
+                  hasCritical ? "text-rose-300" : "text-muted-foreground"
+                )}>{t('dashboard.overdue_exposure')}</p>
+                <p className="text-[9px] text-muted-foreground leading-tight opacity-50 truncate">{t('dashboard.strategic_service_breach')}</p>
+              </div>
+            </div>
+            <div className="flex items-end justify-between gap-2">
+              <span className={cn(
+                "text-[1.65rem] font-black tracking-tight leading-none",
+                hasCritical ? "text-foreground" : "text-muted-foreground/30"
+              )}>
+                {overdue.length}
+              </span>
+              {hasCritical && (
+                <span className="text-[9px] font-bold text-rose-300 shrink-0 animate-pulse uppercase">
+                  ⚠ {t('dashboard.critical_review')}
                 </span>
-                <p className={cn("text-base font-bold font-bold uppercase italic", overdue.length > 0 ? "text-white/70" : "text-muted-foreground")}>
-                    {t('dashboard.strategic_service_breach')}
-                </p>
-              </div>
-              <div className={cn("p-2 rounded-xl shadow-lg", overdue.length > 0 ? "bg-muted/80 text-slate-900" : "bg-red-500/10 text-red-500")}>
-                <AlertTriangle size={16} />
-              </div>
+              )}
             </div>
-            <div className={cn("text-3xl font-black tracking-tighter relative z-10 italic", overdue.length > 0 ? "text-white" : "text-foreground/20")}>
-                {overdue.length} {t('dashboard.alerts_label')}
-            </div>
-            <div className="flex items-center gap-2 mt-4 relative z-10">
-                <div className={cn(overdue.length > 0 ? "text-white animate-pulse" : "text-muted-foreground")}>
-                    {overdue.length > 0 ? t('dashboard.critical_review') : t('dashboard.system_optimal')}
-                </div>
-            </div>
+            <p className={cn(
+              "text-[9px] uppercase font-semibold tracking-wide truncate",
+              hasCritical ? "text-rose-400" : "text-muted-foreground/40"
+            )}>
+              {hasCritical ? `${overdue.length} ${t('dashboard.alerts_label')} — ${t('dashboard.strict_breach')}` : t('dashboard.system_optimal')}
+            </p>
+          </div>
         </PremiumCard>
 
-        {/* Resolved This Month */}
-        <PremiumCard className="bg-background border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
-            <div className="flex items-center justify-between mb-6 relative z-10">
-              <div className="space-y-1">
-                <span className="text-emerald-400 text-base font-bold font-black uppercase italic">{t('dashboard.mission_ready')}</span>
-                <p className="text-base font-bold text-muted-foreground font-bold uppercase italic">{t('dashboard.restored_assets_30d')}</p>
+        {/* Completed This Month */}
+        <PremiumCard className="relative overflow-hidden p-0 border border-border/10 border-l-[3px] border-l-emerald-500 bg-background/60 backdrop-blur-sm group hover:shadow-[0_0_25px_rgba(16,185,129,0.1)] transition-shadow duration-500">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/6 to-transparent pointer-events-none" />
+          <div className="p-4 flex flex-col gap-2.5 relative z-10">
+            <div className="flex items-start gap-2.5">
+              <div className="p-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform duration-300">
+                <CheckCircle2 size={13} strokeWidth={2.5} />
               </div>
-              <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 shadow-lg shadow-emerald-500/10">
-                <CheckCircle2 size={16} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-black text-emerald-400 uppercase leading-tight truncate">{t('dashboard.mission_ready')}</p>
+                <p className="text-[9px] text-muted-foreground leading-tight opacity-50 truncate">{t('dashboard.restored_assets_30d')}</p>
               </div>
             </div>
-            <div className="text-3xl font-black text-foreground tracking-tighter relative z-10 italic">{completedThisMonth}</div>
-            <div className="flex items-center gap-2 mt-4 relative z-10">
-                <p className="text-base font-bold text-emerald-400 font-black uppercase italic flex items-center gap-2">
-                    <ShieldCheck size={10} strokeWidth={3} /> {t('dashboard.restoration_verified')}
-                </p>
+            <div className="flex items-end justify-between gap-2">
+              <span className="text-[1.65rem] font-black text-foreground tracking-tight leading-none">
+                {completedThisMonth}
+              </span>
+              <span className="text-[9px] text-emerald-400 font-semibold shrink-0 uppercase flex items-center gap-1">
+                <ShieldCheck size={9} /> {t('dashboard.restoration_verified')}
+              </span>
             </div>
+            <p className="text-[9px] text-muted-foreground uppercase opacity-40 font-semibold truncate">30 วันล่าสุด</p>
+          </div>
         </PremiumCard>
 
-        {/* Maintenance Expenditure */}
-        <PremiumCard className="bg-background border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
-            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent pointer-events-none" />
-            <div className="flex items-center justify-between mb-6 relative z-10">
-              <div className="space-y-1">
-                <span className="text-rose-400 text-base font-bold font-black uppercase italic">{t('dashboard.fleet_burn_rate')}</span>
-                <p className="text-base font-bold text-muted-foreground font-bold uppercase italic">{t('dashboard.total_restoration_expenditure')}</p>
+        {/* Cost This Month */}
+        <PremiumCard className="relative overflow-hidden p-0 border border-border/10 border-l-[3px] border-l-rose-500 bg-background/60 backdrop-blur-sm group hover:shadow-[0_0_25px_rgba(244,63,94,0.1)] transition-shadow duration-500">
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/6 to-transparent pointer-events-none" />
+          <div className="p-4 flex flex-col gap-2.5 relative z-10">
+            <div className="flex items-start gap-2.5">
+              <div className="p-1.5 rounded-lg bg-rose-500/15 border border-rose-500/20 text-rose-400 shrink-0 group-hover:scale-110 transition-transform duration-300">
+                <Activity size={13} strokeWidth={2.5} />
               </div>
-              <div className="p-2 bg-rose-500/10 rounded-xl text-rose-400 shadow-lg shadow-rose-500/10">
-                <Activity size={16} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-black text-rose-400 uppercase leading-tight truncate">{t('dashboard.fleet_burn_rate')}</p>
+                <p className="text-[9px] text-muted-foreground leading-tight opacity-50 truncate">{t('dashboard.total_restoration_expenditure')}</p>
               </div>
             </div>
-            <div className="text-3xl font-black text-foreground tracking-tighter relative z-10">฿{totalCostThisMonth.toLocaleString()}</div>
-            <div className="flex items-center gap-2 mt-4 relative z-10 opacity-50">
-                 <p className="text-base font-bold text-muted-foreground font-black uppercase italic">{t('maintenance.allocated_budget_nominal')}</p>
+            <div className="flex items-end justify-between gap-2">
+              <span className="text-[1.65rem] font-black text-foreground tracking-tight leading-none">
+                {formatCompact(safeCost)}
+              </span>
             </div>
+            <p className="text-[9px] text-muted-foreground uppercase opacity-40 font-semibold truncate">{t('maintenance.allocated_budget_nominal')}</p>
+          </div>
         </PremiumCard>
       </div>
 
-      {/* Maintenance Intelligence Elite Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Compliance Alerts Registry */}
-        <PremiumCard className="bg-muted/50 border border-border/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-border/5 bg-gradient-to-r from-amber-500/20 via-amber-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent pointer-events-none" />
-              <div className="flex items-center gap-3 relative z-10">
-                <div className="p-2 bg-amber-600 rounded-xl text-white shadow-lg shadow-amber-500/20">
-                  <Clock size={16} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-foreground tracking-tight italic">{t('dashboard.asset_compliance_feed')}</h3>
-                  <p className="text-amber-400 text-base font-bold font-bold uppercase">{t('dashboard.temporal_maintenance_scheduler')}</p>
-                </div>
+      {/* ── Charts Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        {/* Due Soon Timeline */}
+        <PremiumCard className="bg-muted/30 border border-border/10 p-0 overflow-hidden rounded-2xl">
+          <div className="px-5 py-4 border-b border-border/5 bg-black/20 flex items-center gap-3">
+            <div className="p-1.5 bg-amber-600 rounded-lg text-white shrink-0"><Clock size={13} /></div>
+            <div>
+              <h3 className="text-sm font-black text-foreground">{t('dashboard.asset_compliance_feed')}</h3>
+              <p className="text-[9px] text-amber-400 uppercase font-semibold tracking-wide">{t('dashboard.temporal_maintenance_scheduler')}</p>
+            </div>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {[...overdue, ...dueSoon.slice(0, 5)].length === 0 ? (
+              <div className="p-10 text-center">
+                <ShieldCheck size={36} strokeWidth={1} className="mx-auto mb-3 text-emerald-500/40" />
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('maintenance.all_assets_ready')}</p>
               </div>
-           </div>
-           <div className="p-0">
-              <div className="divide-y divide-white/5">
-                {[...overdue, ...dueSoon.slice(0, 5)].map((item, i) => (
-                    <div key={`${item.vehicle_plate}-${item.service_type}-${i}`} className="p-8 flex items-center justify-between group/alert hover:bg-muted/50 transition-all border-l-4 border-transparent hover:border-amber-500">
-                        <div className="flex items-center gap-6">
-                            <div className={cn(
-                                "w-14 h-14 rounded-2xl border flex items-center justify-center text-[12px] font-black shadow-xl italic group-hover/alert:scale-110 transition-transform duration-500 uppercase",
-                                item.status === 'overdue' ? 'bg-red-600 border-red-500 text-foreground' : 'bg-background border-slate-800 text-foreground'
-                            )}>
-                                {item.days_until <= 0 ? 'CRIT' : item.days_until}
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-foreground font-black text-xl tracking-tight uppercase italic">{item.vehicle_plate}</span>
-                                    <span className="text-base font-bold font-black text-muted-foreground border border-border/10 px-2 py-0.5 rounded-full">{item.vehicle_type}</span>
-                                </div>
-                                <div className="text-base font-bold text-amber-400 font-black mt-2 bg-amber-500/10 px-3 py-1 rounded-lg w-fit italic border border-amber-500/20 uppercase">
-                                   {t('dashboard.service_prefix')} {item.service_type}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                             <div className={cn(
-                                "text-base font-bold font-black uppercase mb-1",
-                                item.status === 'overdue' ? 'text-red-400' : 'text-amber-400'
-                             )}>
-                                 {item.status === 'overdue' ? t('dashboard.strict_breach') : `${item.days_until} ${t('common.days')} ${t('common.remaining')}`}
-                             </div>
-                             <div className="text-base font-bold text-muted-foreground font-black bg-muted/50 px-2 py-0.5 rounded-full border border-border/10 uppercase italic">
-                                {new Date(item.due_date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
-                             </div>
-                        </div>
+            ) : (
+              [...overdue, ...dueSoon.slice(0, 5)].map((item, i) => (
+                <div
+                  key={`${item.vehicle_plate}-${item.service_type}-${i}`}
+                  className="px-5 py-3 flex items-center justify-between group hover:bg-muted/30 transition-colors border-l-2 border-transparent hover:border-amber-500/50"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={cn(
+                      "w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-black shrink-0 border",
+                      item.status === 'overdue'
+                        ? 'bg-rose-600 border-rose-500 text-white'
+                        : 'bg-background border-border/20 text-foreground'
+                    )}>
+                      {item.days_until <= 0 ? '!' : item.days_until}
                     </div>
-                ))}
-                {overdue.length === 0 && dueSoon.length === 0 && (
-                     <div className="p-24 text-center">
-                        <ShieldCheck size={48} strokeWidth={1} className="mx-auto mb-4 text-emerald-100" />
-                        <p className="text-base font-bold font-black text-muted-foreground uppercase italic">{t('maintenance.all_assets_ready')}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-foreground uppercase truncate">{item.vehicle_plate}</p>
+                      <p className="text-[9px] text-amber-400 font-semibold uppercase truncate">{item.service_type}</p>
                     </div>
-                )}
-              </div>
-           </div>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <p className={cn(
+                      "text-[10px] font-black uppercase",
+                      item.status === 'overdue' ? 'text-rose-400' : 'text-amber-400'
+                    )}>
+                      {item.status === 'overdue' ? t('dashboard.strict_breach') : `${item.days_until}d`}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground opacity-50">
+                      {new Date(item.due_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </PremiumCard>
 
-        {/* Fleet Health Breakdown Registry */}
-        <PremiumCard className="bg-muted/50 border border-border/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-rose-500/20 via-rose-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
-              <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent pointer-events-none" />
-              <div className="flex items-center gap-3 relative z-10">
-                <div className="p-2 bg-rose-600 rounded-xl text-white shadow-lg">
-                  <Truck size={16} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-foreground tracking-tight italic">{t('dashboard.asset_health_matrix')}</h3>
-                  <p className="text-rose-400 text-base font-bold font-bold uppercase">{t('dashboard.operational_integrity_breakdown')}</p>
-                </div>
+        {/* Fleet Health */}
+        <PremiumCard className="bg-muted/30 border border-border/10 p-0 overflow-hidden rounded-2xl">
+          <div className="px-5 py-4 border-b border-border/5 bg-black/20 flex items-center gap-3">
+            <div className="p-1.5 bg-rose-600 rounded-lg text-white shrink-0"><Truck size={13} /></div>
+            <div>
+              <h3 className="text-sm font-black text-foreground">{t('dashboard.asset_health_matrix')}</h3>
+              <p className="text-[9px] text-rose-400 uppercase font-semibold tracking-wide">{t('dashboard.operational_integrity_breakdown')}</p>
+            </div>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {vehicleHealthSummary.length === 0 ? (
+              <div className="p-10 text-center">
+                <Activity size={36} strokeWidth={1} className="mx-auto mb-3 text-emerald-500/40" />
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('maintenance.fleet_integrity_nominal')}</p>
               </div>
-           </div>
-           <div className="p-0">
-              <div className="divide-y divide-white/5">
-                {vehicleHealthSummary.slice(0, 6).map((v) => (
-                    <div key={v.vehicle_plate} className="p-8 flex items-center justify-between group/v hover:bg-muted/50 transition-all border-l-4 border-transparent hover:border-rose-500">
-                        <div className="flex items-center gap-6">
-                            <div className="w-14 h-14 rounded-2xl bg-background border border-slate-800 flex items-center justify-center text-[12px] font-black text-foreground shadow-xl italic group-hover/v:scale-110 transition-transform duration-500 uppercase">
-                                {v.vehicle_plate.slice(0, 2)}
-                            </div>
-                            <div>
-                                <div className="text-foreground tracking-tighter group-hover/v:text-rose-400 transition-colors uppercase italic">{v.vehicle_plate}</div>
-                                <div className="flex items-center gap-2 mt-2">
-                                    <span className="text-base font-bold text-rose-400 font-black uppercase italic bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
-                                       {v.openTickets} {t('dashboard.active_tickets')}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                             <div className="text-2xl font-black text-foreground tracking-tighter italic">฿{v.totalCost.toLocaleString()}</div>
-                             <div className="text-base font-bold text-muted-foreground font-black mt-1 uppercase italic bg-muted/50 px-2 py-0.5 rounded-full border border-border/10 w-fit ml-auto">
-                                {t('maintenance.cumulative_cost')}
-                             </div>
-                        </div>
+            ) : (
+              vehicleHealthSummary.slice(0, 6).map((v) => (
+                <div
+                  key={v.vehicle_plate}
+                  className="px-5 py-3 flex items-center justify-between group hover:bg-muted/30 transition-colors border-l-2 border-transparent hover:border-rose-500/50"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-background border border-border/20 flex items-center justify-center text-[10px] font-black text-foreground shrink-0 uppercase">
+                      {v.vehicle_plate.slice(0, 2)}
                     </div>
-                ))}
-                {vehicleHealthSummary.length === 0 && (
-                    <div className="p-24 text-center">
-                        <Activity size={48} strokeWidth={1} className="mx-auto mb-4 text-emerald-100" />
-                        <p className="text-base font-bold font-black text-muted-foreground uppercase italic">{t('maintenance.fleet_integrity_nominal')}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-foreground uppercase truncate">{v.vehicle_plate}</p>
+                      <span className="inline-flex text-[9px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded-full border border-rose-500/20 uppercase">
+                        {v.openTickets} {t('dashboard.active_tickets')}
+                      </span>
                     </div>
-                )}
-              </div>
-           </div>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <p className="text-sm font-black text-foreground tabular-nums">{formatCompact(v.totalCost)}</p>
+                    <p className="text-[9px] text-muted-foreground opacity-50 uppercase">{t('maintenance.cumulative_cost')}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </PremiumCard>
+
       </div>
     </div>
   )
 }
-

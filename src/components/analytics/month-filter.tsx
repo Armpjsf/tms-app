@@ -1,154 +1,259 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { useTransition } from "react"
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
+import { useTransition, useState } from "react"
+import { ChevronLeft, ChevronRight, CalendarDays, Check } from "lucide-react"
 import { useLanguage } from "@/components/providers/language-provider"
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
+
+const MONTH_COLORS = [
+  'hover:bg-rose-500/15 data-[active=true]:bg-rose-500/20 data-[active=true]:text-rose-300 data-[active=true]:border-rose-500/30',
+  'hover:bg-orange-500/15 data-[active=true]:bg-orange-500/20 data-[active=true]:text-orange-300 data-[active=true]:border-orange-500/30',
+  'hover:bg-amber-500/15 data-[active=true]:bg-amber-500/20 data-[active=true]:text-amber-300 data-[active=true]:border-amber-500/30',
+  'hover:bg-emerald-500/15 data-[active=true]:bg-emerald-500/20 data-[active=true]:text-emerald-300 data-[active=true]:border-emerald-500/30',
+  'hover:bg-cyan-500/15 data-[active=true]:bg-cyan-500/20 data-[active=true]:text-cyan-300 data-[active=true]:border-cyan-500/30',
+  'hover:bg-blue-500/15 data-[active=true]:bg-blue-500/20 data-[active=true]:text-blue-300 data-[active=true]:border-blue-500/30',
+  'hover:bg-violet-500/15 data-[active=true]:bg-violet-500/20 data-[active=true]:text-violet-300 data-[active=true]:border-violet-500/30',
+  'hover:bg-purple-500/15 data-[active=true]:bg-purple-500/20 data-[active=true]:text-purple-300 data-[active=true]:border-purple-500/30',
+  'hover:bg-pink-500/15 data-[active=true]:bg-pink-500/20 data-[active=true]:text-pink-300 data-[active=true]:border-pink-500/30',
+  'hover:bg-sky-500/15 data-[active=true]:bg-sky-500/20 data-[active=true]:text-sky-300 data-[active=true]:border-sky-500/30',
+  'hover:bg-teal-500/15 data-[active=true]:bg-teal-500/20 data-[active=true]:text-teal-300 data-[active=true]:border-teal-500/30',
+  'hover:bg-indigo-500/15 data-[active=true]:bg-indigo-500/20 data-[active=true]:text-indigo-300 data-[active=true]:border-indigo-500/30',
+]
 
 export function MonthFilter() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const [open, setOpen] = useState(false)
   const { t } = useLanguage()
-  
-  const currentYear = new Date().getFullYear()
-  const currentMonth = new Date().getMonth() + 1
 
-  // Use URL params as Source of Truth
-  const year = parseInt(searchParams.get("year") || currentYear.toString())
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth() + 1
+
+  const year  = parseInt(searchParams.get("year")  || currentYear.toString())
   const month = parseInt(searchParams.get("month") || currentMonth.toString())
 
   const months = [
-    { value: 1, label: t('months.jan') },
-    { value: 2, label: t('months.feb') },
-    { value: 3, label: t('months.mar') },
-    { value: 4, label: t('months.apr') },
-    { value: 5, label: t('months.may') },
-    { value: 6, label: t('months.jun') },
-    { value: 7, label: t('months.jul') },
-    { value: 8, label: t('months.aug') },
-    { value: 9, label: t('months.sep') },
-    { value: 10, label: t('months.oct') },
-    { value: 11, label: t('months.nov') },
-    { value: 12, label: t('months.dec') },
+    t('months.jan'), t('months.feb'), t('months.mar'),
+    t('months.apr'), t('months.may'), t('months.jun'),
+    t('months.jul'), t('months.aug'), t('months.sep'),
+    t('months.oct'), t('months.nov'), t('months.dec'),
   ]
 
-  const years = [
-    currentYear + 1,
-    currentYear,
-    currentYear - 1,
-    currentYear - 2
-  ]
+  const shortMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+
+  const years = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2]
 
   const updateFilter = (newMonth: number, newYear: number) => {
-    // Only update if changed
-    if (newMonth === month && newYear === year) return
-
+    if (newMonth === month && newYear === year) { setOpen(false); return }
     const startDate = `${newYear}-${newMonth.toString().padStart(2, '0')}-01`
     const lastDay = new Date(newYear, newMonth, 0).getDate()
     const endDate = `${newYear}-${newMonth.toString().padStart(2, '0')}-${lastDay}`
-
     const params = new URLSearchParams(searchParams.toString())
     params.set("year", newYear.toString())
     params.set("month", newMonth.toString())
     params.set("startDate", startDate)
     params.set("endDate", endDate)
-    
     startTransition(() => {
       router.push(`?${params.toString()}`, { scroll: false })
+      setOpen(false)
     })
   }
 
-  const handlePrevMonth = () => {
-    let newMonth = month - 1
-    let newYear = year
-    if (newMonth < 1) {
-      newMonth = 12
-      newYear -= 1
-    }
+  const handlePrev = () => {
+    const newMonth = month === 1 ? 12 : month - 1
+    const newYear  = month === 1 ? year - 1 : year
     updateFilter(newMonth, newYear)
   }
 
-  const handleNextMonth = () => {
-    let newMonth = month + 1
-    let newYear = year
-    if (newMonth > 12) {
-      newMonth = 1
-      newYear += 1
-    }
+  const handleNext = () => {
+    const newMonth = month === 12 ? 1 : month + 1
+    const newYear  = month === 12 ? year + 1 : year
     updateFilter(newMonth, newYear)
   }
 
-  const currentMonthLabel = months.find(m => m.value === month)?.label || "Select Month"
+  const isCurrentMonth = month === currentMonth && year === currentYear
+  const displayMonth = shortMonths[month - 1]
 
   return (
-    <div className={`flex items-center bg-white border border-gray-200 rounded-lg p-1 gap-1 transition-opacity duration-300 ${isPending ? 'opacity-50 pointer-events-none' : ''}`}>
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="h-8 w-8 hover:bg-gray-100 text-muted-foreground hover:text-gray-900"
-        onClick={handlePrevMonth}
-        disabled={isPending}
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </Button>
+    <div className="relative">
+      {/* ── Main pill row ── */}
+      <div className={cn(
+        "flex items-center gap-1 rounded-2xl p-1",
+        "bg-black/30 border border-white/5 backdrop-blur-xl",
+        isPending && "opacity-50 pointer-events-none"
+      )}>
 
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button 
-            variant="ghost" 
-            className="h-8 px-3 font-medium text-gray-800 hover:bg-gray-100 hover:text-gray-950 min-w-[140px]"
+        {/* Prev arrow */}
+        <button
+          onClick={handlePrev}
+          disabled={isPending}
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-200"
+        >
+          <ChevronLeft size={14} strokeWidth={2.5} />
+        </button>
+
+        {/* Month/Year trigger */}
+        <button
+          onClick={() => setOpen(v => !v)}
+          disabled={isPending}
+          className={cn(
+            "flex items-center gap-2 h-8 px-3 rounded-xl transition-all duration-200 min-w-[130px] justify-center",
+            "text-foreground font-black text-[11px] uppercase tracking-wider",
+            open
+              ? "bg-white/10 border border-white/10"
+              : "hover:bg-white/5"
+          )}
+        >
+          <CalendarDays size={12} className="text-primary shrink-0" />
+          <span>{displayMonth} {year}</span>
+          {isCurrentMonth && (
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          )}
+        </button>
+
+        {/* Next arrow */}
+        <button
+          onClick={handleNext}
+          disabled={isPending}
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-200"
+        >
+          <ChevronRight size={14} strokeWidth={2.5} />
+        </button>
+
+        {/* Today shortcut */}
+        {!isCurrentMonth && (
+          <button
+            onClick={() => updateFilter(currentMonth, currentYear)}
             disabled={isPending}
+            className="h-8 px-3 rounded-xl text-[9px] font-black uppercase tracking-wider text-primary border border-primary/20 bg-primary/10 hover:bg-primary/20 transition-all duration-200 whitespace-nowrap"
           >
-            <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
-            {currentMonthLabel} {year}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[280px] p-3 bg-white border-gray-200" align="center">
-           <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-2">
+            ปัจจุบัน
+          </button>
+        )}
+      </div>
+
+      {/* ── Dropdown Panel ── */}
+      {open && (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+
+          <div className={cn(
+            "absolute top-full mt-2 right-0 z-50",
+            "w-[260px] rounded-2xl overflow-hidden",
+            "bg-[#111118] border border-white/8 shadow-[0_20px_60px_rgba(0,0,0,0.7)]",
+            "animate-in fade-in slide-in-from-top-2 duration-200"
+          )}>
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
+              <CalendarDays size={13} className="text-primary" />
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">เลือกช่วงเวลา</span>
+            </div>
+
+            <div className="p-3 space-y-3">
+              {/* Year selector */}
+              <div>
+                <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-2 px-1 opacity-50">ปี</p>
+                <div className="grid grid-cols-4 gap-1.5">
                   {years.map(y => (
-                    <Button
+                    <button
                       key={y}
-                      variant={year === y ? "default" : "outline"}
-                      size="sm"
                       onClick={() => updateFilter(month, y)}
-                      className={cn("w-full transition-all", year === y ? "bg-emerald-600 hover:bg-emerald-700" : "bg-transparent border-gray-200 hover:bg-gray-100 text-gray-700")}
+                      className={cn(
+                        "h-8 rounded-xl text-[11px] font-black transition-all duration-200 border",
+                        year === y
+                          ? "bg-primary/20 text-primary border-primary/30 shadow-[0_0_10px_rgba(255,30,133,0.15)]"
+                          : "text-muted-foreground border-white/5 hover:border-white/15 hover:text-foreground hover:bg-white/5"
+                      )}
                     >
                       {y}
-                    </Button>
+                    </button>
                   ))}
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                  {months.map(m => (
-                    <Button
-                      key={m.value}
-                      variant={month === m.value ? "secondary" : "ghost"}
-                      size="sm"
-                      onClick={() => updateFilter(m.value, year)}
-                      className={cn(month === m.value ? "w-full text-foreground" : "text-muted-foreground hover:text-gray-900 hover:bg-gray-100")}
-                    >
-                      {m.label}
-                    </Button>
-                  ))}
-              </div>
-           </div>
-        </PopoverContent>
-      </Popover>
 
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="h-8 w-8 hover:bg-gray-100 text-muted-foreground hover:text-gray-900"
-        onClick={handleNextMonth}
-        disabled={isPending}
-      >
-        <ChevronRight className="h-4 w-4" />
-      </Button>
+              {/* Divider */}
+              <div className="border-t border-white/5" />
+
+              {/* Month grid */}
+              <div>
+                <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-2 px-1 opacity-50">เดือน</p>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {months.map((m, idx) => {
+                    const mNum = idx + 1
+                    const isActive = month === mNum
+                    const colorClass = MONTH_COLORS[idx]
+                    return (
+                      <button
+                        key={mNum}
+                        data-active={isActive}
+                        onClick={() => updateFilter(mNum, year)}
+                        className={cn(
+                          "h-9 rounded-xl text-[10px] font-black transition-all duration-200 border border-transparent relative",
+                          "text-muted-foreground",
+                          colorClass,
+                          isActive && "scale-[1.05] shadow-lg"
+                        )}
+                      >
+                        {shortMonths[idx]}
+                        {isActive && (
+                          <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Quick presets */}
+              <div className="border-t border-white/5 pt-2">
+                <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-2 px-1 opacity-50">ช่วงเร็ว</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { label: 'เดือนนี้',      m: currentMonth,     y: currentYear },
+                    { label: 'เดือนก่อน',    m: currentMonth === 1 ? 12 : currentMonth - 1, y: currentMonth === 1 ? currentYear - 1 : currentYear },
+                    { label: 'ไตรมาสนี้',    m: Math.ceil(currentMonth / 3) * 3 - 2, y: currentYear, note: `Q${Math.ceil(currentMonth/3)}` },
+                    { label: 'ต้นปีนี้',      m: 1,                y: currentYear },
+                  ].map((preset) => {
+                    const isSelected = month === preset.m && year === preset.y
+                    return (
+                      <button
+                        key={preset.label}
+                        onClick={() => updateFilter(preset.m, preset.y)}
+                        className={cn(
+                          "h-8 rounded-xl text-[9px] font-black transition-all duration-200 border px-2 flex items-center justify-between gap-1",
+                          isSelected
+                            ? "bg-primary/15 text-primary border-primary/25"
+                            : "text-muted-foreground border-white/5 hover:border-white/15 hover:text-foreground hover:bg-white/5"
+                        )}
+                      >
+                        <span className="truncate">{preset.label}</span>
+                        {isSelected && <Check size={8} strokeWidth={3} />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 py-2.5 border-t border-white/5 bg-black/20 flex items-center justify-between">
+              <span className="text-[9px] text-muted-foreground opacity-40 uppercase font-semibold">
+                ข้อมูล: {shortMonths[month-1]} {year}
+              </span>
+              <button
+                onClick={() => setOpen(false)}
+                className="text-[9px] font-black text-primary hover:text-primary/80 uppercase tracking-wider"
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
-
