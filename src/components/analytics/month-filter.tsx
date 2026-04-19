@@ -5,6 +5,7 @@ import { useTransition, useState } from "react"
 import { ChevronLeft, ChevronRight, CalendarDays, Check } from "lucide-react"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
+import { useRef, useEffect } from "react"
 
 const MONTH_COLORS = [
   'hover:bg-rose-500/15 data-[active=true]:bg-rose-500/20 data-[active=true]:text-rose-300 data-[active=true]:border-rose-500/30',
@@ -26,7 +27,23 @@ export function MonthFilter() {
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
   const { t } = useLanguage()
+
+  // Handle click outside to close dropdown and allow scrolling
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [open])
 
   const now = new Date()
   const currentYear = now.getFullYear()
@@ -78,12 +95,12 @@ export function MonthFilter() {
   const displayMonth = shortMonths[month - 1]
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       {/* ── Main pill row ── */}
       <div className={cn(
         "flex items-center gap-1 rounded-2xl p-1",
         "bg-black/30 border border-white/5 backdrop-blur-xl",
-        isPending && "opacity-50 pointer-events-none"
+        isPending && "opacity-80"
       )}>
 
         {/* Prev arrow */}
@@ -98,19 +115,23 @@ export function MonthFilter() {
         {/* Month/Year trigger */}
         <button
           onClick={() => setOpen(v => !v)}
-          disabled={isPending}
           className={cn(
-            "flex items-center gap-2 h-8 px-3 rounded-xl transition-all duration-200 min-w-[130px] justify-center",
+            "flex flex-col items-center justify-center gap-1 h-9 px-4 rounded-xl transition-all duration-300 min-w-[140px] relative overflow-hidden",
             "text-foreground font-black text-[11px] uppercase tracking-wider",
             open
               ? "bg-white/10 border border-white/10"
-              : "hover:bg-white/5"
+              : "hover:bg-white/5 border border-transparent"
           )}
         >
-          <CalendarDays size={12} className="text-primary shrink-0" />
-          <span>{displayMonth} {year}</span>
-          {isCurrentMonth && (
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <div className="flex items-center gap-2">
+            <CalendarDays size={12} className={cn("shrink-0", isPending ? "text-primary animate-spin" : "text-primary")} />
+            <span>{displayMonth} {year}</span>
+            {isCurrentMonth && !isPending && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            )}
+          </div>
+          {isPending && (
+            <div className="absolute bottom-0 left-0 h-[2px] bg-primary animate-pulse w-full" />
           )}
         </button>
 
@@ -137,21 +158,23 @@ export function MonthFilter() {
 
       {/* ── Dropdown Panel ── */}
       {open && (
-        <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-
-          <div className={cn(
-            "absolute top-full mt-2 right-0 z-50",
-            "w-[260px] rounded-2xl overflow-hidden",
-            "bg-[#111118] border border-white/8 shadow-[0_20px_60px_rgba(0,0,0,0.7)]",
-            "animate-in fade-in slide-in-from-top-2 duration-200"
-          )}>
-            {/* Header */}
-            <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
-              <CalendarDays size={13} className="text-primary" />
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">เลือกช่วงเวลา</span>
+        <div className={cn(
+          "absolute top-full mt-3 right-0 z-50",
+          "w-[280px] rounded-3xl overflow-hidden",
+          "bg-slate-950/95 border border-white/10 shadow-[0_25px_70px_-15px_rgba(0,0,0,1)] backdrop-blur-2xl",
+          "ring-1 ring-white/5",
+          "animate-in fade-in zoom-in-95 slide-in-from-top-4 duration-300 ease-out"
+        )}>
+          {/* Header */}
+          <div className="px-5 py-4 border-b border-white/5 bg-white/[0.02] flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+              <CalendarDays size={14} className="text-primary" />
             </div>
+            <div>
+              <span className="text-[10px] font-black text-white uppercase tracking-widest block mb-0.5">เลือกช่วงเวลา</span>
+              <span className="text-[8px] font-bold text-muted-foreground/60 uppercase tracking-tighter">DATA_SYNC: ACTIVE</span>
+            </div>
+          </div>
 
             <div className="p-3 space-y-3">
               {/* Year selector */}
@@ -252,7 +275,6 @@ export function MonthFilter() {
               </button>
             </div>
           </div>
-        </>
       )}
     </div>
   )

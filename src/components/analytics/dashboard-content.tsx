@@ -88,7 +88,15 @@ interface SecondaryData {
   subPerf: Array<{ name: string; rating: number }>
   routes: Array<{ id: string; start: string; end: string; efficiency: number }>
   billing: any
-  fuel: any
+  fuel: {
+    totalLiters: number
+    totalCost: number
+    avgCostPerLiter: number
+    avgKmPerLiter: number
+    vehicleBreakdown: any[]
+    monthlyTrends: any[]
+    anomalies: any[]
+  }
   maintenance: any
   safety: {
     sos: {
@@ -213,9 +221,7 @@ export function DashboardContent({
     loadTabData(activeTab)
   }, [activeTab, loadTabData])
 
-  if (loadingPrimary && activeTab === "overview") {
-    return <div className="py-20 text-center uppercase font-black text-primary animate-pulse tracking-widest text-sm italic">Initialising_Intelligence_Core...</div>
-  }
+  const isInitialLoading = loadingPrimary && activeTab === "overview"
 
   const {
     financials = { totalRevenue: 0, totalProfit: 0, margin: 0, growth: 0 },
@@ -234,7 +240,15 @@ export function DashboardContent({
     subPerf = [],
     routes = [],
     billing = { arAging: {}, totalInvoiced: 0 } as any,
-    fuel = { totalLiters: 0, totalCost: 0, anomalies: [] } as any,
+    fuel = { 
+      totalLiters: 0, 
+      totalCost: 0, 
+      avgCostPerLiter: 0, 
+      avgKmPerLiter: 0,
+      monthlyTrends: [],
+      vehicleBreakdown: [],
+      anomalies: [] 
+    } as any,
     maintenance = { upcoming: [], overdue: [], dueSoon: [], activeRepairs: 0, completedThisMonth: 0, totalCostThisMonth: 0, vehicleHealthSummary: [] } as any,
     safety = {
       sos: { total: 0, active: 0, resolved: 0, byReason: [], recentAlerts: [] },
@@ -254,6 +268,10 @@ export function DashboardContent({
     branchPerf, subPerf, billing, fuel, maintenance,
     safety, workforce, routes, driverLeaderboard, vehicleProfitability,
     esgStats, opStats, delayRootCause
+  }
+
+  if (isInitialLoading) {
+    return <div className="py-20 text-center uppercase font-black text-primary animate-pulse tracking-widest text-sm italic">Initialising_Intelligence_Core...</div>
   }
 
   return (

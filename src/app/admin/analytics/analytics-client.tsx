@@ -6,6 +6,7 @@ import { AlertTriangle, ArrowLeft, ShieldAlert, BarChart3, Zap } from "lucide-re
 import { PremiumButton } from "@/components/ui/premium-button"
 import { MonthFilter } from "@/components/analytics/month-filter"
 import { Suspense } from "react"
+import { cn } from "@/lib/utils"
 
 interface AnalyticsClientProps {
   overdueCount: number
@@ -14,29 +15,24 @@ interface AnalyticsClientProps {
 
 export function AnalyticsClient({ overdueCount, isSuperAdmin }: AnalyticsClientProps) {
   const { t } = useLanguage()
-
-  if (!isSuperAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8 text-center bg-background/50 backdrop-blur-3xl rounded-[4rem] border border-border/5 m-10">
-        <div className="p-8 bg-rose-500/20 rounded-full text-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.3)] animate-pulse">
-          <ShieldAlert size={64} />
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-4xl font-black text-foreground uppercase tracking-tighter">{t('analytics.access_unauthorized')}</h1>
-          <p className="text-muted-foreground font-black uppercase tracking-widest text-lg font-bold">
-            {t('analytics.insufficient_credentials')}
-          </p>
-        </div>
-        <Link href="/dashboard">
-          <PremiumButton variant="outline" className="border-border/10 text-white h-14 px-10 rounded-2xl">
-            {t('analytics.return_terminal')}
-          </PremiumButton>
-        </Link>
+  const content = !isSuperAdmin ? (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8 text-center bg-background/50 backdrop-blur-3xl rounded-[4rem] border border-border/5 m-10">
+      <div className="p-8 bg-rose-500/20 rounded-full text-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.3)] animate-pulse">
+        <ShieldAlert size={64} />
       </div>
-    )
-  }
-
-  return (
+      <div className="space-y-2">
+        <h1 className="text-4xl font-black text-foreground uppercase tracking-tighter">{t('analytics.access_unauthorized')}</h1>
+        <p className="text-muted-foreground font-black uppercase tracking-widest text-lg font-bold">
+          {t('analytics.insufficient_credentials')}
+        </p>
+      </div>
+      <Link href="/dashboard">
+        <PremiumButton variant="outline" className="border-border/10 text-white h-14 px-10 rounded-2xl">
+          {t('analytics.return_terminal')}
+        </PremiumButton>
+      </Link>
+    </div>
+  ) : (
     <div className="space-y-12">
       {overdueCount > 0 && (
         <div className="bg-background border-2 border-rose-500/30 p-10 rounded-br-[6rem] rounded-tl-[3rem] flex flex-col md:flex-row items-center justify-between gap-8 shadow-[0_20px_50px_rgba(244,63,94,0.1)] relative overflow-hidden group">
@@ -59,7 +55,7 @@ export function AnalyticsClient({ overdueCount, isSuperAdmin }: AnalyticsClientP
       )}
 
       {/* Global Strategic Header */}
-      <div className="bg-background p-12 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-[0_40px_80px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+      <div className="bg-background p-12 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-[0_40px_80px_rgba(0,0,0,0.5)] relative group">
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 blur-[150px] rounded-full -mr-48 -mt-48 pointer-events-none" />
         
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
@@ -83,7 +79,7 @@ export function AnalyticsClient({ overdueCount, isSuperAdmin }: AnalyticsClientP
 
           <div className="flex flex-wrap items-center gap-6">
             <Suspense fallback={
-              <div className="flex items-center gap-1 h-10 px-4 rounded-2xl bg-black/30 border border-white/5 animate-pulse">
+              <div className={cn("flex items-center gap-1 h-10 px-4 rounded-2xl bg-black/30 border border-white/5 backdrop-blur-xl")}>
                 <div className="w-32 h-3 bg-muted/40 rounded-full" />
               </div>
             }>
@@ -97,6 +93,8 @@ export function AnalyticsClient({ overdueCount, isSuperAdmin }: AnalyticsClientP
         </div>
       </div>
     </div>
-  )
+  );
+
+  return content;
 }
 

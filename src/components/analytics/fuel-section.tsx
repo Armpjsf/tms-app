@@ -25,7 +25,15 @@ const ComparisonIndicator = ({ current, previous }: { current: number, previous:
 
 export function FuelSection({ data }: { data: FuelAnalytics }) {
   const { t } = useLanguage()
-  const { totalLiters, totalCost, avgCostPerLiter, avgKmPerLiter, monthlyTrends, vehicleBreakdown, anomalies } = data
+  const { 
+    totalLiters = 0, 
+    totalCost = 0, 
+    avgCostPerLiter = 0, 
+    avgKmPerLiter = 0, 
+    monthlyTrends = [], 
+    vehicleBreakdown = [], 
+    anomalies = [] 
+  } = data || {}
 
   // Max value for trend bars
   const maxTrendCost = Math.max(...monthlyTrends.map(m => m.totalCost), 1)
