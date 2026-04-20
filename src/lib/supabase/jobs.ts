@@ -828,6 +828,8 @@ export async function getDriverDashboardStats(driverId: string) {
         j.Show_Price_To_Driver !== false // Enforce job-level visibility rule
     ).reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0) || 0) : 0
 
+    const completed = jobs?.filter(j => ['Completed', 'Delivered'].includes(j.Job_Status || '')).length || 0
+    
     // User requested "Remaining Jobs" as the main count
     const total = (jobs?.length || 0) - completed
     
