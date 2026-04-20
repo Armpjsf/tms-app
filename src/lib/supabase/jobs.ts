@@ -425,15 +425,33 @@ async function enrichJobWithCustomerData(job: Job): Promise<Job> {
     
     try {
         const supabase = createAdminClient()
+        
+        // 1. Fetch Customer Price per unit
         const { data: customer } = await supabase
             .from('Master_Customers')
             .select('Price_Per_Unit')
             .eq('Customer_ID', job.Customer_ID)
             .single()
         
+        // 2. Fetch Driver Master Override (Show_Price_Default)
+        // If this is turned off, the driver should NEVER see the price
+        let showPriceOverride = job.Show_Price_To_Driver
+        if (job.Driver_ID) {
+            const { data: driver } = await supabase
+                .from('Master_Drivers')
+                .select('Show_Price_Default')
+                .eq('Driver_ID', job.Driver_ID)
+                .single()
+            
+            if (driver && driver.Show_Price_Default === false) {
+                showPriceOverride = false
+            }
+        }
+        
         return {
             ...job,
-            Price_Per_Unit: customer?.Price_Per_Unit || 0
+            Price_Per_Unit: customer?.Price_Per_Unit || 0,
+            Show_Price_To_Driver: showPriceOverride
         }
     } catch {
         return job
@@ -794,14 +812,21 @@ export async function getDriverDashboardStats(driverId: string) {
       }
     }
 
-    const completed = jobs?.filter(j => ['Completed', 'Delivered'].includes(j.Job_Status || '')).length || 0
+    // Check if driver has a master override to hide income
+    const { data: driverProfile } = await supabase
+        .from('Master_Drivers')
+        .select('Show_Price_Default')
+        .eq('Driver_ID', driverId)
+        .single()
     
-    // Calculate today's income (Only sum jobs where Show_Price_To_Driver is true)
-    const todayIncome = jobs?.filter(j => 
+    const isIncomeVisible = driverProfile?.Show_Price_Default !== false
+
+    // Calculate today's income (Only sum jobs where Show_Price_To_Driver is true AND master toggle is on)
+    const todayIncome = isIncomeVisible ? (jobs?.filter(j => 
         j.Plan_Date === today && 
         j.Job_Status !== 'Cancelled' &&
-        j.Show_Price_To_Driver !== false // Enforce visibility rule
-    ).reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0) || 0
+        j.Show_Price_To_Driver !== false // Enforce job-level visibility rule
+    ).reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0) || 0) : 0
 
     // User requested "Remaining Jobs" as the main count
     const total = (jobs?.length || 0) - completed

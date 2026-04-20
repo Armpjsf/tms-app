@@ -121,10 +121,10 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                       {job.Job_ID}
                     </h1>
                     <span className={cn(
-                      "px-3 py-1 rounded-full text-base font-bold font-bold uppercase tracking-wider border",
+                      "px-3 py-1 rounded-full text-base font-bold font-black uppercase tracking-wider border",
                       job.Job_Status === 'Completed' 
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                        : "bg-blue-500/10 text-emerald-500 border-emerald-500/15"
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" 
+                        : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                     )}>
                       {job.Job_Status}
                     </span>
@@ -164,20 +164,20 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                     </div>
                     <div className="bg-muted/50 rounded-xl p-4 border border-border/10 grid grid-cols-2 gap-y-4 shadow-sm">
                         <div>
-                            <p className="text-base font-bold uppercase text-muted-foreground font-bold mb-1">{t('jobs.dialog.customer')}</p>
-                            <p className="text-xl font-bold text-muted-foreground">{job.Customer_Name || '-'}</p>
+                            <p className="text-base font-black uppercase text-slate-500 mb-1">{t('jobs.dialog.customer')}</p>
+                            <p className="text-xl font-black text-slate-900">{job.Customer_Name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-muted-foreground font-bold mb-1">{t('jobs.dialog.route')}</p>
-                            <p className="text-xl font-bold text-muted-foreground">{job.Route_Name || '-'}</p>
+                            <p className="text-base font-black uppercase text-slate-500 mb-1">{t('jobs.dialog.route')}</p>
+                            <p className="text-xl font-black text-slate-900">{job.Route_Name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-muted-foreground font-bold mb-1">{t('jobs.dialog.vehicle')}</p>
-                            <p className="text-xl font-bold text-muted-foreground">{job.Vehicle_Plate || '-'}</p>
+                            <p className="text-base font-black uppercase text-slate-500 mb-1">{t('jobs.dialog.vehicle')}</p>
+                            <p className="text-xl font-black text-slate-900">{job.Vehicle_Plate || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-muted-foreground font-bold mb-1">{t('jobs.dialog.driver')}</p>
-                            <p className="text-xl font-bold text-muted-foreground">{job.Driver_Name || job.Driver_ID || '-'}</p>
+                            <p className="text-base font-black uppercase text-slate-500 mb-1">{t('jobs.dialog.driver')}</p>
+                            <p className="text-xl font-black text-slate-900">{job.Driver_Name || job.Driver_ID || '-'}</p>
                         </div>
                     </div>
                 </section>

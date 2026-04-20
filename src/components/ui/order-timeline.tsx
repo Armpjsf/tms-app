@@ -138,13 +138,13 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                   <div>
                     <p className={cn(
                       "text-xl font-black transition-colors",
-                      isCompleted ? "text-white" : "text-muted-foreground"
+                      isCompleted ? "text-slate-900" : "text-muted-foreground"
                     )}>
                       {step.label}
                     </p>
                     <p className={cn(
                       "text-base font-bold font-black uppercase tracking-wider",
-                      isCompleted ? "text-muted-foreground" : "text-muted-foreground"
+                      isCompleted ? "text-indigo-600/70" : "text-muted-foreground"
                     )}>
                       {step.labelEn}
                     </p>
@@ -158,10 +158,10 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                 
                 {/* Timestamp Row */}
                 <div className="flex items-center gap-2 mt-1">
-                  <Clock size={10} className={isCompleted ? "text-gray-400" : "text-gray-400"} />
+                  <Clock size={10} className={isCompleted ? "text-slate-500" : "text-gray-400"} />
                   <span className={cn(
                     "text-base font-bold",
-                    isCompleted ? "text-gray-400" : "text-gray-400"
+                    isCompleted ? "text-slate-600" : "text-gray-400"
                   )}>
                     {index === 0 && createdAt 
                       ? new Date(createdAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })
@@ -177,7 +177,7 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                 {/* Description */}
                 <p className={cn(
                   "text-base font-bold mt-1 font-medium",
-                  isCompleted ? "text-muted-foreground" : "text-muted-foreground"
+                  isCompleted ? "text-slate-500" : "text-muted-foreground"
                 )}>
                   {step.description}
                 </p>
