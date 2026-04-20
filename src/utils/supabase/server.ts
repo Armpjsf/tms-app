@@ -38,5 +38,11 @@ export function createAdminClient() {
     throw new Error("Missing Supabase configuration")
   }
 
-  return createJsClient(url, key)
+  return createJsClient(url, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false, // Don't need refresh for service role
+      detectSessionInUrl: false
+    }
+  })
 }

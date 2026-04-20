@@ -30,7 +30,12 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  try {
+    await supabase.auth.getUser()
+  } catch (err) {
+    // Gracefully handle auth refresh failures (like invalid_grant)
+    // The request can still proceed, and RLS will handle unauthorized access
+  }
 
   return response
 }

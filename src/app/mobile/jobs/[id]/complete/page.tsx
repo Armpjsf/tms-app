@@ -176,7 +176,18 @@ export default function JobCompletePage() {
           }
         } else {
             const errorMessage = error instanceof Error ? error.message : String(error)
-            toast.error(`Error: ${errorMessage}`)
+            const isAuthError = errorMessage.includes('invalid_grant') || errorMessage.includes('refresh_token_not_found')
+            
+            if (isAuthError) {
+                toast.error("เซสชั่นหมดอายุ กรุณาล็อกอินใหม่อีกครั้ง", {
+                    action: {
+                        label: "ไปหน้าล็อกอิน",
+                        onClick: () => router.push('/mobile/login')
+                    }
+                })
+            } else {
+                toast.error(`Error: ${errorMessage}`)
+            }
         }
     } finally {
         setLoading(false)
