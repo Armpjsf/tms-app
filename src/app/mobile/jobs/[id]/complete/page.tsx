@@ -73,7 +73,15 @@ export default function JobCompletePage() {
   }
 
   const handleSubmit = async () => {
-    if (photos.length === 0 || !signature) return
+    // Explicit Validation Feedback
+    if (photos.length === 0) {
+        toast.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
+        return
+    }
+    if (!signature) {
+        toast.error("กรุณาลงลายเซ็นผู้รับสินค้า")
+        return
+    }
 
     setLoading(true)
     
@@ -280,10 +288,10 @@ export default function JobCompletePage() {
             <Button 
                 onClick={handleSubmit}
                 disabled={loading}
-                className={`w-full h-14 font-bold text-lg shadow-lg transition-all ${
+                className={`w-full h-14 font-black text-lg shadow-xl transition-all duration-500 rounded-2xl ${
                     photos.length > 0 && signature 
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-500/20 text-white" 
-                        : "bg-slate-800 text-muted-foreground cursor-not-allowed"
+                        ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 shadow-blue-500/30 text-white translate-y-0 active:scale-95" 
+                        : "bg-slate-800 text-muted-foreground opacity-70 grayscale translate-y-1"
                 }`}
             >
                 {loading ? <Loader2 className="animate-spin" /> : "ยืนยันการส่งงาน"}

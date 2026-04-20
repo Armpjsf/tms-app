@@ -40,7 +40,21 @@ export default function JobPickupPage() {
   )
 
   const handleSubmit = async () => {
-    if (!canSubmit) return
+    // Enhanced Validation with feedback
+    if (photos.length === 0) {
+        toast.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
+        return
+    }
+    if (!signature) {
+        toast.error("กรุณาลงลายเซ็นผู้ส่งของ")
+        return
+    }
+    
+    const needsQty = job?.Price_Per_Unit && Number(job.Price_Per_Unit) > 0
+    if (needsQty && (!loadedQty || Number(loadedQty) <= 0)) {
+        toast.error("กรุณาระบุจำนวนสินค้าที่รับจริง (มากกว่า 0)")
+        return
+    }
 
     setLoading(true)
     
@@ -196,11 +210,11 @@ export default function JobPickupPage() {
 
         <Button 
             onClick={handleSubmit}
-            disabled={photos.length === 0 || !signature || loading}
-            className={`w-full h-14 font-bold text-lg shadow-lg transition-all ${
-                photos.length > 0 && signature 
-                    ? "bg-gradient-to-r from-amber-600 to-orange-600 shadow-amber-500/20 text-white" 
-                    : "bg-slate-800 text-muted-foreground cursor-not-allowed"
+            disabled={loading}
+            className={`w-full h-14 font-black text-lg shadow-xl transition-all duration-500 rounded-2xl ${
+                canSubmit
+                    ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 shadow-amber-500/30 text-white translate-y-0 active:scale-95" 
+                    : "bg-slate-800 text-muted-foreground opacity-70 grayscale translate-y-1"
             }`}
         >
             {loading ? <Loader2 className="animate-spin" /> : "ยืนยันการรับสินค้า / ออกเดินทาง"}
