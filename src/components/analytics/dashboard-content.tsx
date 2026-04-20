@@ -259,7 +259,7 @@ export function DashboardContent({
       topPerformers: [],
       driversWithIssues: []
     } as any,
-    esgStats = { co2Saved: 0, treesSaved: 0, fuelSaved: 0 } as any,
+    esgStats = { co2SavedKg: 0, treesSaved: 0, totalSavedKm: 0, efficiencyRate: 0, historicalData: [] } as any,
     delayRootCause = [],
   } = secondary ?? {}
 

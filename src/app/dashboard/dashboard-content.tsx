@@ -30,7 +30,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   const currentBranchId = branch === 'All' ? undefined : branch
   
   // Parallel Fetching - Server Side (Ultra Fast)
-  let unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats, fleetAlerts;
+  let unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats, fleetAlerts, esgResult;
 
   try {
     const results = await Promise.allSettled([
@@ -58,6 +58,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
     custId = results[4].status === 'fulfilled' ? results[4].value : null;
     dailyStats = results[5].status === 'fulfilled' ? results[5].value : { total: 0, delivered: 0, inProgress: 0, pending: 0, sos: 0 };
     driverStats = results[6].status === 'fulfilled' ? results[6].value : { total: 0, active: 0, onJob: 0 };
+    esgResult = results[7].status === 'fulfilled' ? results[7].value : null;
     fleetAlerts = results[8].status === 'fulfilled' ? results[8].value : [];
 
   } catch (error) {
@@ -118,9 +119,9 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
       marketplaceJobs={marketplaceJobs}
       fleetHealth={98}
       esg={{
-        fuelSaved: unified.esg?.fuelSaved || 0,
-        co2Saved: unified.esg?.co2Saved || 0,
-        treesSaved: unified.esg?.treesSaved || 0
+        fuelSaved: esgResult?.fuelSavedLiters || unified.esg?.fuelSaved || 0,
+        co2Saved: esgResult?.co2SavedKg || unified.esg?.co2Saved || 0,
+        treesSaved: esgResult?.treesSaved || unified.esg?.treesSaved || 0
       }}
       initialStart={start}
       initialEnd={end}

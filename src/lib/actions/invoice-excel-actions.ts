@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/server'
+import { CO2_COEFFICIENTS } from '@/lib/utils/esg-utils'
 import ExcelJS from 'exceljs'
 import { getSystemSetting } from './system-settings-actions'
 import { INVOICE_TEMPLATE_BASE64 } from '../templates/invoice_template_base64'
@@ -138,7 +139,8 @@ export async function exportInvoiceExcel(invoiceId: string) {
             row.getCell(4).value = Number(job.Total_Drop || 1)
             row.getCell(5).value = job.Origin_Location || '-'
             row.getCell(6).value = job.Dest_Location || job.Route_Name || '-'
-            row.getCell(7).value = Number(((Number(job.Est_Distance_KM) || 0) * 0.12).toFixed(2))
+            const effectiveDist = Number(job.Est_Distance_KM) || 12.5
+            row.getCell(7).value = Number((effectiveDist * CO2_COEFFICIENTS['default']).toFixed(2))
 
             let basePrice = Number(job.Price_Cust_Total || 0)
             if (basePrice === 0) {

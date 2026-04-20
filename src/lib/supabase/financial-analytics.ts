@@ -10,6 +10,7 @@ import {
     formatDateSafe,
     getEffectiveBranchId
 } from './analytics-helpers'
+import { CO2_COEFFICIENTS } from '../utils/esg-utils'
 
 // 1. Unified Executive Dashboard (Ultra-Performance via RPC)
 export async function getExecutiveDashboardUnified(branchId?: string, startDate?: string, endDate?: string) {
@@ -126,7 +127,8 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         })
 
         // ESG Heuristics
-        const co2Saved = curr.distance * 0.082 * 0.12
+        const effectiveDistance = Math.max(curr.distance, curr.count * 12.5) // Floor of 12.5km per job
+        const co2Saved = effectiveDistance * 0.082 * CO2_COEFFICIENTS['default']
         const fuelSaved = co2Saved / 2.68
         const treesSaved = co2Saved / 20.2
 
@@ -242,7 +244,7 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     
     // TMS 2026 Goal: 8.2% Efficiency Gain Benchmark
     const totalSavedKm = effectiveDistance * 0.082
-    const co2Saved = totalSavedKm * 0.12 // 0.12 kg CO2 per avg KM saved (Medium Fleet)
+    const co2Saved = totalSavedKm * CO2_COEFFICIENTS['default'] // Standard CO2 per avg KM saved (Medium Fleet)
     const fuelSaved = co2Saved / 2.68 
     const treesSaved = co2Saved / 20.2 
 

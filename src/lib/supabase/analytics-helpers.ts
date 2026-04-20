@@ -15,7 +15,8 @@ export type FinancialJob = {
 export const REVENUE_STATUSES = [
     'Completed', 'Delivered', 'Finished', 'Closed', 'Complete', 'Success', 'Done', 'Finish', 'Arrived', 'Arrived Destination',
     'completed', 'delivered', 'finished', 'closed', 'complete', 'success', 'done', 'finish', 'arrived',
-    'เสร็จสิ้น', 'เรียบร้อย', 'ส่งสำเร็จ', 'ปิดงาน', 'สำเร็จ', 'ถึงที่หมาย', 'ถึงจุดหมาย', 'ถึงที่ส่ง', 'จบงาน'
+    'เสร็จสิ้น', 'เรียบร้อย', 'ส่งสำเร็จ', 'ปิดงาน', 'สำเร็จ', 'ถึงที่หมาย', 'ถึงจุดหมาย', 'ถึงที่ส่ง', 'จบงาน',
+    'Verified', 'Verified Jobs', 'Verified Success', 'ยืนยันแล้ว', 'ตรวจสอบแล้ว'
 ]
 
 // "In-progress" statuses for pipeline revenue
@@ -57,7 +58,10 @@ export async function getBranchPlates(branchId: string) {
 
 // Common helper to resolve branch filtering
 export async function getEffectiveBranchId(branchId?: string) {
+    // If 'All' is explicitly requested, we return null (no filter) immediately
+    if (branchId === 'All') return null
+
     const userBranchId = await getUserBranchId()
     const targetBranchId = (branchId && branchId !== 'All') ? branchId : userBranchId
-    return targetBranchId === 'All' ? null : targetBranchId
+    return (targetBranchId === 'All' || !targetBranchId) ? null : targetBranchId
 }

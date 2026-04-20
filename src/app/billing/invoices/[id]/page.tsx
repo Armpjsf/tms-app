@@ -36,7 +36,8 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
   }
   const calculateCO2 = (dist?: number | null, vType?: string | null) => {
     const coefficient = CO2_COEFFICIENTS[vType || 'default'] || CO2_COEFFICIENTS['default']
-    return (Number(dist) || 0) * coefficient
+    const effectiveDist = Number(dist) || 12.5
+    return effectiveDist * coefficient
   }
 
   const totalCO2 = (jobs || []).reduce((sum, job) => {

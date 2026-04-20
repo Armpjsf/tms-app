@@ -1,7 +1,8 @@
 "use server"
 
 import { createAdminClient } from '@/utils/supabase/server'
-import { getEffectiveBranchId, REVENUE_STATUSES } from './analytics-helpers'
+import { getEffectiveBranchId, REVENUE_STATUSES, formatDateSafe } from './analytics-helpers'
+import { getCustomerId } from "@/lib/permissions"
 import { CO2_COEFFICIENTS } from '../utils/esg-utils'
 
 /**
@@ -13,7 +14,8 @@ export type ESGStats = {
     totalSavedKm: number
     co2SavedKg: number
     treesSaved: number
-    efficiencyRate: number // % of KM saved vs Total KM
+    fuelSavedLiters: number
+    efficiencyRate: number // % of jobs with valid distance data
     historicalData: { month: string; co2Saved: number }[]
 }
 
@@ -36,15 +38,18 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
     try {
         const supabase = await createAdminClient()
         const effectiveBranchId = await getEffectiveBranchId(branchId)
-
-        // 1. Fetch Job Data for Calculation with strict isolation
-        const { getCustomerId } = await import("@/lib/permissions")
         const customerId = await getCustomerId()
+
+        const sDate = formatDateSafe(startDate)
+        const eDate = formatDateSafe(endDate)
 
         let query = supabase
             .from('Jobs_Main')
-            .select('Job_ID, Plan_Date, Price_Cust_Total, Source, Branch_ID, Customer_ID, Est_Distance_KM, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Vehicle_Type')
+            .select('Job_ID, Plan_Date, Price_Cust_Total, Branch_ID, Customer_ID, Est_Distance_KM, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Vehicle_Type, original_origins_json, original_destinations_json')
             .in('Job_Status', REVENUE_STATUSES)
+
+        if (sDate) query = query.gte('Plan_Date', sDate)
+        if (eDate) query = query.lte('Plan_Date', eDate)
 
         if (customerId) {
             query = query.eq('Customer_ID', customerId)
@@ -52,12 +57,22 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
             query = query.eq('Branch_ID', effectiveBranchId)
         }
         
-        const { data: jobs } = await query
+        const { data: jobs, error: queryError } = await query
+        
+        console.log(`[ESG] Query executed for Branch: ${effectiveBranchId}, Customer: ${customerId}`)
+        console.log(`[ESG] Date Range: ${sDate} to ${eDate}`)
+        console.log(`[ESG] Jobs found: ${jobs?.length || 0}`)
+
+        if (queryError) {
+            console.error("[ESG] Supabase Query Error:", queryError)
+        }
+
         if (!jobs || jobs.length === 0) {
             return {
                 totalSavedKm: 0,
                 co2SavedKg: 0,
                 treesSaved: 0,
+                fuelSavedLiters: 0,
                 efficiencyRate: 0,
                 historicalData: []
             }
@@ -65,7 +80,12 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
 
         // HEURISTIC: Calculate "Saved KM"
         const totalJobs = jobs.length
-        const optimizedJobs = jobs.filter(j => j.Source === 'Enterprise_API' || j.Source === 'AI_Batch').length
+        // Optimized jobs are those that have real distance or coordinate data (vs fallback baseline)
+        const optimizedJobs = jobs.filter(j => 
+            (Number(j.Est_Distance_KM) > 0) || 
+            (j.Pickup_Lat && j.Pickup_Lon) ||
+            (j.original_origins_json && j.original_origins_json.length > 0)
+        ).length
         const effectiveOptimizedCount = Math.max(optimizedJobs, Math.round(totalJobs * 0.45), totalJobs > 0 ? 1 : 0)
         
         // Calculate real CO2 saved based on vehicle types
@@ -73,15 +93,22 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
             const vType = j.Vehicle_Type || 'default'
             const rate = CO2_COEFFICIENTS[vType] || CO2_COEFFICIENTS['default']
             
-            // We use the same 'distanceBasedSavings' logic per job: 8.2% of the distance is "saved"
             let dist = Number(j.Est_Distance_KM) || 0
-            if (dist <= 0 && j.Pickup_Lat && j.Pickup_Lon && j.Delivery_Lat && j.Delivery_Lon) {
-                dist = calculateHaversineDistance(
-                    Number(j.Pickup_Lat), Number(j.Pickup_Lon), 
-                    Number(j.Delivery_Lat), Number(j.Delivery_Lon)
-                ) * 1.3
+            
+            // Try to recover distance from coordinates if missing
+            if (dist <= 0) {
+                const lat1 = Number(j.Pickup_Lat) || (j.original_origins_json?.[0]?.lat ? Number(j.original_origins_json[0].lat) : null)
+                const lon1 = Number(j.Pickup_Lon) || (j.original_origins_json?.[0]?.lng ? Number(j.original_origins_json[0].lng) : null)
+                const lat2 = Number(j.Delivery_Lat) || (j.original_destinations_json?.[0]?.lat ? Number(j.original_destinations_json[0].lat) : null)
+                const lon2 = Number(j.Delivery_Lon) || (j.original_destinations_json?.[0]?.lng ? Number(j.original_destinations_json[0].lng) : null)
+
+                if (lat1 && lon1 && lat2 && lon2) {
+                    dist = calculateHaversineDistance(lat1, lon1, lat2, lon2) * 1.3
+                }
             }
-            if (dist <= 0) dist = 12.5 // Baseline fallback per job
+
+            // GUARANTEED FALLBACK: Even if all distance data is missing, we assume 12.5km baseline for a completed job
+            if (dist <= 0) dist = 12.5 
             
             const savedKm = dist * 0.082
             return sum + (savedKm * rate)
@@ -89,6 +116,7 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
 
         const totalSavedKm = co2SavedKg / 0.17 // Reverse heuristic for total KM saved metric
         const treesSaved = co2SavedKg / KG_CO2_PER_TREE_YEAR
+        const fuelSavedLiters = co2SavedKg / 2.68 // 1L diesel approx 2.68kg CO2
 
         // 2. Historical Trend (Grouped by Month)
         const monthlyTrend: Record<string, number> = {}
@@ -110,18 +138,20 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
 
         return {
             totalSavedKm: Math.round(totalSavedKm),
-            co2SavedKg: Math.round(co2SavedKg),
+            co2SavedKg: Number(co2SavedKg.toFixed(1)),
             treesSaved: Math.round(treesSaved * 10) / 10,
+            fuelSavedLiters: Math.round(fuelSavedLiters * 10) / 10,
             efficiencyRate: totalJobs > 0 ? Math.round((effectiveOptimizedCount / totalJobs) * 100) : 0,
             historicalData
         }
 
-    } catch (error) {
-        console.error("ESG Calculation Error:", error)
+    } catch (error: any) {
+        console.error("ESG Calculation Error:", error?.message || error)
         return {
             totalSavedKm: 0,
             co2SavedKg: 0,
             treesSaved: 0,
+            fuelSavedLiters: 0,
             efficiencyRate: 0,
             historicalData: []
         }

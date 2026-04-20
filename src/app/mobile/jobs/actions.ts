@@ -6,6 +6,8 @@ import { notifyAdminJobStatus } from '@/lib/actions/push-actions'
 
 import { SupabaseClient } from '@supabase/supabase-js'
 
+import { CO2_COEFFICIENTS } from '@/lib/utils/esg-utils'
+
 /**
  * Helper to calculate CO2 based on distance and vehicle type
  */
@@ -22,14 +24,7 @@ export async function calculateJobCO2(supabase: SupabaseClient, jobId: string) {
         const distance = Number(job.Est_Distance_KM) || 12.5
         const vType = job.Vehicle_Type || '4-Wheel'
         
-        const factors: Record<string, number> = {
-            '4-Wheel': 0.22,
-            '6-Wheel': 0.55,
-            '10-Wheel': 0.95,
-            'Trailer': 1.15
-        }
-
-        const factor = factors[vType as keyof typeof factors] || 0.22
+        const factor = CO2_COEFFICIENTS[vType as keyof typeof CO2_COEFFICIENTS] || CO2_COEFFICIENTS['default']
         const co2Amount = Number((distance * factor).toFixed(2))
         
         return {
