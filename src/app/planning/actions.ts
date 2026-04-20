@@ -7,7 +7,7 @@ import { getAllDriversFromTable } from '@/lib/supabase/drivers'
 import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
 import { logActivity } from '@/lib/supabase/logs'
 import { getUserBranchId } from '@/lib/permissions'
-import { notifyDriverNewJob } from '@/lib/actions/push-actions'
+import { notifyDriverNewJob, notifyMarketplaceNewJob } from '@/lib/actions/push-actions'
 import { getCustomerId, getUserId, isCustomer, isSuperAdmin, isAdmin } from '@/lib/permissions'
 import { sanitizeJobData } from '@/lib/supabase/utils'
 
@@ -108,12 +108,13 @@ export async function createJob(data: JobFormData) {
   const { error: error1 } = await supabase.from('Jobs_Main').insert(buildInsertPayload(data, driverName, subId, unitPrice))
   
   if (!error1) {
-      // Send push notification to the assigned driver
+      // Send notifications
       if (data.Driver_ID) {
-          notifyDriverNewJob(data.Driver_ID, data.Job_ID, data.Customer_Name || 'ไม่ระบุ').catch(() => {
-              // Notification failed
-          })
+          notifyDriverNewJob(data.Driver_ID, data.Job_ID, data.Customer_Name || 'ไม่ระบุ').catch(() => {})
+      } else {
+          notifyMarketplaceNewJob(data.Job_ID, data.Customer_Name || 'ไม่ระบุ').catch(() => {})
       }
+
       revalidatePath('/planning')
       
       // Auto-save locations for future use
@@ -128,6 +129,13 @@ export async function createJob(data: JobFormData) {
       const { error: error2 } = await supabase.from('Jobs_Main').insert(buildInsertPayload({ ...data, Job_ID: newId }, driverName, subId, unitPrice))
       
       if (!error2) {
+          // Send notifications for regenerated ID
+          if (data.Driver_ID) {
+              notifyDriverNewJob(data.Driver_ID, newId, data.Customer_Name || 'ไม่ระบุ').catch(() => {})
+          } else {
+              notifyMarketplaceNewJob(newId, data.Customer_Name || 'ไม่ระบุ').catch(() => {})
+          }
+
           revalidatePath('/planning')
           return { success: true, message: `Job created with new ID: ${newId}` }
       }
@@ -136,6 +144,7 @@ export async function createJob(data: JobFormData) {
 
   return { success: false, message: `Failed to create job: ${error1.message}` }
 }
+
 
 function buildInsertPayload(data: JobFormData, driverName: string, subId: string | null, unitPrice: number = 0) {
   let custTotal = Number(data.Price_Cust_Total) || 0
@@ -398,15 +407,46 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
           created_at_actual: new Date().toISOString(),
           note: `Admin created job for past date (${j.Plan_Date}) on ${new Date().toLocaleDateString('th-TH')}`
         }
-      }).catch((_err: unknown) => {
-          // Log failed
-      })
+      }).catch(() => {})
     }
+  }
+
+  // Handle Notifications for the batch
+  try {
+      const assignedDrivers = new Set<string>()
+      let hasMarketplaceJob = false
+      let sampleJobId = ""
+      let sampleCustomer = ""
+
+      finalizedData.forEach(j => {
+          if (j.Driver_ID) {
+              assignedDrivers.add(j.Driver_ID)
+              // Only notify about the first job for this driver in this batch to avoid spam
+              notifyDriverNewJob(j.Driver_ID, j.Job_ID, j.Customer_Name || 'ไม่ระบุ').catch(() => {})
+          } else {
+              hasMarketplaceJob = true
+              sampleJobId = j.Job_ID
+              sampleCustomer = j.Customer_Name || 'ไม่ระบุ'
+          }
+      })
+
+      if (hasMarketplaceJob) {
+          // Broadcast once for the whole batch
+          const batchCount = finalizedData.filter(j => !j.Driver_ID).length
+          const broadcastMsg = batchCount > 1 
+            ? `${batchCount} งานใหม่!` 
+            : sampleJobId
+          
+          notifyMarketplaceNewJob(broadcastMsg, sampleCustomer).catch(() => {})
+      }
+  } catch (notiErr) {
+      console.error('[PUSH] Bulk notification error:', notiErr)
   }
 
   revalidatePath('/planning')
   return { success: true, message: `Successfully imported ${finalizedData.length} jobs` }
 }
+
 
 export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   const isAdminUser = await isAdmin()

@@ -303,6 +303,64 @@ export async function notifyDriverNewJob(driverId: string, jobId: string, custom
 }
 
 // ─────────────────────────────────────────────
+// Notify: Broadcast Marketplace Job to All Drivers
+// ─────────────────────────────────────────────
+export async function notifyMarketplaceNewJob(jobId: string, customerName: string) {
+    const payload: PushPayload = {
+        title: '🧺 งานใหม่ใน Marketplace!',
+        body: `งาน ${jobId} • ลูกค้า: ${customerName} - เข้าไปเสนอราคาได้เลย`,
+        url: '/mobile/marketplace',
+        type: 'marketplace',
+        tag: `market_${jobId}`,
+    }
+
+    // 1. Create global notification in DB for all drivers? 
+    // Usually we don't want to spam the Notification table for 100 drivers.
+    // Instead, we just send the Push. The driver can see it in Marketplace.
+
+    await broadcastPushToDrivers(payload)
+}
+
+/**
+ * Broadcast push to ALL drivers with subscriptions
+ */
+export async function broadcastPushToDrivers(payload: PushPayload) {
+    const supabase = await createAdminClient()
+    const { data: subs, error } = await supabase
+        .from('Push_Subscriptions')
+        .select('*')
+        .not('Driver_ID', 'is', null)
+
+    if (error || !subs || subs.length === 0) return { success: false, reason: 'no_subscriptions' }
+
+    console.log(`[PUSH] Broadcasting to ${subs.length} driver(s)`)
+
+    const results = await Promise.allSettled(
+        subs.map(async (sub) => {
+            // FCM
+            if (sub.Keys_Auth === 'FCM') {
+                try {
+                    await admin.messaging().send({
+                        notification: { title: payload.title, body: payload.body },
+                        data: { url: payload.url || '/mobile/jobs', type: payload.type || 'general' },
+                        token: sub.Endpoint
+                    })
+                    return { success: true }
+                } catch (err) {
+                    return { success: false }
+                }
+            }
+            // Web Push
+            return await sendWebPush(sub, { ...payload, url: payload.url || '/mobile/jobs' })
+        })
+    )
+
+    const successCount = results.filter(r => r.status === 'fulfilled' && (r.value as { success: boolean })?.success).length
+    return { success: successCount > 0 }
+}
+
+
+// ─────────────────────────────────────────────
 // Notify: Driver sends Chat → Push to Admin
 // ─────────────────────────────────────────────
 export async function notifyAdminNewChat(driverId: string, driverName: string, message: string) {
