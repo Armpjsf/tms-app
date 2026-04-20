@@ -706,7 +706,7 @@ export function JobDialog({
     })
     
     // Sync first assignment to main form data for backward compatibility / validation
-    if (index === 0 && (typeof value === 'string' || typeof value === 'number')) {
+    if (index === 0 && (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')) {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
   }

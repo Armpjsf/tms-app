@@ -278,6 +278,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
     normalized.Pickup_Lon = getValue(['pickup_lon', 'origin_lon', 'lon_start', 'ลองติจูดต้นทาง', 'lon_ต้นทาง'])
     normalized.Delivery_Lat = getValue(['delivery_lat', 'dest_lat', 'lat_end', 'ละติจูดปลายทาง', 'lat_ปลายทาง'])
     normalized.Delivery_Lon = getValue(['delivery_lon', 'dest_lon', 'lon_end', 'ลองติจูดปลายทาง', 'lon_ปลายทาง'])
+    normalized.Show_Price_To_Driver = getValue(['Show_Price_To_Driver', 'show_price', 'การแสดงรายได้'])
     
     return normalized
   }
@@ -315,6 +316,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       Delivery_Lon: data.Delivery_Lon ? Number(data.Delivery_Lon) : null,
       Origin_Location: (data.Origin_Location as string) || null,
       Dest_Location: (data.Dest_Location as string) || null,
+      Show_Price_To_Driver: data.Show_Price_To_Driver !== undefined ? (data.Show_Price_To_Driver === true || data.Show_Price_To_Driver === 'true') : (j.Show_Price_To_Driver ?? true)
     })
     
     if (typeof sanitized.Price_Cust_Total === 'string') sanitized.Price_Cust_Total = parseFloat(sanitized.Price_Cust_Total) || 0
