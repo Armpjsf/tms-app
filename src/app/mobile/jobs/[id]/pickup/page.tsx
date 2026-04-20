@@ -36,7 +36,8 @@ export default function JobPickupPage() {
 
   const canSubmit = photos.length > 0 && signature && (
     (loadedQty && Number(loadedQty) > 0) ||
-    (!job?.Price_Per_Unit || Number(job.Price_Per_Unit) === 0)
+    (!job?.Price_Per_Unit || Number(job.Price_Per_Unit) === 0) ||
+    (job?.Price_Cust_Total && Number(job.Price_Cust_Total) > 0) // Fixed price ignores quantity requirement
   )
 
   const handleSubmit = async () => {
@@ -50,7 +51,9 @@ export default function JobPickupPage() {
         return
     }
     
-    const needsQty = job?.Price_Per_Unit && Number(job.Price_Per_Unit) > 0
+    const needsQty = (job?.Price_Per_Unit && Number(job.Price_Per_Unit) > 0) && 
+                     (!job?.Price_Cust_Total || Number(job.Price_Cust_Total) === 0)
+    
     if (needsQty && (!loadedQty || Number(loadedQty) <= 0)) {
         toast.error("กรุณาระบุจำนวนสินค้าที่รับจริง (มากกว่า 0)")
         return
