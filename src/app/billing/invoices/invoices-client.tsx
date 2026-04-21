@@ -347,7 +347,7 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                             </tr>
                         ) : (
                             filteredInvoices.map((inv) => (
-                                <tr key={inv.Invoice_ID} className="group/row hover:bg-primary/[0.03] transition-all duration-500 cursor-pointer" onClick={() => router.push(`/billing/invoices/${inv.Invoice_ID}`)}>
+                                <tr key={`${inv.Type}-${inv.Invoice_ID}`} className="group/row hover:bg-primary/[0.03] transition-all duration-500 cursor-pointer" onClick={() => router.push(`/billing/invoices/${inv.Invoice_ID}`)}>
                                     <td className="px-6 py-4">
                                         <span className="font-black text-foreground text-sm tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{inv.Invoice_ID}</span>
                                     </td>

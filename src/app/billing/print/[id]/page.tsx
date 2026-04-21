@@ -75,7 +75,7 @@ export default async function BillingPrintPage(props: Props) {
     const baseUrl = `${proto}://${host}`
 
 
-    if (!data) {
+    if (!data || !data.note) {
         return notFound()
     }
 
@@ -416,7 +416,7 @@ export default async function BillingPrintPage(props: Props) {
                             <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเปิดเอกสาร</div>
                             <div className="w-20 h-20 bg-white flex items-center justify-center p-1 border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden">
                                 <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${baseUrl}/public/invoice/${note.Billing_Note_ID}?lang=${lang}&mode=print`)}`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${baseUrl}/public/invoice/${id}?lang=${lang}&mode=print`)}`}
                                     alt="Billing QR Code"
                                     className="w-full h-full object-contain"
                                 />

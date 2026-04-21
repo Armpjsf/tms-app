@@ -202,13 +202,27 @@ export async function createInvoice(invoice: Partial<Invoice>) {
         invoice.Invoice_ID = await getNextInvoiceId(invoice.Branch_ID ?? null)
     }
 
+    // 3. Schema Safety: Discount_Amount is known to be missing in the current DB schema
+    // Move it to Notes or just exclude to prevent crash.
+    const { Discount_Amount, ...sanitizedInvoice } = invoice
+    if (Discount_Amount && Number(Discount_Amount) > 0) {
+        const discountNote = `[SYSTEM: Discount Managed - ${Number(Discount_Amount).toLocaleString()} THB]`
+        sanitizedInvoice.Notes = sanitizedInvoice.Notes 
+            ? `${sanitizedInvoice.Notes}\n${discountNote}`
+            : discountNote
+    }
+
     const { data, error } = await supabase
       .from('invoices')
-      .insert(invoice)
+      .insert(sanitizedInvoice)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+        // If it still fails, it might be other columns missing (VAT_Rate, etc.)
+        // But Discount_Amount is the confirmed offender.
+        throw error
+    }
 
     // Log invoice creation
     await logActivity({

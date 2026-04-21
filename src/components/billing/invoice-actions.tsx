@@ -197,7 +197,11 @@ export function InvoiceRowActions({ id, type, status, language = 'th' }: Invoice
 
                 {status !== 'Draft' && (
                     <DropdownMenuItem className="focus:bg-primary/20 cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors" asChild>
-                        <Link href={`/billing/print/BN-${id}?lang=${language}`} target="_blank" className="flex items-center w-full">
+                        <Link 
+                            href={`/billing/print/${id.startsWith('BN-') || id.startsWith('INV-') ? id : `BN-${id}`}?lang=${language}`} 
+                            target="_blank" 
+                            className="flex items-center w-full"
+                        >
                             <FileText className="h-4 w-4 text-primary" />
                             <span className="font-bold uppercase tracking-widest">PDF</span>
                         </Link>

@@ -69,7 +69,7 @@ export default async function PublicInvoicePage(props: Props) {
     
     const data = await getPublicBillingNoteById(id)
 
-    if (!data) {
+    if (!data || !data.note) {
         return notFound()
     }
 

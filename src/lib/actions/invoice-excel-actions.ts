@@ -83,7 +83,6 @@ export async function exportInvoiceExcel(invoiceId: string) {
                 sourceRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
                     const targetCell = targetRow.getCell(colNumber)
                     targetCell.style = { ...cell.style }
-                    targetCell.font = { name: 'Sarabun', size: 10, bold: cell.font?.bold }
                 })
             }
         }
@@ -123,7 +122,6 @@ export async function exportInvoiceExcel(invoiceId: string) {
             } else {
                 cell.value = '-'
             }
-            cell.font = { name: 'Sarabun', bold: true, size: 10 }
         }
 
         // 6. Fill Job Data
@@ -137,8 +135,22 @@ export async function exportInvoiceExcel(invoiceId: string) {
             row.getCell(2).value = job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-'
             row.getCell(3).value = job.Vehicle_Type || '-'
             row.getCell(4).value = Number(job.Total_Drop || 1)
-            row.getCell(5).value = job.Origin_Location || '-'
-            row.getCell(6).value = job.Dest_Location || job.Route_Name || '-'
+            
+            // Fix Origin/Destination: If Origin or Destination is empty, try to split from Route_Name
+            let origin = (job.Origin_Location || '').trim()
+            let dest = (job.Dest_Location || '').trim()
+            
+            if ((!origin || !dest) && job.Route_Name) {
+                // Support multiple separators: -, →, /
+                const parts = job.Route_Name.split(/[-→/]/)
+                if (parts.length >= 2) {
+                    if (!origin) origin = parts[0].trim()
+                    if (!dest) dest = parts.slice(1).join(' - ').trim()
+                }
+            }
+            
+            row.getCell(5).value = origin || ''
+            row.getCell(6).value = dest || job.Route_Name || ''
             const effectiveDist = Number(job.Est_Distance_KM) || 12.5
             row.getCell(7).value = Number((effectiveDist * CO2_COEFFICIENTS['default']).toFixed(2))
 
@@ -186,7 +198,6 @@ export async function exportInvoiceExcel(invoiceId: string) {
 
             // Styling for data rows
             row.eachCell((cell) => {
-                cell.font = { name: 'Sarabun', size: 10 }
                 if (cell.col >= 8) cell.numFmt = '#,##0.00'
             })
         })
@@ -196,11 +207,14 @@ export async function exportInvoiceExcel(invoiceId: string) {
         const footerRow = worksheet.getRow(footerRowIndex)
         for (let c = 8; c <= 13; c++) {
             footerRow.getCell(c).value = summaryTotals[c]
-            footerRow.getCell(c).font = { name: 'Sarabun', bold: true, size: 10 }
             footerRow.getCell(c).numFmt = '#,##0.00'
         }
 
         // 8. Static Headers
+        // Clear "ต้นฉบับ" (Original) label if it exists in top-right cells (L1, M1)
+        worksheet.getCell('L1').value = null
+        worksheet.getCell('M1').value = null
+
         worksheet.getCell('C3').value = accountingProfile.company_name_th
         worksheet.getCell('C5').value = accountingProfile.address
         worksheet.getCell('A6').value = `เลขที่ประจำตัวผู้เสียภาษี : ${accountingProfile.tax_id}`
@@ -209,37 +223,6 @@ export async function exportInvoiceExcel(invoiceId: string) {
         worksheet.getCell('I4').value = finalDoc.Master_Customers?.Customer_Name || finalDoc.Customer_Name || '-'
         worksheet.getCell('I5').value = finalDoc.Master_Customers?.Address || finalDoc.Customer_Address || '-'
         worksheet.getCell('H6').value = `เลขที่ประจำตัวผู้เสียภาษี :  ${finalDoc.Master_Customers?.Tax_ID || finalDoc.Customer_Tax_ID || '-'}`
-
-        // 9. Auto-fit Column Widths
-        worksheet.columns.forEach((column, i) => {
-            let maxColumnLength = 0
-            column.eachCell?.({ includeEmpty: false }, (cell) => {
-                const cellValue = cell.value ? cell.value.toString() : ''
-                // Thai characters adjustment (rudimentary)
-                const charCount = cellValue.split('').reduce((acc, char) => {
-                    return acc + (char.charCodeAt(0) > 128 ? 1.5 : 1)
-                }, 0)
-                if (charCount > maxColumnLength) {
-                    maxColumnLength = charCount
-                }
-            })
-            // Set cap and floor for width
-            const newWidth = Math.min(Math.max(maxColumnLength + 4, 10), 60)
-            column.width = newWidth
-        })
-
-        // 10. Final Font Polish: Ensure all fonts are Sarabun size 10
-        worksheet.eachRow((row) => {
-            row.eachCell((cell) => {
-                const isBold = cell.font?.bold || false
-                cell.font = { 
-                    name: 'Sarabun', 
-                    size: 10, 
-                    bold: isBold,
-                    color: cell.font?.color
-                }
-            })
-        })
 
         const buffer = await workbook.xlsx.writeBuffer()
         return { success: true, data: Buffer.from(buffer).toString('base64'), fileName: `Invoice_${invoiceId}.xlsx` }

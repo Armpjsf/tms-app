@@ -32,6 +32,7 @@ import { CalendarIcon, Loader2, Calculator, Zap, RefreshCw } from "lucide-react"
 import { format } from "date-fns"
 import { th } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 interface InvoiceFormProps {
     customers: { Customer_ID: string; Customer_Name: string }[]
@@ -47,6 +48,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
   const initialCustomerId = initialData?.customerId || searchParams.get('customer') || ""
   const initialJobIds = initialData?.jobIds || searchParams.get('jobs')?.split(',') || []
   
+  const { t } = useLanguage()
   const router = useRouter()
 
   const [customerId, setCustomerId] = useState(initialCustomerId)

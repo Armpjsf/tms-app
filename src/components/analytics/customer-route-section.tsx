@@ -1,3 +1,5 @@
+"use client"
+
 import { PremiumCard } from "@/components/ui/premium-card"
 import { Building2, MapPin, TrendingUp, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"

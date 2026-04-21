@@ -736,23 +736,62 @@ export async function getPublicBillingNoteById(id: string) {
         // Use admin client to bypass RLS for public invoice view
         const supabase = await createAdminClient()
         
-        // 1. Get Billing Note
-        const { data: note, error: noteError } = await supabase
-            .from('Billing_Notes')
-            .select('*')
-            .eq('Billing_Note_ID', id)
-            .single()
-        
-        if (noteError) throw noteError
+        let note: any = null
+        let jobs: any[] = []
 
-        // 2. Get Associated Jobs
-        const { data: dbJobs, error: jobsError } = await supabase
-            .from('Jobs_Main')
-            .select('*, extra_costs_json')
-            .eq('Billing_Note_ID', id)
-        
-        if (jobsError) throw jobsError
-        let jobs = dbJobs || []
+        // 1. Detect Type and Get Data
+        if (id.startsWith('INV-')) {
+            // It's an Invoice ID
+            const { data: inv, error: invError } = await supabase
+                .from('invoices')
+                .select('*, Master_Customers(*)')
+                .eq('Invoice_ID', id)
+                .single()
+            
+            if (invError) throw invError
+            
+            note = {
+                Billing_Note_ID: inv.Invoice_ID,
+                Customer_Name: inv.Master_Customers?.Customer_Name || inv.Customer_Name,
+                Billing_Date: inv.Issue_Date,
+                Due_Date: inv.Due_Date,
+                Total_Amount: inv.Grand_Total,
+                Status: inv.Status,
+                Customer_Address: inv.Master_Customers?.Address,
+                Customer_Tax_ID: inv.Master_Customers?.Tax_ID,
+                Remarks: inv.Notes,
+                VAT_Rate: inv.VAT_Rate,
+                VAT_Amount: inv.VAT_Amount,
+                Discount_Amount: inv.Discount_Amount,
+                WHT_Rate: inv.WHT_Rate,
+                WHT_Amount: inv.WHT_Amount
+            }
+
+            if (inv.Items_JSON && Array.isArray(inv.Items_JSON)) {
+                jobs = inv.Items_JSON
+            }
+        } else {
+            // It's a Billing Note ID
+            const { data: bn, error: bnError } = await supabase
+                .from('Billing_Notes')
+                .select('*')
+                .eq('Billing_Note_ID', id)
+                .single()
+            
+            if (bnError) throw bnError
+            note = bn
+        }
+
+        // 2. Get Associated Jobs if not already loaded
+        if (jobs.length === 0) {
+            const { data: dbJobs, error: jobsError } = await supabase
+                .from('Jobs_Main')
+                .select('*, extra_costs_json')
+                .or(`Billing_Note_ID.eq."${id}",Invoice_ID.eq."${id}"`)
+            
+            if (jobsError) throw jobsError
+            jobs = dbJobs || []
+        }
 
         // Enrich with Unit Prices from Master_Customers
         try {
