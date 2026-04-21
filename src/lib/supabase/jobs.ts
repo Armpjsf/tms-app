@@ -3,7 +3,7 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { logActivity } from '@/lib/supabase/logs'
 import { getDriverSession } from '@/lib/actions/auth-actions'
-import { getUserBranchId, isSuperAdmin, getCustomerId } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions"
  
 export type JobAssignment = {
   Vehicle_Type: string
@@ -81,10 +81,11 @@ export type Job = {
 
 export async function getTodayJobs(): Promise<Job[]> {
   try {
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
     
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     
@@ -97,7 +98,7 @@ export async function getTodayJobs(): Promise<Job[]> {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !isRegularAdmin && !branchId) {
         return []
     }
 
@@ -117,10 +118,11 @@ export async function getTodayJobs(): Promise<Job[]> {
 // ดึงงานตามสถานะ
 export async function getJobsByStatus(status: string): Promise<Job[]> {
   try {
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -131,7 +133,7 @@ export async function getJobsByStatus(status: string): Promise<Job[]> {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !isRegularAdmin && !branchId) {
         return []
     }
 
@@ -159,10 +161,11 @@ export async function getAllJobs(
   endDate = '' // Add endDate parameter
 ): Promise<{ data: Job[], count: number }> {
   try {
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
     
     const offset = (page - 1) * limit
     
@@ -175,11 +178,11 @@ export async function getAllJobs(
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (isAdmin && (!branchId || branchId === 'All')) {
+    } else if (isSuper && (!branchId || branchId === 'All')) {
         // No filter
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !isRegularAdmin && !branchId) {
         return { data: [], count: 0 }
     }
 
@@ -217,10 +220,11 @@ export async function getAllJobs(
 // นับสถิติงานตามช่วงเวลา (Default: วันนี้)
 export async function getTodayJobStats(branchId?: string, startDate?: string, endDate?: string) {
   try {
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
     const userBranchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     
     let dbQuery = supabase
@@ -239,7 +243,7 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
         const effectiveBranchId = branchId || userBranchId
         if (effectiveBranchId && effectiveBranchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
-        } else if (!isAdmin && !userBranchId) {
+        } else if (!isSuper && !isRegularAdmin && !userBranchId) {
             return { total: 0, delivered: 0, inProgress: 0, pending: 0 }
         }
     }
@@ -266,10 +270,11 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
 // ยอดเงินวันนี้ (Estimated)
 export async function getTodayFinancials(branchId?: string) {
   try {
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
     const userBranchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
     const today = new Date().toISOString().split('T')[0]
 
     let dbQuery = supabase
@@ -283,7 +288,7 @@ export async function getTodayFinancials(branchId?: string) {
         const effectiveBranchId = branchId || userBranchId
         if (effectiveBranchId && effectiveBranchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
-        } else if (!isAdmin && !userBranchId) {
+        } else if (!isSuper && !isRegularAdmin && !userBranchId) {
             return { revenue: 0 }
         }
     }
@@ -362,16 +367,16 @@ export async function getDriverJobs(
   }
 }
 
-// ดึงรายละเอียดงาน By ID
 export async function getJobById(jobId: string): Promise<Job | null> {
     try {
         const driverSession = await getDriverSession()
-        const isAdmin = await isSuperAdmin()
+        const isSuper = await isSuperAdmin()
+        const isRegularAdmin = await isAdmin()
         const branchId = await getUserBranchId()
         const customerId = await getCustomerId()
         
-        // Use admin client if it's a driver or super admin
-        const supabase = (isAdmin || driverSession) ? createAdminClient() : await createClient()
+        // Use admin client if it's a driver or authorized user
+        const supabase = (isSuper || isRegularAdmin || customerId || driverSession) ? createAdminClient() : await createClient()
 
         // 1. SIMPLE CORE FETCH
         // We use select('*') first to rule out any join syntax errors
@@ -381,16 +386,17 @@ export async function getJobById(jobId: string): Promise<Job | null> {
             .eq('Job_ID', jobId)
         
         // Apply Filters
-        if (isAdmin) {
-            // Admin sees all
+        if (isSuper || isRegularAdmin) {
+            // Admin sees all within branch (or all if Super)
+            if (!isSuper && branchId && branchId !== 'All') {
+                baseQuery.eq('Branch_ID', branchId)
+            }
         } else if (customerId) {
             baseQuery.eq('Customer_ID', customerId)
         } else if (driverSession) {
             // DRIVER: Allow if assigned to this driver OR if the job is unassigned (Marketplace/Draft)
             // This is safer and more flexible for drivers opening links
             baseQuery.or(`Driver_ID.eq.${driverSession.driverId},Driver_ID.is.null`)
-        } else if (branchId && branchId !== 'All') {
-            baseQuery.eq('Branch_ID', branchId)
         } else if (!branchId) {
             // If No session and No branch and Not Admin, return null
             return null
@@ -400,7 +406,7 @@ export async function getJobById(jobId: string): Promise<Job | null> {
         
         if (!data || fetchError) {
             // Second chance: If not found and is admin, try finding strictly by ID (Branch override)
-            if (isAdmin) {
+            if (isSuper || isRegularAdmin) {
                 const { data: adminData } = await supabase
                     .from('Jobs_Main')
                     .select('*')
@@ -461,10 +467,11 @@ async function enrichJobWithCustomerData(job: Job): Promise<Job> {
 // สถิติยอดจัดส่งย้อนหลัง 7 วัน
 export async function getWeeklyJobStats(branchId?: string) {
   try {
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
     const userBranchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
     
     const today = new Date()
     const sevenDaysAgo = new Date(today)
@@ -484,7 +491,7 @@ export async function getWeeklyJobStats(branchId?: string) {
         const effectiveBranchId = branchId || userBranchId
         if (effectiveBranchId && effectiveBranchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
-        } else if (!isAdmin && !userBranchId) {
+        } else if (!isSuper && !isRegularAdmin && !userBranchId) {
             return []
         }
     }
@@ -527,10 +534,11 @@ export async function getWeeklyJobStats(branchId?: string) {
 // สัดส่วนสถานะงาน (ทั้งหมด)
 export async function getJobStatusDistribution(branchId?: string) {
     try {
-        const isAdmin = await isSuperAdmin()
+        const isSuper = await isSuperAdmin()
+        const isRegularAdmin = await isAdmin()
         const userBranchId = await getUserBranchId()
         const customerId = await getCustomerId()
-        const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
+        const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
 
         let dbQuery = supabase
             .from('Jobs_Main')
@@ -542,7 +550,7 @@ export async function getJobStatusDistribution(branchId?: string) {
             const effectiveBranchId = branchId || userBranchId
             if (effectiveBranchId && effectiveBranchId !== 'All') {
                 dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
-            } else if (!isAdmin && !userBranchId) {
+            } else if (!isSuper && !isRegularAdmin && !userBranchId) {
                 return []
             }
         }
@@ -589,8 +597,9 @@ import { sanitizeJobData } from './utils'
 // สร้างงานใหม่
 export async function createJob(jobData: Partial<Job>) {
     try {
-        const isAdmin = await isSuperAdmin()
-        const supabase = isAdmin ? await createAdminClient() : await createClient()
+        const isSuper = await isSuperAdmin()
+        const isRegularAdmin = await isAdmin()
+        const supabase = (isSuper || isRegularAdmin) ? await createAdminClient() : await createClient()
         
         // Generate Job ID (Format: JOB-YYYYMMDD-XXXX)
         const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }).replace(/-/g, '')
@@ -656,8 +665,9 @@ export async function createJob(jobData: Partial<Job>) {
 // ดึงรายชื่อคนขับทั้งหมด (จากประวัติงาน)
 export async function getAllDrivers() {
     try {
-        const isAdmin = await isSuperAdmin()
-        const supabase = isAdmin ? await createAdminClient() : await createClient()
+        const isSuper = await isSuperAdmin()
+        const isRegularAdmin = await isAdmin()
+        const supabase = (isSuper || isRegularAdmin) ? await createAdminClient() : await createClient()
         const branchId = await getUserBranchId()
 
         let query = supabase
@@ -667,7 +677,7 @@ export async function getAllDrivers() {
         
         if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
-        } else if (!isAdmin && !branchId) {
+        } else if (!isSuper && !isRegularAdmin && !branchId) {
             return []
         }
 
@@ -692,8 +702,9 @@ export async function getAllDrivers() {
 // ดึงรายชื่อรถทั้งหมด
 export async function getAllVehicles() {
     try {
-        const isAdmin = await isSuperAdmin()
-        const supabase = isAdmin ? await createAdminClient() : await createClient()
+        const isSuper = await isSuperAdmin()
+        const isRegularAdmin = await isAdmin()
+        const supabase = (isSuper || isRegularAdmin) ? await createAdminClient() : await createClient()
         const branchId = await getUserBranchId()
 
         let query = supabase
@@ -703,7 +714,7 @@ export async function getAllVehicles() {
 
         if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
-        } else if (!isAdmin && !branchId) {
+        } else if (!isSuper && !isRegularAdmin && !branchId) {
             return []
         }
 
@@ -727,11 +738,12 @@ export async function getAllVehicles() {
 // ดึงข้อมูลสำหรับหน้า Billing (Completed/Delivered)
 export async function getJobsForBilling(explicitCustomerId?: string, startDate?: string, endDate?: string): Promise<Job[]> {
     try {
-        const isAdmin = await isSuperAdmin()
+        const isSuper = await isSuperAdmin()
+        const isRegularAdmin = await isAdmin()
         const branchId = await getUserBranchId()
         const sessionCustomerId = await getCustomerId()
         const customerId = explicitCustomerId || sessionCustomerId
-        const supabase = isAdmin ? await createAdminClient() : await createClient()
+        const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
 
         let dbQuery = supabase
             .from('Jobs_Main')
@@ -744,7 +756,7 @@ export async function getJobsForBilling(explicitCustomerId?: string, startDate?:
             dbQuery = dbQuery.eq('Customer_ID', customerId)
         } else if (branchId && branchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', branchId)
-        } else if (!isAdmin && !branchId) {
+        } else if (!isSuper && !isRegularAdmin && !branchId) {
             return []
         }
 

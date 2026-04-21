@@ -1,7 +1,7 @@
 "use server"
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
-import { isSuperAdmin } from '@/lib/permissions'
+import { isSuperAdmin, isAdmin, getCustomerId } from '@/lib/permissions'
 
 export type Branch = {
   Branch_ID: string
@@ -14,8 +14,10 @@ export type Branch = {
 
 export async function getAllBranches() {
   try {
-    const isAdmin = await isSuperAdmin()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
+    const customerId = await getCustomerId()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
     
     const { data, error } = await supabase
       .from('Master_Branches')

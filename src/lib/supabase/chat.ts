@@ -1,5 +1,5 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions"
 import { notifyDriverNewChat } from '@/lib/actions/push-actions'
 import { SupabaseClient } from '@supabase/supabase-js'
 
@@ -73,13 +73,15 @@ export async function getChatContacts(): Promise<ChatContact[]> {
 
     // 0. Filter by Branch
     const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
+    const customerId = await getCustomerId()
 
     // 0. Detect correct schema
     let { tableName, columns } = await getChatSchema(supabase)
 
-    // Proactively use admin client for Super Admins for better performance/avoiding RLS errors
-    const effectiveSupabase = isAdmin ? createAdminClient() : supabase
+    // Proactively use admin client for authorized users
+    const effectiveSupabase = (isSuper || isRegularAdmin || customerId) ? createAdminClient() : supabase
 
     const result = await effectiveSupabase
       .from(tableName)
@@ -125,7 +127,7 @@ export async function getChatContacts(): Promise<ChatContact[]> {
     
     if (branchId && branchId !== 'All') {
         allowedDriverIds = new Set(allDrivers?.filter(d => d.Branch_ID === branchId).map(d => d.Driver_ID) || [])
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !isRegularAdmin && !branchId) {
         return []
     }
 
@@ -170,10 +172,15 @@ export async function getMessages(driverId: string): Promise<ChatMessage[]> {
   try {
     const supabase = await createClient()
     
-    // 0. Detect correct schema
-    let { tableName, columns } = await getChatSchema(supabase)
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
+    const customerId = await getCustomerId()
+    
+    // 0. Detect correct schema (Try admin client first if authorized)
+    let { tableName, columns } = await getChatSchema((isSuper || isRegularAdmin || customerId) ? createAdminClient() : supabase)
 
-    const result = await supabase
+    const effectiveSupabase = (isSuper || isRegularAdmin || customerId) ? createAdminClient() : supabase
+    const result = await effectiveSupabase
       .from(tableName)
       .select('*')
       .or(`${columns.sender_id}.eq.${driverId},${columns.receiver_id}.eq.${driverId}`)

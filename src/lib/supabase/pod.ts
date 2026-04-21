@@ -20,7 +20,9 @@ export type PODRecord = {
 export async function getTodayPODs(): Promise<PODRecord[]> {
   try {
     const isSuper = await isSuperAdmin()
-    const supabase = isSuper ? createAdminClient() : await createClient()
+    const isRegularAdmin = await isAdmin()
+    const customerId = await getCustomerId()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? createAdminClient() : await createClient()
     const today = new Date().toISOString().split('T')[0]
     
     const branchId = await getUserBranchId()
@@ -36,7 +38,7 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!(await isAdmin()) && !branchId) {
         return []
     }
 
@@ -58,7 +60,9 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
 export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo?: string, query?: string): Promise<{ data: PODRecord[], count: number }> {
   try {
     const isSuper = await isSuperAdmin()
-    const supabase = isSuper ? createAdminClient() : await createClient()
+    const isRegularAdmin = await isAdmin()
+    const customerId = await getCustomerId()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? createAdminClient() : await createClient()
     const offset = (page - 1) * limit
     
     const branchId = await getUserBranchId()
@@ -75,7 +79,7 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
         // No filter
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isSuper && !branchId) {
+    } else if (!isSuper && !isRegularAdmin && !branchId) {
         return { data: [], count: 0 }
     }
 
@@ -109,7 +113,9 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
 export async function getPODStats(dateFrom?: string, dateTo?: string) {
   try {
     const isSuper = await isSuperAdmin()
-    const supabase = isSuper ? createAdminClient() : await createClient()
+    const isRegularAdmin = await isAdmin()
+    const customerId = await getCustomerId()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? createAdminClient() : await createClient()
     
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
@@ -125,7 +131,7 @@ export async function getPODStats(dateFrom?: string, dateTo?: string) {
         // No branch filter for super admin
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isSuper && !branchId) {
+    } else if (!isSuper && !isRegularAdmin && !branchId) {
         return { total: 0, withPhoto: 0, withSignature: 0, complete: 0 }
     }
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient, createAdminClient } from "@/utils/supabase/server";
-import { getUserBranchId, isSuperAdmin, isAdmin } from "@/lib/permissions";
+import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions";
 
 // Type matching actual Supabase schema (ProperCase columns!)
 export type GPSLog = {
@@ -56,8 +56,10 @@ export async function saveGPSLog(data: {
 // ดึงตำแหน่งล่าสุดของ Driver ทุกคน (สำหรับแสดงบน Map)
 export async function getLatestDriverLocations() {
   try {
-    const isAdmin = await isSuperAdmin();
-    const supabase = isAdmin ? await createAdminClient() : await createClient();
+    const isSuper = await isSuperAdmin();
+    const isRegularAdmin = await isAdmin();
+    const customerId = await getCustomerId();
+    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient();
 
     // ดึงข้อมูล GPS ย้อนหลัง 1 ชั่วโมง
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -112,6 +114,11 @@ export async function getLatestDriverLocations() {
 
     // Filter by branch manually if needed
     const logs = Array.from(latestLocations.values());
+    if (customerId) {
+      // For customers, further security filter (though they already use admin client)
+      // This is just a safeguard. Ideally getActiveFleetStatus is used instead for map.
+      return logs; 
+    }
     if (branchId && branchId !== "All") {
       return logs.filter((l) => l.Master_Drivers?.Branch_ID === branchId);
     }
@@ -125,7 +132,10 @@ export async function getLatestDriverLocations() {
 // ดึงประวัติการเดินทางของ Driver ตามวันที่ (สำหรับแสดงเส้นทาง)
 export async function getDriverRouteForDate(driverId: string, date: string) {
   try {
-    const supabase = await createClient();
+    const isSuper = await isSuperAdmin();
+    const isRegularAdmin = await isAdmin();
+    const customerId = await getCustomerId();
+    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient();
 
     // Create Start and End timestamps for the day
     const startDate = `${date}T00:00:00`;

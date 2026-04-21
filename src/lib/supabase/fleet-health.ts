@@ -1,7 +1,7 @@
 "use server"
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions"
 
 export type HealthAlert = {
     vehicle_plate: string
@@ -16,8 +16,10 @@ export type HealthAlert = {
 
 export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
     try {
-        const isAdmin = await isSuperAdmin()
-        const supabase = isAdmin ? await createAdminClient() : await createClient()
+        const isSuper = await isSuperAdmin()
+        const isRegularAdmin = await isAdmin()
+        const customerId = await getCustomerId()
+        const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
         const branchId = await getUserBranchId()
 
         // 1. Fetch all active vehicles
@@ -38,7 +40,7 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
 
         if (branchId && branchId !== 'All') {
             vehicleQuery = vehicleQuery.eq('Branch_ID', branchId)
-        } else if (!isAdmin && !branchId) {
+        } else if (!isSuper && !isRegularAdmin && !branchId) {
             return []
         }
 
