@@ -26,7 +26,6 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
     const today = new Date().toISOString().split('T')[0]
     
     const branchId = await getUserBranchId()
-    const customerId = await getCustomerId()
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -66,7 +65,6 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
     const offset = (page - 1) * limit
     
     const branchId = await getUserBranchId()
-    const customerId = await getCustomerId()
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -118,7 +116,6 @@ export async function getPODStats(dateFrom?: string, dateTo?: string) {
     const supabase = (isSuper || isRegularAdmin || customerId) ? createAdminClient() : await createClient()
     
     const branchId = await getUserBranchId()
-    const customerId = await getCustomerId()
 
     let dbQuery = supabase
       .from('Jobs_Main')
