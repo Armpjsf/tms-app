@@ -6,6 +6,7 @@ import {
     PenTool, CalendarDays, ShieldCheck, Printer, Download
 } from "lucide-react"
 import { AutoPrint } from "@/components/utils/auto-print"
+import { PrintButton } from "@/components/billing/print-button"
 
 export const dynamic = 'force-dynamic'
 
@@ -224,12 +225,7 @@ export default async function PublicInvoicePage(props: Props) {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <button 
-                        onClick={() => window.print()}
-                        className="h-10 px-5 bg-white border border-slate-200 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm"
-                    >
-                        <Printer size={16} /> พิมพ์ / บันทึก PDF
-                    </button>
+                    <PrintButton />
                 </div>
             </div>
 

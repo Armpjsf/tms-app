@@ -1,18 +1,23 @@
-
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { Printer } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-export function PrintButton() {
-  return (
-    <Button 
-      onClick={() => window.print()} 
-      variant="outline"
-      className="gap-2 print-hidden bg-white text-black hover:bg-slate-100"
-    >
-      <Printer size={16} />
-      พิมพ์ใบกำกับภาษี (Print)
-    </Button>
-  )
+interface PrintButtonProps {
+    className?: string;
+    label?: string;
+}
+
+export function PrintButton({ className, label = "พิมพ์ / บันทึก PDF" }: PrintButtonProps) {
+    return (
+        <button 
+            onClick={() => window.print()}
+            className={cn(
+                "h-10 px-5 bg-white border border-slate-200 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm",
+                className
+            )}
+        >
+            <Printer size={16} /> {label}
+        </button>
+    )
 }
