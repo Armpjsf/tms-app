@@ -104,15 +104,34 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     const nowIso = now.toISOString()
     const timeString = now.toTimeString().split(' ')[0] 
     
-    const { error: updateError } = await supabase
-      .from("Jobs_Main")
-      .update({
+    // Get existing notes and quantity for auto-update
+    const { data: jobData } = await supabase.from("Jobs_Main").select("Notes, Price_Cust_Total, Master_Customers(Price_Per_Unit)").eq("Job_ID", jobId).single()
+    const currentNotes = jobData?.Notes || ""
+    const adminPrice = Number(jobData?.Price_Cust_Total || 0)
+    const unitPrice = Number((jobData as any)?.Master_Customers?.Price_Per_Unit || 0)
+    const loadedQty = Number(formData.get("loaded_qty") || 0)
+
+    const updatePayload: any = {
         Job_Status: "Completed", 
         Photo_Proof_Url: photoUrlString,
         Signature_Url: signatureUrl,
         Actual_Delivery_Time: timeString,
         Delivery_Date: nowIso.split('T')[0]
-      })
+    }
+
+    if (loadedQty > 0) {
+        updatePayload.Loaded_Qty = loadedQty
+        updatePayload.Notes = updateNotesWithQty(currentNotes, loadedQty)
+        
+        // Auto-calculate price if not set by admin
+        if (adminPrice === 0 && unitPrice > 0) {
+            updatePayload.Price_Cust_Total = Number((loadedQty * unitPrice).toFixed(2))
+        }
+    }
+    
+    const { error: updateError } = await supabase
+      .from("Jobs_Main")
+      .update(updatePayload)
       .eq("Job_ID", jobId)
 
     if (updateError) throw updateError

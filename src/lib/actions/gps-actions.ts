@@ -38,14 +38,21 @@ export async function getJobGPSData(jobId: string, driverId: string, date: strin
             .limit(1)
 
         const latest = latestData?.[0]
+        
+        // Final mapping with robustness
+        const route = finalRoute?.map(r => {
+            const lat = r.latitude ?? (r as any).Latitude ?? (r as any).lat ?? 0;
+            const lng = r.longitude ?? (r as any).Longitude ?? (r as any).lng ?? 0;
+            return [Number(lat), Number(lng)] as [number, number];
+        }) || []
 
         return {
-            route: finalRoute?.map(r => [r.latitude || (r as Record<string, unknown>).Latitude, r.longitude || (r as Record<string, unknown>).Longitude]) || [],
+            route,
             latest: latest ? {
-                lat: latest.latitude || latest.Latitude,
-                lng: latest.longitude || latest.Longitude,
-                timestamp: latest.timestamp || latest.Timestamp
-            } : null
+                lat: latest.latitude ?? (latest as any).Latitude ?? (latest as any).lat ?? 0,
+                lng: latest.longitude ?? (latest as any).Longitude ?? (latest as any).lng ?? 0,
+                timestamp: latest.timestamp ?? (latest as any).Timestamp ?? latest.created_at
+            } : (jobId ? null : null) // We can't access job here easily without passing it. 
         }
     } catch {
         return { route: [], latest: null }

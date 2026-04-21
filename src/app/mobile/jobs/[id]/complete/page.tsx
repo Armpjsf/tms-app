@@ -9,18 +9,20 @@ import { SignaturePad } from "@/components/mobile/signature-pad"
 import { toast } from "sonner"
 import { submitJobPOD } from "@/lib/actions/pod-actions"
 import { getJobDetails } from "@/app/mobile/jobs/actions"
-import { Loader2, CheckCircle, BrainCircuit, AlertTriangle, ScanLine } from "lucide-react"
+import { Loader2, CheckCircle, BrainCircuit, AlertTriangle, ScanLine, Box } from "lucide-react"
 import { PodReport } from "@/components/mobile/pod-report"
 import { Job } from "@/lib/supabase/jobs"
 import html2canvas from "html2canvas"
 import { analyzePODImage, AIAnalysisResult } from "@/lib/utils/ai-verification"
 import { saveJobOffline, blobToB64 } from "@/lib/utils/offline-storage"
+import { QuantityStepper } from "@/components/mobile/quantity-stepper"
 
 export default function JobCompletePage() {
   const router = useRouter()
   const params = useParams<{ id: string }>()
   const [photos, setPhotos] = useState<File[]>([])
   const [signature, setSignature] = useState<Blob | null>(null)
+  const [loadedQty, setLoadedQty] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [completed, setCompleted] = useState(false)
   
@@ -140,6 +142,10 @@ export default function JobCompletePage() {
         formData.append("photo_count", photos.length.toString())
         
         formData.append("signature", signature, "signature.png")
+        
+        if (loadedQty) {
+            formData.append("loaded_qty", loadedQty)
+        }
         
         const result = await submitJobPOD(params.id, formData)
         
@@ -275,15 +281,29 @@ export default function JobCompletePage() {
                              )}
                         </div>
                     ) : null}
-                </div>
-            )}
-        </section>
+                )}
+                    </div>
+                )}
+                </section>
 
-        <section>
-            <h2 className="text-muted-foreground font-bold mb-2">2. ลายเซ็นผู้รับ</h2>
-            <SignaturePad onSave={setSignature} />
-        </section>
+                {/* Quantity Input Section (Only if needed for pricing) */}
+                {job && job.Price_Per_Unit && Number(job.Price_Per_Unit) > 0 && (!job.Price_Cust_Total || Number(job.Price_Cust_Total) === 0) && (
+                <section>
+                    <h2 className="text-muted-foreground font-bold mb-2">2. ยืนยันจำนวนที่ส่งจริง</h2>
+                    <QuantityStepper 
+                        value={loadedQty}
+                        onChange={setLoadedQty}
+                        label="ระบุจำนวนที่ส่งมอบจริง (ชิ้น)"
+                    />
+                </section>
+                )}
 
+                <section>
+                <h2 className="text-muted-foreground font-bold mb-2">
+                    {job && job.Price_Per_Unit && Number(job.Price_Per_Unit) > 0 && (!job.Price_Cust_Total || Number(job.Price_Cust_Total) === 0) ? "3. ลายเซ็นผู้รับ" : "2. ลายเซ็นผู้รับ"}
+                </h2>
+                <SignaturePad onSave={setSignature} />
+                </section>
         <div className="space-y-3">
             <Button 
                 onClick={handleSubmit}

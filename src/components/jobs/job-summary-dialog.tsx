@@ -88,6 +88,37 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
   }] : []
   const reportUrl = podPhotos.find((url: string) => url.toUpperCase().includes('REPORT'))
 
+  // Web-Safe and Robust JSON Parsing (similar to JobDialog)
+  const parseNodes = (val: any) => {
+    if (!val) return []
+    if (Array.isArray(val)) return val
+    if (typeof val === 'object' && val !== null) return [val]
+    if (typeof val === 'string' && val.trim() !== '') {
+        try { 
+          const parsed = JSON.parse(val)
+          return Array.isArray(parsed) ? parsed : [parsed]
+        } catch { return [] }
+    }
+    return []
+  }
+
+  const originsList = parseNodes(job.origins || job.original_origins_json)
+  const destsList = parseNodes(job.destinations || job.original_destinations_json)
+  
+  // Ultimate Fallback Chain for Origin
+  const displayOrigin = job.Origin_Location || 
+                        (originsList.length > 0 ? originsList[0].name : null) || 
+                        (job as any).Pickup_Location || 
+                        (job as any).Pickup_Address ||
+                        '-'
+
+  // Ultimate Fallback Chain for Destination
+  const displayDest = job.Dest_Location || 
+                      (destsList.length > 0 ? destsList[destsList.length - 1].name : null) || 
+                      (job as any).Delivery_Location || 
+                      (job as any).Delivery_Address ||
+                      '-'
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-gray-200 bg-background print:max-h-none print:overflow-visible">
@@ -192,14 +223,14 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                             <div className="mt-1"><div className="w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20" /></div>
                             <div>
                                 <p className="text-base font-bold uppercase text-muted-foreground font-bold">{t('jobs.dialog.origin')}</p>
-                                <p className="text-lg font-bold text-muted-foreground font-medium">{job.Origin_Location || '-'}</p>
+                                <p className="text-lg font-bold text-muted-foreground font-medium">{displayOrigin}</p>
                             </div>
                         </div>
                         <div className="flex gap-3">
                             <div className="mt-1"><MapPin size={14} className="text-emerald-500" /></div>
                             <div>
                                 <p className="text-base font-bold uppercase text-muted-foreground font-bold">{t('jobs.dialog.destination')}</p>
-                                <p className="text-lg font-bold text-muted-foreground font-bold">{job.Dest_Location || '-'}</p>
+                                <p className="text-lg font-bold text-muted-foreground font-bold">{displayDest}</p>
                             </div>
                         </div>
                     </div>
