@@ -600,31 +600,27 @@ export function JobDialog({
         }
     }
 
-    // 2. Master Route Lookup
-    if (routes && routes.length > 0) {
-        // Find if this name matches an Origin or Destination in our master list
-        const masterMatch = routes.find(r => 
-            (r.Origin && r.Origin.trim() === name) || 
-            (r.Destination && r.Destination.trim() === name)
-        );
+    // 2. Master Route Lookup - Only auto-fill if coordinates are empty to avoid overwriting existing data
+    const currentOrigin = origins[index];
+    if (routes && routes.length > 0 && (!currentOrigin.lat || !currentOrigin.lng)) {
+        // Find if this name matches an Origin in our master list
+        const masterMatch = routes.find(r => r.Origin && r.Origin.trim() === name);
 
         if (masterMatch) {
-            const isOriginMatch = masterMatch.Origin?.trim() === name;
-            const lat = isOriginMatch ? masterMatch.Origin_Lat : masterMatch.Dest_Lat;
-            const lng = isOriginMatch ? masterMatch.Origin_Lon : masterMatch.Dest_Lon;
-            const link = isOriginMatch ? masterMatch.Map_Link_Origin : masterMatch.Map_Link_Destination;
+            const lat = masterMatch.Origin_Lat;
+            const lng = masterMatch.Origin_Lon;
+            const link = masterMatch.Map_Link_Origin;
 
             if (lat && lng) {
                 updateOrigin(index, 'lat', lat.toString());
                 updateOrigin(index, 'lng', lng.toString());
-                toast.success(`ใช้พิกัดจากมาสเตอร์: ${name}`);
+                toast.success(`ใช้พิกัดต้นทางจากมาสเตอร์: ${name}`);
             } else if (link) {
-                // Fallback to extraction from link in master data
                 const coords = extractCoordsFromUrl(link);
                 if (coords) {
                     updateOrigin(index, 'lat', coords.lat.toString());
                     updateOrigin(index, 'lng', coords.lng.toString());
-                    toast.success(`ดึงพิกัดจากลิงก์มาสเตอร์: ${name}`);
+                    toast.success(`ดึงพิกัดจากลิงก์ต้นทางมาสเตอร์: ${name}`);
                 }
             }
         }
@@ -658,25 +654,22 @@ export function JobDialog({
         }
     }
 
-    // 2. Master Route Lookup
-    if (routes && routes.length > 0) {
-        const masterMatch = routes.find(r => 
-            (r.Destination && r.Destination.trim() === name) || 
-            (r.Origin && r.Origin.trim() === name)
-        );
+    // 2. Master Route Lookup - Only auto-fill if coordinates are empty
+    const currentDest = destinations[index];
+    if (routes && routes.length > 0 && (!currentDest.lat || !currentDest.lng)) {
+        // Find if this name matches a Destination in our master list
+        const masterMatch = routes.find(r => r.Destination && r.Destination.trim() === name);
 
         if (masterMatch) {
-            const isDestMatch = masterMatch.Destination?.trim() === name;
-            const lat = isDestMatch ? masterMatch.Dest_Lat : masterMatch.Origin_Lat;
-            const lng = isDestMatch ? masterMatch.Dest_Lon : masterMatch.Origin_Lon;
-            const link = isDestMatch ? masterMatch.Map_Link_Destination : masterMatch.Map_Link_Origin;
+            const lat = masterMatch.Dest_Lat;
+            const lng = masterMatch.Dest_Lon;
+            const link = masterMatch.Map_Link_Destination;
 
             if (lat && lng) {
                 updateDestination(index, 'lat', lat.toString());
                 updateDestination(index, 'lng', lng.toString());
-                toast.success(`ใช้พิกัดจากมาสเตอร์: ${name}`);
+                toast.success(`ใช้พิกัดปลายทางจากมาสเตอร์: ${name}`);
             } else if (link) {
-                // Fallback to extraction from link in master data
                 const coords = extractCoordsFromUrl(link);
                 if (coords) {
                     updateDestination(index, 'lat', coords.lat.toString());
