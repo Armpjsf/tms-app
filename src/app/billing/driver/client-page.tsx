@@ -98,11 +98,24 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
 
   // Filter data (Client-side)
   const filteredData = initialJobs.filter(item => {
+    const driver = drivers.find(d => d.Driver_Name === item.Driver_Name)
+    
     if (paymentModel === 'individual') {
-        if (selectedEntityId && item.Driver_Name !== selectedEntityId) return false
+        // If a specific driver is selected, show only that driver
+        if (selectedEntityId) {
+            if (item.Driver_Name !== selectedEntityId) return false
+        } else {
+            // "All" mode: Show only drivers who don't belong to any subcontractor group
+            if (driver?.Sub_ID) return false
+        }
     } else {
-        const driver = drivers.find(d => d.Driver_Name === item.Driver_Name)
-        if (selectedEntityId && driver?.Sub_ID !== selectedEntityId) return false
+        // If a specific subcontractor is selected, show only drivers in that group
+        if (selectedEntityId) {
+            if (driver?.Sub_ID !== selectedEntityId) return false
+        } else {
+            // "All" mode: Show only drivers who belong to a subcontractor group
+            if (!driver?.Sub_ID) return false
+        }
     }
 
     // Date filtering with string comparison (Safe for YYYY-MM-DD)
@@ -358,7 +371,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 <SelectContent className="bg-card border-border/10 text-foreground font-black">
                   <SelectItem value="all" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">{t('billing_driver.all_sectors')}</SelectItem>
                   {paymentModel === 'individual' ? (
-                      drivers.map(d => (
+                      drivers.filter(d => !d.Sub_ID).map(d => (
                           <SelectItem key={d.Driver_Name || ""} value={d.Driver_Name || ""} className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">{d.Driver_Name}</SelectItem>
                       ))
                   ) : (
