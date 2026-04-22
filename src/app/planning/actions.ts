@@ -491,7 +491,7 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
      if (targetCustomerId) {
          const { data: customer } = await supabase.from('Master_Customers').select('Price_Per_Unit').eq('Customer_ID', targetCustomerId).single()
          const unitPrice = customer?.Price_Per_Unit || 0
-         const qty = Number(updateData.Loaded_Qty ?? (await supabase.from('Jobs_Main').select('Loaded_Qty').eq('Job_ID', jobId).single()).data?.Loaded_Qty || 0)
+         const qty = Number((updateData.Loaded_Qty ?? (await supabase.from('Jobs_Main').select('Loaded_Qty').eq('Job_ID', jobId).single()).data?.Loaded_Qty) || 0)
          
          if (unitPrice > 0 && qty > 0) {
              updateData.Price_Cust_Total = Number((qty * unitPrice).toFixed(2))
