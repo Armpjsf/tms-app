@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function DriverPaymentPage() {
   const [jobs, drivers, companyProfile, subcontractors] = await Promise.all([
-    getJobsForBilling(),
+    getJobsForBilling(undefined, undefined, undefined, 'driver'),
     getActiveDrivers(),
     getCompanyProfile(),
     getAllSubcontractors()

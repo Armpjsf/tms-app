@@ -737,7 +737,12 @@ export async function getAllVehicles() {
 }
 
 // ดึงข้อมูลสำหรับหน้า Billing (Completed/Delivered)
-export async function getJobsForBilling(explicitCustomerId?: string, startDate?: string, endDate?: string): Promise<Job[]> {
+export async function getJobsForBilling(
+    explicitCustomerId?: string, 
+    startDate?: string, 
+    endDate?: string,
+    mode: 'customer' | 'driver' = 'customer'
+): Promise<Job[]> {
     try {
         const isSuper = await isSuperAdmin()
         const isRegularAdmin = await isAdmin()
@@ -750,8 +755,14 @@ export async function getJobsForBilling(explicitCustomerId?: string, startDate?:
             .from('Jobs_Main')
             .select('*')
             .in('Job_Status', ['Completed', 'Delivered'])
-            .is('Billing_Note_ID', null)
-            .is('Invoice_ID', null)
+        
+        if (mode === 'driver') {
+            // For driver payments, only filter out if already paid to driver
+            dbQuery = dbQuery.is('Driver_Payment_ID', null)
+        } else {
+            // For customer billing, filter out if already invoiced/noted
+            dbQuery = dbQuery.is('Billing_Note_ID', null).is('Invoice_ID', null)
+        }
         
         if (customerId) {
             dbQuery = dbQuery.eq('Customer_ID', customerId)
