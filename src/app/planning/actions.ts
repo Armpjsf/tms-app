@@ -484,13 +484,14 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
     if (vehicle) updateData.Sub_ID = vehicle.Sub_ID || null
   }
   
-  // Auto-calculate Price_Cust_Total for updates if total is 0 and we have unit price info
-  if ((!updateData.Price_Cust_Total || Number(updateData.Price_Cust_Total) === 0)) {
+  // Auto-calculate Price_Cust_Total for updates 
+  // Trigger if Price_Cust_Total is missing/0 OR if Loaded_Qty was explicitly updated
+  if ((!updateData.Price_Cust_Total || Number(updateData.Price_Cust_Total) === 0) || (data.Loaded_Qty !== undefined)) {
      const targetCustomerId = updateData.Customer_ID || (await supabase.from('Jobs_Main').select('Customer_ID').eq('Job_ID', jobId).single()).data?.Customer_ID
      if (targetCustomerId) {
          const { data: customer } = await supabase.from('Master_Customers').select('Price_Per_Unit').eq('Customer_ID', targetCustomerId).single()
          const unitPrice = customer?.Price_Per_Unit || 0
-         const qty = Number(updateData.Loaded_Qty || updateData.Weight_Kg || (await supabase.from('Jobs_Main').select('Loaded_Qty').eq('Job_ID', jobId).single()).data?.Loaded_Qty || 0)
+         const qty = Number(updateData.Loaded_Qty ?? (await supabase.from('Jobs_Main').select('Loaded_Qty').eq('Job_ID', jobId).single()).data?.Loaded_Qty || 0)
          
          if (unitPrice > 0 && qty > 0) {
              updateData.Price_Cust_Total = Number((qty * unitPrice).toFixed(2))

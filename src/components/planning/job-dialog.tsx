@@ -158,11 +158,16 @@ export function JobDialog({
   const parseJson = (val: string | unknown[] | Record<string, any> | null | undefined, defaultVal: any) => {
     if (!val) return defaultVal
     if (Array.isArray(val)) return val
-    if (typeof val === 'object' && val !== null) return [val] // Wrap single object as array if needed
-    if (typeof val === 'string') {
+    if (typeof val === 'object' && val !== null) {
+      if (Array.isArray(val)) return val
+      return [val] // Wrap single object as array
+    }
+    if (typeof val === 'string' && val.trim() !== '') {
       try {
         const parsed = JSON.parse(val)
-        return Array.isArray(parsed) ? parsed : [parsed]
+        if (Array.isArray(parsed)) return parsed
+        if (parsed && typeof parsed === 'object') return [parsed]
+        return defaultVal
       } catch {
         return defaultVal
       }
@@ -373,18 +378,35 @@ export function JobDialog({
       // A. Sync Locations
       const rawOrigins = (job.origins || job.original_origins_json)
       let parsedOrigins = parseJson(rawOrigins, []) as LocationPoint[]
-      if (parsedOrigins.length === 0 && job.Origin_Location) {
-        parsedOrigins = [{ name: job.Origin_Location, lat: job.Pickup_Lat?.toString() || '', lng: job.Pickup_Lon?.toString() || '' }]
+      
+      // Fallback: If no parsed origins or they are effectively empty, use plain strings
+      if (parsedOrigins.length === 0 || (parsedOrigins.length === 1 && !parsedOrigins[0].name)) {
+        if (job.Origin_Location) {
+          parsedOrigins = [{ 
+            name: job.Origin_Location, 
+            lat: job.Pickup_Lat?.toString() || '', 
+            lng: job.Pickup_Lon?.toString() || '' 
+          }]
+        } else {
+          parsedOrigins = [{ name: '', lat: '', lng: '' }]
+        }
       }
-      if (parsedOrigins.length === 0) parsedOrigins = [{ name: '', lat: '', lng: '' }]
       setOrigins(parsedOrigins)
 
       const rawDestinations = (job.destinations || job.original_destinations_json)
       let parsedDestinations = parseJson(rawDestinations, []) as LocationPoint[]
-      if (parsedDestinations.length === 0 && job.Dest_Location) {
-        parsedDestinations = [{ name: job.Dest_Location, lat: job.Delivery_Lat?.toString() || '', lng: job.Delivery_Lon?.toString() || '' }]
+      
+      if (parsedDestinations.length === 0 || (parsedDestinations.length === 1 && !parsedDestinations[0].name)) {
+        if (job.Dest_Location) {
+          parsedDestinations = [{ 
+            name: job.Dest_Location, 
+            lat: job.Delivery_Lat?.toString() || '', 
+            lng: job.Delivery_Lon?.toString() || '' 
+          }]
+        } else {
+          parsedDestinations = [{ name: '', lat: '', lng: '' }]
+        }
       }
-      if (parsedDestinations.length === 0) parsedDestinations = [{ name: '', lat: '', lng: '' }]
       setDestinations(parsedDestinations)
 
       // B. Sync Extra Costs
@@ -484,6 +506,7 @@ export function JobDialog({
         Vehicle_Plate: '',
         Vehicle_Type: job?.Vehicle_Type || '4-Wheel'
     }))
+    // Note: origins and destinations are already in state, so they are preserved
     setAssignments([{ 
         Vehicle_Type: job?.Vehicle_Type || '4-Wheel', 
         Vehicle_Plate: '', 
@@ -493,9 +516,8 @@ export function JobDialog({
         Cost_Driver_Total: job?.Cost_Driver_Total ? Number(job.Cost_Driver_Total) : 0,
         Price_Cust_Total: job?.Price_Cust_Total ? Number(job.Price_Cust_Total) : 0
     }])
-    setActiveTab('assign')
-    // Assuming 'toast' is defined elsewhere or meant to be a placeholder for a notification system
-    // toast.success("คัดลอกข้อมูลงานเรียบร้อยแล้ว กรุณามอบหมายคนขับสำหรับงานใหม่")
+    setActiveTab('info')
+    toast.info(t('jobs.dialog.cloning_mode') || "Entering cloning mode")
   }
 
   const handleCopyTrackingLink = () => {
