@@ -66,9 +66,22 @@ export function JobActionButton({ job }: JobActionButtonProps) {
 
 
   if (currentStatus === 'Completed') {
+    const isVerified = job.Verification_Status === 'Verified'
+
     return (
-        <div className="text-center p-3 bg-emerald-500/10 rounded-xl text-emerald-400 font-medium flex items-center justify-center gap-2 text-xs">
-            <CheckSquare size={18} /> งานเสร็จสิ้นแล้ว
+        <div className="flex flex-col gap-2">
+            <div className="text-center p-3 bg-emerald-500/10 rounded-xl text-emerald-400 font-medium flex items-center justify-center gap-2 text-xs">
+                <CheckSquare size={18} /> งานเสร็จสิ้นแล้ว {isVerified && "(ตรวจสอบแล้ว)"}
+            </div>
+            {!isVerified && (
+                <Button 
+                    onClick={handlePOD}
+                    variant="outline"
+                    className="w-full h-12 border-amber-500/50 text-amber-500 hover:bg-amber-500/10 font-bold"
+                >
+                    แก้ไขจำนวนสินค้า
+                </Button>
+            )}
         </div>
     )
   }

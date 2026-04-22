@@ -16,8 +16,18 @@ export async function getJobGPSData(jobId: string, driverId: string, date: strin
             .eq('job_id', jobId) 
             .order('timestamp', { ascending: true })
         
-        // If no job-specific logs, fallback to driver logs for that day
+        // If no job-specific logs, try stripping 'JOB-' prefix (mobile app might send it without)
         let finalRoute = routeData
+        if ((!finalRoute || finalRoute.length === 0) && jobId.startsWith('JOB-')) {
+            const strippedId = jobId.replace('JOB-', '')
+            const { data: strippedData } = await supabase
+                .from('gps_logs')
+                .select('latitude, longitude, timestamp')
+                .eq('job_id', strippedId) 
+                .order('timestamp', { ascending: true })
+            if (strippedData && strippedData.length > 0) finalRoute = strippedData
+        }
+
         if (!finalRoute || finalRoute.length === 0) {
             const { data: driverData } = await supabase
                 .from('gps_logs')

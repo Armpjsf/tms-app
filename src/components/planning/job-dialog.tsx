@@ -200,6 +200,7 @@ export function JobDialog({
     Est_Distance_KM: job?.Est_Distance_KM || '',
     Price_Cust_Extra: job?.Price_Cust_Extra || '',
     Cost_Driver_Extra: job?.Cost_Driver_Extra || '',
+    Loaded_Qty: job?.Loaded_Qty || '',
   })
 
   // Multi-point origins
@@ -431,6 +432,7 @@ export function JobDialog({
         Show_Price_To_Driver: firstAssign.Show_Price_To_Driver ?? job.Show_Price_To_Driver ?? true,
         Delivery_Lat: job.Delivery_Lat || null,
         Delivery_Lon: job.Delivery_Lon || null,
+        Loaded_Qty: job.Loaded_Qty !== null && job.Loaded_Qty !== undefined ? job.Loaded_Qty : '',
       }
       console.log('[JobDialog DEBUG] Setting formData:', newFormData);
       setFormData(newFormData);
@@ -838,6 +840,7 @@ export function JobDialog({
         Est_Distance_KM: formData.Est_Distance_KM,
         Price_Cust_Extra: formData.Price_Cust_Extra, // Ensure Extra Costs saved
         Cost_Driver_Extra: formData.Cost_Driver_Extra,
+        Loaded_Qty: formData.Loaded_Qty === "" ? null : Number(formData.Loaded_Qty),
       }
 
       if (internalMode === 'create') {
@@ -1367,6 +1370,23 @@ export function JobDialog({
                                     )
                                 })()}
                             </div>
+                        </div>
+
+                        {/* Added Loaded Qty Input for Admin */}
+                        <div className="space-y-4">
+                            <Label className="text-amber-500 text-2xl font-black uppercase tracking-normal flex items-center gap-2">
+                                <Package className="w-5 h-5" /> {language === 'th' ? 'จำนวนที่ส่งมอบจริง' : 'Loaded Qty'}
+                            </Label>
+                            <Input
+                                type="number"
+                                value={formData.Loaded_Qty}
+                                onChange={(e) => setFormData({ ...formData, Loaded_Qty: e.target.value === "" ? "" : Number(e.target.value) })}
+                                placeholder="0"
+                                className="bg-background border-amber-500/30 text-amber-600 dark:text-amber-400 text-xl h-14 font-black"
+                            />
+                            <p className="text-xs font-bold text-muted-foreground italic">
+                                {language === 'th' ? "* แก้ไขจำนวนชิ้นหลังส่งงาน (ถ้าจำเป็น)" : "* Edit actual pieces delivered if needed."}
+                            </p>
                         </div>
                     </div>
                    </>

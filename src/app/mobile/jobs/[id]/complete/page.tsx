@@ -35,9 +35,14 @@ export default function JobCompletePage() {
   const reportRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-      if (params.id) {
-          getJobDetails(params.id).then(setJob)
-      }
+    if (params.id) {
+        getJobDetails(params.id).then(j => {
+            setJob(j)
+            if (j?.Loaded_Qty) {
+                setLoadedQty(j.Loaded_Qty.toString())
+            }
+        })
+    }
   }, [params.id])
 
   // Trigger AI Verification when photo is added
@@ -281,10 +286,9 @@ export default function JobCompletePage() {
                              )}
                         </div>
                     ) : null}
-                )}
-                    </div>
-                )}
-                </section>
+                </div>
+            )}
+        </section>
 
                 {/* Quantity Input Section (Only if needed for pricing) */}
                 {job && job.Price_Per_Unit && Number(job.Price_Per_Unit) > 0 && (!job.Price_Cust_Total || Number(job.Price_Cust_Total) === 0) && (

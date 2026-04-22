@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
 import { OrderTimeline } from "@/components/ui/order-timeline"
 import { DriverLocation } from "@/components/maps/leaflet-map"
+import { Route } from "@/lib/supabase/routes"
 
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), { 
     ssr: false,
@@ -49,9 +50,10 @@ type JobSummaryDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   job: Job | any
+  routes?: Route[]
 }
 
-export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogProps) {
+export function JobSummaryDialog({ open, onOpenChange, job, routes }: JobSummaryDialogProps) {
   const { t } = useLanguage()
   const [gpsData, setGpsData] = useState<JobGPSData | null>(null)
 
@@ -105,9 +107,24 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
   const originsList = parseNodes(job.origins || job.original_origins_json)
   const destsList = parseNodes(job.destinations || job.original_destinations_json)
   
+  // Tactical Fallback: Parse from Route_Name (e.g. "A -> B")
+  const routeParts = job.Route_Name?.includes('->') 
+    ? job.Route_Name.split('->').map((s: string) => s.trim())
+    : job.Route_Name?.includes('-')
+      ? job.Route_Name.split('-').map((s: string) => s.trim())
+      : []
+
+  const routeOrigin = routeParts.length > 0 ? routeParts[0] : null
+  const routeDest = routeParts.length > 1 ? routeParts[1] : null
+
+  // Master Route Lookup (Tactical fallback suggested by user)
+  const masterRoute = routes?.find(r => r.Route_Name === job.Route_Name)
+
   // Ultimate Fallback Chain for Origin
   const displayOrigin = job.Origin_Location || 
                         (originsList.length > 0 ? originsList[0].name : null) || 
+                        masterRoute?.Origin ||
+                        routeOrigin ||
                         (job as any).Pickup_Location || 
                         (job as any).Pickup_Address ||
                         '-'
@@ -115,6 +132,8 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
   // Ultimate Fallback Chain for Destination
   const displayDest = job.Dest_Location || 
                       (destsList.length > 0 ? destsList[destsList.length - 1].name : null) || 
+                      masterRoute?.Destination ||
+                      routeDest ||
                       (job as any).Delivery_Location || 
                       (job as any).Delivery_Address ||
                       '-'
@@ -245,11 +264,17 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 {t('reports.latest_location')}
               </h3>
               <div className="h-[250px] rounded-2xl overflow-hidden border border-border/10 bg-muted shadow-inner relative">
-                {(job.Tracking_LAT && job.Tracking_LNG) || gpsPoints.length > 0 || latestLocation ? (
+                {(job.Tracking_LAT && job.Tracking_LNG) || gpsPoints.length > 0 || latestLocation || masterRoute?.Origin_Lat ? (
                   <LeafletMap 
                     routeHistory={gpsPoints as [number, number][]}
-                    drivers={mapDrivers}
-                    center={latestLocation ? [latestLocation.lat, latestLocation.lng] : undefined}
+                    drivers={mapDrivers.length > 0 ? mapDrivers : (masterRoute?.Origin_Lat ? [{
+                        id: 'static',
+                        name: 'Route Path',
+                        lat: masterRoute.Origin_Lat,
+                        lng: masterRoute.Origin_Lon || 0,
+                        status: 'Planned Route Start'
+                    }] : [])}
+                    center={latestLocation ? [latestLocation.lat, latestLocation.lng] : (masterRoute?.Origin_Lat ? [masterRoute.Origin_Lat, masterRoute.Origin_Lon || 0] : undefined)}
                   />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-background/80 backdrop-blur-sm">
@@ -368,31 +393,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
             {t('reports.close_btn')}
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2 border-border/10 text-foreground" onClick={() => window.print()}>
-              <FileText size={16} />
-              {t('reports.print_btn')}
-            </Button>
-            
-            {reportUrl ? (
-              <Button 
-                asChild
-                className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-900/20"
-              >
-                <Link href={reportUrl} target="_blank">
-                  <Eye size={16} />
-                  {t('reports.view_original_btn')}
-                </Link>
-              </Button>
-            ) : (
-              <Button 
-                disabled
-                variant="secondary"
-                className="gap-2 opacity-50 transition-opacity"
-              >
-                <FileX size={16} />
-                {t('reports.no_file')}
-              </Button>
-            )}
+            {/* Action buttons removed as per user request */}
           </div>
         </div>
       </DialogContent>

@@ -274,6 +274,11 @@ export const dictionaries = {
       toast_verified: 'อนุมัติงานเรียบร้อยแล้ว',
       toast_rejected: 'ไม่อนุมัติงานเรียบร้อยแล้ว'
     },
+    timeline: {
+      action_create: 'สร้างงาน',
+      action_update: 'อัปเดตข้อมูล',
+      action_delete: 'ลบงาน',
+    },
     jobs: {
       status_requested: 'รอการตอบรับ',
       status_pending: 'รอเริ่มงาน',
@@ -308,7 +313,8 @@ export const dictionaries = {
           locations: 'จุดรับ-ส่งสินค้า',
           items: 'รายการสินค้า',
           assignment: 'การมอบหมายงาน',
-          price: 'ราคาและต้นทุน'
+          price: 'ราคาและต้นทุน',
+          history: 'ประวัติงาน'
         },
         abort: 'ยกเลิก',
         execute: 'สร้างงาน',
@@ -390,6 +396,12 @@ export const dictionaries = {
         use_current_branch: '-- ใช้สาขาปัจจุบัน --',
         branch_helper: 'หากไม่เลือก จะใช้สาขาที่เลือกไว้ที่แถบด้านบน',
         copy_tracking: 'คัดลอกลิงก์ติดตาม',
+        timeline_title: 'ประวัติกิจกรรมและการดำเนินงาน',
+        msg_no_activity: 'ยังไม่มีกิจกรรมการทำงานบันทึกไว้',
+        audit_verified: 'งานนี้ได้รับการตรวจสอบแล้ว',
+        audit_desc: 'ข้อมูลทั้งหมดถูกต้องและได้รับการยืนยันโดยแอดมิน',
+        msg_retrieving_history: 'กำลังดึงข้อมูลประวัติ...',
+        msg_params_updated: 'มีการอัปเดตข้อมูลรายละเอียดงาน',
       },
     },
     maintenance: {
@@ -2109,6 +2121,11 @@ export const dictionaries = {
           name_required: 'Route name is required',
       }
     },
+    timeline: {
+      action_create: 'Job Created',
+      action_update: 'Information Updated',
+      action_delete: 'Job Deleted',
+    },
     jobs: {
       status_requested: 'Requested',
       status_pending: 'Pending',
@@ -2143,7 +2160,8 @@ export const dictionaries = {
           locations: 'Pickup/Dropoff',
           items: 'Cargo Items',
           assignment: 'Assignment',
-          price: 'Pricing'
+          price: 'Pricing',
+          history: 'History'
         },
         abort: 'Cancel',
         execute: 'Create Job',
@@ -2226,6 +2244,12 @@ export const dictionaries = {
         use_current_branch: 'Use Current',
         branch_helper: 'Defaults to current active hub',
         copy_tracking: 'Copy Link',
+        timeline_title: 'Activity & Operational History',
+        msg_no_activity: 'No operational activity recorded yet.',
+        audit_verified: 'This job has been verified',
+        audit_desc: 'All data is correct and has been confirmed by administrator.',
+        msg_retrieving_history: 'Retrieving history data...',
+        msg_params_updated: 'Job details have been updated',
       },
     },
     maintenance: {

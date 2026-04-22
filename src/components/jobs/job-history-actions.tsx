@@ -138,6 +138,7 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
         open={showSummary}
         onOpenChange={setShowSummary}
         job={job}
+        routes={routes}
       />
 
       <AdminVerificationDialog

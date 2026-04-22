@@ -151,7 +151,7 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
   
   // Auto-calculate if total is 0 but we have quantity and unit price
   if (custTotal === 0 && unitPrice > 0) {
-      const qty = Number(data.Weight_Kg || data.Volume_Cbm || 0)
+      const qty = Number(data.Loaded_Qty || data.Weight_Kg || data.Volume_Cbm || 0)
       if (qty > 0) {
           custTotal = Number((qty * unitPrice).toFixed(2))
       }
@@ -188,6 +188,7 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
       Delivery_Lat: data.Delivery_Lat || null,
       Delivery_Lon: data.Delivery_Lon || null,
       Branch_ID: data.Branch_ID || null,
+      Loaded_Qty: Number(data.Loaded_Qty) || 0,
       Created_At: new Date().toISOString(),
   }
 }
@@ -489,7 +490,7 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
      if (targetCustomerId) {
          const { data: customer } = await supabase.from('Master_Customers').select('Price_Per_Unit').eq('Customer_ID', targetCustomerId).single()
          const unitPrice = customer?.Price_Per_Unit || 0
-         const qty = Number(updateData.Weight_Kg || updateData.Volume_Cbm || (await supabase.from('Jobs_Main').select('Weight_Kg').eq('Job_ID', jobId).single()).data?.Weight_Kg || 0)
+         const qty = Number(updateData.Loaded_Qty || updateData.Weight_Kg || (await supabase.from('Jobs_Main').select('Loaded_Qty').eq('Job_ID', jobId).single()).data?.Loaded_Qty || 0)
          
          if (unitPrice > 0 && qty > 0) {
              updateData.Price_Cust_Total = Number((qty * unitPrice).toFixed(2))
