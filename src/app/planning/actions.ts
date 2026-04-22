@@ -118,7 +118,8 @@ export async function createJob(data: JobFormData) {
       revalidatePath('/planning')
       
       // Auto-save locations for future use
-      autoSaveOriginDestinations(data.Branch_ID || null, data.original_origins_json, data.original_destinations_json).catch(() => {})
+      // Disable auto-save to Master_Routes as per user request to prevent data clutter
+      // autoSaveOriginDestinations(data.Branch_ID || null, data.original_origins_json, data.original_destinations_json).catch(() => {})
       
       return { success: true, message: 'Job created successfully' }
   }
@@ -195,43 +196,11 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
 
 /**
  * Auto-saves new origins/destinations into Master_Routes for future autocomplete
+ * DISABLED: Per user request to prevent unintended route data creation.
  */
 async function autoSaveOriginDestinations(branchId: string | null, originsJson?: string, destsJson?: string) {
-    if (!branchId) return
-    const supabase = createAdminClient()
-
-    const parseNodes = (json?: string) => {
-        if (!json) return []
-        try {
-            const parsed = JSON.parse(json)
-            return Array.isArray(parsed) ? parsed : []
-        } catch {
-            return []
-        }
-    }
-
-    const allNodes = [...parseNodes(originsJson), ...parseNodes(destsJson)]
-    const validNodes = allNodes.filter(n => n.name && n.lat && n.lng)
-
-    if (validNodes.length === 0) return
-
-    // Prepare upsert payload
-    const routesToSave = validNodes.map(node => ({
-        Route_Name: node.name.trim(),
-        Origin: node.name.trim(),
-        Origin_Lat: parseFloat(String(node.lat)),
-        Origin_Lon: parseFloat(String(node.lng)),
-        Destination: node.name.trim(),
-        Dest_Lat: parseFloat(String(node.lat)),
-        Dest_Lon: parseFloat(String(node.lng)),
-        Branch_ID: branchId,
-        Distance_KM: 0
-    }))
-
-    // Upsert to Master_Routes (Ignore duplicates or update coordinates)
-    await supabase
-        .from('Master_Routes')
-        .upsert(routesToSave, { onConflict: 'Route_Name' })
+    // This feature is currently disabled to prevent data clutter in Master_Routes.
+    return
 }
 
 export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
