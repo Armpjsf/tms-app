@@ -118,9 +118,29 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
     ).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
   }, [contacts, initialDrivers, searchQuery])
 
-  const activeDriver = selectedDriverId 
-    ? (contacts.find(c => c.driver_id === selectedDriverId) || initialDrivers.find(d => d.Driver_ID === selectedDriverId))
-    : null
+  const activeDriver = useMemo(() => {
+    if (!selectedDriverId) return null
+    const contact = contacts.find(c => c.driver_id === selectedDriverId)
+    if (contact) return contact
+    
+    const initial = initialDrivers.find(d => d.Driver_ID === selectedDriverId)
+    if (initial) return {
+        driver_id: initial.Driver_ID,
+        driver_name: initial.Driver_Name || `พนักงานขับรถ (${initial.Driver_ID})`,
+        last_message: '',
+        unread: 0,
+        updated_at: new Date().toISOString()
+    }
+
+    // Fallback for cases where driver ID exists but not in current lists (e.g. from a notification)
+    return {
+        driver_id: selectedDriverId,
+        driver_name: `พนักงานขับรถ (${selectedDriverId})`,
+        last_message: '',
+        unread: 0,
+        updated_at: new Date().toISOString()
+    }
+  }, [selectedDriverId, contacts, initialDrivers])
 
   const fetchMessages = useCallback(async (driverId: string) => {
     const { getChatHistory } = await import('@/lib/actions/chat-actions')
