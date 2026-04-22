@@ -54,8 +54,8 @@ export function AdminGlobalNotifier({ branchId, isAdmin }: AdminGlobalNotifierPr
       if (notifiedIds.current.has(`${type}-${id}`)) return
       
       // 2. Branch Filtering
-      // Only filter if not a Super Admin (isAdmin = true)
-      if (!isAdmin && branchId && branchId !== 'All') {
+      // Filter by selected branch for everyone (including Super Admin)
+      if (branchId && branchId !== 'All') {
           // If the data has a Branch_ID and it doesn't match, skip
           if (data.Branch_ID && String(data.Branch_ID) !== String(branchId)) return
       }
@@ -104,8 +104,8 @@ export function AdminGlobalNotifier({ branchId, isAdmin }: AdminGlobalNotifierPr
         const data = payload.new as any
         if (!data || notifiedIds.current.has(`sos-${data.Job_ID}`)) return
         
-        // Branch Check
-        if (!isAdmin && branchId && branchId !== 'All') {
+        // Branch Check (Enforce for all, including Super Admin)
+        if (branchId && branchId !== 'All') {
             if (data.Branch_ID && String(data.Branch_ID) !== String(branchId)) return
         }
 
@@ -229,9 +229,20 @@ export function AdminGlobalNotifier({ branchId, isAdmin }: AdminGlobalNotifierPr
     // 3. Chat Listener
     const chatChannel = supabase
       .channel('global-chat-listener')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'Chat_Messages' }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'Chat_Messages' }, async (payload) => {
         const data = payload.new as any
         if (!data || data.receiver_id !== 'admin' || notifiedIds.current.has(`chat-${data.id}`)) return
+
+        // Branch Filter for Chat (Messages don't have Branch_ID, need to check sender/driver)
+        if (branchId && branchId !== 'All') {
+            try {
+                const { data: driver } = await supabase.from('Master_Drivers').select('Branch_ID').eq('Driver_ID', data.sender_id).single()
+                if (driver && String(driver.Branch_ID) !== String(branchId)) return
+            } catch (err) {
+                // If lookup fails, default to showing if we can't confirm branch mismatch
+            }
+        }
+
         notifiedIds.current.add(`chat-${data.id}`)
         playSound('standard')
         toast.info(
