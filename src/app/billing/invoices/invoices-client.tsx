@@ -102,6 +102,14 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
       setSelectedJobIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }
 
+  const toggleAll = () => {
+    if (selectedJobIds.length === filteredJobs.length && filteredJobs.length > 0) {
+        setSelectedJobIds([])
+    } else {
+        setSelectedJobIds(filteredJobs.map(j => j.Job_ID))
+    }
+  }
+
   return (
     <DashboardLayout>
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 bg-background/60 backdrop-blur-3xl p-8 rounded-3xl border border-border/5 shadow-xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
@@ -327,7 +335,27 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                     <table className="w-full text-sm text-left border-collapse">
                     <thead>
                         <tr className="bg-muted/30 border-b border-border/5">
-                        {activeTab === 'missions' && <th className="px-6 py-4 w-12"></th>}
+                        {activeTab === 'missions' && (
+                            <th className="px-6 py-4 w-12">
+                                <div 
+                                    className={cn(
+                                        "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer",
+                                        selectedJobIds.length > 0 && selectedJobIds.length === filteredJobs.length 
+                                            ? "bg-primary border-primary rotate-12 scale-110 shadow-lg" 
+                                            : selectedJobIds.length > 0 
+                                                ? "bg-primary/50 border-primary"
+                                                : "border-border/20 hover:border-primary/50"
+                                    )}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        toggleAll()
+                                    }}
+                                >
+                                    {selectedJobIds.length > 0 && selectedJobIds.length === filteredJobs.length && <CheckCircle2 size={12} className="text-white" strokeWidth={3} />}
+                                    {selectedJobIds.length > 0 && selectedJobIds.length < filteredJobs.length && <div className="w-2.5 h-0.5 bg-white rounded-full" />}
+                                </div>
+                            </th>
+                        )}
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">{activeTab === 'missions' ? t('invoices.col_mission_id') : t('invoices.col_id')}</th>
                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">{t('invoices.col_entity')}</th>
                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground text-center">{activeTab === 'missions' ? t('invoices.col_plan_date') : t('invoices.col_vector')}</th>
