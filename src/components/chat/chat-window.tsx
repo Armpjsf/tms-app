@@ -89,20 +89,33 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   }, [])
 
   const filteredContacts = useMemo(() => {
-    const all = contacts.length > 0 ? contacts : initialDrivers.map(d => ({
-      driver_id: d.Driver_ID,
-      driver_name: d.Driver_Name || `พนักงานขับรถ (${d.Driver_ID})`,
-      last_message: 'เริ่มการสนทนา',
-      unread: 0,
-      updated_at: new Date().toISOString()
-    }))
+    // Merge contacts (history) and initialDrivers (currently active)
+    const contactMap = new Map<string, Contact>()
     
-    if (!searchQuery.trim()) return all
+    // 1. Start with initial active drivers
+    initialDrivers.forEach(d => {
+      contactMap.set(d.Driver_ID, {
+        driver_id: d.Driver_ID,
+        driver_name: d.Driver_Name || `พนักงานขับรถ (${d.Driver_ID})`,
+        last_message: 'เริ่มการสนทนา',
+        unread: 0,
+        updated_at: new Date().toISOString()
+      })
+    })
+
+    // 2. Overlay with actual chat contacts (to get last message and unread counts)
+    contacts.forEach(c => {
+      contactMap.set(c.driver_id, c)
+    })
+    
+    const all = Array.from(contactMap.values())
+    
+    if (!searchQuery.trim()) return all.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     const q = searchQuery.toLowerCase()
     return all.filter((c: Contact) => 
-      c.driver_name.toLowerCase().includes(q) ||
-      c.driver_id.toLowerCase().includes(q)
-    )
+      (c.driver_name || '').toLowerCase().includes(q) ||
+      (c.driver_id || '').toLowerCase().includes(q)
+    ).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
   }, [contacts, initialDrivers, searchQuery])
 
   const activeDriver = selectedDriverId 
@@ -345,7 +358,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                       "w-12 h-12 rounded-full flex items-center justify-center text-foreground font-bold text-lg border-2 transition-all duration-300",
                       isSelected ? 'bg-primary border-primary text-white' : 'bg-background border-border/10 text-muted-foreground'
                     )}>
-                      {name.charAt(0)}
+                      {(name || '?').toString().charAt(0)}
                     </div>
                     {(c.unread || 0) > 0 && (
                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-[10px] font-bold text-white flex items-center justify-center rounded-full border-2 border-background">
@@ -385,7 +398,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                      {(activeDriver.driver_name || activeDriver.Driver_Name || '?').charAt(0)}
+                      {(activeDriver.driver_name || activeDriver.Driver_Name || '?').toString().charAt(0)}
                     </div>
                     <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-background shadow-sm" />
                   </div>

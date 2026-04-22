@@ -253,9 +253,10 @@ export default function JobCompletePage() {
             <h2 className="text-muted-foreground font-bold mb-2">1. ถ่ายรูปสินค้า</h2>
             <CameraInput onImagesChange={setPhotos} maxImages={5} />
             
-            {/* AI Verification Feedback */}
-            {photos.length > 0 && (
-                <div className="mt-3 bg-card border border-slate-800 rounded-lg p-3">
+            {/* AI Verification Feedback - Reserved space to prevent signature jumping */}
+            <div className="mt-3 bg-card border border-slate-800 rounded-lg p-3 min-h-[5rem] flex flex-col justify-center">
+                {photos.length > 0 ? (
+                    <>
                     {verifying ? (
                         <div className="flex items-center gap-3 text-purple-400 animate-pulse">
                             <ScanLine className="animate-spin-slow" size={20} />
@@ -286,8 +287,14 @@ export default function JobCompletePage() {
                              )}
                         </div>
                     ) : null}
-                </div>
-            )}
+                    </>
+                ) : (
+                    <div className="flex items-center gap-3 text-muted-foreground/40 italic">
+                        <ScanLine size={20} />
+                        <span className="text-lg">ถ่ายรูปเพื่อรับการตรวจสอบด้วย AI</span>
+                    </div>
+                )}
+            </div>
         </section>
 
                 {/* Quantity Input Section (Only if needed for pricing) */}

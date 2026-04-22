@@ -45,14 +45,15 @@ export function SignaturePad({ onSave }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="border-2 border-slate-300 rounded-xl bg-white overflow-hidden touch-none relative">
+    <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+      <div className="border-2 border-slate-300 rounded-xl bg-white overflow-hidden touch-none relative min-h-[12rem]">
         <SignatureCanvas
           ref={sigCanvas}
           penColor="black"
           backgroundColor="white"
           canvasProps={{
             className: "w-full h-48 cursor-crosshair block",
+            style: { width: '100%', height: '192px' }
           }}
           onBegin={() => setIsEmpty(false)}
           onEnd={handleEnd}
