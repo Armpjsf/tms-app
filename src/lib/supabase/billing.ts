@@ -96,6 +96,24 @@ export async function createBillingNote(
             branchId = jobs?.[0]?.Branch_ID || 'HQ'
         }
 
+        // Fetch customer details to persist them in the billing note
+        let customerAddress = ""
+        let customerTaxId = ""
+        let creditDays = 15
+
+        const { data: customer } = await supabase
+            .from('Master_Customers')
+            .select('Address, Tax_ID, Credit_Term')
+            .eq('Customer_Name', customerName.trim())
+            .limit(1)
+            .maybeSingle()
+        
+        if (customer) {
+            customerAddress = customer.Address || ""
+            customerTaxId = customer.Tax_ID || ""
+            creditDays = customer.Credit_Term || 15
+        }
+
         const { error: insertError } = await supabase
             .from('Billing_Notes')
             .insert({
@@ -107,7 +125,10 @@ export async function createBillingNote(
                 Status: 'Pending',
                 Created_At: new Date().toISOString(),
                 Updated_At: new Date().toISOString(),
-                Branch_ID: branchId
+                Branch_ID: branchId,
+                Customer_Address: customerAddress,
+                Customer_Tax_ID: customerTaxId,
+                Credit_Days: creditDays
             })
 
         if (insertError) throw insertError
@@ -423,10 +444,19 @@ export async function getBillingNoteByIdWithJobs(id: string) {
         let customerTaxId = ""
 
         if (note && note.Customer_Name) {
-            const { data: customer, error: custError } = await supabase
-                .from('Master_Customers')
-                .select('Address, Tax_ID, Email') 
-                .eq('Customer_Name', note.Customer_Name)
+            // Try to find Customer_ID from jobs first (more reliable than name matching)
+            const customerId = jobs.find(j => j.Customer_ID)?.Customer_ID
+            
+            let query = supabase.from('Master_Customers').select('Address, Tax_ID, Email')
+            
+            if (customerId) {
+                query = query.eq('Customer_ID', customerId)
+            } else {
+                // Fallback to name with trimming to handle potential trailing spaces
+                query = query.eq('Customer_Name', note.Customer_Name.trim())
+            }
+
+            const { data: customer, error: custError } = await query
                 .limit(1)
                 .maybeSingle()
             
@@ -435,8 +465,8 @@ export async function getBillingNoteByIdWithJobs(id: string) {
             }
 
             if (customer) {
-                customerAddress = customer.Address
-                customerTaxId = customer.Tax_ID
+                customerAddress = customer.Address || ""
+                customerTaxId = customer.Tax_ID || ""
                 customerEmail = customer.Email || ""
             }
         }
@@ -847,16 +877,24 @@ export async function getPublicBillingNoteById(id: string) {
         let customerTaxId = ""
 
         if (note && note.Customer_Name) {
-            const { data: customer } = await supabase
-                .from('Master_Customers')
-                .select('Address, Tax_ID, Email') 
-                .eq('Customer_Name', note.Customer_Name)
+            // Try to find Customer_ID from jobs first (more reliable)
+            const customerId = jobs.find(j => j.Customer_ID)?.Customer_ID
+            
+            let query = supabase.from('Master_Customers').select('Address, Tax_ID, Email')
+            
+            if (customerId) {
+                query = query.eq('Customer_ID', customerId)
+            } else {
+                query = query.eq('Customer_Name', note.Customer_Name.trim())
+            }
+
+            const { data: customer } = await query
                 .limit(1)
                 .maybeSingle()
             
             if (customer) {
-                customerAddress = customer.Address
-                customerTaxId = customer.Tax_ID
+                customerAddress = customer.Address || ""
+                customerTaxId = customer.Tax_ID || ""
                 customerEmail = customer.Email || ""
             }
         }
