@@ -12,7 +12,8 @@ type Props = {
 export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
   const [previews, setPreviews] = useState<string[]>([])
   const [files, setFiles] = useState<File[]>([])
-  const inputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawFiles = Array.from(e.target.files || [])
@@ -56,9 +57,17 @@ export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
 
   const triggerCamera = () => {
     if (files.length >= maxImages) return
-    if (inputRef.current) {
-        inputRef.current.value = ''
-        inputRef.current.click()
+    if (cameraInputRef.current) {
+        cameraInputRef.current.value = ''
+        cameraInputRef.current.click()
+    }
+  }
+
+  const triggerGallery = () => {
+    if (files.length >= maxImages) return
+    if (galleryInputRef.current) {
+        galleryInputRef.current.value = ''
+        galleryInputRef.current.click()
     }
   }
 
@@ -67,10 +76,18 @@ export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
       <input
         type="file"
         accept="image/*"
-        capture="environment" // Prefer rear camera
+        capture="environment"
         multiple
         className="hidden" 
-        ref={inputRef}
+        ref={cameraInputRef}
+        onChange={handleFileChange}
+      />
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden" 
+        ref={galleryInputRef}
         onChange={handleFileChange}
       />
 
@@ -91,32 +108,55 @@ export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
                 </div>
             ))}
             
-            {/* Add More Button */}
+            {/* Add More Buttons */}
             {previews.length < maxImages && (
-                <button
-                    type="button"
-                    onClick={triggerCamera}
-                    className="aspect-video rounded-xl border-2 border-dashed border-gray-200 bg-white/80 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-700 hover:border-slate-500 transition-colors active:bg-gray-100"
-                >
-                    <Plus size={24} />
-                    <span className="text-lg font-bold">เพิ่มรูป</span>
-                </button>
+                <div className="contents">
+                    <button
+                        type="button"
+                        onClick={triggerCamera}
+                        className="aspect-video rounded-xl border-2 border-dashed border-gray-200 bg-white/80 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-gray-700 hover:border-slate-500 transition-colors active:bg-gray-100"
+                    >
+                        <Camera size={20} />
+                        <span className="text-sm font-bold">ถ่ายเพิ่ม</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={triggerGallery}
+                        className="aspect-video rounded-xl border-2 border-dashed border-gray-200 bg-white/80 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-gray-700 hover:border-slate-500 transition-colors active:bg-gray-100"
+                    >
+                        <Plus size={20} />
+                        <span className="text-sm font-bold">แนบรูป</span>
+                    </button>
+                </div>
             )}
         </div>
       )}
 
       {/* Initial Empty State */}
       {previews.length === 0 && (
-        <button
-          type="button"
-          onClick={triggerCamera}
-          className="w-full aspect-video rounded-xl border-2 border-dashed border-gray-200 bg-white/80 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-700 hover:border-slate-500 transition-colors active:bg-gray-100"
-        >
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-            <Camera size={24} />
-          </div>
-          <span className="text-xl font-medium">ถ่ายรูปสินค้า ({files.length}/{maxImages})</span>
-        </button>
+        <div className="grid grid-cols-2 gap-4">
+            <button
+            type="button"
+            onClick={triggerCamera}
+            className="aspect-video rounded-2xl border-2 border-dashed border-gray-200 bg-white shadow-sm flex flex-col items-center justify-center gap-3 text-gray-400 hover:text-primary hover:border-primary/50 transition-all active:scale-95"
+            >
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <Camera size={28} />
+                </div>
+                <span className="text-lg font-black text-slate-700">ถ่ายรูปสินค้า</span>
+            </button>
+
+            <button
+            type="button"
+            onClick={triggerGallery}
+            className="aspect-video rounded-2xl border-2 border-dashed border-gray-200 bg-white shadow-sm flex flex-col items-center justify-center gap-3 text-gray-400 hover:text-indigo-600 hover:border-indigo-600/50 transition-all active:scale-95"
+            >
+                <div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                    <Plus size={28} />
+                </div>
+                <span className="text-lg font-black text-slate-700">แนบรูปภาพ</span>
+            </button>
+        </div>
       )}
     </div>
   )
