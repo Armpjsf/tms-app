@@ -79,35 +79,36 @@ export type Job = {
 
 // ดึงงานทั้งหมดวันนี้
 
-export async function getTodayJobs(): Promise<Job[]> {
+// ดึงงานตามวันที่ (Default: วันนี้)
+export async function getTodayJobs(date?: string, branchId?: string): Promise<Job[]> {
   try {
     const isSuper = await isSuperAdmin()
     const isRegularAdmin = await isAdmin()
-    const branchId = await getUserBranchId()
+    const userBranchId = await getUserBranchId()
     const customerId = await getCustomerId()
     const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
     
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+    // Use provided date or today in Bangkok time
+    const targetDate = date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     
     let dbQuery = supabase
       .from('Jobs_Main')
       .select('*')
-      .eq('Plan_Date', today)
+      .eq('Plan_Date', targetDate)
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (branchId && branchId !== 'All') {
-        dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isSuper && !isRegularAdmin && !branchId) {
-        return []
+    } else {
+        const effectiveBranchId = branchId || userBranchId
+        if (effectiveBranchId && effectiveBranchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
+        } else if (!isSuper && !isRegularAdmin && !userBranchId) {
+            return []
+        }
     }
 
     const { data } = await dbQuery
       .order('Created_At', { ascending: false })
-    
-    if (data === null) {
-      return []
-    }
     
     return data || []
   } catch {

@@ -11,17 +11,18 @@ export const dynamic = 'force-dynamic'
 interface PageProps {
   searchParams: Promise<{ 
     branch?: string; 
+    date?: string;
   }>
 }
 
-async function PlanningContent({ branch }: { branch: string }) {
+async function PlanningContent({ branch, date }: { branch: string, date?: string }) {
   const currentBranchId = branch === 'All' ? undefined : branch
   const isAdminUser = await isAdmin()
 
-  // Get today's stats, jobs and all requests
+  // Get stats, jobs and all requests for the target date
   const [stats, todayJobs, requestedJobs, jobCreationData, hasPriceView, hasDelete, hasCreate] = await Promise.all([
-    getTodayJobStats(currentBranchId),
-    getTodayJobs(currentBranchId),
+    getTodayJobStats(currentBranchId, date, date), // Reuse date for both start/end to get single day stats
+    getTodayJobs(date, currentBranchId),
     getRequestedJobs(currentBranchId),
     getJobCreationData(),
     hasPermission('job_price_view'),
@@ -45,6 +46,7 @@ async function PlanningContent({ branch }: { branch: string }) {
       canCreate={canCreate}
       createBulkJobs={createBulkJobs}
       branchId={branch}
+      selectedDate={date}
     />
   )
 }
@@ -53,6 +55,7 @@ export default async function PlanningPage(props: PageProps) {
   const searchParams = await props.searchParams
   const cookieStore = await cookies()
   const branch = searchParams.branch || cookieStore.get('selectedBranch')?.value || 'All'
+  const date = searchParams.date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
 
   return (
     <Suspense fallback={
@@ -63,7 +66,7 @@ export default async function PlanningPage(props: PageProps) {
           </p>
       </div>
     }>
-      <PlanningContent branch={branch} />
+      <PlanningContent branch={branch} date={date} />
     </Suspense>
   )
 }

@@ -52,6 +52,8 @@ interface PlanningClientProps {
     canDelete: boolean
     canCreate: boolean
     createBulkJobs: (data: Partial<JobFormData>[]) => Promise<{ success: boolean; message: string }>
+    branchId: string
+    selectedDate: string
 }
 
 const container = {
@@ -77,7 +79,9 @@ export function PlanningClient({
     canViewPrice,
     canDelete,
     canCreate,
-    createBulkJobs
+    createBulkJobs,
+    branchId,
+    selectedDate
 }: PlanningClientProps) {
     const { drivers, vehicles, customers, routes, subcontractors } = jobCreationData
     const [view, setView] = useState<'list' | 'kanban' | 'requests'>('list')
@@ -88,6 +92,22 @@ export function PlanningClient({
     useRealtime('Jobs_Main', () => {
         router.refresh()
     })
+
+    const handleDateChange = (newDate: string) => {
+        const params = new URLSearchParams(window.location.search)
+        params.set('date', newDate)
+        router.push(`/planning?${params.toString()}`)
+    }
+
+    const setYesterday = () => {
+        const d = new Date(selectedDate)
+        d.setDate(d.getDate() - 1)
+        handleDateChange(d.toLocaleDateString('en-CA'))
+    }
+
+    const setToday = () => {
+        handleDateChange(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }))
+    }
 
     const filteredJobs = useMemo(() => {
         if (view === 'requests') {
@@ -156,6 +176,27 @@ export function PlanningClient({
                                     {requestCount}
                                 </span>
                             )}
+                        </button>
+                    </div>
+
+                    <div className="flex items-center bg-muted/50 p-1 rounded-xl border border-border/10 shadow-inner ml-2">
+                        <button 
+                            onClick={setYesterday}
+                            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all"
+                        >
+                            เมื่อวาน
+                        </button>
+                        <input 
+                            type="date" 
+                            value={selectedDate}
+                            onChange={(e) => handleDateChange(e.target.value)}
+                            className="bg-transparent border-none text-xs font-bold text-primary px-2 focus:ring-0 cursor-pointer"
+                        />
+                        <button 
+                            onClick={setToday}
+                            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all"
+                        >
+                            วันนี้
                         </button>
                     </div>
 
