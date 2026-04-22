@@ -114,6 +114,7 @@ export default function UserSettingsPage() {
         setFormData(prev => ({
             ...prev,
             Role: standardRole,
+            Branch_ID: standardRole === 'Super Admin' ? 'All' : (prev.Branch_ID === 'All' ? '' : prev.Branch_ID),
             Customer_ID: standardRole === 'Customer' ? prev.Customer_ID : null, // Reset if not customer
             Permissions: allRolePermissions[role] || prev.Permissions || {}
         }))
@@ -122,7 +123,8 @@ export default function UserSettingsPage() {
 
 
     const handleSave = async () => {
-        if (!formData.Username || !formData.Name || !formData.Branch_ID || !formData.Role) {
+        const isSuperAdminRole = formData.Role === 'Super Admin'
+        if (!formData.Username || !formData.Name || !formData.Role || (!isSuperAdminRole && !formData.Branch_ID)) {
             return toast.warning("กรุณากรอกข้อมูลให้ครบถ้วน")
         }
 
@@ -137,12 +139,17 @@ export default function UserSettingsPage() {
         setSaving(true)
         try {
             let result;
+            const payload = { ...formData }
+            if (isSuperAdminRole && (!payload.Branch_ID || payload.Branch_ID === "")) {
+                payload.Branch_ID = 'All'
+            }
+
             if (editingUser) {
-                const updateData = { ...formData }
+                const updateData = { ...payload }
                 if (!updateData.Password) delete updateData.Password
                 result = await updateUser(editingUser, updateData)
             } else {
-                result = await createUser(formData as UserData)
+                result = await createUser(payload as UserData)
             }
             if (result.success) {
                 toast.success(editingUser ? "แก้ไขข้อมูลเรียบร้อย" : "สร้างผู้ใช้งานเรียบร้อย")
@@ -374,6 +381,11 @@ export default function UserSettingsPage() {
                                             <SelectValue placeholder={t('settings_pages.users.dialog.select_hub')} />
                                         </SelectTrigger>
                                         <SelectContent className="bg-popover border-border/10 text-foreground">
+                                            {formData.Role === 'Super Admin' && (
+                                                <SelectItem value="All" className="font-black italic uppercase tracking-normal text-primary">
+                                                    -- ALL BRANCHES (GLOBAL) --
+                                                </SelectItem>
+                                            )}
                                             {branches.map(b => (
                                                 <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="font-black italic uppercase tracking-normal">
                                                     {b.Branch_Name}

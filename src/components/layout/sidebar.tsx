@@ -53,6 +53,7 @@ const navigation: NavGroup[] = [
     titleKey: "nav_groups.ops_command",
     items: [
       { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+      { titleKey: "navigation.user_monitor", href: "/admin/monitoring/users", icon: <Activity size={20} />, badge: "common.live", badgeColor: "green" },
     ],
   },
   {

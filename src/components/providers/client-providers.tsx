@@ -6,6 +6,7 @@ import { ErrorBoundary } from "@/components/error-boundary"
 import { LanguageProvider } from "@/components/providers/language-provider"
 import { BranchProvider } from "@/components/providers/branch-provider"
 import { GlobalClientComponents } from "@/components/providers/global-client-components"
+import { UserPresenceFetcher } from "@/components/providers/user-presence-fetcher"
 
 interface ClientProvidersProps {
   children: React.ReactNode
@@ -22,7 +23,9 @@ export function ClientProviders({ children }: ClientProvidersProps) {
       <ErrorBoundary>
         <LanguageProvider>
           <BranchProvider>
-            {children}
+            <UserPresenceFetcher>
+              {children}
+            </UserPresenceFetcher>
           </BranchProvider>
           <GlobalClientComponents />
         </LanguageProvider>
