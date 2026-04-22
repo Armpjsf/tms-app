@@ -315,8 +315,7 @@ export const dictionaries = {
           items: 'รายการสินค้า',
           assignment: 'การมอบหมายงาน',
           price: 'ราคาและต้นทุน',
-          history: 'ประวัติงาน',
-          proofs: 'หลักฐาน (Photos/POD)'
+          history: 'ประวัติงาน'
         },
         abort: 'ยกเลิก',
         execute: 'สร้างงาน',
@@ -542,10 +541,7 @@ export const dictionaries = {
       close_btn: 'ปิดหน้าต่าง',
       photo_count: '{{count}} รูป',
       no_photos: 'ไม่มีรูปถ่ายหลักฐาน',
-      delivery_date: 'เวลาที่ส่งสินค้า',
-      delete_photo: 'ลบรูปภาพ',
-      delete_signature: 'ลบลายเซ็น',
-      confirm_delete_media: 'ยืนยันการลบไฟล์หลักฐานนี้?',
+      delivery_date: 'เวลาที่ส่งสินค้า'
     },
     dashboard: {
       title: 'ศูนย์บริหารการขนส่ง',
@@ -2167,8 +2163,7 @@ export const dictionaries = {
           items: 'Cargo Items',
           assignment: 'Assignment',
           price: 'Pricing',
-          history: 'History',
-          proofs: 'Proofs (Photos/POD)'
+          history: 'History'
         },
         abort: 'Cancel',
         execute: 'Create Job',
@@ -2395,10 +2390,7 @@ export const dictionaries = {
       close_btn: 'Close',
       photo_count: '{{count}} Photos',
       no_photos: 'No photos',
-      delivery_date: 'Delivery Time',
-      delete_photo: 'Delete Photo',
-      delete_signature: 'Delete Signature',
-      confirm_delete_media: 'Confirm deleting this proof?',
+      delivery_date: 'Delivery Time'
     },
     dashboard: {
       title: 'Fleet Command',

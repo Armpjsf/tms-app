@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { updateJob, createBulkJobs, deleteJob, deleteJobMedia } from "@/app/planning/actions"
+import { updateJob, createBulkJobs, deleteJob } from "@/app/planning/actions"
 import { CustomerAutocomplete } from "@/components/customer-autocomplete"
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { VehicleAutocomplete } from "@/components/vehicle-autocomplete"
@@ -27,7 +27,7 @@ import {
   Activity, AlertTriangle, Banknote, Building2, Calendar, Check, Eye, EyeOff, 
   FileText, Fuel, History, Info, Link as LinkIcon, Loader2, MapPin, Package, 
   Plus, RefreshCw, Search as SearchIcon, Settings as SettingsIcon, ShieldCheck, Trash2, 
-  Truck, User, X, Zap, Image as ImageIcon
+  Truck, User, X, Zap 
 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -107,7 +107,7 @@ export function JobDialog({
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'info' | 'location' | 'assign' | 'price' | 'history' | 'proofs'>('info')
+  const [activeTab, setActiveTab] = useState<'info' | 'location' | 'assign' | 'price' | 'history'>('info')
   const [internalMode, setInternalMode] = useState<'create' | 'edit'>(mode)
 
   // Sync internalMode state with mode prop if it changes
@@ -778,36 +778,6 @@ export function JobDialog({
     return errors
   }
 
-  const handleDeleteMedia = async (field: any, url: string) => {
-    if (!confirm(t('reports.confirm_delete_media'))) return
-    
-    setLoading(true)
-    try {
-        const result = await deleteJobMedia(formData.Job_ID, field, url)
-        if (result.success) {
-            // Update local state to reflect deletion
-            setFormData(prev => {
-                const currentVal = (prev as any)[field] as string || ""
-                if (field === 'Photo_Proof_Url' || field === 'Pickup_Photo_Url') {
-                    const urls = currentVal.split(',').filter(Boolean)
-                    const updated = urls.filter(u => u.trim() !== url.trim()).join(',')
-                    return { ...prev, [field]: updated || null }
-                } else {
-                    return { ...prev, [field]: null }
-                }
-            })
-            toast.success(t('common.success'))
-        } else {
-            toast.error(result.message || t('jobs.dialog.error'))
-        }
-    } catch (err) {
-        console.error('[handleDeleteMedia ERROR]', err)
-        toast.error(t('jobs.dialog.error'))
-    } finally {
-        setLoading(false)
-    }
-  }
-
   const handleDelete = async () => {
     if (!job?.Job_ID) return
     if (!confirm(t('jobs.dialog.confirm_delete'))) return
@@ -980,10 +950,7 @@ export function JobDialog({
     { id: 'location', label: t('jobs.dialog.tabs.locations'), icon: <MapPin className="w-4 h-4" /> },
     { id: 'assign', label: t('jobs.dialog.tabs.assignment'), icon: <Truck className="w-4 h-4" /> },
     ...(canViewPrice ? [{ id: 'price', label: t('jobs.dialog.tabs.price'), icon: <Banknote className="w-4 h-4" /> }] as const : []),
-    ...(internalMode === 'edit' ? [
-        { id: 'proofs', label: t('jobs.dialog.tabs.proofs') || 'Proofs', icon: <ImageIcon className="w-4 h-4" /> },
-        { id: 'history', label: t('jobs.dialog.tabs.history') || 'History', icon: <History className="w-4 h-4" /> }
-    ] as const : []),
+    ...(internalMode === 'edit' ? [{ id: 'history', label: t('jobs.dialog.tabs.history') || 'History', icon: <History className="w-4 h-4" /> }] as const : []),
   ] as const
 
   return (
@@ -1837,125 +1804,6 @@ export function JobDialog({
                 <Plus className="w-4 h-4 mr-2" /> {t('jobs.dialog.add_vehicle')}
               </Button>
 
-            </div>
-          )}
-
-          {/* Tab: หลักฐาน (Proofs) */}
-          {activeTab === 'proofs' && internalMode === 'edit' && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300 pb-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Pickup Proofs */}
-                    <div className="space-y-4 p-6 bg-muted/20 rounded-[2rem] border border-border/5">
-                        <h3 className="text-2xl font-black text-primary border-b border-primary/20 pb-2 flex items-center gap-2">
-                            <MapPin className="w-6 h-6" /> {t('reports.pickup_info')}
-                        </h3>
-                        
-                        {/* Pickup Photos */}
-                        <div className="space-y-2">
-                            <Label className="text-lg font-bold text-muted-foreground">
-                                {t('reports.photo_count', { count: ((formData as any).Pickup_Photo_Url || "").split(',').filter(Boolean).length })}
-                            </Label>
-                            <div className="grid grid-cols-3 gap-3">
-                                {((formData as any).Pickup_Photo_Url || "").split(',').filter(Boolean).map((url: string, idx: number) => (
-                                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-border group shadow-sm bg-background">
-                                        <img src={url} alt="Pickup" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                                        <button
-                                            type="button"
-                                            onClick={() => handleDeleteMedia('Pickup_Photo_Url', url)}
-                                            className="absolute top-2 right-2 bg-destructive/90 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive shadow-lg scale-90 group-hover:scale-100"
-                                            title={t('reports.delete_photo')}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                            {!((formData as any).Pickup_Photo_Url) && (
-                                <div className="text-center py-6 border border-dashed border-border rounded-xl text-muted-foreground italic">
-                                    {t('reports.no_photos')}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Pickup Signature */}
-                        <div className="space-y-2">
-                            <Label className="text-lg font-bold text-muted-foreground">{t('reports.pickup_signature')}</Label>
-                            {(formData as any).Pickup_Signature_Url ? (
-                                <div className="relative w-full h-40 bg-white rounded-xl border border-border group shadow-sm">
-                                    <img src={(formData as any).Pickup_Signature_Url} alt="Pickup Signature" className="w-full h-full object-contain p-4 invert dark:invert-0" />
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDeleteMedia('Pickup_Signature_Url', (formData as any).Pickup_Signature_Url)}
-                                        className="absolute top-3 right-3 bg-destructive/90 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive shadow-lg"
-                                        title={t('reports.delete_signature')}
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="text-center py-6 border border-dashed border-border rounded-xl text-muted-foreground italic">
-                                    {t('reports.no_signature')}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Delivery Proofs */}
-                    <div className="space-y-4 p-6 bg-muted/20 rounded-[2rem] border border-border/5">
-                        <h3 className="text-2xl font-black text-emerald-600 border-b border-emerald-600/20 pb-2 flex items-center gap-2">
-                            <Check className="w-6 h-6" /> {t('reports.pod_info')}
-                        </h3>
-
-                        {/* POD Photos */}
-                        <div className="space-y-2">
-                            <Label className="text-lg font-bold text-muted-foreground">
-                                {t('reports.photo_count', { count: ((formData as any).Photo_Proof_Url || "").split(',').filter(Boolean).length })}
-                            </Label>
-                            <div className="grid grid-cols-3 gap-3">
-                                {((formData as any).Photo_Proof_Url || "").split(',').filter(Boolean).map((url: string, idx: number) => (
-                                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-border group shadow-sm bg-background">
-                                        <img src={url} alt="POD" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                                        <button
-                                            type="button"
-                                            onClick={() => handleDeleteMedia('Photo_Proof_Url', url)}
-                                            className="absolute top-2 right-2 bg-destructive/90 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive shadow-lg scale-90 group-hover:scale-100"
-                                            title={t('reports.delete_photo')}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                            {!((formData as any).Photo_Proof_Url) && (
-                                <div className="text-center py-6 border border-dashed border-border rounded-xl text-muted-foreground italic">
-                                    {t('reports.no_photos')}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Delivery Signature */}
-                        <div className="space-y-2">
-                            <Label className="text-lg font-bold text-muted-foreground">{t('reports.dropoff_signature')}</Label>
-                            {(formData as any).Signature_Url ? (
-                                <div className="relative w-full h-40 bg-white rounded-xl border border-border group shadow-sm">
-                                    <img src={(formData as any).Signature_Url} alt="Signature" className="w-full h-full object-contain p-4 invert dark:invert-0" />
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDeleteMedia('Signature_Url', (formData as any).Signature_Url)}
-                                        className="absolute top-3 right-3 bg-destructive/90 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive shadow-lg"
-                                        title={t('reports.delete_signature')}
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="text-center py-6 border border-dashed border-border rounded-xl text-muted-foreground italic">
-                                    {t('reports.no_signature')}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
             </div>
           )}
 
