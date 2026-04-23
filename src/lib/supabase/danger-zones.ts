@@ -1,3 +1,5 @@
+"use server"
+
 import { createAdminClient } from "@/utils/supabase/server"
 import { getUserBranchId } from "@/lib/permissions"
 
