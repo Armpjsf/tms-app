@@ -366,7 +366,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                             <div>
                                 <p className="text-sm font-bold">{activeDriver.driver_name}</p>
                                 <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest flex items-center gap-1">
-                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Online
+                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Online
                                 </p>
                             </div>
                         </div>
