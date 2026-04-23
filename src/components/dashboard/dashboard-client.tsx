@@ -191,7 +191,7 @@ export function DashboardClient({
             <RequestShipmentDialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen} />
             
             {/* Tactical Range Selector - SERVER SYNCED */}
-            <div className="mb-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-background/50 backdrop-blur-3xl p-3 rounded-2xl border border-border/5 shadow-xl overflow-hidden group">
+            <div className="mb-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-background/50 backdrop-blur-3xl p-3 rounded-2xl border border-border/5 shadow-xl group">
                 <div className="absolute top-0 right-0 w-64 h-full bg-primary/5 blur-3xl pointer-events-none" />
                 
                 <div className="flex items-center gap-3 relative z-10">
