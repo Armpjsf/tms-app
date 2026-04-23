@@ -289,7 +289,9 @@ export function HistoryClient({
                                 </div>
                                 <p className="text-foreground font-black text-sm tracking-tight uppercase leading-tight">{job.Vehicle_Plate || "-"}</p>
                             </div>
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{job.Driver_Name || t('common.pending')}</p>
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">
+                                {job.Driver_Name || (job.Driver_ID ? (drivers.find(d => d.Driver_ID === job.Driver_ID)?.Driver_Name || t('common.pending')) : t('common.pending'))}
+                            </p>
                         </div>
                       </td>
                       <td className="py-4 px-4 text-center">

@@ -382,7 +382,7 @@ export function MonitoringCommandCenter({
                                                 "text-[10px] font-bold uppercase tracking-widest",
                                                 job.Driver_Name ? "text-muted-foreground" : "text-amber-500"
                                             )}>
-                                                {job.Driver_Name || t('common.status_pending') || 'รอดำเนินการ'}
+                                                {job.Driver_Name || (job.Driver_ID ? (allDrivers.find(d => d.Driver_ID === job.Driver_ID)?.Driver_Name || t('common.status_pending') || 'รอดำเนินการ') : (t('common.status_pending') || 'รอดำเนินการ'))}
                                             </p>
                                         </div>
                                     </div>
