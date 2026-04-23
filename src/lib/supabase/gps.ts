@@ -238,7 +238,7 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
         .select("Driver_ID")
         .eq("Customer_ID", customerId)
         .not("Driver_ID", "is", null)
-        .in("Job_Status", ["Assigned", "Picked Up", "In Transit", "Arrived", "SOS"]);
+        .in("Job_Status", ["Assigned", "Confirmed", "Picked Up", "In Progress", "In Transit", "Arrived", "SOS"]);
 
       const activeDriverIds = Array.from(
         new Set(activeJobs?.map((j) => j.Driver_ID) || []),
