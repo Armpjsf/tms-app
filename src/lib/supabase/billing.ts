@@ -336,8 +336,8 @@ export async function getBillingNoteByIdWithJobs(id: string) {
         let jobs: any[] = []
 
         // 1. Detect Type and Get Data
-        if (id.startsWith('INV-')) {
-            // It's an Invoice ID
+        if (id.startsWith('INV')) {
+            // It's an Invoice ID (e.g. INV- or INV_)
             const { data: inv, error: invError } = await supabase
                 .from('invoices')
                 .select('*, Master_Customers(*)')
@@ -770,8 +770,8 @@ export async function getPublicBillingNoteById(id: string) {
         let jobs: any[] = []
 
         // 1. Detect Type and Get Data
-        if (id.startsWith('INV-')) {
-            // It's an Invoice ID
+        if (id.startsWith('INV')) {
+            // It's an Invoice ID (e.g. INV- or INV_)
             const { data: inv, error: invError } = await supabase
                 .from('invoices')
                 .select('*, Master_Customers(*)')

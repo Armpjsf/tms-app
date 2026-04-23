@@ -90,9 +90,13 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
         Type: 'BillingNote'
     }))
 
+    // 4. Deduplicate by Invoice_ID (Prefer Invoice over BillingNote if IDs match)
+    const seenIds = new Set(mappedInvoices.map(i => i.Invoice_ID))
+    const uniqueBN = mappedBN.filter(bn => !seenIds.has(bn.Invoice_ID))
+
     const todayNum = new Date().setHours(0,0,0,0)
 
-    const combined = [...mappedInvoices, ...mappedBN].map(doc => {
+    const combined = [...mappedInvoices, ...uniqueBN].map(doc => {
         // Dynamic Overdue check
         if (doc.Status !== 'Paid' && doc.Due_Date) {
             const dueDate = new Date(doc.Due_Date).setHours(0,0,0,0)
