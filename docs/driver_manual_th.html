@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คู่มือการใช้งานแอปพลิเคชันสำหรับพนักงานขับรถ (Elite Driver)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;800&display=swap');
+        
+        body {
+            font-family: 'Sarabun', sans-serif;
+            line-height: 1.6;
+            color: #334155;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #f8fafc;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            border-bottom: 4px solid #10b981;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #0f172a;
+            font-size: 32px;
+            font-weight: 800;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .step {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-left: 8px solid #10b981;
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            background: #10b981;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .step-content h2 {
+            margin: 0 0 10px 0;
+            font-size: 22px;
+            color: #0f172a;
+            font-weight: 800;
+        }
+
+        .step-content p {
+            margin: 0;
+            font-size: 18px;
+            color: #475569;
+            font-weight: 400;
+        }
+
+        .highlight-green { color: #059669; font-weight: 800; }
+        .highlight-blue { color: #2563eb; font-weight: 800; }
+        .highlight-red { color: #dc2626; font-weight: 800; }
+
+        .tips {
+            background: #0f172a;
+            color: white;
+            border-radius: 25px;
+            padding: 40px;
+            margin-top: 50px;
+        }
+
+        .tips h3 {
+            color: #fbbf24;
+            font-size: 24px;
+            margin-top: 0;
+            font-weight: 800;
+        }
+
+        .tips ul {
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        .tips li {
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        @media print {
+            body { background: white; padding: 20px; }
+            .step { box-shadow: none; border: 1px solid #e2e8f0; border-left: 8px solid #10b981; page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>คู่มือพนักงานขับรถ (Elite Driver)</h1>
+        <p>ฉบับเข้าใจง่าย สำหรับการปฏิบัติงานรายวัน</p>
+    </div>
+
+    <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+            <h2>เปิดแอปและดูงาน</h2>
+            <p>เมื่อเข้าแอปมาที่หน้าแรก คุณจะเห็นรายการงานวันนี้ หากมีงานใหม่จะมี <span class="highlight-blue">เสียงเตือน</span> ให้คุณกดเข้าไปดูรายละเอียด</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+            <h2>กดยืนยันรับงาน</h2>
+            <p>เมื่อตรวจสอบวันเวลาและสถานที่แล้ว ให้กดปุ่ม <span class="highlight-green">"กดรับงาน" (สีเขียวด้านล่างสุด)</span> เพื่อแจ้งแอดมินว่าคุณทราบงานแล้ว</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+            <h2>ถึงจุดรับสินค้า</h2>
+            <p>เมื่อขับรถไปถึงโกดังหรือจุดขึ้นของ ให้รีบกดปุ่ม <span class="highlight-green">"ถึงจุดรับของ"</span> ทันที ห้ามลืมกด เพราะระบบจะใช้จุดนี้บันทึกเวลาเข้าของคุณ</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+            <h2>ถ่ายรูปรองรับและใส่จำนวน</h2>
+            <p>หลังจากเอาของขึ้นรถเสร็จ ให้กด <span class="highlight-blue">"ถ่ายรูปรับสินค้า"</span> ถ่ายรูปสินค้าที่อยู่บนรถ และกดปุ่ม <span class="highlight-red">[-] [+]</span> เพื่อใส่จำนวนชิ้นที่รับมาจริงให้ถูกต้อง</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-number">5</div>
+        <div class="step-content">
+            <h2>ออกเดินทางส่งของ</h2>
+            <p>หากไปไม่ถูก ให้กดรูป <span class="highlight-blue">"แผนที่"</span> ในแอป ระบบจะเปิด Google Maps นำทางคุณไปส่งของได้ทันที</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-number">6</div>
+        <div class="step-content">
+            <h2>ส่งงาน (ปิดงาน)</h2>
+            <p>เมื่อถึงบ้านลูกค้า ให้กด <span class="highlight-green">"ถึงจุดส่งของ"</span> แล้วกด <span class="highlight-blue">"บันทึกส่งงาน"</span> จากนั้นให้ลูกค้าเซ็นชื่อบนหน้าจอมือถือ และถ่ายรูปใบส่งของที่เซ็นแล้วเป็นอันจบงาน</p>
+        </div>
+    </div>
+
+    <div class="tips">
+        <h3>ข้อควรระวัง (สำคัญมาก!)</h3>
+        <ul>
+            <li><strong>เปิดเน็ตและ GPS ตลอดเวลา:</strong> แอปต้องใช้เน็ตในการส่งตำแหน่งเพื่อคิดค่าเที่ยวให้คุณ</li>
+            <li><strong>ถ่ายรูปให้ชัด:</strong> รูปที่เบลอหรือมืดเกินไป แอดมินอาจจะไม่อนุมัติงาน</li>
+            <li><strong>ถ้ามีปัญหา:</strong> หากรถเสีย หรือหาลูกค้าไม่เจอ ให้กดปุ่ม 🆘 (SOS) หรือแจ้งในแชททันที</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        © 2026 Elite Transport Management System (ePOD)
+    </div>
+
+</body>
+</html>
