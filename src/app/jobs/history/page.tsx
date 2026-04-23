@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { getAllJobs } from "@/lib/supabase/jobs"
+import { getAllJobs, getJobStatsSummary } from "@/lib/supabase/jobs"
 import { getJobCreationData } from "@/app/planning/actions"
 import { isCustomer, hasPermission } from "@/lib/permissions"
 import { HistoryClient } from "./history-client"
@@ -22,8 +22,9 @@ export default async function JobHistoryPage(props: Props) {
   const status = (searchParams.status as string) || ''
   const limit = 25
 
-  const [jobsResult, creationData, canViewPrice, canDelete, canExport] = await Promise.all([
+  const [jobsResult, stats, creationData, canViewPrice, canDelete, canExport] = await Promise.all([
     getAllJobs(page, limit, query, status, dateFrom, dateTo),
+    getJobStatsSummary(query, dateFrom, dateTo),
     getJobCreationData(),
     hasPermission('job_price_view'),
     hasPermission('job_delete'),
@@ -38,6 +39,7 @@ export default async function JobHistoryPage(props: Props) {
       <HistoryClient 
         jobs={jobs}
         count={count}
+        stats={stats}
         drivers={drivers}
         vehicles={vehicles}
         customers={customers}

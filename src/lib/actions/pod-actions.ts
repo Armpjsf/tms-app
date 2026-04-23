@@ -105,10 +105,25 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     const timeString = now.toTimeString().split(' ')[0] 
     
     // Get existing notes and quantity for auto-update
-    const { data: jobData } = await supabase.from("Jobs_Main").select("Notes, Price_Cust_Total, Master_Customers(Price_Per_Unit)").eq("Job_ID", jobId).single()
+    // Optimized fetch: Get job data and customer unit price in parallel or robustly
+    const { data: jobData } = await supabase
+        .from("Jobs_Main")
+        .select("Notes, Price_Cust_Total, Customer_ID")
+        .eq("Job_ID", jobId)
+        .single()
+
+    let unitPrice = 0
+    if (jobData?.Customer_ID) {
+        const { data: cust } = await supabase
+            .from("Master_Customers")
+            .select("Price_Per_Unit")
+            .eq("Customer_ID", jobData.Customer_ID)
+            .single()
+        unitPrice = Number(cust?.Price_Per_Unit || 0)
+    }
+
     const currentNotes = jobData?.Notes || ""
     const adminPrice = Number(jobData?.Price_Cust_Total || 0)
-    const unitPrice = Number((jobData as any)?.Master_Customers?.Price_Per_Unit || 0)
     const loadedQty = Number(formData.get("loaded_qty") || 0)
 
     const updatePayload: any = {
@@ -221,10 +236,25 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
       uploadWarning = `อัปโหลดหลักฐานไม่สำเร็จ: ${errMsg}`
     }
 
-    const { data: jobData } = await supabase.from("Jobs_Main").select("Price_Cust_Total, Notes, Master_Customers(Price_Per_Unit)").eq("Job_ID", jobId).single()
+    // Get job data and customer unit price
+    const { data: jobData } = await supabase
+        .from("Jobs_Main")
+        .select("Price_Cust_Total, Notes, Customer_ID")
+        .eq("Job_ID", jobId)
+        .single()
+
+    let unitPrice = 0
+    if (jobData?.Customer_ID) {
+        const { data: cust } = await supabase
+            .from("Master_Customers")
+            .select("Price_Per_Unit")
+            .eq("Customer_ID", jobData.Customer_ID)
+            .single()
+        unitPrice = Number(cust?.Price_Per_Unit || 0)
+    }
+
     const adminPrice = Number(jobData?.Price_Cust_Total || 0)
     const currentNotes = jobData?.Notes || ""
-    const unitPrice = Number((jobData as { Master_Customers: { Price_Per_Unit: number } | null } | null)?.Master_Customers?.Price_Per_Unit || 0)
     const loadedQty = Number(formData.get("loaded_qty") || 0)
 
     const clientTimestamp = formData.get("actualCompletionTime") as string

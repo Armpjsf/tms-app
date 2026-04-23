@@ -367,19 +367,28 @@ export function JobDialog({
 
   // Comprehensive State Sync when dialog opens in Edit Mode
   // Centralized State Sync: Handles Create/Edit transitions and Data Population
+  // Comprehensive State Sync when dialog opens
   useEffect(() => {
     if (!show) return;
 
-    console.log('[JobDialog DEBUG] Sync Triggered', { internalMode, jobId: job?.Job_ID, show });
+    // Use mode prop as the primary driver to avoid internal state lag
+    const syncMode = job ? 'edit' : mode;
 
-    if (internalMode === 'edit' && job) {
-      console.log('[JobDialog DEBUG] Syncing EDIT Data for', job.Job_ID);
+    console.log('[JobDialog DEBUG] Sync Triggered', { 
+        syncMode, 
+        propMode: mode, 
+        internalMode, 
+        jobId: job?.Job_ID, 
+        show 
+    });
+
+    if (job) {
+      console.log('[JobDialog DEBUG] Syncing Data from Job:', job.Job_ID);
       
       // A. Sync Locations
       const rawOrigins = (job.origins || job.original_origins_json)
       let parsedOrigins = parseJson(rawOrigins, []) as LocationPoint[]
       
-      // Fallback: If no parsed origins or they are effectively empty, use plain strings
       if (parsedOrigins.length === 0 || (parsedOrigins.length === 1 && !parsedOrigins[0].name)) {
         if (job.Origin_Location) {
           parsedOrigins = [{ 
@@ -429,14 +438,14 @@ export function JobDialog({
 
       const firstAssign = initialAssignments[0]
       const newFormData = {
-        Job_ID: job.Job_ID || '',
+        Job_ID: syncMode === 'edit' ? (job.Job_ID || '') : generateJobId(), // Preserve ID only if editing
         Plan_Date: job.Plan_Date || job.Pickup_Date || defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
         Delivery_Date: job.Delivery_Date || defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
         Customer_ID: job.Customer_ID || '',
         Customer_Name: job.Customer_Name || '',
         Route_Name: job.Route_Name || '',
-        Driver_ID: firstAssign.Driver_ID || job.Driver_ID || '', // Fallback to core job field
-        Vehicle_Plate: firstAssign.Vehicle_Plate || job.Vehicle_Plate || '', // Fallback to core job field
+        Driver_ID: firstAssign.Driver_ID || job.Driver_ID || '',
+        Vehicle_Plate: firstAssign.Vehicle_Plate || job.Vehicle_Plate || '',
         Vehicle_Type: firstAssign.Vehicle_Type || job.Vehicle_Type || '4-Wheel',
         Sub_ID: firstAssign.Sub_ID || job.Sub_ID || '',
         Price_Cust_Total: firstAssign.Price_Cust_Total !== undefined ? firstAssign.Price_Cust_Total : (job.Price_Cust_Total !== null ? Number(job.Price_Cust_Total) : 0),
@@ -445,7 +454,7 @@ export function JobDialog({
         Cost_Driver_Extra: job.Cost_Driver_Extra !== null && job.Cost_Driver_Extra !== undefined ? Number(job.Cost_Driver_Extra) : 0,
         Cargo_Type: job.Cargo_Type || '',
         Notes: job.Notes || '',
-        Job_Status: job.Job_Status || 'New',
+        Job_Status: syncMode === 'edit' ? (job.Job_Status || 'New') : 'New',
         Weight_Kg: job.Weight_Kg !== null && job.Weight_Kg !== undefined ? Number(job.Weight_Kg) : 0,
         Volume_Cbm: job.Volume_Cbm !== null && job.Volume_Cbm !== undefined ? Number(job.Volume_Cbm) : 0,
         Est_Distance_KM: job.Est_Distance_KM !== null && job.Est_Distance_KM !== undefined ? Number(job.Est_Distance_KM) : 0,
@@ -456,11 +465,10 @@ export function JobDialog({
         Delivery_Lon: job.Delivery_Lon || null,
         Loaded_Qty: job.Loaded_Qty !== null && job.Loaded_Qty !== undefined ? job.Loaded_Qty : '',
       }
-      console.log('[JobDialog DEBUG] Setting formData:', newFormData);
       setFormData(newFormData);
 
-    } else if (internalMode === 'create' && !job) {
-      console.log('[JobDialog DEBUG] Syncing CREATE Data');
+    } else {
+      console.log('[JobDialog DEBUG] Resetting to empty CREATE state');
       setFormData({
         Job_ID: generateJobId(),
         Plan_Date: defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
@@ -493,7 +501,8 @@ export function JobDialog({
       setExtraCosts([])
       setAssignments([{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '', Show_Price_To_Driver: true, Cost_Driver_Total: 0, Price_Cust_Total: 0 }])
     }
-  }, [show, internalMode, job?.Job_ID, defaultDate])
+  }, [show, mode, job?.Job_ID, defaultDate])
+
 
 
   const handleDuplicate = () => {

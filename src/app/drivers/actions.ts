@@ -162,6 +162,12 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
     updateData.Branch_ID = data.Branch_ID
   }
 
+  // Allow updating the Driver_ID (Primary Key)
+  // This will work if ON UPDATE CASCADE is set on foreign keys in Supabase
+  if (data.Driver_ID && data.Driver_ID !== driverId) {
+    updateData.Driver_ID = data.Driver_ID
+  }
+
   // Only update password if provided
   if (data.Password && data.Password.trim() !== '') {
     updateData.Password = data.Password

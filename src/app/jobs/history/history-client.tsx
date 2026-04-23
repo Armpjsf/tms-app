@@ -35,6 +35,7 @@ import { useLanguage } from "@/components/providers/language-provider"
 interface HistoryClientProps {
   jobs: any[]
   count: number
+  stats: { success: number, failed: number, cancelled: number, total: number }
   drivers: any[]
   vehicles: any[]
   customers: any[]
@@ -52,6 +53,7 @@ interface HistoryClientProps {
 export function HistoryClient({ 
   jobs, 
   count, 
+  stats,
   drivers, 
   vehicles, 
   customers, 
@@ -139,10 +141,10 @@ export function HistoryClient({
       {/* Metrics Matrix */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {[
-          { label: t('navigation.pod'), value: count || 0, icon: Package, color: "text-muted-foreground", bg: "bg-muted/50", border: "border-border/5" },
-          { label: t('common.success'), value: jobs?.filter((j: any) => ['Delivered', 'Complete', 'Completed'].includes(j?.Job_Status || '')).length || 0, icon: CheckCircle2, color: "text-primary", bg: "bg-primary/20", border: "border-primary/20" },
-          { label: t('common.failed'), value: jobs?.filter((j: any) => j?.Job_Status === 'Failed').length || 0, icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" },
-          { label: t('common.cancelled'), value: jobs?.filter((j: any) => j?.Job_Status === 'Cancelled').length || 0, icon: XCircle, color: "text-muted-foreground", bg: "bg-muted/50", border: "border-border/5" },
+          { label: t('navigation.pod'), value: stats.total || 0, icon: Package, color: "text-muted-foreground", bg: "bg-muted/50", border: "border-border/5" },
+          { label: t('common.success'), value: stats.success || 0, icon: CheckCircle2, color: "text-primary", bg: "bg-primary/20", border: "border-primary/20" },
+          { label: t('common.failed'), value: stats.failed || 0, icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" },
+          { label: t('common.cancelled'), value: stats.cancelled || 0, icon: XCircle, color: "text-muted-foreground", bg: "bg-muted/50", border: "border-border/5" },
         ].map((stat, idx) => (
           <div key={idx} className={cn(
                   "p-6 rounded-2xl border backdrop-blur-3xl shadow-xl relative overflow-hidden group transition-all hover:scale-[1.02] bg-background/40",

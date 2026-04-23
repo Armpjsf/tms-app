@@ -121,7 +121,6 @@ export function DriverDialog({
                       onChange={(e) => setFormData({ ...formData, Driver_ID: e.target.value })}
                       placeholder="e.g. DRV-001"
                       required
-                      disabled={mode === 'edit'}
                       className="h-12 pl-12 rounded-xl bg-muted/50 border-border/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/40"
                     />
                 </div>

@@ -268,6 +268,47 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
   }
 }
 
+// นับสถิติงานรวม (Global Stats สำหรับหน้า History)
+export async function getJobStatsSummary(query = '', startDate = '', endDate = '') {
+  try {
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
+    const branchId = await getUserBranchId()
+    const customerId = await getCustomerId()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
+    
+    let dbQuery = supabase
+      .from('Jobs_Main')
+      .select('Job_Status')
+    
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    } else if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    }
+
+    if (startDate) dbQuery = dbQuery.gte('Plan_Date', startDate)
+    if (endDate) dbQuery = dbQuery.lte('Plan_Date', endDate)
+    if (query) {
+      dbQuery = dbQuery.or(`Job_ID.ilike.%${query}%,Customer_Name.ilike.%${query}%,Route_Name.ilike.%${query}%`)
+    }
+
+    const { data } = await dbQuery
+    
+    if (!data) return { success: 0, failed: 0, cancelled: 0, total: 0 }
+    
+    return {
+      total: data.length,
+      success: data.filter(j => ['Delivered', 'Complete', 'Completed'].includes(j.Job_Status || '')).length,
+      failed: data.filter(j => j.Job_Status === 'Failed').length,
+      cancelled: data.filter(j => j.Job_Status === 'Cancelled').length
+    }
+  } catch {
+    return { success: 0, failed: 0, cancelled: 0, total: 0 }
+  }
+}
+
+
 // ยอดเงินวันนี้ (Estimated)
 export async function getTodayFinancials(branchId?: string) {
   try {
