@@ -18,7 +18,7 @@ export function PushTestButton({ driverId: initialDriverId, userId: initialUserI
   const [registering, setRegistering] = useState(false)
   const [userId, setUserId] = useState<string | null>(initialUserId || null)
   const [driverId, setDriverId] = useState<string | null>(initialDriverId || null)
-  const [lastResult, setLastResult] = useState<{ success: boolean; reason?: string } | null>(null)
+  const [lastResult, setLastResult] = useState<{ success: boolean; reason?: string; debug?: any } | null>(null)
 
   // Helper for manual reg
   const urlBase64ToUint8Array = (base64String: string) => {
@@ -198,6 +198,16 @@ export function PushTestButton({ driverId: initialDriverId, userId: initialUserI
               </p>
             </div>
           </div>
+
+          {lastResult.debug && !lastResult.success && (
+              <div className="mt-4 p-4 bg-black/20 rounded-xl font-mono text-[10px] space-y-1">
+                  <p className="font-bold border-b border-white/10 pb-1 mb-2">DEBUG INFO (SERVER):</p>
+                  <p>VAPID Config: {lastResult.debug.vapidConfigured ? '✅' : '❌'}</p>
+                  <p>FCM Config: {lastResult.debug.firebaseInitialized ? '✅' : '❌'}</p>
+                  <p>Public Key: {lastResult.debug.envVapidPublic ? '✅' : '❌'}</p>
+                  <p>Private Key: {lastResult.debug.envVapidPrivate ? '✅' : '❌'}</p>
+              </div>
+          )}
 
           {!lastResult.success && lastResult.reason === 'no_subscription' && (
               <PremiumButton

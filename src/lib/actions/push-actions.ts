@@ -54,12 +54,23 @@ if (!admin.apps.length) {
 }
 
 // Configure web-push with VAPID keys
-const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY!
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@tms-epod.com'
+function ensureWebPushConfig() {
+    const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY
+    const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@tms-epod.com'
 
-if (VAPID_PUBLIC && VAPID_PRIVATE) {
-    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE)
+    if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
+        console.error("[PUSH] Missing VAPID keys in environment variables.")
+        return false
+    }
+
+    try {
+        webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE)
+        return true
+    } catch (err) {
+        console.error("[PUSH] Failed to set VAPID details:", err)
+        return false
+    }
 }
 
 // ─────────────────────────────────────────────
@@ -90,8 +101,11 @@ export type PushPayload = {
 // Core: Send one Web Push subscription
 // ─────────────────────────────────────────────
 async function sendWebPush(sub: { Endpoint: string; Keys_P256dh: string; Keys_Auth: string }, payload: PushPayload) {
+    if (!ensureWebPushConfig()) {
+        return { success: false, statusCode: 500, error: 'VAPID not configured' }
+    }
+
     try {
-        // Force high urgency for ALL system notifications as requested
         const urgency: "high" | "normal" | "low" | "very-low" = "high";
 
         await webpush.sendNotification(
@@ -103,11 +117,12 @@ async function sendWebPush(sub: { Endpoint: string; Keys_P256dh: string; Keys_Au
             }
         )
         return { success: true }
-    } catch (err: unknown) {
+    } catch (err: any) {
+        console.error(`[PUSH] Web Push Error [${sub.Endpoint.slice(0, 30)}...]:`, err.message || err)
         if (err && typeof err === 'object' && 'statusCode' in err) {
-            return { success: false, statusCode: (err as { statusCode: number }).statusCode }
+            return { success: false, statusCode: (err as { statusCode: number }).statusCode, error: err.message }
         }
-        return { success: false, statusCode: 0 }
+        return { success: false, statusCode: 0, error: String(err) }
     }
 }
 
@@ -206,11 +221,12 @@ export async function sendPushToDriver(driverId: string, payload: PushPayload) {
                     })
                     return { success: true }
                 } catch (err: any) {
+                    console.error(`[PUSH] FCM Send Error for token [${sub.Endpoint.slice(0, 20)}...]:`, err.message || err)
                     // Cleanup expired FCM tokens
                     if (err?.code === 'messaging/registration-token-not-registered') {
                         await supabase.from('Push_Subscriptions').delete().eq('Endpoint', sub.Endpoint)
                     }
-                    return { success: false }
+                    return { success: false, error: err.message }
                 }
             }
 
@@ -657,8 +673,17 @@ export async function testPushNotification(target: { driverId?: string; userId?:
         tag: 'push_test'
     }
 
+    const debugInfo = {
+        vapidConfigured: ensureWebPushConfig(),
+        firebaseInitialized: admin.apps.length > 0,
+        envVapidPublic: !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        envVapidPrivate: !!process.env.VAPID_PRIVATE_KEY,
+        envFirebaseProject: !!process.env.FIREBASE_PROJECT_ID
+    }
+
     if (target.driverId) {
-        return await sendPushToDriver(target.driverId, payload)
+        const result = await sendPushToDriver(target.driverId, payload)
+        return { ...result, debug: debugInfo }
     } else if (target.userId) {
         const supabase = await createAdminClient()
         const { data: subs } = await supabase
@@ -666,7 +691,7 @@ export async function testPushNotification(target: { driverId?: string; userId?:
             .select('*')
             .eq('User_ID', target.userId)
 
-        if (!subs || subs.length === 0) return { success: false, reason: 'no_subscription' }
+        if (!subs || subs.length === 0) return { success: false, reason: 'no_subscription', debug: debugInfo }
         
         console.log(`[PUSH-TEST] Sending to ${subs.length} device(s) for user: ${target.userId}`)
         
@@ -681,8 +706,8 @@ export async function testPushNotification(target: { driverId?: string; userId?:
         )
         
         const successCount = results.filter(r => r.status === 'fulfilled' && (r.value as any).success).length
-        return { success: successCount > 0 }
+        return { success: successCount > 0, debug: debugInfo }
     }
 
-    return { success: false, reason: 'invalid_target' }
+    return { success: false, reason: 'invalid_target', debug: debugInfo }
 }

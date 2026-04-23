@@ -56,6 +56,21 @@ export function PermissionRequester({ driverId }: Props) {
 
     // 1. Native Push (FCM)
     if (Capacitor.isNativePlatform()) {
+      // Create channel for Android 8.0+
+      try {
+          PushNotifications.createChannel({
+              id: 'tms-notifications',
+              name: 'TMS Notifications',
+              description: 'General system notifications',
+              importance: 5, // Importance.HIGH
+              visibility: 1, // Visibility.PUBLIC
+              sound: 'default',
+              vibration: true,
+          }).catch(() => {})
+      } catch {
+          // ignore
+      }
+
       PushNotifications.checkPermissions().then(async (status) => {
         if (status.receive === 'granted') {
           // Already granted → silently register FCM token immediately
