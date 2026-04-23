@@ -198,6 +198,8 @@ export function JobDialog({
     Volume_Cbm: job?.Volume_Cbm || '',
     Zone: job?.Zone || '',
     Branch_ID: job?.Branch_ID || '',
+    Pickup_Lat: job?.Pickup_Lat || null,
+    Pickup_Lon: job?.Pickup_Lon || null,
     Delivery_Lat: job?.Delivery_Lat || null,
     Delivery_Lon: job?.Delivery_Lon || null,
     Sub_ID: job?.Sub_ID || '',
@@ -859,6 +861,11 @@ export function JobDialog({
         Origin_Location: origins.map(o => o.name).join(' → '),
         Dest_Location: destinations.map(d => d.name).join(' → '),
         Route_Name: `${origins[0]?.name || ''} → ${destinations[destinations.length-1]?.name || ''}`,
+        // Sync single-point coordinates from the multi-point lists
+        Pickup_Lat: origins[0]?.lat ? Number(origins[0].lat) : null,
+        Pickup_Lon: origins[0]?.lng ? Number(origins[0].lng) : null,
+        Delivery_Lat: destinations[destinations.length - 1]?.lat ? Number(destinations[destinations.length - 1].lat) : null,
+        Delivery_Lon: destinations[destinations.length - 1]?.lng ? Number(destinations[destinations.length - 1].lng) : null,
         // Serialize complex fields
         original_origins_json: JSON.stringify(origins),
         original_destinations_json: JSON.stringify(destinations),
