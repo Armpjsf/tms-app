@@ -80,6 +80,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [onlineDrivers, setOnlineDrivers] = useState<Set<string>>(new Set())
   
   const supabaseClient = useMemo(() => createClient(), [])
 
@@ -237,6 +238,26 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
         ))
     }
 
+    const presenceChannel = supabaseClient.channel('online_drivers')
+    
+    presenceChannel
+        .on('presence', { event: 'sync' }, () => {
+            const newState = presenceChannel.presenceState()
+            const onlineIds = new Set(Object.keys(newState))
+            setOnlineDrivers(onlineIds)
+        })
+        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+            setOnlineDrivers(prev => new Set([...Array.from(prev), key]))
+        })
+        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+            setOnlineDrivers(prev => {
+                const next = new Set(prev)
+                next.delete(key)
+                return next
+            })
+        })
+        .subscribe()
+
     const channel = supabaseClient
       .channel('chat_realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'Chat_Messages' }, handleRealtimeInsert)
@@ -244,7 +265,10 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'gps_logs' }, handleGPSUpdate)
       .subscribe()
 
-    return () => { supabaseClient.removeChannel(channel) }
+    return () => { 
+        supabaseClient.removeChannel(channel)
+        supabaseClient.removeChannel(presenceChannel)
+    }
   }, [updateContactList, scrollToBottom, supabaseClient, isHydrated])
 
   const sendMessage = async () => {
@@ -354,8 +378,11 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                                   {c.driver_name.charAt(0)}
                               </div>
                               {(() => {
+                                  const isPresenceOnline = onlineDrivers.has(c.driver_id)
                                   const lastUpdateDate = c.last_update ? new Date(c.last_update) : null
-                                  const isOnline = lastUpdateDate && (new Date().getTime() - lastUpdateDate.getTime() < 10 * 60 * 1000)
+                                  const isGPSOnline = lastUpdateDate && (new Date().getTime() - lastUpdateDate.getTime() < 10 * 60 * 1000)
+                                  const isOnline = isPresenceOnline || isGPSOnline
+                                  
                                   return (
                                       <div className={cn(
                                           "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white",
@@ -389,9 +416,11 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                             <div>
                                 <p className="text-sm font-bold">{activeDriver.driver_name}</p>
                                 {(() => {
+                                    const isPresenceOnline = onlineDrivers.has(activeDriver.driver_id)
                                     const lastUpdateDate = activeDriver.last_update ? new Date(activeDriver.last_update) : null
-                                    const isOnline = lastUpdateDate && (new Date().getTime() - lastUpdateDate.getTime() < 10 * 60 * 1000)
-                                    
+                                    const isGPSOnline = lastUpdateDate && (new Date().getTime() - lastUpdateDate.getTime() < 10 * 60 * 1000)
+                                    const isOnline = isPresenceOnline || isGPSOnline
+
                                     return (
                                         <p className={cn(
                                             "text-[10px] font-bold uppercase tracking-widest flex items-center gap-1",
