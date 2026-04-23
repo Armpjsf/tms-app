@@ -1,11 +1,15 @@
 "use client"
 
-import { useMemo, useState, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import {
     Search,
     Activity,
     Truck,
-    FileSpreadsheet
+    FileSpreadsheet,
+    Star,
+    Filter,
+    Users,
+    Check
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSearchParams } from 'next/navigation'
@@ -65,6 +69,55 @@ export function MonitoringCommandCenter({
     const [chatDriverId, setChatDriverId] = useState<string | null>(null)
     const isMounted = useRef(true)
     const searchParams = useSearchParams()
+
+    // --- Personalization & Filtering ---
+    const [pinnedCustomerNames, setPinnedCustomerNames] = useState<string[]>([])
+    const [showPinnedOnly, setShowPinnedOnly] = useState(false)
+    const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false)
+
+    // Load preferences
+    useEffect(() => {
+        const saved = localStorage.getItem('tms_pinned_customers')
+        if (saved) {
+            try {
+                setPinnedCustomerNames(JSON.parse(saved))
+            } catch (e) {
+                console.error('Failed to load pinned customers')
+            }
+        }
+    }, [])
+
+    // Save preferences
+    useEffect(() => {
+        localStorage.setItem('tms_pinned_customers', JSON.stringify(pinnedCustomerNames))
+    }, [pinnedCustomerNames])
+
+    // Get list of all customers from current jobs
+    const allCustomerNames = useMemo(() => {
+        const names = new Set<string>()
+        jobs.forEach(j => { if (j.Customer_Name) names.add(j.Customer_Name) })
+        return Array.from(names).sort()
+    }, [jobs])
+
+    const togglePinCustomer = (name: string) => {
+        setPinnedCustomerNames(prev => 
+            prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+        )
+    }
+
+    // Driver-to-Customer mapping based on active jobs
+    const driverToCustomerMap = useMemo(() => {
+        const map: Record<string, string[]> = {}
+        jobs.forEach(j => {
+            if (j.Driver_ID && j.Customer_Name) {
+                if (!map[j.Driver_ID]) map[j.Driver_ID] = []
+                if (!map[j.Driver_ID].includes(j.Customer_Name)) {
+                    map[j.Driver_ID].push(j.Customer_Name)
+                }
+            }
+        })
+        return map
+    }, [jobs])
 
     // Real-time: gps_logs
     useRealtime('gps_logs', (payload) => {
@@ -162,15 +215,43 @@ export function MonitoringCommandCenter({
 
     const driversWithGPS = useMemo(() => {
         return drivers
+            .filter(d => {
+                // Search filter
+                const matchesSearch = !searchQuery || 
+                    d.Driver_Name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    d.Vehicle_Plate?.toLowerCase().includes(searchQuery.toLowerCase())
+                
+                // Focus Mode filter
+                if (showPinnedOnly && pinnedCustomerNames.length > 0) {
+                    const customers = driverToCustomerMap[d.Driver_ID] || []
+                    const isPinned = customers.some(c => pinnedCustomerNames.includes(c))
+                    return matchesSearch && isPinned
+                }
+
+                return matchesSearch
+            })
             .map(d => {
                 const lastUpdateDate = d.Last_Update ? new Date(d.Last_Update) : null
                 const isOnline = lastUpdateDate && (new Date().getTime() - lastUpdateDate.getTime() < 10 * 60 * 1000)
                 return { ...d, status: isOnline ? 'Online' : 'Offline' }
             })
             .sort((a, b) => (a.status === 'Online' ? -1 : 1))
-    }, [drivers])
+    }, [drivers, searchQuery, showPinnedOnly, pinnedCustomerNames, driverToCustomerMap])
 
-    const alertCount = jobs.filter(j => j.Job_Status === 'SOS' || j.Job_Status === 'Failed').length
+    const filteredJobs = useMemo(() => {
+        return jobs.filter(j => {
+            const matchesSearch = !searchQuery || 
+                j.Job_ID?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                j.Customer_Name?.toLowerCase().includes(searchQuery.toLowerCase())
+            
+            if (showPinnedOnly && pinnedCustomerNames.length > 0) {
+                return matchesSearch && j.Customer_Name && pinnedCustomerNames.includes(j.Customer_Name)
+            }
+            return matchesSearch
+        })
+    }, [jobs, searchQuery, showPinnedOnly, pinnedCustomerNames])
+
+    const alertCount = filteredJobs.filter(j => j.Job_Status === 'SOS' || j.Job_Status === 'Failed').length
 
     return (
         <div className="flex h-[calc(100vh-64px)] bg-background text-muted-foreground overflow-hidden font-sans rounded-3xl border border-border/5 shadow-2xl relative z-10">
@@ -198,22 +279,82 @@ export function MonitoringCommandCenter({
                         </div>
                     </div>
 
-                    <div className="relative group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={14} />
-                        <input 
-                            type="text" 
-                            placeholder={t('common.search')}
-                            className="w-full h-10 bg-muted/50 border border-border/10 rounded-xl pl-10 pr-3 text-xs font-black uppercase tracking-widest focus:outline-none focus:border-primary/50 focus:bg-muted/80 transition-all placeholder:text-muted-foreground outline-none"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="relative group flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={14} />
+                            <input 
+                                type="text" 
+                                placeholder={t('common.search')}
+                                className="w-full h-10 bg-muted/50 border border-border/10 rounded-xl pl-10 pr-3 text-xs font-black uppercase tracking-widest focus:outline-none focus:border-primary/50 focus:bg-muted/80 transition-all placeholder:text-muted-foreground outline-none"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        <div className="relative">
+                            <button 
+                                onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+                                className={cn(
+                                    "p-2.5 rounded-xl border transition-all flex items-center justify-center relative",
+                                    pinnedCustomerNames.length > 0 
+                                        ? "bg-primary/20 border-primary/30 text-primary shadow-lg shadow-primary/20" 
+                                        : "bg-muted/50 border-border/10 text-muted-foreground hover:bg-muted/80"
+                                )}
+                            >
+                                <Users size={18} />
+                                {pinnedCustomerNames.length > 0 && (
+                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[8px] flex items-center justify-center rounded-full font-black">
+                                        {pinnedCustomerNames.length}
+                                    </div>
+                                )}
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {isFilterMenuOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsFilterMenuOpen(false)} />
+                                    <div className="absolute right-0 mt-2 w-64 bg-background border border-border/10 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in duration-200">
+                                        <p className="text-[10px] font-black uppercase tracking-widest mb-3 flex items-center gap-2">
+                                            <Star size={12} className="text-yellow-500 fill-yellow-500" />
+                                            Pinned Customers
+                                        </p>
+                                        <div className="max-h-60 overflow-y-auto space-y-1 custom-scrollbar">
+                                            {allCustomerNames.map(name => (
+                                                <button 
+                                                    key={name}
+                                                    onClick={() => togglePinCustomer(name)}
+                                                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 text-left transition-all"
+                                                >
+                                                    <span className={cn(
+                                                        "text-[10px] font-bold uppercase",
+                                                        pinnedCustomerNames.includes(name) ? "text-primary" : "text-foreground"
+                                                    )}>{name}</span>
+                                                    {pinnedCustomerNames.includes(name) && <Check size={12} className="text-primary" />}
+                                                </button>
+                                            ))}
+                                            {allCustomerNames.length === 0 && (
+                                                <p className="text-[10px] text-muted-foreground italic py-4 text-center">No customers found</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="flex gap-1.5 mt-6 overflow-x-auto pb-1 custom-scrollbar">
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
                         <FilterButton active={filter === 'all'} onClick={() => setFilter('all')} label={t('common.all')} />
-                        <FilterButton active={filter === 'drivers'} onClick={() => setFilter('drivers')} label={t('monitoring.active_fleet')} color="blue" />
-                        <FilterButton active={filter === 'alerts'} onClick={() => setFilter('alerts')} label={t('monitoring.alerts')} count={alertCount} color="rose" />
-                    </div>
+                        <button 
+                            onClick={() => setShowPinnedOnly(!showPinnedOnly)}
+                            className={cn(
+                                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border flex items-center gap-1.5",
+                                showPinnedOnly
+                                    ? "bg-yellow-500 text-black border-yellow-500 shadow-lg shadow-yellow-500/20"
+                                    : "bg-muted/50 border-border/10 text-muted-foreground hover:text-foreground"
+                            )}
+                        >
+                            <Star size={12} className={showPinnedOnly ? "fill-black" : ""} />
+                            {pinnedCustomerNames.length > 0 ? `My Focus (${pinnedCustomerNames.length})` : "Focus Mode"}
+                        </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
@@ -258,7 +399,7 @@ export function MonitoringCommandCenter({
                                 </div>
                             ))
                     ) : filter === 'alerts' ? (
-                        jobs.filter(j => j.Job_Status === 'SOS' || j.Job_Status === 'Failed').map(job => (
+                        filteredJobs.filter(j => j.Job_Status === 'SOS' || j.Job_Status === 'Failed').map(job => (
                             <div key={job.Job_ID}
                                  onClick={() => handleJobClick(job)}
                                  className={cn(
@@ -290,7 +431,7 @@ export function MonitoringCommandCenter({
             <div className="flex-1 relative">
                 <DashboardMap 
                     drivers={driversWithGPS as any} 
-                    allJobs={jobs}
+                    allJobs={filteredJobs}
                     focusPosition={focusPosition} 
                 />
             </div>

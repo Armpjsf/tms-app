@@ -219,7 +219,7 @@ export async function getAllJobs(
 }
 
 // นับสถิติงานตามช่วงเวลา (Default: วันนี้)
-export async function getTodayJobStats(branchId?: string, startDate?: string, endDate?: string) {
+export async function getTodayJobStats(branchId?: string, startDate?: string, endDate?: string, customerNames?: string[]) {
   try {
     const isSuper = await isSuperAdmin()
     const isRegularAdmin = await isAdmin()
@@ -246,6 +246,10 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
             dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
         } else if (!isSuper && !isRegularAdmin && !userBranchId) {
             return { total: 0, delivered: 0, inProgress: 0, pending: 0 }
+        }
+
+        if (customerNames && customerNames.length > 0) {
+            dbQuery = dbQuery.in('Customer_Name', customerNames)
         }
     }
     

@@ -8,6 +8,7 @@ import { isCustomer, getCustomerId } from "@/lib/permissions"
 import { getActiveFleetStatus } from "@/lib/supabase/gps"
 import { getActiveFleetAlerts } from "@/lib/actions/fleet-intelligence-actions"
 import { getESGStats } from "@/lib/supabase/esg-analytics"
+import { getAllCustomers } from "@/lib/supabase/customers"
 import { cookies } from "next/headers"
 import { AlertTriangle } from "lucide-react"
 
@@ -16,6 +17,7 @@ interface DashboardContentProps {
     branch?: string; 
     start?: string; 
     end?: string; 
+    customers?: string; // Comma separated names
   }
 }
 
@@ -26,24 +28,26 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   const branch = searchParams.branch || branchFromCookie || 'All'
   const start = searchParams.start
   const end = searchParams.end
+  const customers = searchParams.customers ? searchParams.customers.split(',') : []
   
   const currentBranchId = branch === 'All' ? undefined : branch
   
   // Parallel Fetching - Server Side (Ultra Fast)
-  let unified, sosIds, marketplaceJobs, heatmapJobs, customerMode, custId, dailyStats, driverStats, fleetAlerts, esgResult;
+  let unified, sosIds, marketplaceJobs, heatmapJobs, customerMode, custId, dailyStats, driverStats, fleetAlerts, esgResult, allCustomers;
 
   try {
     const results = await Promise.allSettled([
-      getExecutiveDashboardUnified(currentBranchId, start || undefined, end || undefined),
+      getExecutiveDashboardUnified(currentBranchId, start || undefined, end || undefined, customers),
       getSOSDriverIds(),
       getMarketplaceJobs(currentBranchId),
       isCustomer(),
       getCustomerId(),
-      getTodayJobStats(currentBranchId, start || undefined, end || undefined),
+      getTodayJobStats(currentBranchId, start || undefined, end || undefined, customers),
       getDriverStats(currentBranchId),
       getESGStats(start || undefined, end || undefined, currentBranchId),
       getActiveFleetAlerts(),
-      getProfitHeatmapData(start || undefined, end || undefined, currentBranchId)
+      getProfitHeatmapData(start || undefined, end || undefined, currentBranchId),
+      getAllCustomers(1, 1000, undefined, currentBranchId)
     ]);
 
     // Map results with fallbacks
@@ -62,6 +66,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
     esgResult = results[7].status === 'fulfilled' ? results[7].value : null;
     fleetAlerts = results[8].status === 'fulfilled' ? results[8].value : [];
     heatmapJobs = results[9].status === 'fulfilled' ? results[9].value : [];
+    allCustomers = results[10].status === 'fulfilled' ? (results[10].value as any).data : [];
 
   } catch (error) {
     console.error("[Dashboard] Critical data fetch error:", error);
@@ -122,6 +127,8 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
       marketplaceJobs={marketplaceJobs}
       heatmapJobs={heatmapJobs}
       fleetHealth={98}
+      allCustomers={allCustomers}
+      initialCustomers={customers}
       esg={{
         fuelSaved: esgResult?.fuelSavedLiters || unified.esg?.fuelSaved || 0,
         co2Saved: esgResult?.co2SavedKg || unified.esg?.co2Saved || 0,

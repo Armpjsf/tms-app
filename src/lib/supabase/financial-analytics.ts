@@ -13,7 +13,7 @@ import {
 import { CO2_COEFFICIENTS } from '../utils/esg-utils'
 
 // 1. Unified Executive Dashboard (Ultra-Performance via RPC)
-export async function getExecutiveDashboardUnified(branchId?: string, startDate?: string, endDate?: string) {
+export async function getExecutiveDashboardUnified(branchId?: string, startDate?: string, endDate?: string, customerNames?: string[]) {
     const supabase = await createAdminClient()
     const customerId = await getCustomerId()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
@@ -34,19 +34,24 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     const isCust = await isCustomer()
     const finalCustomerId = customerId || (isCust ? 'RESTRICTED_ACCESS_PENDING' : null)
 
-    // Use the new Super RPC for Current Month
+    // Use the new Super RPC for Current Month (Only if no specific customer names are filtered)
     let currentData, rpcError;
-    try {
-        const response = await supabase.rpc('get_executive_summary', {
-            start_date: sDateCurrent,
-            end_date: eDateCurrent,
-            filter_branch_id: effectiveBranchId || null,
-            filter_customer_id: finalCustomerId
-        })
-        currentData = response.data
-        rpcError = response.error
-    } catch (e) {
-        console.warn('[getExecutiveDashboardUnified] RPC call failed, switching to fallback.')
+    if (!customerNames || customerNames.length === 0) {
+        try {
+            const response = await supabase.rpc('get_executive_summary', {
+                start_date: sDateCurrent,
+                end_date: eDateCurrent,
+                filter_branch_id: effectiveBranchId || null,
+                filter_customer_id: finalCustomerId
+            })
+            currentData = response.data
+            rpcError = response.error
+        } catch (e) {
+            console.warn('[getExecutiveDashboardUnified] RPC call failed, switching to fallback.')
+        }
+    } else {
+        // Force fallback to manual aggregation if filtering by customer names
+        rpcError = { message: 'Manual filtering required for customer names' }
     }
 
     // Fallback if RPC fails or is missing
@@ -65,6 +70,7 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             
             if (finalCustomerId) query = query.eq('Customer_ID', finalCustomerId)
             if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+            if (customerNames && customerNames.length > 0) query = query.in('Customer_Name', customerNames)
             
             const { data } = await query
             return data || []

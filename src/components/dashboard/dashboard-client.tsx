@@ -11,9 +11,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   Calendar,
-  Filter,
   X,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Users,
+  Star,
+  Check
 } from "lucide-react"
 import { WeeklyShipmentChart } from "@/components/dashboard/charts/weekly-shipment-chart"
 import { DashboardMap } from "@/components/dashboard/dashboard-map"
@@ -85,6 +87,8 @@ interface DashboardClientProps {
     }
     initialStart?: string
     initialEnd?: string
+    allCustomers?: any[]
+    initialCustomers?: string[]
 }
 
 export function DashboardClient({ 
@@ -101,6 +105,8 @@ export function DashboardClient({
     heatmapJobs = [],
     fleetHealth,
     esg,
+    allCustomers = [],
+    initialCustomers = [],
     initialStart = "",
     initialEnd = ""
 }: DashboardClientProps) {
@@ -111,6 +117,21 @@ export function DashboardClient({
     const [startDate, setStartDate] = useState(initialStart)
     const [endDate, setEndDate] = useState(initialEnd)
     const [isSyncing, setIsSyncing] = useState(false)
+    const [selectedCustomers, setSelectedCustomers] = useState<string[]>(initialCustomers)
+    const [isCustomerMenuOpen, setIsCustomerMenuOpen] = useState(false)
+    const [pinnedCustomers, setPinnedCustomers] = useState<string[]>([])
+
+    // Load Pinned Customers for the Admin
+    useEffect(() => {
+        const saved = localStorage.getItem('tms_admin_pinned_customers')
+        if (saved) {
+            try { setPinnedCustomers(JSON.parse(saved)) } catch (e) {}
+        }
+    }, [])
+
+    useEffect(() => {
+        localStorage.setItem('tms_admin_pinned_customers', JSON.stringify(pinnedCustomers))
+    }, [pinnedCustomers])
 
     // Sync local state if props change (e.g. navigation)
     useEffect(() => {
@@ -126,9 +147,31 @@ export function DashboardClient({
         
         if (endDate) params.set('end', endDate)
         else params.delete('end')
+
+        if (selectedCustomers.length > 0) params.set('customers', selectedCustomers.join(','))
+        else params.delete('customers')
         
         router.push(`/dashboard?${params.toString()}`)
         setTimeout(() => setIsSyncing(false), 1000)
+    }
+
+    const toggleCustomer = (name: string) => {
+        setSelectedCustomers(prev => 
+            prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+        )
+    }
+
+    const togglePin = (name: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        setPinnedCustomers(prev => 
+            prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+        )
+    }
+
+    const applyPinned = () => {
+        setSelectedCustomers(pinnedCustomers)
+        setIsCustomerMenuOpen(false)
+        // Trigger sync manually via a small timeout to let state update or just call router directly
     }
 
     const handleReset = () => {
@@ -161,48 +204,117 @@ export function DashboardClient({
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-3 relative z-10 w-full md:w-auto">
-                    <div className="flex items-center gap-2 w-full sm:w-56 bg-background/50 border border-border/10 rounded-xl px-3 h-10 hover:border-primary/30 transition-all group/input">
-                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest italic whitespace-nowrap">START:</span>
-                        <input 
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="bg-transparent border-none focus:ring-0 text-xs font-black uppercase text-foreground w-full cursor-pointer"
-                        />
-                    </div>
-                    <div className="flex items-center gap-2 w-full sm:w-56 bg-background/50 border border-border/10 rounded-xl px-3 h-10 hover:border-primary/30 transition-all group/input">
-                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest italic whitespace-nowrap">END:</span>
-                        <input 
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="bg-transparent border-none focus:ring-0 text-xs font-black uppercase text-foreground w-full cursor-pointer"
-                        />
-                    </div>
-                    
-                    {(startDate || endDate) && (
-                        <button 
-                            onClick={handleReset}
-                            className="p-2 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-xl hover:bg-rose-500 hover:text-white transition-all group/reset"
-                            title="Reset Range"
-                        >
-                            <X size={16} className="group-hover/reset:rotate-90 transition-transform" />
-                        </button>
-                    )}
-                    
-                    <button 
-                        onClick={handleSync}
-                        disabled={isSyncing}
-                        className={cn(
-                            "px-5 h-10 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-primary/80 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(255,30,133,0.3)]",
-                            isSyncing && "opacity-50 cursor-not-allowed"
+                    <div className="flex items-center gap-3 relative z-10 w-full md:w-auto">
+                        {!customerMode && (
+                            <div className="relative">
+                                <button 
+                                    onClick={() => setIsCustomerMenuOpen(!isCustomerMenuOpen)}
+                                    className={cn(
+                                        "h-10 px-4 bg-background/50 border border-border/10 rounded-xl flex items-center gap-2 hover:border-primary/30 transition-all text-[10px] font-black uppercase tracking-widest",
+                                        selectedCustomers.length > 0 && "border-primary/50 text-primary"
+                                    )}
+                                >
+                                    <Users size={14} />
+                                    {selectedCustomers.length > 0 ? `${selectedCustomers.length} Focus` : "Customer Portfolio"}
+                                </button>
+
+                                {isCustomerMenuOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsCustomerMenuOpen(false)} />
+                                        <div className="absolute right-0 mt-2 w-72 bg-background/95 backdrop-blur-2xl border border-border/10 rounded-2xl shadow-2xl z-50 p-5 animate-in fade-in zoom-in duration-200">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Target Accounts</p>
+                                                {pinnedCustomers.length > 0 && (
+                                                    <button onClick={applyPinned} className="text-[9px] font-black text-primary hover:underline uppercase">Use Pinned</button>
+                                                )}
+                                            </div>
+                                            <div className="max-h-64 overflow-y-auto space-y-1 custom-scrollbar pr-2">
+                                                {allCustomers.map(c => (
+                                                    <button 
+                                                        key={c.Customer_ID}
+                                                        onClick={() => toggleCustomer(c.Customer_Name)}
+                                                        className={cn(
+                                                            "w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-primary/5 group transition-all",
+                                                            selectedCustomers.includes(c.Customer_Name) ? "bg-primary/10" : ""
+                                                        )}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={cn("w-2 h-2 rounded-full", selectedCustomers.includes(c.Customer_Name) ? "bg-primary" : "bg-muted")} />
+                                                            <span className={cn(
+                                                                "text-[11px] font-bold uppercase truncate max-w-[140px]",
+                                                                selectedCustomers.includes(c.Customer_Name) ? "text-primary" : "text-foreground"
+                                                            )}>{c.Customer_Name}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <Star 
+                                                                size={14} 
+                                                                onClick={(e) => togglePin(c.Customer_Name, e)}
+                                                                className={cn(
+                                                                    "transition-all",
+                                                                    pinnedCustomers.includes(c.Customer_Name) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground opacity-20 hover:opacity-100"
+                                                                )} 
+                                                            />
+                                                            {selectedCustomers.includes(c.Customer_Name) && <Check size={14} className="text-primary" />}
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="mt-4 pt-4 border-t border-border/10">
+                                                <button 
+                                                    onClick={handleSync}
+                                                    className="w-full h-10 bg-primary text-black font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-primary/80 transition-all"
+                                                >
+                                                    Apply Focus
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         )}
-                    >
-                        <Filter size={12} strokeWidth={3} />
-                        {isSyncing ? "SYNCING..." : "SYNC_DATA"}
-                    </button>
-                    
+
+                        <div className="flex items-center gap-2 w-full sm:w-48 bg-background/50 border border-border/10 rounded-xl px-3 h-10 hover:border-primary/30 transition-all group/input">
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest italic whitespace-nowrap">START:</span>
+                            <input 
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="bg-transparent border-none focus:ring-0 text-xs font-black uppercase text-foreground w-full cursor-pointer"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 w-full sm:w-48 bg-background/50 border border-border/10 rounded-xl px-3 h-10 hover:border-primary/30 transition-all group/input">
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest italic whitespace-nowrap">END:</span>
+                            <input 
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="bg-transparent border-none focus:ring-0 text-xs font-black uppercase text-foreground w-full cursor-pointer"
+                            />
+                        </div>
+                        
+                        {(startDate || endDate || selectedCustomers.length > 0) && (
+                            <button 
+                                onClick={handleReset}
+                                className="p-2 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-xl hover:bg-rose-500 hover:text-white transition-all group/reset"
+                                title="Reset Range"
+                            >
+                                <X size={16} className="group-hover/reset:rotate-90 transition-transform" />
+                            </button>
+                        )}
+                        
+                        <button 
+                            onClick={handleSync}
+                            disabled={isSyncing}
+                            className={cn(
+                                "px-5 h-10 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-primary/80 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(255,30,133,0.3)]",
+                                isSyncing && "opacity-50 cursor-not-allowed"
+                            )}
+                        >
+                            <Activity size={12} strokeWidth={3} />
+                            {isSyncing ? "SYNCING..." : "SYNC_DATA"}
+                        </button>
+                    </div>
+    
                     <ExcelExport 
                         data={weeklyStats.length ? weeklyStats : [{ message: "No data in selected range" }]}
                         filename="logispro_dashboard_summary"
