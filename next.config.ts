@@ -7,6 +7,15 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   skipWaiting: true,
   workboxOptions: {
     importScripts: ["/sw-push.js"],
+    // Exclude dynamic pages from Service Worker caching to prevent no-response errors
+    exclude: [
+      /chat/,
+      /planning/,
+      /billing/,
+      /drivers/,
+      /dashboard/,
+      /monitoring/,
+    ],
   },
 });
 
