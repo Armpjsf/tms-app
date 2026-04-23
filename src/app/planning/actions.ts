@@ -262,6 +262,44 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
     return normalized
   }
 
+  const cleanId = (val: any) => {
+    if (val === undefined || val === null) return undefined
+    const s = String(val).trim()
+    if (s.endsWith('.0')) return s.slice(0, -2)
+    return s
+  }
+
+  const normalizeDate = (val: any) => {
+    if (!val) return null
+    if (typeof val === 'number') {
+      // Excel serial date (days since 1900-01-01)
+      const date = new Date(Math.round((val - 25569) * 86400 * 1000))
+      return date.toISOString().split('T')[0]
+    }
+    if (typeof val === 'string') {
+      const trimmed = val.trim()
+      // Handle DD.MM.YYYY or DD/MM/YYYY
+      const separator = trimmed.includes('.') ? '.' : trimmed.includes('/') ? '/' : trimmed.includes('-') ? '-' : null
+      if (separator) {
+        const parts = trimmed.split(separator)
+        if (parts.length === 3) {
+          // If first part is 4 digits, assume YYYY-MM-DD
+          if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`
+          // If last part is 4 digits, assume DD-MM-YYYY
+          if (parts[2].length === 4) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+        }
+      }
+      // Fallback for standard ISO or other string formats
+      try {
+        const d = new Date(trimmed)
+        if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
+      } catch {
+        return trimmed
+      }
+    }
+    return String(val)
+  }
+
   const cleanData = jobs.map(j => {
     const data = normalizeData(j)
     const driverId = data.Driver_ID as string
@@ -271,9 +309,9 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
     const vehicle = vehicleMap.get(vehiclePlate)
 
     const sanitized = sanitizeJobData({
-      Job_ID: (data.Job_ID as string) || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
+      Job_ID: cleanId(data.Job_ID) || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
       Branch_ID: (data.Branch_ID as string) || effectiveBranchId,
-      Plan_Date: (data.Plan_Date as string) || new Date().toISOString().split('T')[0],
+      Plan_Date: normalizeDate(data.Plan_Date) || new Date().toISOString().split('T')[0],
       Customer_ID: (data.Customer_ID as string) || customerMap.get((data.Customer_Name as string)?.toLowerCase().trim()) || null,
       Customer_Name: data.Customer_Name as string,
       Route_Name: (data.Route_Name as string) || 'Direct',

@@ -76,10 +76,10 @@ export function ExcelImport({
       reader.onload = (e) => {
         try {
           const data = e.target?.result
-          const workbook = read(data, { type: "binary" })
+          const workbook = read(data, { type: "binary", cellDates: true, dateNF: 'yyyy-mm-dd' })
           const sheetName = workbook.SheetNames[0]
           const sheet = workbook.Sheets[sheetName]
-          const jsonData = utils.sheet_to_json(sheet)
+          const jsonData = utils.sheet_to_json(sheet, { raw: false, dateNF: 'yyyy-mm-dd' })
           const plainData = JSON.parse(JSON.stringify(jsonData))
           resolve(plainData)
         } catch (error) {

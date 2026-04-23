@@ -749,6 +749,7 @@ export const dictionaries = {
     planning: {
       title: 'วางแผนงานขนส่ง',
       mission_orchestration: 'ระบบสั่งการและวางแผนงาน',
+      import_title: 'นำเข้าข้อมูลงาน (Bulk)',
       new_job: 'สร้างงานใหม่',
       bulk_create: 'นำเข้าข้อมูลไฟล์',
       kanban_view: 'มุมมองกระดาน',
@@ -2599,6 +2600,7 @@ export const dictionaries = {
     planning: {
       title: 'Job Planning',
       mission_orchestration: 'Order & Planning Hub',
+      import_title: 'Bulk Import Jobs',
       new_job: 'New Job',
       bulk_create: 'Bulk Import',
       kanban_view: 'Kanban',

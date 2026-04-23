@@ -461,6 +461,8 @@ export function JobDialog({
         Zone: job.Zone || '',
         Branch_ID: job.Branch_ID || '',
         Show_Price_To_Driver: firstAssign.Show_Price_To_Driver ?? job.Show_Price_To_Driver ?? true,
+        Pickup_Lat: job.Pickup_Lat || null,
+        Pickup_Lon: job.Pickup_Lon || null,
         Delivery_Lat: job.Delivery_Lat || null,
         Delivery_Lon: job.Delivery_Lon || null,
         Loaded_Qty: job.Loaded_Qty !== null && job.Loaded_Qty !== undefined ? job.Loaded_Qty : '',
