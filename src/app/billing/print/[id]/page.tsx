@@ -235,7 +235,11 @@ export default async function BillingPrintPage(props: Props) {
     
     const totalPreTax = displayItems.reduce((acc, curr) => acc + curr.totalBeforeTax, 0)
 
-    const wht = note.WHT_Amount ?? ((totalPreTax - (note.Discount_Amount || 0)) * (note.WHT_Rate || 1) / 100)
+    const whtRate = Number(note.WHT_Rate || 1)
+    const wht = (note.WHT_Amount && note.WHT_Amount > 0) 
+        ? Number(note.WHT_Amount) 
+        : ((totalPreTax - (note.Discount_Amount || 0)) * whtRate / 100)
+        
     const netTotal = (note.Total_Amount || (totalPreTax - (note.Discount_Amount || 0) + (note.VAT_Amount || 0))) - wht
 
     const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
