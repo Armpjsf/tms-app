@@ -76,45 +76,27 @@ export async function getChatSchema(supabase: SupabaseClient) {
 // Get list of drivers with their last message
 export async function getChatContacts(): Promise<ChatContact[]> {
   try {
-    const supabase = await createClient()
-
-    // 0. Filter by Branch
+    // Use admin client directly to bypass RLS issues
+    const adminSupabase = createAdminClient()
+    
     const branchId = await getUserBranchId()
     const isSuper = await isSuperAdmin()
     const isRegularAdmin = await isAdmin()
     const customerId = await getCustomerId()
 
-    // 0. Detect correct schema
-    let { tableName, columns } = await getChatSchema(supabase)
+    // Detect schema once
+    const { tableName, columns } = await getChatSchema(adminSupabase)
 
-    // Proactively use admin client for authorized users
-    const effectiveSupabase = (isSuper || isRegularAdmin || customerId) ? createAdminClient() : supabase
-
-    const result = await effectiveSupabase
+    // ⚡ Critical fix: Always limit the fetch - never fetch all messages!
+    const { data: messages, error } = await adminSupabase
       .from(tableName)
       .select('*')
       .order(columns.created_at, { ascending: false })
+      .limit(1000)
 
-    let messages = result.data
-
-    // FALLBACK: Use Admin Client if error occurs (likely RLS / Auth issue)
-    if (result.error) {
-      const adminSupabase = createAdminClient()
-      
-      // Re-detect schema with admin client just in case
-      const adminSchema = await getChatSchema(adminSupabase)
-      tableName = adminSchema.tableName
-      columns = adminSchema.columns
-
-      const { data: adminMessages, error: adminError } = await adminSupabase
-        .from(tableName)
-        .select('*')
-        .order(columns.created_at, { ascending: false })
-      
-      if (adminError) {
-        return []
-      }
-      messages = adminMessages
+    if (error) {
+      console.error('[getChatContacts] Error:', error.message)
+      return []
     }
 
     // Normalizing results to lowercase keys for internal logic
@@ -128,7 +110,6 @@ export async function getChatContacts(): Promise<ChatContact[]> {
     })) || []
 
     // 1. Get Drivers in my branch to filter messages (Use Admin client for names to ensure visibility)
-    const adminSupabase = createAdminClient()
     let allowedDriverIds: Set<string> | null = null
     const { data: allDrivers } = await adminSupabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Branch_ID')
     
