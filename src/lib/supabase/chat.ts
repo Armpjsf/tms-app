@@ -22,8 +22,14 @@ export type ChatContact = {
   updated_at: string
 }
 
+// Cache schema detection to avoid multiple DB roundtrips per action call
+let _cachedSchema: { tableName: string; columns: { id: string; sender_id: string; receiver_id: string; message: string; is_read: string; created_at: string } } | null = null
+
 // Helper to detect table and column casing
 export async function getChatSchema(supabase: SupabaseClient) {
+  // Return cached result if available (avoids multiple DB round-trips)
+  if (_cachedSchema) return _cachedSchema
+
   let tableName = 'Chat_Messages'
   // Check table casing
   const { error: tableError } = await supabase.from('Chat_Messages').select('id').limit(1)
@@ -63,7 +69,8 @@ export async function getChatSchema(supabase: SupabaseClient) {
     }
   }
 
-  return { tableName, columns }
+  _cachedSchema = { tableName, columns }
+  return _cachedSchema
 }
 
 // Get list of drivers with their last message

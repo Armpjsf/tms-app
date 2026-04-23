@@ -15,47 +15,25 @@ export interface ChatMessage {
 }
 
 export async function getChatHistory(driverId: string) {
-    const supabase = await createClient()
+    // Use admin client directly to bypass RLS - chat requires cross-user visibility
+    const adminSupabase = createAdminClient()
     
-    // 0. Detect correct schema
-    let { tableName, columns } = await getChatSchema(supabase)
+    // Detect schema once using admin client
+    const { tableName, columns } = await getChatSchema(adminSupabase)
 
-    const result = await supabase
+    const { data, error } = await adminSupabase
         .from(tableName)
         .select('*')
         .or(`${columns.sender_id}.eq.${driverId},${columns.receiver_id}.eq.${driverId}`)
         .order(columns.created_at, { ascending: true })
-
-    if (result.error) {
-        // Fallback to admin client (bypass RLS)
-        const adminSupabase = createAdminClient()
-        const adminSchema = await getChatSchema(adminSupabase)
-        tableName = adminSchema.tableName
-        columns = adminSchema.columns
-
-        const { data: adminData, error: adminError } = await adminSupabase
-            .from(tableName)
-            .select('*')
-            .or(`${columns.sender_id}.eq.${driverId},${columns.receiver_id}.eq.${driverId}`)
-            .order(columns.created_at, { ascending: true })
-        
-        if (adminError) {
-            return []
-        }
-
-        // Return normalized data from admin fallback
-        return ((adminData ?? []) as Record<string, unknown>[]).map(msg => ({
-            id: msg[columns.id] as number,
-            sender_id: msg[columns.sender_id] as string,
-            receiver_id: msg[columns.receiver_id] as string,
-            message: msg[columns.message] as string,
-            is_read: msg[columns.is_read] as boolean,
-            created_at: msg[columns.created_at] as string
-        })) as ChatMessage[]
+    
+    if (error) {
+        console.error('[getChatHistory] Error:', error.message)
+        return []
     }
 
-    // Normalize
-    return ((result.data ?? []) as Record<string, unknown>[]).map(msg => ({
+    // Normalize column names to consistent lowercase keys
+    return ((data ?? []) as Record<string, unknown>[]).map(msg => ({
         id: msg[columns.id] as number,
         sender_id: msg[columns.sender_id] as string,
         receiver_id: msg[columns.receiver_id] as string,
