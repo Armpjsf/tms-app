@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, createContext, useContext, useState } from "react"
+import { useEffect, createContext, useContext, useState, useMemo } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { UserData } from "@/lib/actions/user-actions"
 
@@ -13,7 +13,7 @@ const PresenceContext = createContext<PresenceState>({ user: null, onlineUsers: 
 
 export function PresenceProvider({ children, user }: { children: React.ReactNode, user: UserData | null }) {
     const [onlineUsers, setOnlineUsers] = useState<any[]>([])
-    const supabase = createClient()
+    const supabase = useMemo(() => createClient(), [])
 
     useEffect(() => {
         if (!user) return

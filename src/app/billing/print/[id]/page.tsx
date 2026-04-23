@@ -14,6 +14,7 @@ type Props = {
 }
 
 function ArabicNumberToText(Number: number) {
+    if (Number === undefined || Number === null || isNaN(Number)) return "";
     const numStr = Number.toFixed(2);
     const parts = numStr.split('.');
     const integerPart = parts[0];
@@ -58,6 +59,15 @@ function ArabicNumberToText(Number: number) {
         text += readNumber(fractionalPart) + 'สตางค์';
     }
     return text;
+}
+
+function safeLocaleDateString(date: Date, locale: string) {
+    try {
+        if (!date || isNaN(date.getTime())) return '-';
+        return date.toLocaleDateString(locale);
+    } catch {
+        return '-';
+    }
 }
 
 export default async function BillingPrintPage(props: Props) {
@@ -229,8 +239,11 @@ export default async function BillingPrintPage(props: Props) {
     const netTotal = (note.Total_Amount || (totalPreTax - (note.Discount_Amount || 0) + (note.VAT_Amount || 0))) - wht
 
     const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
-    const issueDate = new Date(note.Billing_Date);
-    const dueDate = new Date(issueDate.getTime() + (note.Credit_Days || 15) * 24 * 60 * 60 * 1000);
+    const issueDate = note.Billing_Date ? new Date(note.Billing_Date) : new Date();
+    const creditDays = Number(note.Credit_Days || 15)
+    const dueDate = !isNaN(issueDate.getTime()) 
+        ? new Date(issueDate.getTime() + creditDays * 24 * 60 * 60 * 1000)
+        : new Date();
 
     return (
         <div className="bg-white min-h-screen p-8 text-black print:p-0 print-container font-sans">
@@ -287,11 +300,11 @@ export default async function BillingPrintPage(props: Props) {
                                 <div className="font-bold text-slate-700">เลขที่เอกสาร :</div>
                                 <div>{note.Billing_Note_ID}</div>
                                 <div className="font-bold text-slate-700">วันที่ออก :</div>
-                                <div>{issueDate.toLocaleDateString(localeStr)}</div>
+                                <div>{safeLocaleDateString(issueDate, localeStr)}</div>
                                 <div className="font-bold text-slate-700">เครดิต :</div>
                                 <div>{note.Credit_Days || '15'} วัน</div>
                                 <div className="font-bold text-slate-700">วันที่ครบกำหนด :</div>
-                                <div>{dueDate.toLocaleDateString(localeStr)}</div>
+                                <div>{safeLocaleDateString(dueDate, localeStr)}</div>
                             </div>
                         </div>
                         <div className="pl-3 border-l-2 border-slate-200 text-[11px]">
@@ -427,13 +440,13 @@ export default async function BillingPrintPage(props: Props) {
                                 <div className="h-10 border-b border-dashed border-slate-400 mb-1 mx-1"></div>
                                 <div className="font-bold mb-0.5 whitespace-nowrap">ผู้ออกเอกสาร (ผู้ขาย)</div>
                                 <div className="text-slate-600 truncate">{contactName}</div>
-                                <div className="text-slate-500 text-[9px]">{issueDate.toLocaleDateString(localeStr)}</div>
+                                <div className="text-slate-500 text-[9px]">{safeLocaleDateString(issueDate, localeStr)}</div>
                             </div>
                             <div>
                                 <div className="h-10 border-b border-dashed border-slate-400 mb-1 mx-1"></div>
                                 <div className="font-bold mb-0.5 whitespace-nowrap">ผู้อนุมัติ (ผู้ขาย)</div>
                                 <div className="text-slate-600 truncate">{contactName}</div>
-                                <div className="text-slate-500 text-[9px]">{issueDate.toLocaleDateString(localeStr)}</div>
+                                <div className="text-slate-500 text-[9px]">{safeLocaleDateString(issueDate, localeStr)}</div>
                             </div>
                             <div className="flex flex-col items-center relative">
                                 <div className="h-10 flex items-center justify-center mb-1">
