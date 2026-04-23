@@ -374,12 +374,11 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
               const name = c.driver_name
               const isSelected = selectedDriverId === id
               return (
-                <motion.div 
+                <div 
                   key={id}
-                  layout
                   onClick={() => setSelectedDriverId(id)}
                   className={cn(
-                    "flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 mb-2 relative group",
+                    "flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-colors border-2 mb-2 relative",
                     isSelected 
                       ? 'bg-primary/10 border-primary/20 shadow-sm' 
                       : 'bg-transparent border-transparent hover:bg-muted/50'
@@ -407,7 +406,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                     </div>
                     <p className="text-xs text-muted-foreground truncate pr-2 opacity-70 font-medium">{(c.last_message || 'ไม่มีข้อความ')}</p>
                   </div>
-                </motion.div>
+                </div>
               )
             })
           )}

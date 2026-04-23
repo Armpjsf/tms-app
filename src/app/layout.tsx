@@ -7,14 +7,14 @@ import { NotificationSoundProvider } from "@/components/providers/notification-s
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  weight: ["400", "700", "800", "900"],
   display: "swap",
 });
 
 const prompt = Prompt({
   variable: "--font-prompt",
   subsets: ["thai", "latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  weight: ["400", "600", "700"],
   display: "swap",
 });
 
