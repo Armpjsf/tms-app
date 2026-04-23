@@ -99,13 +99,127 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   }, [forcedDriverId])
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
-    if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior })
+    if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTo({
+            top: chatContainerRef.current.scrollHeight,
+            behavior
+        })
     }
   }, [])
 
   // 1. Stable Supabase client
   const supabaseClient = useMemo(() => createClient(), [])
+
+  const filteredContacts = useMemo(() => {
+    const contactMap = new Map<string, Contact>()
+    initialDrivers.forEach(d => {
+      contactMap.set(d.Driver_ID, {
+        driver_id: d.Driver_ID,
+        driver_name: d.Driver_Name || `พนักงานขับรถ (${d.Driver_ID})`,
+        last_message: 'เริ่มการสนทนา',
+        unread: 0,
+        updated_at: new Date().toISOString()
+      })
+    })
+    contacts.forEach(c => {
+      contactMap.set(c.driver_id, c)
+    })
+    const all = Array.from(contactMap.values())
+    if (!searchQuery.trim()) return all.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    const q = searchQuery.toLowerCase()
+    return all.filter((c: Contact) => 
+      (c.driver_name || '').toLowerCase().includes(q) ||
+      (c.driver_id || '').toLowerCase().includes(q)
+    ).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+  }, [contacts, initialDrivers, searchQuery])
+
+  const activeDriver = useMemo(() => {
+    if (!selectedDriverId) return null
+    const contact = contacts.find(c => c.driver_id === selectedDriverId)
+    if (contact) return contact
+    const initial = initialDrivers.find(d => d.Driver_ID === selectedDriverId)
+    if (initial) return {
+        driver_id: initial.Driver_ID,
+        driver_name: initial.Driver_Name || `พนักงานขับรถ (${initial.Driver_ID})`,
+        last_message: '',
+        unread: 0,
+        updated_at: new Date().toISOString()
+    }
+    return {
+        driver_id: selectedDriverId,
+        driver_name: `พนักงานขับรถ (${selectedDriverId})`,
+        last_message: '',
+        unread: 0,
+        updated_at: new Date().toISOString()
+    }
+  }, [selectedDriverId, contacts, initialDrivers])
+
+  const fetchMessages = useCallback(async (driverId: string) => {
+    const { getChatHistory } = await import('@/lib/actions/chat-actions')
+    const history = await getChatHistory(driverId)
+    if (history) {
+      setMessages(history)
+      scrollToBottom('instant')
+    }
+  }, [scrollToBottom])
+
+  const sendMessage = useCallback(async () => {
+    if (!inputMessage.trim() || !selectedDriverId || isSending) return
+    const messageText = inputMessage.trim()
+    setInputMessage('')
+    setIsSending(true)
+
+    const optimisticMsg: ChatMessage = {
+      id: Date.now(),
+      sender_id: 'admin',
+      receiver_id: selectedDriverId,
+      message: messageText,
+      created_at: new Date().toISOString(),
+      is_read: false,
+    }
+    setMessages(prev => [...prev, optimisticMsg])
+    scrollToBottom()
+
+    const { sendChatMessage } = await import('@/lib/actions/chat-actions')
+    const result = await sendChatMessage('admin', messageText, selectedDriverId)
+    if (!result.success) {
+      setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
+      setInputMessage(messageText)
+    }
+    setIsSending(false)
+  }, [inputMessage, selectedDriverId, isSending, scrollToBottom])
+
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !selectedDriverId) return
+    setUploadingImage(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('folder', 'Chat_Images')
+    try {
+        const uploadResult = await uploadImageToDrive(formData)
+        if (uploadResult.success && uploadResult.directLink) {
+            const imageUrlMessage = `[IMAGE] ${uploadResult.directLink}`
+            const { sendChatMessage } = await import('@/lib/actions/chat-actions')
+            await sendChatMessage('admin', imageUrlMessage, selectedDriverId)
+        } else {
+            toast.error('อัปโหลดล้มเหลว')
+        }
+    } catch {
+        toast.error('เกิดข้อผิดพลาดของระบบ')
+    } finally {
+        setUploadingImage(false)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }, [selectedDriverId])
+
+  const markAllAsRead = useCallback(async (driverId: string) => {
+    const { markAsReadAction } = await import('@/lib/actions/chat-actions')
+    await markAsReadAction(driverId)
+    setContacts(prev => prev.map(c => 
+      c.driver_id === driverId ? { ...c, unread: 0 } : c
+    ))
+  }, [])
 
   // 2. Optimized Contact List Update
   const updateContactList = useCallback((newMsg: ChatMessage) => {
@@ -139,11 +253,8 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   // 3. Robust Realtime Listener
   useEffect(() => {
     console.log("[CHAT] Connecting to Realtime...")
-    
     const handleRealtimeInsert = (payload: any) => {
       const raw = payload.new
-      console.log("[CHAT] New message received:", raw)
-      
       const newMsg: ChatMessage = {
         id: raw.id ?? raw.Id,
         sender_id: raw.sender_id ?? raw.Sender_ID,
@@ -152,19 +263,12 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
         is_read: raw.is_read ?? raw.Is_Read,
         created_at: raw.created_at ?? raw.Created_At
       }
-
       if (!newMsg.sender_id || !newMsg.message) return
-
       const relevantDriverId = newMsg.sender_id === 'admin' ? newMsg.receiver_id : newMsg.sender_id
-      
       if (relevantDriverId === selectedDriverIdRef.current) {
         setMessages(prev => {
-          const isDuplicate = prev.some(m => 
-            (m.id === newMsg.id) || 
-            (m.sender_id === newMsg.sender_id && m.message === newMsg.message && Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 2000)
-          )
-          if (isDuplicate) return prev
-          return [...prev, newMsg]
+          const isDuplicate = prev.some(m => (m.id === newMsg.id) || (m.sender_id === newMsg.sender_id && m.message === newMsg.message && Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 2000))
+          return isDuplicate ? prev : [...prev, newMsg]
         })
         scrollToBottom()
         if (newMsg.sender_id !== 'admin') {
@@ -175,22 +279,17 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
          const driverName = contactsRef.current.find(c => c.driver_id === newMsg.sender_id)?.driver_name || `พนักงานขับรถ (${newMsg.sender_id})`
          toast.info(`ข้อความใหม่จาก ${driverName}`, {
              description: newMsg.message.startsWith('[IMAGE]') ? '📷 ส่งรูปภาพ' : newMsg.message,
-             action: {
-                 label: 'เปิดแชท',
-                 onClick: () => setSelectedDriverId(newMsg.sender_id)
-             }
+             action: { label: 'เปิดแชท', onClick: () => setSelectedDriverId(newMsg.sender_id) }
          })
          try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
       }
       updateContactList(newMsg)
     }
-
     const channel = supabaseClient
-      .channel('chat_global_v3')
+      .channel('chat_global_v4')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'Chat_Messages' }, handleRealtimeInsert)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, handleRealtimeInsert)
-      .subscribe((status) => console.log("[CHAT] Subscription:", status))
-
+      .subscribe()
     return () => { supabaseClient.removeChannel(channel) }
   }, [updateContactList, scrollToBottom, supabaseClient])
 
