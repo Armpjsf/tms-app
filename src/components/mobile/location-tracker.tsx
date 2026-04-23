@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react"
 import { saveGPSLog } from "@/lib/supabase/gps"
 import { updateDriverLocation } from "@/lib/actions/location-actions"
+import { Geolocation } from '@capacitor/geolocation'
+import { Capacitor } from '@capacitor/core'
+import { toast } from "sonner"
 
 const UPDATE_INTERVAL = 60000 // Update every 1 minute
 const MIN_DISTANCE = 0.0002 // Approx 20-30 meters
@@ -12,42 +15,82 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
   
   const lastUpdateRef = useRef<number>(0)
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null)
-  const wakeLockRef = useRef<any>(null) // Using any here because WakeLockSentinel might not be in all lib types
+  const wakeLockRef = useRef<any>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const watchIdRef = useRef<string | null>(null)
   
   useEffect(() => {
-    // 1. Setup WatchPosition
-    const watchId = navigator.geolocation.watchPosition(
-        async (position) => {
-            const { latitude, longitude, speed } = position.coords
-            processLocationUpdate(latitude, longitude, speed || 0)
-        },
-        (err) => {
-            console.warn('[PWA] Geolocation watch error:', err.code, err.message)
-            setStatus("error")
-        },
-        {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 5000
+    // 1. Setup Tracking
+    const startTracking = async () => {
+        const isNative = Capacitor.isNativePlatform()
+        
+        if (isNative) {
+            try {
+                const permissions = await Geolocation.checkPermissions()
+                if (permissions.location !== 'granted') {
+                    await Geolocation.requestPermissions()
+                }
+
+                const id = await Geolocation.watchPosition(
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 3000
+                    },
+                    (position, err) => {
+                        if (err) {
+                            console.error('[Capacitor] Watch error:', err)
+                            return
+                        }
+                        if (position) {
+                            processLocationUpdate(
+                                position.coords.latitude, 
+                                position.coords.longitude, 
+                                position.coords.speed || 0
+                            )
+                        }
+                    }
+                )
+                watchIdRef.current = id
+                console.log("[Capacitor] Native tracking initiated")
+            } catch (err) {
+                console.error("[Capacitor] Failed to start native tracking:", err)
+                toast.error("Native GPS tracking failed to initialize")
+            }
+        } else {
+            // Web Fallback
+            const id = navigator.geolocation.watchPosition(
+                (pos) => processLocationUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.speed || 0),
+                (err) => {
+                    console.warn('[Web] Geolocation error:', err)
+                    setStatus("error")
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+            )
+            watchIdRef.current = String(id)
+            console.log("[Web] Browser tracking initiated")
         }
-    )
+    }
 
     // 2. Setup Visibility Catch-up
     const handleVisibilityChange = () => {
         if (document.visibilityState === "visible") {
             console.log("[PWA] Resumed: Catching up GPS...")
-            navigator.geolocation.getCurrentPosition(
-                (pos) => processLocationUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.speed || 0),
-                null,
-                { enableHighAccuracy: true }
-            )
+            if (!Capacitor.isNativePlatform()) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => processLocationUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.speed || 0),
+                    null,
+                    { enableHighAccuracy: true }
+                )
+            }
             // Re-acquire wake lock if needed
-            requestWakeLock()
+            setupPersistence()
         }
     }
 
-    // 3. Screen Wake Lock
-    const requestWakeLock = async () => {
+    // 3. Background Persistence Hacks
+    const setupPersistence = async () => {
+        // Screen Wake Lock
         if ('wakeLock' in navigator) {
             try {
                 wakeLockRef.current = await (navigator as any).wakeLock.request('screen')
@@ -55,6 +98,23 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
             } catch (err) {
                 console.warn("[PWA] Wake Lock failed:", err)
             }
+        }
+
+        // Silent Audio Loop Hack (to prevent OS from killing background process)
+        if (!audioRef.current) {
+            const silentMp3 = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="
+            audioRef.current = new Audio(silentMp3)
+            audioRef.current.loop = true
+            audioRef.current.volume = 0.01 // Minimal volume
+            
+            // Interaction required to play audio in most browsers
+            const playAudio = () => {
+                audioRef.current?.play().catch(() => {
+                    console.log("[PWA] Audio play failed, waiting for interaction")
+                })
+                document.removeEventListener('click', playAudio)
+            }
+            document.addEventListener('click', playAudio)
         }
     }
 
@@ -88,14 +148,27 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
     }
 
     document.addEventListener("visibilitychange", handleVisibilityChange)
-    requestWakeLock()
+    startTracking()
+    setupPersistence()
 
     return () => {
-        if (watchId) navigator.geolocation.clearWatch(watchId)
+        if (watchIdRef.current) {
+            if (Capacitor.isNativePlatform()) {
+                Geolocation.clearWatch({ id: watchIdRef.current })
+            } else {
+                navigator.geolocation.clearWatch(Number(watchIdRef.current))
+            }
+        }
         document.removeEventListener("visibilitychange", handleVisibilityChange)
+        
         if (wakeLockRef.current) {
             wakeLockRef.current.release()
             wakeLockRef.current = null
+        }
+
+        if (audioRef.current) {
+            audioRef.current.pause()
+            audioRef.current = null
         }
     }
   }, [driverId])
