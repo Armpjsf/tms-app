@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { TrendingUp, Activity, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
