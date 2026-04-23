@@ -29,18 +29,28 @@ export async function saveGPSLog(data: {
 }) {
   try {
     const supabase = await createAdminClient();
+    let plate = data.vehiclePlate;
+
+    // Auto-fill vehicle plate if missing
+    if (!plate) {
+        const { data: driver } = await supabase
+            .from('Master_Drivers')
+            .select('Vehicle_Plate')
+            .eq('Driver_ID', data.driverId)
+            .single();
+        if (driver?.Vehicle_Plate) plate = driver.Vehicle_Plate;
+    }
 
     // Note: GPS_Logs table uses lowercase column names
     const { error } = await supabase
-      .from("gps_logs") // Use lowercase table name if possible, or verify match
+      .from("gps_logs") 
       .insert({
         driver_id: data.driverId,
-        vehicle_plate: data.vehiclePlate,
+        vehicle_plate: plate,
         latitude: data.lat,
         longitude: data.lng,
         job_id: data.jobId,
         speed: data.speed,
-        // timestamp is auto-generated
       });
 
     if (error) {
@@ -299,7 +309,7 @@ export async function getVehicleRouteHistory(plate: string, startDate: string, e
 
         const { data, error } = await supabase
             .from("gps_logs")
-            .select("latitude, longitude, timestamp")
+            .select("latitude, longitude, timestamp, driver_id")
             .eq("vehicle_plate", plate)
             .gte("timestamp", s)
             .lte("timestamp", e)
@@ -307,7 +317,30 @@ export async function getVehicleRouteHistory(plate: string, startDate: string, e
 
         if (error) throw error;
 
-        return (data || []).map(d => ({
+        let logs = data || [];
+
+        // Fallback: If no logs found by plate, try to find by driver_id associated with this plate
+        if (logs.length === 0) {
+            const { data: drivers } = await supabase
+                .from('Master_Drivers')
+                .select('Driver_ID')
+                .eq('Vehicle_Plate', plate);
+            
+            if (drivers && drivers.length > 0) {
+                const driverIds = drivers.map(d => d.Driver_ID);
+                const { data: driverLogs } = await supabase
+                    .from("gps_logs")
+                    .select("latitude, longitude, timestamp")
+                    .in("driver_id", driverIds)
+                    .gte("timestamp", s)
+                    .lte("timestamp", e)
+                    .order("timestamp", { ascending: true });
+                
+                if (driverLogs) logs = driverLogs;
+            }
+        }
+
+        return logs.map(d => ({
             lat: Number(d.latitude || d.Latitude),
             lng: Number(d.longitude || d.Longitude),
             timestamp: d.timestamp || d.Timestamp

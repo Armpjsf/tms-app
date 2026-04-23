@@ -18,6 +18,7 @@ interface Contact {
   last_message: string
   unread: number
   updated_at: string
+  last_update?: string | null // GPS heartbeat
 }
 
 interface ChatWindowProps {
@@ -111,7 +112,8 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
         driver_name: d.Driver_Name || `พนักงานขับรถ (${d.Driver_ID})`,
         last_message: 'เริ่มการสนทนา',
         unread: 0,
-        updated_at: '2024-01-01T00:00:00.000Z'
+        updated_at: '2024-01-01T00:00:00.000Z',
+        last_update: (d as any).Last_Update
       })
     })
 
@@ -227,10 +229,19 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
       updateContactList(newMsg)
     }
 
+    const handleGPSUpdate = (payload: any) => {
+        const newLog = payload.new
+        const driverId = newLog.driver_id || newLog.Driver_ID
+        setContacts(prev => prev.map(c => 
+            c.driver_id === driverId ? { ...c, last_update: newLog.timestamp || newLog.Timestamp || new Date().toISOString() } : c
+        ))
+    }
+
     const channel = supabaseClient
-      .channel('chat_main')
+      .channel('chat_realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'Chat_Messages' }, handleRealtimeInsert)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, handleRealtimeInsert)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'gps_logs' }, handleGPSUpdate)
       .subscribe()
 
     return () => { supabaseClient.removeChannel(channel) }
@@ -338,8 +349,20 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                             selectedDriverId === c.driver_id ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-muted"
                         )}
                       >
-                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold shrink-0 border">
-                              {c.driver_name.charAt(0)}
+                          <div className="relative shrink-0">
+                              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold border">
+                                  {c.driver_name.charAt(0)}
+                              </div>
+                              {(() => {
+                                  const lastUpdateDate = c.last_update ? new Date(c.last_update) : null
+                                  const isOnline = lastUpdateDate && (new Date().getTime() - lastUpdateDate.getTime() < 10 * 60 * 1000)
+                                  return (
+                                      <div className={cn(
+                                          "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white",
+                                          isOnline ? "bg-emerald-500" : "bg-slate-300"
+                                      )} />
+                                  )
+                              })()}
                           </div>
                           <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-baseline">
@@ -365,9 +388,23 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                             </div>
                             <div>
                                 <p className="text-sm font-bold">{activeDriver.driver_name}</p>
-                                <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Online
-                                </p>
+                                {(() => {
+                                    const lastUpdateDate = activeDriver.last_update ? new Date(activeDriver.last_update) : null
+                                    const isOnline = lastUpdateDate && (new Date().getTime() - lastUpdateDate.getTime() < 10 * 60 * 1000)
+                                    
+                                    return (
+                                        <p className={cn(
+                                            "text-[10px] font-bold uppercase tracking-widest flex items-center gap-1",
+                                            isOnline ? "text-emerald-500" : "text-slate-400"
+                                        )}>
+                                            <span className={cn(
+                                                "w-1.5 h-1.5 rounded-full",
+                                                isOnline ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
+                                            )} /> 
+                                            {isOnline ? 'Online' : 'Offline'}
+                                        </p>
+                                    )
+                                })()}
                             </div>
                         </div>
                     </div>

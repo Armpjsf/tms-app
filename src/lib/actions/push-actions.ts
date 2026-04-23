@@ -91,9 +91,16 @@ export type PushPayload = {
 // ─────────────────────────────────────────────
 async function sendWebPush(sub: { Endpoint: string; Keys_P256dh: string; Keys_Auth: string }, payload: PushPayload) {
     try {
+        // Force high urgency for ALL system notifications as requested
+        const urgency: "high" | "normal" | "low" | "very-low" = "high";
+
         await webpush.sendNotification(
             { endpoint: sub.Endpoint, keys: { p256dh: sub.Keys_P256dh, auth: sub.Keys_Auth } },
-            JSON.stringify(payload)
+            JSON.stringify(payload),
+            { 
+                TTL: 60 * 60 * 24, // 24 hours
+                urgency
+            }
         )
         return { success: true }
     } catch (err: unknown) {
@@ -111,8 +118,9 @@ export async function savePushSubscription(driverId: string, subscription: PushS
     const supabase = await createAdminClient()
     const isFCM = subscription.isFCM === true
 
-    // Prevents Duplicate Key Constraint Error ("Push_Subscriptions_Driver_ID_key")
-    await supabase.from('Push_Subscriptions').delete().eq('Driver_ID', driverId)
+    // Only delete THIS specific endpoint if it exists (e.g. to update it)
+    // This allows a single driver to have multiple devices (APK, PWA, Tablet, etc.)
+    await supabase.from('Push_Subscriptions').delete().eq('Endpoint', subscription.endpoint)
 
     const { error } = await supabase
         .from('Push_Subscriptions')
@@ -137,8 +145,8 @@ export async function savePushSubscription(driverId: string, subscription: PushS
 export async function saveAdminPushSubscription(userId: string, subscription: PushSubscription) {
     const supabase = await createAdminClient()
 
-    // Prevents Duplicate Key Constraint Error on User_ID
-    await supabase.from('Push_Subscriptions').delete().eq('User_ID', userId)
+    // Prevents Duplicate Key Constraint Error on Endpoint
+    await supabase.from('Push_Subscriptions').delete().eq('Endpoint', subscription.endpoint)
 
     const { error } = await supabase
         .from('Push_Subscriptions')
@@ -163,53 +171,60 @@ export async function saveAdminPushSubscription(userId: string, subscription: Pu
 export async function sendPushToDriver(driverId: string, payload: PushPayload) {
     const supabase = await createAdminClient()
 
-    const { data: sub, error } = await supabase
+    const { data: subs, error } = await supabase
         .from('Push_Subscriptions')
         .select('*')
         .eq('Driver_ID', driverId)
-        .single()
 
-    if (error || !sub) {
+    if (error || !subs || subs.length === 0) {
         return { success: false, reason: 'no_subscription' }
     }
 
-    // FCM Native Push
-    if (sub.Keys_Auth === 'FCM') {
-        try {
-            await admin.messaging().send({
-                notification: { title: payload.title, body: payload.body },
-                data: { url: payload.url || '/mobile/jobs', type: payload.type || 'general' },
-                android: {
-                    notification: {
-                        sound: 'default',
-                        channelId: 'tms-notifications',
-                        priority: 'high',
-                        vibrateTimingsMillis: [0, 300, 100, 300, 100, 400],
+    console.log(`[PUSH] Sending to ${subs.length} device(s) for driver: ${driverId}`)
+
+    const results = await Promise.allSettled(
+        subs.map(async (sub) => {
+            // FCM Native Push
+            if (sub.Keys_Auth === 'FCM') {
+                try {
+                    await admin.messaging().send({
+                        notification: { title: payload.title, body: payload.body },
+                        data: { 
+                            url: payload.url || '/mobile/jobs', 
+                            type: payload.type || 'general',
+                            tag: payload.tag || '' 
+                        },
+                        android: {
+                            notification: {
+                                sound: 'default',
+                                channelId: 'tms-notifications',
+                                priority: 'high',
+                                vibrateTimingsMillis: [0, 300, 100, 300, 100, 400],
+                            }
+                        },
+                        token: sub.Endpoint
+                    })
+                    return { success: true }
+                } catch (err: any) {
+                    // Cleanup expired FCM tokens
+                    if (err?.code === 'messaging/registration-token-not-registered') {
+                        await supabase.from('Push_Subscriptions').delete().eq('Endpoint', sub.Endpoint)
                     }
-                },
-                token: sub.Endpoint
-            })
-            return { success: true }
-        } catch (err: unknown) {
-            if (err && typeof err === 'object' && 'code' in err &&
-                (err as { code: string }).code === 'messaging/registration-token-not-registered') {
-                await supabase.from('Push_Subscriptions').delete().eq('Driver_ID', driverId)
+                    return { success: false }
+                }
             }
-            return { success: false, reason: 'send_failed' }
-        }
-    }
 
-    // Web Push
-    console.log(`[PUSH] Attempting Web Push to driver: ${driverId}`)
-    const result = await sendWebPush(sub, { ...payload, url: payload.url || '/mobile/jobs' })
+            // Web Push
+            const result = await sendWebPush(sub, { ...payload, url: payload.url || '/mobile/jobs' })
+            if (!result.success && (result.statusCode === 404 || result.statusCode === 410)) {
+                await supabase.from('Push_Subscriptions').delete().eq('Endpoint', sub.Endpoint)
+            }
+            return result
+        })
+    )
 
-    if (!result.success && (result.statusCode === 404 || result.statusCode === 410)) {
-        console.log(`[PUSH] Removing expired subscription for driver ${driverId}`)
-        await supabase.from('Push_Subscriptions').delete().eq('Driver_ID', driverId)
-    }
-
-    console.log(`[PUSH] Web Push to driver ${driverId}: ${result.success ? 'OK' : `FAIL (${result.statusCode})`}`)
-    return result.success ? { success: true } : { success: false, reason: 'send_failed' }
+    const successCount = results.filter(r => r.status === 'fulfilled' && (r.value as any).success).length
+    return { success: successCount > 0 }
 }
 
 // ─────────────────────────────────────────────
@@ -342,7 +357,19 @@ export async function broadcastPushToDrivers(payload: PushPayload) {
                 try {
                     await admin.messaging().send({
                         notification: { title: payload.title, body: payload.body },
-                        data: { url: payload.url || '/mobile/jobs', type: payload.type || 'general' },
+                        data: { 
+                            url: payload.url || '/mobile/jobs', 
+                            type: payload.type || 'general',
+                            tag: payload.tag || ''
+                        },
+                        android: {
+                            notification: {
+                                sound: 'default',
+                                channelId: 'tms-notifications',
+                                priority: 'high',
+                                vibrateTimingsMillis: [0, 300, 100, 300, 100, 400],
+                            }
+                        },
                         token: sub.Endpoint
                     })
                     return { success: true }
@@ -634,18 +661,27 @@ export async function testPushNotification(target: { driverId?: string; userId?:
         return await sendPushToDriver(target.driverId, payload)
     } else if (target.userId) {
         const supabase = await createAdminClient()
-        // Pick the LATEST registration for this user (since we now allow multiple/manual inserts)
-        const { data: sub } = await supabase
+        const { data: subs } = await supabase
             .from('Push_Subscriptions')
             .select('*')
             .eq('User_ID', target.userId)
-            .order('Updated_At', { ascending: false })
-            .limit(1)
-            .maybeSingle()
 
-        if (!sub) return { success: false, reason: 'no_subscription' }
-        const result = await sendWebPush(sub, payload)
-        return result.success ? { success: true } : { success: false, reason: 'send_failed' }
+        if (!subs || subs.length === 0) return { success: false, reason: 'no_subscription' }
+        
+        console.log(`[PUSH-TEST] Sending to ${subs.length} device(s) for user: ${target.userId}`)
+        
+        const results = await Promise.allSettled(
+            subs.map(async (sub) => {
+                const result = await sendWebPush(sub, payload)
+                if (!result.success && (result.statusCode === 404 || result.statusCode === 410)) {
+                    await supabase.from('Push_Subscriptions').delete().eq('Endpoint', sub.Endpoint)
+                }
+                return result
+            })
+        )
+        
+        const successCount = results.filter(r => r.status === 'fulfilled' && (r.value as any).success).length
+        return { success: successCount > 0 }
     }
 
     return { success: false, reason: 'invalid_target' }
