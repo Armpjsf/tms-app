@@ -121,11 +121,14 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
     }
 
     // Load vehicles on panel open
-    useMemo(async () => {
-        if (showHistory && vehicles.length === 0) {
-            const data = await getAllVehiclePlates()
-            setVehicles(data)
+    useEffect(() => {
+        const loadVehicles = async () => {
+            if (showHistory && vehicles.length === 0) {
+                const data = await getAllVehiclePlates()
+                setVehicles(data)
+            }
         }
+        loadVehicles()
     }, [showHistory, vehicles.length])
 
     return (

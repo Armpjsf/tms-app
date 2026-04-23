@@ -1,6 +1,6 @@
 "use client"
 
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, CircleMarker } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useEffect, useState, useRef } from 'react'
@@ -84,6 +84,17 @@ function RecenterMap({ position, zoom }: { position: [number, number], zoom?: nu
   return null
 }
 
+function FitBounds({ positions }: { positions: [number, number][] }) {
+    const map = useMap()
+    useEffect(() => {
+        if (positions && positions.length > 0) {
+            const bounds = L.latLngBounds(positions)
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: true })
+        }
+    }, [positions, map])
+    return null
+}
+
 export default function LeafletMap({ 
   center = [13.7563, 100.5018], 
   zoom = 13, 
@@ -108,6 +119,9 @@ export default function LeafletMap({
       className="z-0"
     >
       {focusPosition && <RecenterMap position={focusPosition} zoom={15} />}
+      
+      {routeHistory.length > 0 && <FitBounds positions={routeHistory} />}
+
       <TileLayer
         attribution='&copy; Google Maps'
         url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
@@ -136,16 +150,23 @@ export default function LeafletMap({
         <>
             <Polyline 
                 positions={routeHistory} 
-                color="#3b82f6" 
-                weight={4} 
-                opacity={0.6}
-                dashArray="10, 10"
+                color="#2563eb" 
+                weight={5} 
+                opacity={0.8}
             />
+            {routeHistory.map((pos, idx) => (
+                <CircleMarker 
+                    key={`breadcrumb-${idx}`} 
+                    center={pos} 
+                    radius={3} 
+                    pathOptions={{ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 1 }} 
+                />
+            ))}
             <Marker position={routeHistory[0]} icon={greenIcon}>
-                <Popup>Starting Point</Popup>
+                <Popup><p className="font-bold">📍 จุดเริ่มต้น</p></Popup>
             </Marker>
             <Marker position={routeHistory[routeHistory.length - 1]} icon={redIcon}>
-                <Popup>Last Known Location</Popup>
+                <Popup><p className="font-bold">🚩 ตำแหน่งล่าสุด</p></Popup>
             </Marker>
         </>
       )}
