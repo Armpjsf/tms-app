@@ -1,5 +1,5 @@
 import { DashboardClient } from "@/components/dashboard/dashboard-client"
-import { getExecutiveDashboardUnified } from "@/lib/supabase/financial-analytics"
+import { getExecutiveDashboardUnified, getProfitHeatmapData } from "@/lib/supabase/financial-analytics"
 import { getSOSDriverIds } from "@/lib/supabase/sos"
 import { getCustomerName } from "@/lib/supabase/customers"
 import { getMarketplaceJobs, getTodayJobStats } from "@/lib/supabase/jobs"
@@ -30,7 +30,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   const currentBranchId = branch === 'All' ? undefined : branch
   
   // Parallel Fetching - Server Side (Ultra Fast)
-  let unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats, fleetAlerts, esgResult;
+  let unified, sosIds, marketplaceJobs, heatmapJobs, customerMode, custId, dailyStats, driverStats, fleetAlerts, esgResult;
 
   try {
     const results = await Promise.allSettled([
@@ -42,7 +42,8 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
       getTodayJobStats(currentBranchId, start || undefined, end || undefined),
       getDriverStats(currentBranchId),
       getESGStats(start || undefined, end || undefined, currentBranchId),
-      getActiveFleetAlerts()
+      getActiveFleetAlerts(),
+      getProfitHeatmapData(start || undefined, end || undefined, currentBranchId)
     ]);
 
     // Map results with fallbacks
@@ -60,6 +61,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
     driverStats = results[6].status === 'fulfilled' ? results[6].value : { total: 0, active: 0, onJob: 0 };
     esgResult = results[7].status === 'fulfilled' ? results[7].value : null;
     fleetAlerts = results[8].status === 'fulfilled' ? results[8].value : [];
+    heatmapJobs = results[9].status === 'fulfilled' ? results[9].value : [];
 
   } catch (error) {
     console.error("[Dashboard] Critical data fetch error:", error);
@@ -69,6 +71,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
     driverStats = { total: 0, active: 0, onJob: 0 };
     sosIds = [];
     marketplaceJobs = [];
+    heatmapJobs = [];
     unified = { financial: { revenue: 0, netProfit: 0 }, trend: [], kpi: { margin: { current: 0 } } };
     fleetAlerts = [];
   }
@@ -117,6 +120,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
       weeklyStats={unified.trend || []}
       fleetStatus={fleetStatus}
       marketplaceJobs={marketplaceJobs}
+      heatmapJobs={heatmapJobs}
       fleetHealth={98}
       esg={{
         fuelSaved: esgResult?.fuelSavedLiters || unified.esg?.fuelSaved || 0,

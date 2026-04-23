@@ -616,5 +616,43 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
     return Object.values(stats).sort((a: any, b: any) => b.netProfit - a.netProfit).slice(0, 5)
 }
 
+export async function getProfitHeatmapData(startDate?: string, endDate?: string, branchId?: string) {
+    const supabase = await createAdminClient()
+    const customerId = await getCustomerId()
+    const effectiveBranchId = await getEffectiveBranchId(branchId)
+    
+    // Default to current month if no range provided (prevent huge historical fetches)
+    const now = new Date()
+    const currentStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const currentEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    
+    const sDate = formatDateSafe(startDate) || formatDateSafe(currentStart)
+    const eDate = formatDateSafe(endDate) || formatDateSafe(currentEnd)
+
+    let query = supabase
+        .from('Jobs_Main')
+        .select('Delivery_Lat, Delivery_Lon, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra')
+        .in('Job_Status', REVENUE_STATUSES)
+        .not('Delivery_Lat', 'is', null)
+        .not('Delivery_Lon', 'is', null)
+    
+    if (customerId) query = query.eq('Customer_ID', customerId)
+    else if (await isCustomer()) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
+    else if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+
+    if (sDate) query = query.gte('Plan_Date', sDate)
+    if (eDate) query = query.lte('Plan_Date', eDate)
+
+    const { data } = await query
+    
+    // Process and normalize profit including extras
+    return (data || []).map(j => ({
+        Delivery_Lat: Number(j.Delivery_Lat),
+        Delivery_Lon: Number(j.Delivery_Lon),
+        Price_Cust_Total: (Number(j.Price_Cust_Total) || 0) + (Number(j.Price_Cust_Extra) || 0),
+        Cost_Driver_Total: (Number(j.Cost_Driver_Total) || 0) + (Number(j.Cost_Driver_Extra) || 0)
+    }))
+}
+
 export async function getFleetComplianceMetrics(branchId?: string) { return { score: 94, status: 'Excellent', details: [{ label: 'Insurance', value: 100 }, { label: 'Registration', value: 88 }, { label: 'Maintenance', value: 92 }] } }
 export async function getFleetHealthScore(branchId?: string) { return { score: 88, status: 'Healthy', metrics: [{ label: 'Uptime', value: 98 }, { label: 'Utilization', value: 76 }, { label: 'Breakdowns', value: 2 }] } }

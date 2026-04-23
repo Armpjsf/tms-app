@@ -76,6 +76,7 @@ interface DashboardClientProps {
     }[]
     fleetStatus: DriverStatus[] 
     marketplaceJobs: Job[]
+    heatmapJobs?: any[]
     fleetHealth: number
     esg?: {
         fuelSaved: number
@@ -97,6 +98,7 @@ export function DashboardClient({
     weeklyStats, 
     fleetStatus,
     marketplaceJobs,
+    heatmapJobs = [],
     fleetHealth,
     esg,
     initialStart = "",
@@ -280,7 +282,7 @@ export function DashboardClient({
                 {/* 1. Asset Visualization (MAP) */}
                 <motion.div variants={item} className="lg:col-span-8 h-[500px] glass-panel rounded-3xl relative group border-border/5 shadow-2xl overflow-hidden ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
                     <div className="absolute inset-0 z-0">
-                        <DashboardMap drivers={fleetStatus} />
+                        <DashboardMap drivers={fleetStatus} allJobs={heatmapJobs} />
                     </div>
                     <div className="absolute top-6 left-6 z-10">
                         <div className="px-5 py-3 glass-panel rounded-2xl border-border/10 backdrop-blur-3xl shadow-2xl">
