@@ -355,6 +355,7 @@ export function MonitoringCommandCenter({
                             <Star size={12} className={showPinnedOnly ? "fill-black" : ""} />
                             {pinnedCustomerNames.length > 0 ? `My Focus (${pinnedCustomerNames.length})` : "Focus Mode"}
                         </button>
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
