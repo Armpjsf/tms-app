@@ -14,9 +14,11 @@ export default async function MonitoringPage() {
       getCustomerId()
   ])
 
-  const [assignedJobs, confirmedJobs, inProgressJobs, inTransitJobs, arrivedJobs, sosJobs, failedJobs, activeDrivers, chatContacts, healthAlerts] = await Promise.all([
+  const [pendingJobs, assignedJobs, confirmedJobs, pickedUpJobs, inProgressJobs, inTransitJobs, arrivedJobs, sosJobs, failedJobs, activeDrivers, chatContacts, healthAlerts] = await Promise.all([
+    getJobsByStatus('Pending'),
     getJobsByStatus('Assigned'),
     getJobsByStatus('Confirmed'),
+    getJobsByStatus('Picked Up'),
     getJobsByStatus('In Progress'),
     getJobsByStatus('In Transit'),
     getJobsByStatus('Arrived'),
@@ -27,7 +29,7 @@ export default async function MonitoringPage() {
     getFleetHealthAlerts(),
   ])
 
-  const activeJobs = [...assignedJobs, ...confirmedJobs, ...inProgressJobs, ...inTransitJobs, ...arrivedJobs, ...sosJobs, ...failedJobs].sort((a, b) => 
+  const activeJobs = [...pendingJobs, ...assignedJobs, ...confirmedJobs, ...pickedUpJobs, ...inProgressJobs, ...inTransitJobs, ...arrivedJobs, ...sosJobs, ...failedJobs].sort((a, b) => 
     new Date(b.Plan_Date || '').getTime() - new Date(a.Plan_Date || '').getTime()
   )
 
