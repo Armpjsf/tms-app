@@ -360,7 +360,8 @@ export async function getBillingNoteByIdWithJobs(id: string) {
                 VAT_Amount: inv.VAT_Amount,
                 Discount_Amount: inv.Discount_Amount,
                 WHT_Rate: inv.WHT_Rate,
-                WHT_Amount: inv.WHT_Amount
+                WHT_Amount: inv.WHT_Amount,
+                Credit_Days: inv.Credit_Days || 15
             }
 
             if (inv.Items_JSON && Array.isArray(inv.Items_JSON)) {
@@ -473,9 +474,9 @@ export async function getBillingNoteByIdWithJobs(id: string) {
 
         const billingNoteWithDetails: BillingNote = {
             ...note as BillingNote,
-            Customer_Email: customerEmail,
-            Customer_Address: customerAddress,
-            Customer_Tax_ID: customerTaxId
+            Customer_Email: customerEmail || (note as any).Customer_Email,
+            Customer_Address: customerAddress || (note as any).Customer_Address,
+            Customer_Tax_ID: customerTaxId || (note as any).Customer_Tax_ID
         }
 
         return { note: billingNoteWithDetails, jobs: jobs || [], company: companyProfile }
@@ -794,7 +795,8 @@ export async function getPublicBillingNoteById(id: string) {
                 VAT_Amount: inv.VAT_Amount,
                 Discount_Amount: inv.Discount_Amount,
                 WHT_Rate: inv.WHT_Rate,
-                WHT_Amount: inv.WHT_Amount
+                WHT_Amount: inv.WHT_Amount,
+                Credit_Days: inv.Credit_Days || 15
             }
 
             if (inv.Items_JSON && Array.isArray(inv.Items_JSON)) {
@@ -901,9 +903,9 @@ export async function getPublicBillingNoteById(id: string) {
 
         const billingNoteWithDetails: BillingNote = {
             ...note as BillingNote,
-            Customer_Email: customerEmail,
-            Customer_Address: customerAddress,
-            Customer_Tax_ID: customerTaxId
+            Customer_Email: customerEmail || (note as any).Customer_Email,
+            Customer_Address: customerAddress || (note as any).Customer_Address,
+            Customer_Tax_ID: customerTaxId || (note as any).Customer_Tax_ID
         }
 
         return { note: billingNoteWithDetails, jobs: jobs || [], company: companyProfile }
