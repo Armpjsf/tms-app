@@ -8,6 +8,10 @@ import { cn } from '@/lib/utils'
 
 import { useLanguage } from '@/components/providers/language-provider'
 import { MapOverlay } from './map-overlay'
+import { getVehicleRouteHistory } from '@/lib/supabase/gps'
+import { getAllVehiclePlates } from '@/lib/supabase/jobs'
+import { toast } from 'sonner'
+import { Calendar, History, Search, X } from 'lucide-react'
 
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
   ssr: false,
@@ -49,6 +53,15 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
     const { t } = useLanguage()
     const [currentTime] = useState<number>(() => Date.now())
     const [showHeatmap, setShowHeatmap] = useState(false)
+    const [showHistory, setShowHistory] = useState(false)
+    const [routeHistory, setRouteHistory] = useState<[number, number][]>([])
+    const [isLoadingRoute, setIsLoadingRoute] = useState(false)
+    
+    // History selection state
+    const [vehicles, setVehicles] = useState<string[]>([])
+    const [selectedVehicle, setSelectedVehicle] = useState('')
+    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
+    const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
 
     // Map fleetStatus to LeafletMap's DriverLocation format
     const activeDrivers = useMemo(() => {
@@ -74,15 +87,50 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
         return allJobs
             .filter(j => j.Delivery_Lat && j.Delivery_Lon)
             .map(j => ({
-                lat: j.Delivery_Lat,
-                lng: j.Delivery_Lon,
-                profit: (j.Price_Cust_Total || 0) - (j.Cost_Driver_Total || 0)
+                lat: Number(j.Delivery_Lat),
+                lng: Number(j.Delivery_Lon),
+                profit: (Number(j.Price_Cust_Total) || 0) - (Number(j.Cost_Driver_Total) || 0)
             }))
     }, [allJobs])
 
+    const fetchHistory = async (plate: string, s: string, e: string) => {
+        setIsLoadingRoute(true)
+        try {
+            const data = await getVehicleRouteHistory(plate, s, e)
+            if (data.length === 0) {
+                toast.info("No route data found for this period")
+                setRouteHistory([])
+            } else {
+                setRouteHistory(data.map(d => [d.lat, d.lng] as [number, number]))
+                toast.success(`Loaded ${data.length} GPS points`)
+            }
+        } catch {
+            toast.error("Failed to fetch route history")
+        } finally {
+            setIsLoadingRoute(false)
+        }
+    }
+
+    const handleShowTodayRoute = (plate: string) => {
+        setSelectedVehicle(plate)
+        const today = new Date().toISOString().split('T')[0]
+        setStartDate(today)
+        setEndDate(today)
+        setShowHistory(true)
+        fetchHistory(plate, today, today)
+    }
+
+    // Load vehicles on panel open
+    useMemo(async () => {
+        if (showHistory && vehicles.length === 0) {
+            const data = await getAllVehiclePlates()
+            setVehicles(data)
+        }
+    }, [showHistory, vehicles.length])
+
     return (
         <div className="absolute inset-0 z-0">
-            <LeafletMap 
+             <LeafletMap 
                 drivers={activeDrivers}
                 height="100%"
                 zoom={10}
@@ -91,34 +139,123 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
                 plannedRoute={plannedRoute}
                 profitPoints={profitPoints}
                 showHeatmap={showHeatmap}
+                routeHistory={routeHistory}
+                onShowRoute={handleShowTodayRoute}
             />
 
             {/* Map Mode Toggle */}
-            <div className="absolute top-6 right-6 z-10 flex flex-col gap-2">
+            <div className="absolute top-6 right-6 z-10 flex flex-col gap-3">
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowHeatmap(!showHeatmap)}
+                    onClick={() => {
+                        setShowHeatmap(!showHeatmap)
+                        if (!showHeatmap) setShowHistory(false)
+                    }}
                     className={cn(
-                        "h-10 px-4 rounded-xl border font-black uppercase tracking-tighter transition-all shadow-2xl",
+                        "h-12 px-6 rounded-2xl border-2 font-black uppercase tracking-tighter transition-all shadow-2xl backdrop-blur-xl",
                         showHeatmap 
                             ? "bg-emerald-500 border-emerald-400 text-white hover:bg-emerald-600 scale-105" 
-                            : "bg-background/90 backdrop-blur-md border-border/10 text-muted-foreground hover:bg-muted"
+                            : "bg-background/80 border-border/10 text-muted-foreground hover:bg-muted"
                     )}
                 >
-                    {showHeatmap ? (
-                        <>
-                            <Activity className="mr-2 h-4 w-4" />
-                            {t('dashboard.map.live_fleet')}
-                        </>
-                    ) : (
-                        <>
-                            <TrendingUp className="mr-2 h-4 w-4" />
-                            {t('dashboard.map.profit_heatmap')}
-                        </>
+                    <TrendingUp className={cn("mr-2 h-5 w-5", showHeatmap && "animate-pulse")} />
+                    {showHeatmap ? t('dashboard.map.live_fleet') : t('dashboard.map.profit_heatmap')}
+                </Button>
+
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                        setShowHistory(!showHistory)
+                        if (!showHistory) setShowHeatmap(false)
+                    }}
+                    className={cn(
+                        "h-12 px-6 rounded-2xl border-2 font-black uppercase tracking-tighter transition-all shadow-2xl backdrop-blur-xl",
+                        showHistory 
+                            ? "bg-blue-500 border-blue-400 text-white hover:bg-blue-600 scale-105" 
+                            : "bg-background/80 border-border/10 text-muted-foreground hover:bg-muted"
                     )}
+                >
+                    <History className={cn("mr-2 h-5 w-5", isLoadingRoute && "animate-spin")} />
+                    {showHistory ? "CLOSE HISTORY" : "ROUTE HISTORY"}
                 </Button>
             </div>
+
+            {/* History Selector Panel */}
+            {showHistory && (
+                <div className="absolute top-6 left-6 z-20 w-80 bg-background/95 backdrop-blur-2xl p-6 rounded-[2.5rem] border-2 border-primary/20 shadow-[0_0_50px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="font-black text-foreground tracking-tighter flex items-center gap-2">
+                            <History className="text-primary" size={20} />
+                            TRACKER
+                        </h3>
+                        <button onClick={() => setShowHistory(false)} className="p-2 hover:bg-muted rounded-full">
+                            <X size={16} />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 block">Vehicle Plate</label>
+                            <select 
+                                value={selectedVehicle}
+                                onChange={(e) => setSelectedVehicle(e.target.value)}
+                                className="w-full bg-muted/50 border border-border/10 rounded-xl px-4 h-11 text-sm font-bold focus:outline-none focus:ring-2 ring-primary/20 appearance-none"
+                            >
+                                <option value="">Select Vehicle</option>
+                                {vehicles.map(v => <option key={v} value={v}>{v}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 block">Start</label>
+                                <input 
+                                    type="date" 
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="w-full bg-muted/50 border border-border/10 rounded-xl px-3 h-11 text-xs font-bold focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 block">End</label>
+                                <input 
+                                    type="date" 
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="w-full bg-muted/50 border border-border/10 rounded-xl px-3 h-11 text-xs font-bold focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <Button 
+                            className="w-full h-12 rounded-xl font-black uppercase tracking-widest mt-2 shadow-lg shadow-primary/20"
+                            disabled={!selectedVehicle || isLoadingRoute}
+                            onClick={() => fetchHistory(selectedVehicle, startDate, endDate)}
+                        >
+                            {isLoadingRoute ? "FETCHING DATA..." : "VIEW HISTORY"}
+                        </Button>
+
+                        {routeHistory.length > 0 && (
+                            <div className="pt-4 border-t border-border/10">
+                                <div className="flex items-center justify-between text-xs font-bold text-muted-foreground mb-3">
+                                    <span>Captured Points:</span>
+                                    <span className="text-primary">{routeHistory.length}</span>
+                                </div>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="w-full h-9 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-rose-500/10 hover:text-rose-500"
+                                    onClick={() => setRouteHistory([])}
+                                >
+                                    Clear Path
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Map Overlay Badge */}
             <MapOverlay route={routeSummary} />

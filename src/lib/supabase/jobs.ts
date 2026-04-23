@@ -1057,3 +1057,18 @@ export async function getRequestedJobs(providedBranchId?: string): Promise<Job[]
         return []
     }
 }
+
+export async function getAllVehiclePlates() {
+    try {
+        const supabase = await createAdminClient();
+        const { data } = await supabase
+            .from('Master_Vehicles')
+            .select('Vehicle_Plate')
+            .not('Vehicle_Plate', 'is', null)
+            .order('Vehicle_Plate', { ascending: true });
+        
+        return Array.from(new Set((data || []).map(v => v.Vehicle_Plate)));
+    } catch {
+        return [];
+    }
+}

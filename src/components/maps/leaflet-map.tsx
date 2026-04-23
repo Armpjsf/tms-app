@@ -71,6 +71,7 @@ type LeafletMapProps = {
   plannedRoute?: { lat: number; lng: number; name: string; type: 'start' | 'stop' | 'end' }[]
   profitPoints?: ProfitPoint[]
   showHeatmap?: boolean
+  onShowRoute?: (plate: string) => void
 }
 
 function RecenterMap({ position, zoom }: { position: [number, number], zoom?: number }) {
@@ -94,7 +95,8 @@ export default function LeafletMap({
   focusPosition,
   plannedRoute = [],
   profitPoints = [],
-  showHeatmap = false
+  showHeatmap = false,
+  onShowRoute
 }: LeafletMapProps) {
   const mapCenter = currentPosition || (routeHistory.length > 0 ? routeHistory[0] : (plannedRoute.length > 0 ? [plannedRoute[0].lat, plannedRoute[0].lng] : center)) as [number, number]
 
@@ -116,7 +118,7 @@ export default function LeafletMap({
       )}
 
       {drivers.filter(d => isFinite(d.lat) && isFinite(d.lng)).map((driver) => (
-        <MovingMarker key={driver.id} driver={driver} />
+        <MovingMarker key={driver.id} driver={driver} onShowRoute={onShowRoute} />
       ))}
 
       {showCurrentPosition && currentPosition && (
@@ -176,7 +178,7 @@ export default function LeafletMap({
   )
 }
 
-function MovingMarker({ driver }: { driver: DriverLocation }) {
+function MovingMarker({ driver, onShowRoute }: { driver: DriverLocation, onShowRoute?: (plate: string) => void }) {
   const [currentPos, setCurrentPos] = useState<[number, number]>([driver.lat, driver.lng])
   const lastPosRef = useRef<[number, number]>([driver.lat, driver.lng])
   const [heading, setHeading] = useState<number>(driver.heading || 0)
@@ -255,13 +257,16 @@ function MovingMarker({ driver }: { driver: DriverLocation }) {
             popupAnchor: [0, -20]
         })}>
       <Popup>
-         <DriverPopup driver={{ ...driver, lat: currentPos[0], lng: currentPos[1], heading }} />
+         <DriverPopup 
+            driver={{ ...driver, lat: currentPos[0], lng: currentPos[1], heading }} 
+            onShowRoute={onShowRoute}
+         />
       </Popup>
     </Marker>
   )
 }
 
-function DriverPopup({ driver }: { driver: DriverLocation }) {
+function DriverPopup({ driver, onShowRoute }: { driver: DriverLocation, onShowRoute?: (plate: string) => void }) {
   const [address, setAddress] = useState<string>('Loading address...')
 
   useEffect(() => {
@@ -312,8 +317,18 @@ function DriverPopup({ driver }: { driver: DriverLocation }) {
             </p>
         </div>
         {driver.lastUpdate && <p className="text-gray-400 text-base font-bold mt-1 text-right">Updated: {driver.lastUpdate}</p>}
+        
+        {onShowRoute && driver.vehiclePlate && (
+            <div className="pt-2 border-t border-border/10 mt-2">
+                <button 
+                    onClick={() => onShowRoute(driver.vehiclePlate!)}
+                    className="w-full py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
+                >
+                    Show Today's Path
+                </button>
+            </div>
+        )}
       </div>
     </div>
   )
 }
-

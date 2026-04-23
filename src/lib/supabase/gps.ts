@@ -234,7 +234,7 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
     });
 
     // 4. Format the data to match expected return type
-    return drivers.map((driver: any) => {
+     return drivers.map((driver: any) => {
       const dId = driver.Driver_ID || driver.driver_id;
       const log = logMap.get(dId);
       
@@ -251,4 +251,33 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
   } catch {
     return [];
   }
+}
+
+export async function getVehicleRouteHistory(plate: string, startDate: string, endDate: string) {
+    try {
+        const supabase = await createAdminClient();
+        
+        // Ensure ISO format with time if only dates provided
+        const s = startDate.includes('T') ? startDate : `${startDate}T00:00:00`;
+        const e = endDate.includes('T') ? endDate : `${endDate}T23:59:59`;
+
+        const { data, error } = await supabase
+            .from("gps_logs")
+            .select("latitude, longitude, timestamp")
+            .eq("vehicle_plate", plate)
+            .gte("timestamp", s)
+            .lte("timestamp", e)
+            .order("timestamp", { ascending: true });
+
+        if (error) throw error;
+
+        return (data || []).map(d => ({
+            lat: Number(d.latitude || d.Latitude),
+            lng: Number(d.longitude || d.Longitude),
+            timestamp: d.timestamp || d.Timestamp
+        }));
+    } catch (err) {
+        console.error("[GPS] Fetch route history failed:", err);
+        return [];
+    }
 }
