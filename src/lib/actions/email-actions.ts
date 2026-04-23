@@ -57,3 +57,38 @@ export async function sendBillingEmail({ from, to, cc, subject, html, attachment
         return { success: false, error: message };
     }
 }
+
+export async function sendDangerZoneAlert({ plate, driverName, zoneName, timestamp, recipient }: { plate: string, driverName: string, zoneName: string, timestamp: string, recipient: string }) {
+    const subject = `⚠️ ALERT: Vehicle ${plate} entered Danger Zone: ${zoneName}`;
+    const html = `
+        <div style="font-family: sans-serif; padding: 20px; border: 4px solid #ef4444; border-radius: 20px; background-color: #fef2f2;">
+            <h1 style="color: #ef4444; margin-top: 0;">⚠️ DANGER ZONE ALERT</h1>
+            <p style="font-size: 18px; font-weight: bold;">Detection Details:</p>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #fee2e2;"><strong>Vehicle Plate:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #fee2e2;">${plate}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #fee2e2;"><strong>Driver Name:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #fee2e2;">${driverName}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #fee2e2;"><strong>Zone Name:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #fee2e2;">${zoneName}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #fee2e2;"><strong>Timestamp:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #fee2e2;">${timestamp}</td>
+                </tr>
+            </table>
+            <p style="margin-top: 20px; color: #7f1d1d; font-style: italic;">Please check the live monitoring dashboard for more details.</p>
+        </div>
+    `;
+
+    return sendBillingEmail({
+        to: recipient,
+        subject,
+        html
+    });
+}

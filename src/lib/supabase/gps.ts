@@ -2,6 +2,8 @@
 
 import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions";
+import { getDangerZones, isPointInPolygon } from "./danger-zones";
+import { sendDangerZoneAlert } from "../actions/email-actions";
 
 // Type matching actual Supabase schema (ProperCase columns!)
 export type GPSLog = {
@@ -44,6 +46,39 @@ export async function saveGPSLog(data: {
       console.error('[DEBUG] saveGPSLog error:', JSON.stringify(error, null, 2))
       return { success: false, error };
     }
+
+    // --- DANGER ZONE CHECK ---
+    try {
+        const zones = await getDangerZones(); // Get zones for branch
+        const activeZones = zones.filter(z => z.Is_Active);
+        
+        for (const zone of activeZones) {
+            if (isPointInPolygon([data.lat, data.lng], zone.Coordinates)) {
+                // Potential Incursion Detected!
+                console.warn(`[DANGER] Driver ${data.driverId} entered zone ${zone.Zone_Name}`);
+                
+                // Fetch driver details for email
+                const { data: driver } = await supabase
+                    .from('Master_Drivers')
+                    .select('Driver_Name, Vehicle_Plate')
+                    .eq('Driver_ID', data.driverId)
+                    .single();
+                
+                if (zone.Email_Recipient) {
+                    await sendDangerZoneAlert({
+                        plate: driver?.Vehicle_Plate || data.vehiclePlate || 'Unknown',
+                        driverName: driver?.Driver_Name || 'Unknown',
+                        zoneName: zone.Zone_Name,
+                        timestamp: new Date().toLocaleString('th-TH'),
+                        recipient: zone.Email_Recipient
+                    });
+                }
+            }
+        }
+    } catch (dzError) {
+        console.error("[GPS] Danger zone check failed:", dzError);
+    }
+    // -------------------------
 
     console.log('[DEBUG] saveGPSLog success for:', data.driverId)
 
