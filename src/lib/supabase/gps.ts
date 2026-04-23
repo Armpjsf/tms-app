@@ -2,7 +2,8 @@
 
 import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions";
-import { getDangerZones, isPointInPolygon } from "./danger-zones";
+import { getDangerZones } from "./danger-zones";
+import { isPointInPolygon } from "@/lib/utils";
 import { sendDangerZoneAlert } from "../actions/email-actions";
 
 // Type matching actual Supabase schema (ProperCase columns!)
