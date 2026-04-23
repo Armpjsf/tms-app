@@ -58,10 +58,15 @@ function groupMessagesByDate(messages: ChatMessage[]) {
 }
 
 export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: ChatWindowProps) {
+  const [isHydrated, setIsHydrated] = useState(false)
   const { t } = useLanguage()
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null)
   const selectedDriverIdRef = useRef<string | null>(null)
   
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
+
   useEffect(() => {
     selectedDriverIdRef.current = selectedDriverId
   }, [selectedDriverId])
@@ -79,6 +84,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   useEffect(() => {
     contactsRef.current = contacts
   }, [contacts])
+
   const [searchQuery, setSearchQuery] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -86,11 +92,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
-  const supabase = createClient()
-
-  useEffect(() => {
-    setContacts(initialContacts)
-  }, [initialContacts])
+  const supabaseClient = useMemo(() => createClient(), [])
 
   useEffect(() => {
     if (forcedDriverId) {
@@ -99,16 +101,10 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   }, [forcedDriverId])
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
-    if (chatContainerRef.current) {
-        chatContainerRef.current.scrollTo({
-            top: chatContainerRef.current.scrollHeight,
-            behavior
-        })
+    if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior })
     }
   }, [])
-
-  // 1. Stable Supabase client
-  const supabaseClient = useMemo(() => createClient(), [])
 
   const filteredContacts = useMemo(() => {
     const contactMap = new Map<string, Contact>()
@@ -221,7 +217,6 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
     ))
   }, [])
 
-  // 2. Optimized Contact List Update
   const updateContactList = useCallback((newMsg: ChatMessage) => {
     setContacts(prev => {
       const driverId = newMsg.sender_id === 'admin' ? newMsg.receiver_id : newMsg.sender_id
@@ -250,8 +245,8 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
     })
   }, [])
 
-  // 3. Robust Realtime Listener
   useEffect(() => {
+    if (!isHydrated) return
     console.log("[CHAT] Connecting to Realtime...")
     const handleRealtimeInsert = (payload: any) => {
       const raw = payload.new
@@ -286,22 +281,30 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
       updateContactList(newMsg)
     }
     const channel = supabaseClient
-      .channel('chat_global_v4')
+      .channel('chat_global_v5')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'Chat_Messages' }, handleRealtimeInsert)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, handleRealtimeInsert)
       .subscribe()
     return () => { supabaseClient.removeChannel(channel) }
-  }, [updateContactList, scrollToBottom, supabaseClient])
+  }, [updateContactList, scrollToBottom, supabaseClient, isHydrated])
 
   useEffect(() => {
-    if (selectedDriverId) {
+    if (selectedDriverId && isHydrated) {
       fetchMessages(selectedDriverId)
       markAllAsRead(selectedDriverId)
     }
-  }, [selectedDriverId, fetchMessages, markAllAsRead])
+  }, [selectedDriverId, fetchMessages, markAllAsRead, isHydrated])
 
   const messageGroups = useMemo(() => groupMessagesByDate(messages), [messages])
   const totalUnread = useMemo(() => contacts.reduce((s, c) => s + (c.unread || 0), 0), [contacts])
+
+  if (!isHydrated) {
+      return (
+          <div className="flex items-center justify-center h-full min-h-[400px]">
+              <Loader2 className="animate-spin text-primary" size={40} />
+          </div>
+      )
+  }
 
   return (
     <div className="flex flex-col gap-8 h-full">
@@ -606,4 +609,3 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
     </div>
   )
 }
-
