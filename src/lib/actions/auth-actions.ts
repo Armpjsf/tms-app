@@ -5,6 +5,9 @@ import { getSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 import argon2 from "argon2"
 
+import { getDriverSession } from "@/lib/auth-utils"
+export { getDriverSession }
+
 /**
  * Helper to get cookies dynamically to avoid build issues in some environments.
  */
@@ -29,23 +32,6 @@ export async function getAdminSession() {
     return null
   } catch (error) {
     console.error("[AUTH] Failed to get admin session:", error)
-    return null
-  }
-}
-
-/**
- * RESTORED: Get current driver session from cookies
- */
-export async function getDriverSession() {
-  try {
-    const cookieStore = await getCookieStore()
-    const driverCookie = cookieStore.get('driver_session')?.value
-    if (driverCookie) {
-      return JSON.parse(driverCookie)
-    }
-    return null
-  } catch (error) {
-    console.error("[AUTH] Failed to get driver session:", error)
     return null
   }
 }

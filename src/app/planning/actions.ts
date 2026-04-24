@@ -462,6 +462,36 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
 }
 
 
+/**
+ * Helper to get the most appropriate unit price based on fuel rates or master data
+ */
+async function getSmartUnitPrice(supabase: any, customerId: string, planDate?: string, vehicleType: string = '4-Wheel'): Promise<number> {
+    if (!customerId) return 0
+    
+    try {
+        // 1. Try to find a dynamic rate based on fuel for 'SYSTEM_PER_PIECE'
+        const fuelPrice = await getFuelPriceNumber(planDate || undefined)
+        if (fuelPrice) {
+            const suggestedRate = await getSuggestedRate(customerId, 'SYSTEM_PER_PIECE', fuelPrice, vehicleType)
+            if (suggestedRate && suggestedRate > 0) {
+                return suggestedRate
+            }
+        }
+
+        // 2. Fallback to static price in Master_Customers
+        const { data: cust } = await supabase
+            .from("Master_Customers")
+            .select("Price_Per_Unit")
+            .eq("Customer_ID", customerId)
+            .single()
+        
+        return Number(cust?.Price_Per_Unit || 0)
+    } catch (err) {
+        console.error("[PRICE_ERROR] Failed to fetch smart unit price:", err)
+        return 0
+    }
+}
+
 export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   const isAdminUser = await isAdmin()
   const supabase = isAdminUser ? createAdminClient() : await createClient()
@@ -525,36 +555,6 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
          }
      }
   }
-
-/**
- * Helper to get the most appropriate unit price based on fuel rates or master data
- */
-async function getSmartUnitPrice(supabase: any, customerId: string, planDate?: string, vehicleType: string = '4-Wheel'): Promise<number> {
-    if (!customerId) return 0
-    
-    try {
-        // 1. Try to find a dynamic rate based on fuel for 'SYSTEM_PER_PIECE'
-        const fuelPrice = await getFuelPriceNumber(planDate || undefined)
-        if (fuelPrice) {
-            const suggestedRate = await getSuggestedRate(customerId, 'SYSTEM_PER_PIECE', fuelPrice, vehicleType)
-            if (suggestedRate && suggestedRate > 0) {
-                return suggestedRate
-            }
-        }
-
-        // 2. Fallback to static price in Master_Customers
-        const { data: cust } = await supabase
-            .from("Master_Customers")
-            .select("Price_Per_Unit")
-            .eq("Customer_ID", customerId)
-            .single()
-        
-        return Number(cust?.Price_Per_Unit || 0)
-    } catch (err) {
-        console.error("[PRICE_ERROR] Failed to fetch smart unit price:", err)
-        return 0
-    }
-}
 
   const { error } = await supabase
     .from('Jobs_Main')

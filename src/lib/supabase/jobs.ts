@@ -2,7 +2,7 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { logActivity } from '@/lib/supabase/logs'
-import { getDriverSession } from '@/lib/actions/auth-actions'
+import { getDriverSession } from '@/lib/auth-utils'
 import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions"
  
 export type JobAssignment = {
