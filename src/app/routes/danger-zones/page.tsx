@@ -250,20 +250,12 @@ export default function DangerZonesPage() {
                             zoom={12}
                             center={[13.7563, 100.5018]}
                             plannedRoute={isDrawing ? drawingPath : []}
-                            // Custom interaction logic: When drawing, we can't easily capture clicks through the dynamic LeafletMap without props
+                            onMapClick={(lat, lng) => {
+                                if (isDrawing) {
+                                    setCurrentCoords(prev => [...prev, [lat, lng]])
+                                }
+                            }}
                         />
-                        {/* Overlay to capture clicks for drawing */}
-                        {isDrawing && (
-                            <div 
-                                className="absolute inset-0 z-20 cursor-crosshair"
-                                onClick={(e) => {
-                                    // This is a bit hacky since we don't have direct access to map coords here
-                                    // In a real implementation, we'd pass an onClick prop to LeafletMap
-                                    // For now, I'll advise the user that I'll add a 'Drawing' prop to LeafletMap
-                                    toast.info("Add point mode active. Please click on the map areas to define boundaries.")
-                                }}
-                            />
-                        )}
                         
                         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20">
                              <div className="px-6 py-3 bg-background/90 backdrop-blur-3xl border border-border/10 rounded-2xl shadow-2xl flex items-center gap-4">

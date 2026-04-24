@@ -72,6 +72,7 @@ type LeafletMapProps = {
   profitPoints?: ProfitPoint[]
   showHeatmap?: boolean
   onShowRoute?: (plate: string) => void
+  onMapClick?: (lat: number, lng: number) => void
 }
 
 function RecenterMap({ position, zoom }: { position: [number, number], zoom?: number }) {
@@ -107,7 +108,8 @@ export default function LeafletMap({
   plannedRoute = [],
   profitPoints = [],
   showHeatmap = false,
-  onShowRoute
+  onShowRoute,
+  onMapClick
 }: LeafletMapProps) {
   const mapCenter = currentPosition || (routeHistory.length > 0 ? routeHistory[0] : (plannedRoute.length > 0 ? [plannedRoute[0].lat, plannedRoute[0].lng] : center)) as [number, number]
 
@@ -118,6 +120,7 @@ export default function LeafletMap({
       style={{ height, width: '100%', borderRadius: '0.5rem' }}
       className="z-0"
     >
+      <MapClickHandler onClick={onMapClick} />
       {focusPosition && <RecenterMap position={focusPosition} zoom={15} />}
       
       {routeHistory.length > 0 && <FitBounds positions={routeHistory} />}
@@ -197,6 +200,16 @@ export default function LeafletMap({
       )}
     </MapContainer>
   )
+}
+
+function MapClickHandler({ onClick }: { onClick?: (lat: number, lng: number) => void }) {
+    const { useMapEvents } = require('react-leaflet')
+    const map = useMapEvents({
+        click: (e) => {
+            if (onClick) onClick(e.latlng.lat, e.latlng.lng)
+        }
+    })
+    return null
 }
 
 function MovingMarker({ driver, onShowRoute }: { driver: DriverLocation, onShowRoute?: (plate: string) => void }) {
