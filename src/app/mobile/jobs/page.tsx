@@ -20,13 +20,17 @@ export default async function DriverJobsPage(props: Props) {
   const date = (searchParams.date as string) || undefined
   const status = (searchParams.status as string) || undefined
 
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
   // Fetch jobs for this driver with filters
   const jobs = await getDriverJobs(session.driverId, { startDate: date, endDate: date, status })
 
   // Scalability: Hide old completed/cancelled jobs from default view
   let displayJobs = jobs
   if (!status || status === 'All') {
-      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
       displayJobs = jobs.filter(j => {
           // Keep active jobs regardless of date
           if (j.Job_Status !== 'Completed' && j.Job_Status !== 'Cancelled') return true;
@@ -92,8 +96,20 @@ export default async function DriverJobsPage(props: Props) {
                     {/* Top Row: Job ID & Status */}
                     <div className="flex justify-between items-start mb-6 relative z-10">
                         <div className="space-y-2">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-xl border border-border/10">
-                                <span className="text-primary font-black text-sm italic">#{job.Job_ID.slice(-8)}</span>
+                            <div className="flex items-center gap-2">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-xl border border-border/10">
+                                    <span className="text-primary font-black text-sm italic">#{job.Job_ID.slice(-8)}</span>
+                                </div>
+                                {job.Plan_Date === today && (
+                                    <div className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-xl text-primary font-black text-[10px] uppercase tracking-widest">
+                                        วันนี้
+                                    </div>
+                                )}
+                                {job.Plan_Date === tomorrowStr && (
+                                    <div className="px-3 py-1 bg-accent/20 border border-accent/30 rounded-xl text-accent font-black text-[10px] uppercase tracking-widest">
+                                        พรุ่งนี้
+                                    </div>
+                                )}
                             </div>
                             <h3 className="text-foreground font-black text-xl tracking-tight line-clamp-1 leading-none uppercase italic">
                                 {job.Customer_Name}
