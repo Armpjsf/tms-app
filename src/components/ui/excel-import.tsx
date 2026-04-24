@@ -235,19 +235,19 @@ export function ExcelImport({
                     <table className="w-full text-base font-bold text-left border-collapse">
                         <thead className="bg-muted/80 text-muted-foreground sticky top-0 backdrop-blur-md">
                             <tr>
-                                {Object.keys(previewData[0]).slice(0, 4).map(key => (
+                                {Object.keys(previewData[0]).slice(0, 6).map(key => (
                                     <th key={key} className="p-3 font-bold uppercase tracking-wider">{key}</th>
                                 ))}
-                                {Object.keys(previewData[0]).length > 4 && <th className="p-3 font-bold">...</th>}
+                                {Object.keys(previewData[0]).length > 6 && <th className="p-3 font-bold">...</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {previewData.slice(0, 3).map((row, i) => (
                                 <tr key={i} className="hover:bg-muted/50 transition-colors">
-                                    {Object.values(row).slice(0, 4).map((val: unknown, j) => (
+                                    {Object.values(row).slice(0, 6).map((val: unknown, j) => (
                                         <td key={j} className="p-3 text-muted-foreground font-medium truncate max-w-[100px]">{String(val)}</td>
                                     ))}
-                                    {Object.values(row).length > 4 && <td className="p-3 text-muted-foreground">...</td>}
+                                    {Object.values(row).length > 6 && <td className="p-3 text-muted-foreground">...</td>}
                                 </tr>
                             ))}
                         </tbody>

@@ -211,19 +211,19 @@ export function PlanningClient({
                                 title={t('planning.import_title') || 'Import Jobs'}
                                 onImport={(data) => createBulkJobs(data, branchId === 'All' ? null : branchId)}
                                 templateData={[{
-                                    Job_ID: "JOB-001",
-                                    Plan_Date: new Date().toISOString().split('T')[0],
-                                    Customer_Name: "บริษัท สยามคูโบต้าคอร์ปอเรชั่น จำกัด",
-                                    Route_Name: "BKK-CNX",
-                                    Driver_ID: "D001",
-                                    Vehicle_Plate: "80-1234 กทม.",
-                                    Weight_Kg: 1500,
-                                    Volume_Cbm: 10,
-                                    Price_Cust_Total: 5500,
-                                    Cost_Driver_Total: 3500,
-                                    Ref_No: "SO-12345",
-                                    Notes: "ด่วนพิเศษ",
-                                    Branch_ID: "HQ"
+                                    "รหัสงาน": "JOB-001",
+                                    "วันที่แผน": new Date().toISOString().split('T')[0],
+                                    "ลูกค้า": "บริษัท ตัวอย่าง จำกัด",
+                                    "เส้นทาง": "BKK-CNX",
+                                    "รหัสคนขับ": "D001",
+                                    "ทะเบียนรถ": "80-1234 กทม.",
+                                    "น้ำหนักสินค้า": 1500,
+                                    "ปริมาตร": 10,
+                                    "ราคาขาย": 5500,
+                                    "จ่ายคนขับ": 3500,
+                                    "เลขที่อ้างอิง": "SO-12345",
+                                    "หมายเหตุ": "ด่วนพิเศษ",
+                                    "สาขา": branchId !== 'All' ? branchId : "HQ"
                                 }]}
                                 templateFilename="logispro_jobs_template.xlsx"
                             />
