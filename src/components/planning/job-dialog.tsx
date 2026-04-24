@@ -387,20 +387,22 @@ export function JobDialog({
     if (job) {
       console.log('[JobDialog DEBUG] Syncing Data from Job:', job.Job_ID);
       
+      const masterRoute = routes.find(r => r.Route_Name === job.Route_Name)
+
       // A. Sync Locations
       const rawOrigins = (job.origins || job.original_origins_json)
       let parsedOrigins = parseJson(rawOrigins, []) as LocationPoint[]
       
-      // Better fallback: If JSON is empty OR missing coordinates for the first point
-      if (parsedOrigins.length === 0 || (!parsedOrigins[0].lat && !parsedOrigins[0].lng)) {
-        if (job.Origin_Location) {
-          parsedOrigins = [{ 
-            name: job.Origin_Location, 
-            lat: (parsedOrigins[0]?.lat || job.Pickup_Lat)?.toString() || '', 
-            lng: (parsedOrigins[0]?.lng || job.Pickup_Lon)?.toString() || '' 
-          }]
+      // Smart recovery: If JSON is empty/missing, try Master_Routes then Root columns
+      if (parsedOrigins.length === 0 || (!parsedOrigins[0].name)) {
+        const originName = job.Origin_Location || masterRoute?.Origin || ''
+        const lat = (parsedOrigins[0]?.lat || job.Pickup_Lat || masterRoute?.Origin_Lat)?.toString() || ''
+        const lng = (parsedOrigins[0]?.lng || job.Pickup_Lon || masterRoute?.Origin_Lon)?.toString() || ''
+        
+        if (originName || lat || lng) {
+            parsedOrigins = [{ name: originName, lat, lng }]
         } else if (parsedOrigins.length === 0) {
-          parsedOrigins = [{ name: '', lat: '', lng: '' }]
+            parsedOrigins = [{ name: '', lat: '', lng: '' }]
         }
       }
       setOrigins(parsedOrigins)
@@ -408,21 +410,18 @@ export function JobDialog({
       const rawDestinations = (job.destinations || job.original_destinations_json)
       let parsedDestinations = parseJson(rawDestinations, []) as LocationPoint[]
       
-      if (parsedDestinations.length === 0 || (!parsedDestinations[parsedDestinations.length - 1].lat && !parsedDestinations[parsedDestinations.length - 1].lng)) {
-        if (job.Dest_Location) {
-          const lastIndex = parsedDestinations.length > 0 ? parsedDestinations.length - 1 : 0;
-          const fallbackDest = {
-            name: job.Dest_Location,
-            lat: (parsedDestinations[lastIndex]?.lat || job.Delivery_Lat)?.toString() || '',
-            lng: (parsedDestinations[lastIndex]?.lng || job.Delivery_Lon)?.toString() || ''
-          }
-          if (parsedDestinations.length > 0) {
-            parsedDestinations[lastIndex] = fallbackDest;
-          } else {
-            parsedDestinations = [fallbackDest];
-          }
+      if (parsedDestinations.length === 0 || (!parsedDestinations[parsedDestinations.length - 1].name)) {
+        const destName = job.Dest_Location || masterRoute?.Destination || ''
+        const lastIndex = parsedDestinations.length > 0 ? parsedDestinations.length - 1 : 0
+        const lat = (parsedDestinations[lastIndex]?.lat || job.Delivery_Lat || masterRoute?.Dest_Lat)?.toString() || ''
+        const lng = (parsedDestinations[lastIndex]?.lng || job.Delivery_Lon || masterRoute?.Dest_Lon)?.toString() || ''
+
+        if (destName || lat || lng) {
+            const fallbackDest = { name: destName, lat, lng }
+            if (parsedDestinations.length > 0) parsedDestinations[lastIndex] = fallbackDest
+            else parsedDestinations = [fallbackDest]
         } else if (parsedDestinations.length === 0) {
-          parsedDestinations = [{ name: '', lat: '', lng: '' }]
+            parsedDestinations = [{ name: '', lat: '', lng: '' }]
         }
       }
       setDestinations(parsedDestinations)

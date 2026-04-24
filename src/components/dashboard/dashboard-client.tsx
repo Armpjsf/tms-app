@@ -372,7 +372,14 @@ export function DashboardClient({
             </div>
 
             {/* 1. Bento Grid Tactical Summary (NEW) */}
-            <div className="w-full">
+            <div className="w-full relative">
+                {jobStats.total === 0 && (
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-20 px-4 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-full animate-pulse">
+                        <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest italic">
+                            {startDate || endDate ? "No missions found for selected range" : "No missions scheduled for today"}
+                        </p>
+                    </div>
+                )}
                 <DailySummary 
                     stats={jobStats} 
                     driverStats={driverStats}

@@ -4,7 +4,7 @@ import { getSOSDriverIds } from "@/lib/supabase/sos"
 import { getCustomerName } from "@/lib/supabase/customers"
 import { getMarketplaceJobs, getTodayJobStats } from "@/lib/supabase/jobs"
 import { getDriverStats } from "@/lib/supabase/drivers"
-import { isCustomer, getCustomerId } from "@/lib/permissions"
+import { isCustomer, getCustomerId, isAdmin } from "@/lib/permissions"
 import { getActiveFleetStatus } from "@/lib/supabase/gps"
 import { getActiveFleetAlerts } from "@/lib/actions/fleet-intelligence-actions"
 import { getESGStats } from "@/lib/supabase/esg-analytics"
@@ -32,6 +32,8 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   
   const currentBranchId = branch === 'All' ? undefined : branch
   
+  const isAdminUser = await isAdmin()
+  
   // Parallel Fetching - Server Side (Ultra Fast)
   let unified, sosIds, marketplaceJobs, heatmapJobs, customerMode, custId, dailyStats, driverStats, fleetAlerts, esgResult, allCustomers;
 
@@ -47,7 +49,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
       getESGStats(start || undefined, end || undefined, currentBranchId),
       getActiveFleetAlerts(),
       getProfitHeatmapData(start || undefined, end || undefined, currentBranchId),
-      getAllCustomers(1, 1000, undefined, currentBranchId)
+      getAllCustomers(1, 1000, undefined, isAdminUser ? undefined : currentBranchId)
     ]);
 
     // Map results with fallbacks

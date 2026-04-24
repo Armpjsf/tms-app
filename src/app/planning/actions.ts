@@ -138,6 +138,8 @@ export async function createJob(data: JobFormData) {
           }
 
           revalidatePath('/planning')
+          revalidatePath('/dashboard')
+          revalidatePath('/jobs/history')
           return { success: true, message: `Job created with new ID: ${newId}` }
       }
       return { success: false, message: `Failed to create job (Duplicate ID): ${error2.message}` }
@@ -212,15 +214,17 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
   const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : null
 
   // Fetch Master Data for lookups
-  const [{ data: allDrivers }, { data: allVehicles }, { data: allCustomers }] = await Promise.all([
+  const [{ data: allDrivers }, { data: allVehicles }, { data: allCustomers }, { data: allRoutes }] = await Promise.all([
     supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Sub_ID'),
     supabase.from('Master_Vehicles').select('Vehicle_Plate, Sub_ID'),
-    supabase.from('Master_Customers').select('Customer_ID, Customer_Name')
+    supabase.from('Master_Customers').select('Customer_ID, Customer_Name'),
+    supabase.from('Master_Routes').select('*')
   ])
 
   const driverMap = new Map(allDrivers?.map(d => [d.Driver_ID, d]) || [])
   const vehicleMap = new Map(allVehicles?.map(v => [v.Vehicle_Plate, v]) || [])
   const customerMap = new Map(allCustomers?.map(c => [c.Customer_Name?.toLowerCase().trim(), c.Customer_ID]) || [])
+  const routeMap = new Map(allRoutes?.map(r => [r.Route_Name?.trim(), r]) || [])
 
   // Helper to normalize keys
   const normalizeData = (row: Partial<JobFormData>) => {
@@ -452,7 +456,16 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
   }
 
   revalidatePath('/planning')
-  return { success: true, message: `Successfully imported ${finalizedData.length} jobs` }
+  revalidatePath('/dashboard')
+  revalidatePath('/jobs/history')
+
+  const uniqueDates = Array.from(new Set(finalizedData.map(j => j.Plan_Date))).filter(Boolean)
+  const dateStr = uniqueDates.length === 1 ? ` for ${uniqueDates[0]}` : ""
+  
+  return { 
+    success: true, 
+    message: `Successfully imported ${finalizedData.length} jobs${dateStr}` 
+  }
 }
 
 
@@ -534,6 +547,7 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   autoSaveOriginDestinations(branchId || null, data.original_origins_json, data.original_destinations_json).catch(() => {})
 
   revalidatePath('/planning')
+  revalidatePath('/dashboard')
   revalidatePath('/jobs/history')
 
   // Log the update
@@ -564,6 +578,7 @@ export async function deleteJob(jobId: string) {
   }
 
   revalidatePath('/planning')
+  revalidatePath('/dashboard')
   revalidatePath('/jobs/history')
 
   // Log the deletion
