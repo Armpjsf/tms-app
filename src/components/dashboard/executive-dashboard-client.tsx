@@ -126,20 +126,27 @@ export function ExecutiveDashboardClient({ initialData, initialRemark, branchId,
             </div>
 
             {/* Primary KPIs Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 <KpiCard 
                     title={t('dashboard.revenue')} 
                     value={data.financial.revenue} 
                     unit="THB" 
                     icon={<TrendingUp className="text-emerald-500" />}
-                    growth={12.5}
+                    growth={data.kpi.revenue.growth}
                 />
                 <KpiCard 
                     title={t('dashboard.profit')} 
                     value={data.financial.netProfit} 
                     unit="THB" 
                     icon={<Zap className="text-blue-500" />}
-                    growth={8.2}
+                    growth={data.kpi.profit.growth}
+                />
+                <KpiCard 
+                    title="ยอดสินค้า" 
+                    value={data.kpi.totalQty?.current || data.financial.totalQty || 0} 
+                    growth={data.kpi.totalQty?.growth}
+                    unit="ชิ้น" 
+                    icon={<BarChart3 className="text-emerald-400" />}
                 />
                 <KpiCard 
                     title={t('dashboard.margin')} 

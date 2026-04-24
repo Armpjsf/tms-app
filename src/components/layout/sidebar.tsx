@@ -143,7 +143,13 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
             const profile = await getUserProfile()
 
             if (profile?.Role) {
-                const perms = await getPermissionsByRole(profile.Role)
+                const perms = await getPermissionsByRole(profile.Role) || []
+                
+                // --- FALLBACK: Force Danger Zones for Admins ---
+                if ((profile.Role === 'Super Admin' || profile.Role === 'Admin') && !perms.includes('navigation.danger_zones')) {
+                    perms.push('navigation.danger_zones')
+                }
+
                 localStorage.setItem("sidebar_permissions", JSON.stringify(perms))
                 setSidebarState({
                     allowedMenus: perms,

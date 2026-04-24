@@ -20,6 +20,7 @@ interface DailySummaryProps {
         inProgress: number
         pending: number
         sos?: number
+        totalQty?: number
     }
     driverStats: {
         total: number
@@ -105,7 +106,7 @@ export function DailySummary({ stats, driverStats, biddingCount, sosCount, fleet
                                 />
                             </div>
                             
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div className="p-4 bg-muted/30 rounded-2xl border border-border/5">
                                     <p className="text-xs font-bold text-muted-foreground uppercase mb-1">{t('common.all')}</p>
                                     <p className="text-2xl font-black">{stats.total}</p>
@@ -117,6 +118,10 @@ export function DailySummary({ stats, driverStats, biddingCount, sosCount, fleet
                                 <div className="p-4 bg-blue-50/50 dark:bg-blue-500/5 rounded-2xl border border-blue-500/10">
                                     <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase mb-1">{t('dashboard.activity.active')}</p>
                                     <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{stats.inProgress}</p>
+                                </div>
+                                <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                                    <p className="text-xs font-bold text-primary uppercase mb-1">ยอดสินค้า</p>
+                                    <p className="text-2xl font-black text-primary">{(stats.totalQty || 0).toLocaleString()}</p>
                                 </div>
                             </div>
                         </div>

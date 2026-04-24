@@ -63,6 +63,7 @@ interface DashboardClientProps {
         inProgress: number
         pending: number
         sos?: number
+        totalQty?: number
     }
     driverStats: {
         total: number

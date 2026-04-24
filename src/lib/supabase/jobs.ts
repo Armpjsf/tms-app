@@ -230,7 +230,7 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
     
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('Job_Status')
+      .select('Job_Status, Loaded_Qty')
 
     if (startDate && endDate) {
         dbQuery = dbQuery.gte('Plan_Date', startDate).lte('Plan_Date', endDate)
@@ -245,7 +245,7 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
         if (effectiveBranchId && effectiveBranchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
         } else if (!isSuper && !isRegularAdmin && !userBranchId) {
-            return { total: 0, delivered: 0, inProgress: 0, pending: 0 }
+            return { total: 0, delivered: 0, inProgress: 0, pending: 0, totalQty: 0 }
         }
 
         if (customerNames && customerNames.length > 0) {
@@ -256,7 +256,7 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
     const { data } = await dbQuery
     
     if (data === null) {
-      return { total: 0, delivered: 0, inProgress: 0, pending: 0 }
+      return { total: 0, delivered: 0, inProgress: 0, pending: 0, totalQty: 0 }
     }
     
     const jobs = data || []
@@ -265,10 +265,11 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
       delivered: jobs.filter(j => j.Job_Status === 'Delivered' || j.Job_Status === 'Completed').length,
       inProgress: jobs.filter(j => j.Job_Status === 'In Transit' || j.Job_Status === 'In Progress' || j.Job_Status === 'Arrived Pickup' || j.Job_Status === 'Arrived Dropoff').length,
       pending: jobs.filter(j => j.Job_Status === 'New' || j.Job_Status === 'Assigned' || j.Job_Status === 'Requested' || j.Job_Status === 'Pending').length,
-      sos: jobs.filter(j => j.Job_Status === 'SOS').length
+      sos: jobs.filter(j => j.Job_Status === 'SOS').length,
+      totalQty: jobs.reduce((sum, j) => sum + (Number(j.Loaded_Qty) || 0), 0)
     }
   } catch {
-    return { total: 0, delivered: 0, inProgress: 0, pending: 0 }
+    return { total: 0, delivered: 0, inProgress: 0, pending: 0, totalQty: 0 }
   }
 }
 

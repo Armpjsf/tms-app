@@ -260,6 +260,7 @@ export function JobDialog({
   const [isSyncingFuel, setIsSyncingFuel] = useState(false)
   const [fuelError, setFuelError] = useState<string | null>(null)
   const [suggestedRate, setSuggestedRate] = useState<number | null>(null)
+  const [isPerPieceMode, setIsPerPieceMode] = useState(false)
   const [checkingRate, setCheckingRate] = useState(false)
   const [masterVehicleTypes, setMasterVehicleTypes] = useState<MasterVehicleType[]>([])
 
@@ -285,24 +286,41 @@ export function JobDialog({
     const origin = origins[0]
     const destination = destinations[destinations.length - 1]
     
-    if (formData.Customer_ID && origin?.name && destination?.name && fuelPrice) {
-      // Find the official route name (e.g. BARSEALE1) from Master_Routes
-      // instead of using a naive concatenation.
-      const officialRoute = routes.find(r => 
-        (r.Origin?.trim() === origin.name.trim() && r.Destination?.trim() === destination.name.trim()) ||
-        (r.Route_Name === `${origin.name.trim()} - ${destination.name.trim()}`)
-      )
-      
-      const routeLookupName = officialRoute ? officialRoute.Route_Name : `${origin.name.trim()} - ${destination.name.trim()}`
-      
+    if (formData.Customer_ID && fuelPrice) {
       setCheckingRate(true)
-      getSuggestedRate(formData.Customer_ID, routeLookupName, fuelPrice, formData.Vehicle_Type)
-        .then(rate => {
-            setSuggestedRate(rate)
-            setCheckingRate(false)
-        })
+
+      const checkRate = async () => {
+          // 1. Try "SYSTEM_PER_PIECE" first (Priority for per-unit jobs)
+          const perPieceRate = await getSuggestedRate(formData.Customer_ID, 'SYSTEM_PER_PIECE', fuelPrice, formData.Vehicle_Type)
+          
+          if (perPieceRate && perPieceRate > 0) {
+              setSuggestedRate(perPieceRate)
+              setIsPerPieceMode(true)
+              setCheckingRate(false)
+              return
+          }
+
+          // 2. Fallback to route-based rate
+          if (origin?.name && destination?.name) {
+              const officialRoute = routes.find(r => 
+                (r.Origin?.trim() === origin.name.trim() && r.Destination?.trim() === destination.name.trim()) ||
+                (r.Route_Name === `${origin.name.trim()} - ${destination.name.trim()}`)
+              )
+              const routeLookupName = officialRoute ? officialRoute.Route_Name : `${origin.name.trim()} - ${destination.name.trim()}`
+              
+              const routeRate = await getSuggestedRate(formData.Customer_ID, routeLookupName, fuelPrice, formData.Vehicle_Type)
+              setSuggestedRate(routeRate)
+              setIsPerPieceMode(false)
+          } else {
+              setSuggestedRate(null)
+          }
+          setCheckingRate(false)
+      }
+
+      checkRate()
     } else {
         setSuggestedRate(null)
+        setIsPerPieceMode(false)
     }
   }, [formData.Customer_ID, formData.Vehicle_Type, origins, destinations, fuelPrice, routes])  // 4. Handlers
   const handleSyncFuel = async () => {
@@ -1886,7 +1904,13 @@ export function JobDialog({
                               {suggestedRate && (
                                   <>
                                       <span className="mx-3 opacity-20">|</span>
-                                      เรทแนะนำ: <span className="text-emerald-500">{suggestedRate.toLocaleString()}฿</span>
+                                      {isPerPieceMode ? 'เรทแนะนำต่อชิ้น: ' : 'เรทแนะนำเหมา: '}
+                                      <span className="text-emerald-500">{suggestedRate.toLocaleString()}฿</span>
+                                      {isPerPieceMode && formData.Loaded_Qty && (
+                                          <span className="ml-2 text-xs font-bold text-muted-foreground italic">
+                                              (รวมประมาณ: {(Number(formData.Loaded_Qty) * suggestedRate).toLocaleString()}฿)
+                                          </span>
+                                      )}
                                       <Button 
                                         type="button" 
                                         variant="ghost" 
@@ -1921,7 +1945,7 @@ export function JobDialog({
                           )}
                           {!suggestedRate && fuelPrice && !checkingRate && (
                               <p className="text-sm font-bold text-muted-foreground mt-1 uppercase tracking-tight flex items-center gap-1">
-                                  <Info size={14} /> ยังไม่ได้ตั้งค่า Matrix สำหรับเส้นทางนี้
+                                  <Info size={14} /> {isPerPieceMode ? 'ยังไม่ได้ตั้งค่า Matrix สำหรับราคารายชิ้น' : 'ยังไม่ได้ตั้งค่า Matrix สำหรับเส้นทางนี้'}
                               </p>
                           )}
                       </div>
@@ -1929,11 +1953,17 @@ export function JobDialog({
                   {suggestedRate && (
                       <Button 
                           type="button"
-                          onClick={() => updateAssignment(0, 'Price_Cust_Total', suggestedRate)}
+                          onClick={() => {
+                              const finalPrice = isPerPieceMode 
+                                ? Number((Number(formData.Loaded_Qty || 1) * suggestedRate).toFixed(2))
+                                : suggestedRate
+                              updateAssignment(0, 'Price_Cust_Total', finalPrice)
+                              toast.success(isPerPieceMode ? `คำนวณราคาให้แล้ว (${formData.Loaded_Qty || 1} ชิ้น x ${suggestedRate}฿)` : 'ใช้ราคาเหมาตามน้ำมันแล้ว')
+                          }}
                           className="bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl h-14 px-8 shadow-xl shadow-emerald-500/20 gap-3 group"
                       >
                           <Zap size={20} className="group-hover:scale-125 transition-transform" />
-                          ใช้ราคาแนะนำนี้
+                          {isPerPieceMode ? 'คำนวณยอดรวมอัตโนมัติ' : 'ใช้ราคาแนะนำนี้'}
                       </Button>
                   )}
               </div>

@@ -64,7 +64,7 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         const fetchRange = async (start: string, end: string) => {
             let query = supabase
                 .from('Jobs_Main')
-                .select('Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status, Plan_Date, Est_Distance_KM')
+                .select('Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status, Plan_Date, Est_Distance_KM, Loaded_Qty')
                 .gte('Plan_Date', start)
                 .lte('Plan_Date', end)
             
@@ -86,7 +86,8 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             const revenuePipeline = jobs.filter(j => PIPELINE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Price_Cust_Total) || 0), 0)
             const cost = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Cost_Driver_Total) || 0) + (Number(j.Price_Cust_Extra) || 0) + (Number(j.Cost_Driver_Extra) || 0), 0)
             const distance = jobs.reduce((sum, j) => sum + (Number(j.Est_Distance_KM) || 0), 0)
-            return { revenue, revenuePipeline, cost, profit: revenue - cost, distance, count: jobs.length }
+            const totalQty = jobs.reduce((sum, j) => sum + (Number(j.Loaded_Qty) || 0), 0)
+            return { revenue, revenuePipeline, cost, profit: revenue - cost, distance, count: jobs.length, totalQty }
         }
 
         const curr = calcStats(currJobs)
@@ -150,7 +151,8 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
                 revenuePipeline: curr.revenuePipeline,
                 cost: { total: totalCostManual, driver: curr.cost, extra: 0, fuel: fuelCost, maintenance: maintCost }, 
                 netProfit: curr.revenue - totalCostManual, 
-                profitMargin: curr.revenue > 0 ? ((curr.revenue - totalCostManual) / curr.revenue) * 100 : 0 
+                profitMargin: curr.revenue > 0 ? ((curr.revenue - totalCostManual) / curr.revenue) * 100 : 0,
+                totalQty: curr.totalQty
             },
             trend, 
             statusDist: Object.entries(statusMap).map(([name, value]) => ({ name, value })),
@@ -158,7 +160,8 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
                 revenue: { current: curr.revenue, previous: prev.revenue, growth: calculateGrowth(curr.revenue, prev.revenue), target: 250000, attainment: (curr.revenue / 250000) * 100 }, 
                 profit: { current: curr.revenue - totalCostManual, previous: prev.profit, growth: calculateGrowth(curr.revenue - totalCostManual, prev.profit) }, 
                 margin: { current: curr.revenue > 0 ? ((curr.revenue - totalCostManual) / curr.revenue) * 100 : 0, growth: calculateGrowth((curr.revenue - totalCostManual) / (curr.revenue || 1), prev.profit / (prev.revenue || 1)), target: 15 }, 
-                jobs: { current: curr.count } 
+                jobs: { current: curr.count },
+                totalQty: { current: curr.totalQty, growth: calculateGrowth(curr.totalQty, prev.totalQty) }
             },
             esg: { fuelSaved: Math.round(fuelSaved), co2Saved: Math.round(co2Saved), treesSaved: Number(treesSaved.toFixed(1)) },
             vehicles: []
