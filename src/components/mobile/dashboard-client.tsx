@@ -268,11 +268,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                          </div>
                          <h3 className="text-foreground font-black text-2xl mb-2 italic">พร้อมรับงานใหม่?</h3>
                          <p className="text-muted-foreground text-base font-bold mb-8">ขณะนี้คุณยังไม่มีภารกิจค้างในระบบ</p>
-                         <Link href="/mobile/marketplace">
-                             <Button className="h-16 px-10 rounded-2xl bg-primary text-white font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all shadow-primary/20">
-                                 เข้าสู่ตลาดรับงาน
-                             </Button>
-                         </Link>
+                         <p className="text-muted-foreground text-base font-bold">ขณะนี้คุณยังไม่มีภารกิจค้างในระบบ</p>
                     </motion.div>
                 )}
                 </AnimatePresence>
@@ -335,19 +331,6 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                 </div>
             </motion.div>
 
-            {/* FLOATING MARKETPLACE BUTTON - IMPROVED POSITION */}
-            <div className="fixed bottom-[130px] right-6 z-[140]">
-                 <Link href="/mobile/marketplace">
-                     <button className="w-18 h-18 rounded-[2rem] bg-accent flex flex-col items-center justify-center text-white shadow-2xl active:scale-95 border-[6px] border-background transition-all hover:brightness-110 relative group overflow-hidden">
-                        {/* Pulse Effect */}
-                        <div className="absolute inset-0 bg-white/20 rounded-full animate-ping opacity-0 group-hover:opacity-40 transition-opacity duration-1000" />
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
-                        
-                        <Gavel size={28} strokeWidth={2.5} className="relative z-10" />
-                        <span className="text-[8px] font-black uppercase tracking-widest -mt-0.5 relative z-10">รับงาน</span>
-                     </button>
-                 </Link>
-            </div>
         </motion.div>
     )
 }
