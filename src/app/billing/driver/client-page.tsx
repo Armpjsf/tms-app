@@ -199,13 +199,14 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
     if (paymentModel === 'individual') {
         const jobsByDriver: Record<string, Job[]> = {}
         jobsToExport.forEach(job => {
-            const dName = job.Driver_Name || 'Unknown'
+            const driverInfo = drivers.find(d => d.Driver_ID === job.Driver_ID) || drivers.find(d => d.Vehicle_Plate === job.Vehicle_Plate)
+            const dName = job.Driver_Name || driverInfo?.Driver_Name || 'Unknown'
             if (!jobsByDriver[dName]) jobsByDriver[dName] = []
             jobsByDriver[dName].push(job)
         })
 
         Object.entries(jobsByDriver).forEach(([driverName, p_jobs]) => {
-            const driverInfo = drivers.find(d => d.Driver_Name === driverName)
+            const driverInfo = drivers.find(d => d.Driver_Name === driverName || d.Driver_ID === p_jobs[0].Driver_ID || d.Vehicle_Plate === p_jobs[0].Vehicle_Plate)
             if (!driverInfo?.Bank_Account_No) {
                 missingBankEntities.push(driverName)
                 return
@@ -261,7 +262,10 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
     const dataToExport = jobsToExport.map(job => ({
         'Job ID': job.Job_ID,
         'วันที่': job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-',
-        'คนขับ': job.Driver_Name || '-',
+        'คนขับ': job.Driver_Name || 
+                drivers.find(d => d.Driver_ID === job.Driver_ID)?.Driver_Name || 
+                drivers.find(d => d.Vehicle_Plate === job.Vehicle_Plate)?.Driver_Name || 
+                '-',
         'ทะเบียนรถ': job.Vehicle_Plate || '-',
         'ต้นทาง': job.Origin_Location || '-',
         'ปลายทาง': job.Dest_Location || '-',
@@ -597,7 +601,12 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                         <div className="p-2 bg-muted/50 rounded-xl group-hover/row:bg-primary/20 transition-colors">
                             <User className="w-5 h-5 text-muted-foreground group-hover/row:text-primary transition-colors" />
                         </div>
-                        <span className="font-black text-muted-foreground text-xl uppercase tracking-tight">{item.Driver_Name || '-'}</span>
+                        <span className="font-black text-muted-foreground text-xl uppercase tracking-tight">
+                            {item.Driver_Name || 
+                             drivers.find(d => d.Driver_ID === item.Driver_ID)?.Driver_Name || 
+                             drivers.find(d => d.Vehicle_Plate === item.Vehicle_Plate)?.Driver_Name || 
+                             '-'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-8 py-8">
