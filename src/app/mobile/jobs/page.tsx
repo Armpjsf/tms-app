@@ -147,20 +147,12 @@ export default async function DriverJobsPage(props: Props) {
                         const points = routeStr.split(/[→\->]/).map(p => p.trim()).filter(Boolean);
                         
                         // Default values
-                        let displayOrigin = job.Origin_Location || "คลังสินค้า";
-                        let displayDest = job.Route_Name || job.Dest_Location || "ปลายทาง";
+                        let displayOrigin = job.Origin_Location || "ไม่ระบุต้นทาง";
+                        let displayDest = job.Dest_Location || "ไม่ระบุปลายทาง";
 
                         if (points.length >= 2) {
-                            // If first point is warehouse and we have more, skip it for the "Real" origin
-                            const isWarehouse = (p: string) => p.includes('คลัง') || p.toLowerCase().includes('warehouse');
-                            
-                            if (isWarehouse(points[0]) && points.length >= 2) {
-                                displayOrigin = points[1];
-                                displayDest = points[points.length - 1];
-                            } else {
-                                displayOrigin = points[0];
-                                displayDest = points[points.length - 1];
-                            }
+                            displayOrigin = points[0];
+                            displayDest = points[points.length - 1];
                         }
 
                         return (

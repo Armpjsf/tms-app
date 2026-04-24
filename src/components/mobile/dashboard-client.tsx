@@ -216,18 +216,12 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                             const routeStr = currentJob.Route_Name || currentJob.Dest_Location || "";
                             const points = routeStr.split(/[→\->]/).map(p => p.trim()).filter(Boolean);
                             
-                            let displayOrigin = currentJob.Origin_Location || "คลังสินค้า";
-                            let displayDest = currentJob.Route_Name || currentJob.Dest_Location || "ปลายทาง";
+                            let displayOrigin = currentJob.Origin_Location || "ไม่ระบุต้นทาง";
+                            let displayDest = currentJob.Dest_Location || "ไม่ระบุปลายทาง";
 
                             if (points.length >= 2) {
-                                const isWarehouse = (p: string) => p.includes('คลัง') || p.toLowerCase().includes('warehouse');
-                                if (isWarehouse(points[0]) && points.length >= 2) {
-                                    displayOrigin = points[1];
-                                    displayDest = points[points.length - 1];
-                                } else {
-                                    displayOrigin = points[0];
-                                    displayDest = points[points.length - 1];
-                                }
+                                displayOrigin = points[0];
+                                displayDest = points[points.length - 1];
                             }
 
                             return (
