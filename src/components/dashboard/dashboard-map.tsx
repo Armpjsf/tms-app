@@ -85,12 +85,36 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
     // Generate Profit Points for Heatmap
     const profitPoints = useMemo(() => {
         return allJobs
-            .filter(j => j.Delivery_Lat && j.Delivery_Lon)
-            .map(j => ({
-                lat: Number(j.Delivery_Lat),
-                lng: Number(j.Delivery_Lon),
-                profit: (Number(j.Price_Cust_Total) || 0) - (Number(j.Cost_Driver_Total) || 0)
-            }))
+            .map(j => {
+                let lat = Number(j.Delivery_Lat)
+                let lng = Number(j.Delivery_Lon)
+                
+                // Fallback to JSON if root columns are empty
+                if (!lat || !lng) {
+                    try {
+                        const json = typeof j.original_destinations_json === 'string' 
+                            ? JSON.parse(j.original_destinations_json) 
+                            : j.original_destinations_json
+                        
+                        if (Array.isArray(json) && json.length > 0) {
+                            const lastPoint = json[json.length - 1]
+                            lat = Number(lastPoint.lat)
+                            lng = Number(lastPoint.lng)
+                        }
+                    } catch (e) {
+                        // ignore parse errors
+                    }
+                }
+
+                if (!lat || !lng || isNaN(lat) || isNaN(lng)) return null
+
+                return {
+                    lat,
+                    lng,
+                    profit: (Number(j.Price_Cust_Total) || 0) - (Number(j.Cost_Driver_Total) || 0)
+                }
+            })
+            .filter((p): p is { lat: number, lng: number, profit: number } => p !== null)
     }, [allJobs])
 
     const fetchHistory = async (plate: string, s: string, e: string) => {
