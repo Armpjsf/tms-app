@@ -22,7 +22,7 @@ export default function JobPickupPage() {
   const [photos, setPhotos] = useState<File[]>([])
   const [signature, setSignature] = useState<Blob | null>(null)
   const [loadedQty, setLoadedQty] = useState<string>("")
-  const [loading, setLoading] = useState(false)
+  const [completed, setCompleted] = useState(false)
   
   // Job Data for Report
   const [job, setJob] = useState<Job | null>(null)
@@ -59,70 +59,95 @@ export default function JobPickupPage() {
         return
     }
 
-    setLoading(true)
+    // --- OPTIMISTIC UI ---
+    // Show success screen immediately, process in background
+    setCompleted(true)
+    toast.success("บันทึกข้อมูลเรียบร้อยแล้ว กำลังอัปโหลดเบื้องหลัง...")
     
-    try {
-        const formData = new FormData()
-        
-        // 1. Capture Report BEFORE sending
-        if (reportRef.current && job) {
-            try {
-                const canvas = await html2canvas(reportRef.current, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    windowWidth: 1200
-                })
-                
-                const reportBlob = await new Promise<Blob | null>(resolve => 
-                    canvas.toBlob(resolve, 'image/jpeg', 0.8)
-                )
-                
-                if (reportBlob) {
-                    formData.append("pickup_report", reportBlob, `Pickup_Report_${params.id}.jpg`)
+    // Continue processing in "background" (don't await the whole thing for the UI)
+    const runBackgroundSubmission = async () => {
+        try {
+            const formData = new FormData()
+            
+            // 1. Capture Report
+            if (reportRef.current && job) {
+                try {
+                    const canvas = await html2canvas(reportRef.current, {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        windowWidth: 1200
+                    })
+                    
+                    const reportBlob = await new Promise<Blob | null>(resolve => 
+                        canvas.toBlob(resolve, 'image/jpeg', 0.8)
+                    )
+                    
+                    if (reportBlob) {
+                        formData.append("pickup_report", reportBlob, `Pickup_Report_${params.id}.jpg`)
+                    }
+                } catch (err) {
+                    console.error("Report capture failed:", err)
                 }
-            } catch {
-                // Pickup Report Generation Failed
+            }
+
+            // 2. Append Photos & Signature
+            photos.forEach((photo, index) => formData.append(`photo_${index}`, photo))
+            formData.append("photo_count", photos.length.toString())
+            formData.append("signature", signature, "signature.png")
+            if (loadedQty) formData.append("loaded_qty", loadedQty)
+            
+            const result = await submitJobPickup(params.id, formData)
+            
+            if (result.success) {
+                toast.success("อัปโหลดข้อมูลสำเร็จ")
+            } else {
+                throw new Error(typeof result.error === 'string' ? result.error : "Upload failed")
+            }
+        } catch (error) {
+            console.error("Background submission failed, attempting offline save:", error)
+            // Fallback to offline storage if background upload fails
+            try {
+                const { blobToB64, saveJobOffline } = await import("@/lib/utils/offline-storage")
+                const photoB64s = await Promise.all(photos.map(p => blobToB64(p)))
+                const sigB64 = signature ? await blobToB64(signature) : null
+                
+                const offlineData = {
+                    photos: photoB64s,
+                    signature: sigB64,
+                    photo_count: photos.length,
+                    actualCompletionTime: new Date().toISOString(),
+                    type: 'Pickup'
+                }
+
+                saveJobOffline(params.id, offlineData, 'Pickup')
+                toast.info("ข้อมูลถูกบันทึกไว้ในเครื่องแล้ว จะอัปโหลดใหม่อัตโนมัติเมื่อพร้อม")
+            } catch (offlineErr) {
+                toast.error("ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง")
+                setCompleted(false) // Only revert if absolutely failed
             }
         }
-
-        // 2. Append Photos
-        photos.forEach((photo, index) => {
-            formData.append(`photo_${index}`, photo)
-        })
-        formData.append("photo_count", photos.length.toString())
-        
-        // 3. Append Signature
-        formData.append("signature", signature, "signature.png")
-        
-        // 4. Append Quantity
-        if (loadedQty) {
-            formData.append("loaded_qty", loadedQty)
-        }
-        
-        const result = await submitJobPickup(params.id, formData)
-        
-        if (result.success) {
-          if (result.warning) {
-            toast.warning(String(result.warning)) 
-          }
-          router.push(`/mobile/jobs/${params.id}?success=pickup`)
-        } else {
-          toast.error(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
-          setLoading(false)
-        }
-    } catch (error: unknown) {
-        // Pickup Submit Error
-        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error instanceof Error && error.message.includes('fetch'))
-        
-        if (isNetworkError) {
-             // ...
-        } else {
-            const msg = error instanceof Error ? error.message : (typeof error === 'object' ? JSON.stringify(error) : String(error))
-            toast.error(`เกิดข้อผิดพลาดในการส่งข้อมูล: ${msg}`)
-            setLoading(false)
-        }
     }
+
+    runBackgroundSubmission()
+  }
+
+  if (completed) {
+      return (
+          <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center space-y-4">
+              <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-500 animate-in zoom-in duration-300">
+                  <Box size={48} />
+              </div>
+              <h1 className="text-2xl font-bold text-foreground">รับของสำเร็จ!</h1>
+              <p className="text-muted-foreground italic">ข้อมูลกำลังถูกส่งไปยังระบบเบื้องหลัง...</p>
+              <Button 
+                onClick={() => router.push(`/mobile/jobs/${params.id}`)}
+                className="w-full bg-amber-600 hover:bg-amber-700 font-bold h-12 rounded-xl"
+              >
+                  กลับหน้ารายละเอียดงาน
+              </Button>
+          </div>
+      )
   }
 
   return (
@@ -189,14 +214,14 @@ export default function JobPickupPage() {
 
         <Button 
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={false}
             className={`w-full h-14 font-black text-lg shadow-xl transition-all duration-500 rounded-2xl ${
                 canSubmit
                     ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 shadow-amber-500/30 text-white translate-y-0 active:scale-95" 
                     : "bg-slate-800 text-muted-foreground opacity-70 grayscale translate-y-1"
             }`}
         >
-            {loading ? <Loader2 className="animate-spin" /> : "ยืนยันการรับสินค้า / ออกเดินทาง"}
+            ยืนยันการรับสินค้า / ออกเดินทาง
         </Button>
       </div>
 

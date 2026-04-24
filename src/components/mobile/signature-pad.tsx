@@ -55,6 +55,14 @@ export const SignaturePad = memo(({ onSave }: Props) => {
     }
   }
 
+  const handleBegin = () => {
+    // Hide keyboard if any input is focused
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+    setIsEmpty(false)
+  }
+
   const handleEnd = () => {
       setTimeout(() => save(), 50) 
   }
@@ -70,7 +78,7 @@ export const SignaturePad = memo(({ onSave }: Props) => {
             className: "w-full h-56 cursor-crosshair block",
             style: { width: '100%', height: '224px' }
           }}
-          onBegin={() => setIsEmpty(false)}
+          onBegin={handleBegin}
           onEnd={handleEnd}
         />
         {isEmpty && !lastSignatureRef.current && (

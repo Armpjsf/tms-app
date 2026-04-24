@@ -90,127 +90,93 @@ export default function JobCompletePage() {
         return
     }
 
-    setLoading(true)
+    // --- OPTIMISTIC UI ---
+    // Show success screen immediately
+    setCompleted(true)
+    toast.success("บันทึกข้อมูลเรียบร้อยแล้ว กำลังอัปโหลดเบื้องหลัง...")
     
-    try {
-        const formData = new FormData()
-        
-        // 1. Capture Report BEFORE sending
-        if (reportRef.current && job) {
-            const captureReport = async (retryCount = 0): Promise<Blob | null> => {
-                try {
-                    // Wait for all images in the report to load properly
-                    await waitForImages(reportRef.current!)
-                    
-                    // Progressive delay based on retries
-                    const delay = 500 + (retryCount * 500)
-                    await new Promise(resolve => setTimeout(resolve, delay))
+    // Background submission
+    const runBackgroundSubmission = async () => {
+        try {
+            const formData = new FormData()
+            
+            // 1. Capture Report
+            if (reportRef.current && job) {
+                const captureReport = async (retryCount = 0): Promise<Blob | null> => {
+                    try {
+                        await waitForImages(reportRef.current!)
+                        const delay = 500 + (retryCount * 500)
+                        await new Promise(resolve => setTimeout(resolve, delay))
 
-                    const canvas = await html2canvas(reportRef.current!, {
-                        scale: 2, // High resolution
-                        useCORS: true,
-                        logging: false, // Disabled to save memory
-                        backgroundColor: "#ffffff",
-                        windowWidth: 800, // Consistent with component width
-                        allowTaint: true
-                    })
-                    
-                    return new Promise<Blob | null>(resolve => 
-                        canvas.toBlob(resolve, 'image/jpeg', 0.8)
-                    )
-                } catch (err) {
-                    console.error("Capture effort failed:", err)
-                    if (retryCount < 1) return captureReport(retryCount + 1)
-                    return null
+                        const canvas = await html2canvas(reportRef.current!, {
+                            scale: 2,
+                            useCORS: true,
+                            logging: false,
+                            backgroundColor: "#ffffff",
+                            windowWidth: 800,
+                            allowTaint: true
+                        })
+                        
+                        return new Promise<Blob | null>(resolve => 
+                            canvas.toBlob(resolve, 'image/jpeg', 0.8)
+                        )
+                    } catch (err) {
+                        if (retryCount < 1) return captureReport(retryCount + 1)
+                        return null
+                    }
                 }
-            }
 
-            try {
                 const reportBlob = await captureReport()
-                
                 if (reportBlob && reportBlob.size > 5000) { 
                     formData.append("pod_report", reportBlob, `POD_Report_${params.id}.jpg`)
-                } else {
-                    // Report too small or empty
                 }
-                } catch (err) {
-                    console.error("Inner capture error:", err)
-                }
-        }
-
-        // Photos are already compressed by CameraInput component
-        photos.forEach((photo, index) => {
-            formData.append(`photo_${index}`, photo)
-        })
-
-        // Also send count so server knows how many to look for
-        formData.append("photo_count", photos.length.toString())
-        
-        formData.append("signature", signature, "signature.png")
-        
-        if (loadedQty) {
-            formData.append("loaded_qty", loadedQty)
-        }
-        
-        const result = await submitJobPOD(params.id, formData)
-        
-        if (result.success) {
-          router.push(`/mobile/jobs/${params.id}?success=pod`)
-        } else {
-          toast.error(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
-          setLoading(false)
-        }
-    } catch (error: unknown) {
-        // Check if it's a network error
-        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error instanceof Error && error.message.includes('fetch'))
-        
-        if (isNetworkError) {
-          try {
-            // Prepare data for offline storage (convert Blobs to Base64)
-            const photoB64s = await Promise.all(photos.map(p => blobToB64(p)))
-            const sigB64 = signature ? await blobToB64(signature) : null
-            
-            // Capture report if possible (as Base64)
-            let reportB64 = null
-            if (reportRef.current && job) {
-                try {
-                    const canvas = await html2canvas(reportRef.current!, { scale: 2, useCORS: true })
-                    reportB64 = canvas.toDataURL('image/jpeg', 0.8)
-                } catch { /* Fail silently */ }
             }
 
-            const offlineData = {
-                photos: photoB64s,
-                signature: sigB64,
-                pod_report: reportB64,
-                photo_count: photos.length,
-                actualCompletionTime: new Date().toISOString()
-            }
-
-            saveJobOffline(params.id, offlineData, 'POD')
-            setCompleted(true) 
-            toast.success("บันทึกข้อมูลแล้ว (โหมดออฟไลน์) จะส่งให้อัตโนมัติเมื่อมีสัญญาณ")
-          } catch (offlineErr) {
-            toast.error("ไม่สามารถบันทึกข้อมูลออฟไลน์ได้: " + String(offlineErr))
-          }
-        } else {
-            const errorMessage = error instanceof Error ? error.message : String(error)
-            const isAuthError = errorMessage.includes('invalid_grant') || errorMessage.includes('refresh_token_not_found')
+            // 2. Photos & Signature
+            photos.forEach((photo, index) => formData.append(`photo_${index}`, photo))
+            formData.append("photo_count", photos.length.toString())
+            formData.append("signature", signature, "signature.png")
+            if (loadedQty) formData.append("loaded_qty", loadedQty)
             
-            if (isAuthError) {
-                toast.error("เซสชั่นหมดอายุ กรุณาล็อกอินใหม่อีกครั้ง", {
-                    action: {
-                        label: "ไปหน้าล็อกอิน",
-                        onClick: () => router.push('/mobile/login')
-                    }
-                })
+            const result = await submitJobPOD(params.id, formData)
+            
+            if (result.success) {
+                toast.success("อัปโหลดข้อมูลสำเร็จ")
             } else {
-                toast.error(`Error: ${errorMessage}`)
+                throw new Error(String(result.error))
+            }
+        } catch (error) {
+            console.error("POD Background failure, saving offline:", error)
+            try {
+                const photoB64s = await Promise.all(photos.map(p => blobToB64(p)))
+                const sigB64 = signature ? await blobToB64(signature) : null
+                
+                let reportB64 = null
+                if (reportRef.current && job) {
+                    try {
+                        const canvas = await html2canvas(reportRef.current!, { scale: 2, useCORS: true })
+                        reportB64 = canvas.toDataURL('image/jpeg', 0.8)
+                    } catch { /* Fail silently */ }
+                }
+
+                const offlineData = {
+                    photos: photoB64s,
+                    signature: sigB64,
+                    pod_report: reportB64,
+                    photo_count: photos.length,
+                    actualCompletionTime: new Date().toISOString()
+                }
+
+                saveJobOffline(params.id, offlineData, 'POD')
+                toast.info("ข้อมูลถูกบันทึกไว้ในเครื่องแล้ว จะอัปโหลดใหม่อัตโนมัติเมื่อพร้อม")
+            } catch (offlineErr) {
+                toast.error("ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง")
+                setCompleted(false)
             }
         }
-    } finally {
-        setLoading(false)
     }
+
+    runBackgroundSubmission()
   }
 
 
@@ -318,14 +284,13 @@ export default function JobCompletePage() {
         <div className="space-y-3">
             <Button 
                 onClick={handleSubmit}
-                disabled={loading}
                 className={`w-full h-14 font-black text-lg shadow-xl transition-all duration-500 rounded-2xl ${
                     photos.length > 0 && signature 
                         ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 shadow-blue-500/30 text-white translate-y-0 active:scale-95" 
                         : "bg-slate-800 text-muted-foreground opacity-70 grayscale translate-y-1"
                 }`}
             >
-                {loading ? <Loader2 className="animate-spin" /> : "ยืนยันการส่งงาน"}
+                ยืนยันการส่งงาน
             </Button>
             
             {/* Validation Feedback */}
