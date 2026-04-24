@@ -44,10 +44,11 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
               return;
           }
 
-          await PushNotifications.register();
+          // Important: Add listeners BEFORE register()
+          PushNotifications.removeAllListeners();
           
-          // Token is handled via listener
           PushNotifications.addListener('registration', async (token) => {
+              console.log("[APK] Push registered:", token.value);
               const res = await fetch('/api/push/subscribe', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -59,14 +60,15 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
                       }
                   })
               });
-              if (res.ok) toast.success("ลงทะเบียนแจ้งเตือนผ่าน APK สำเร็จ!");
-              else toast.error("ลงทะเบียนผ่าน APK ไม่สำเร็จ");
+              if (res.ok) toast.success("ลงทะเบียน APK สำเร็จ! ตอนนี้คุณสามารถรับงานได้แล้ว");
+              else toast.error("บันทึก Token ไม่สำเร็จ");
           });
 
           PushNotifications.addListener('registrationError', (err) => {
-              toast.error("เกิดข้อผิดพลาดในการลงทะเบียน APK: " + err.error);
+              toast.error("เกิดข้อผิดพลาด APK Registration: " + err.error);
           });
 
+          await PushNotifications.register();
           return;
       }
 
@@ -136,7 +138,10 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
       },
       {
         loading: 'กำลังส่งสัญญาณทดสอบ...',
-        success: 'ส่งสัญญาณทดสอบแล้ว! กรุณารอรับการแจ้งเตือน',
+        success: (result: any) => {
+          if (result.subCount === 0) return '❌ ไม่พบการลงทะเบียนแจ้งเตือน (โปรดกดเปิดรับงานก่อน)'
+          return `ส่งสัญญาณแล้ว! พบ ${result.subCount} อุปกรณ์ที่ลงทะเบียนไว้`
+        },
         error: (err) => `ส่งไม่สำเร็จ: ${err.message}`
       }
     )

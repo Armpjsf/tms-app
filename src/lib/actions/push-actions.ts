@@ -683,7 +683,14 @@ export async function testPushNotification(target: { driverId?: string; userId?:
 
     if (target.driverId) {
         const result = await sendPushToDriver(target.driverId, payload)
-        return { ...result, debug: debugInfo }
+        // Check how many subscriptions we actually found for more context
+        const supabase = await createAdminClient()
+        const { count } = await supabase
+            .from('Push_Subscriptions')
+            .select('*', { count: 'exact', head: true })
+            .eq('Driver_ID', target.driverId)
+            
+        return { ...result, subCount: count || 0, debug: debugInfo }
     } else if (target.userId) {
         const supabase = await createAdminClient()
         const { data: subs } = await supabase
