@@ -16,9 +16,27 @@ export const sanitizeJobData = (data: Record<string, unknown>) => {
         'Loaded_Qty', 'Est_Distance_KM'
     ]
     
+    const numericKeys = [
+        'Price_Cust_Total', 'Cost_Driver_Total', 'Price_Cust_Extra', 'Cost_Driver_Extra',
+        'Weight_Kg', 'Volume_Cbm', 'Pickup_Lat', 'Pickup_Lon', 'Delivery_Lat', 'Delivery_Lon',
+        'lat', 'lon', 'Loaded_Qty', 'Est_Distance_KM', 'Rating'
+    ]
+    
     Object.keys(data).forEach(key => {
         if (allowedKeys.includes(key)) {
-            clean[key] = data[key]
+            let val = data[key]
+            
+            // If it's a numeric key and value is an empty string (or just whitespace), set to null
+            if (numericKeys.includes(key) && typeof val === 'string' && val.trim() === "") {
+                val = null
+            }
+            // Also ensure it's a proper number if it's a non-empty string for numeric keys
+            else if (numericKeys.includes(key) && typeof val === 'string' && val.trim() !== "") {
+                const numVal = Number(val)
+                if (!isNaN(numVal)) val = numVal
+            }
+
+            clean[key] = val
         }
     })
     return clean
