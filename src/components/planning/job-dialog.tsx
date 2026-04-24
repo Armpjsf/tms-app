@@ -391,14 +391,15 @@ export function JobDialog({
       const rawOrigins = (job.origins || job.original_origins_json)
       let parsedOrigins = parseJson(rawOrigins, []) as LocationPoint[]
       
-      if (parsedOrigins.length === 0 || (parsedOrigins.length === 1 && !parsedOrigins[0].name)) {
+      // Better fallback: If JSON is empty OR missing coordinates for the first point
+      if (parsedOrigins.length === 0 || (!parsedOrigins[0].lat && !parsedOrigins[0].lng)) {
         if (job.Origin_Location) {
           parsedOrigins = [{ 
             name: job.Origin_Location, 
-            lat: job.Pickup_Lat?.toString() || '', 
-            lng: job.Pickup_Lon?.toString() || '' 
+            lat: (parsedOrigins[0]?.lat || job.Pickup_Lat)?.toString() || '', 
+            lng: (parsedOrigins[0]?.lng || job.Pickup_Lon)?.toString() || '' 
           }]
-        } else {
+        } else if (parsedOrigins.length === 0) {
           parsedOrigins = [{ name: '', lat: '', lng: '' }]
         }
       }
@@ -407,14 +408,20 @@ export function JobDialog({
       const rawDestinations = (job.destinations || job.original_destinations_json)
       let parsedDestinations = parseJson(rawDestinations, []) as LocationPoint[]
       
-      if (parsedDestinations.length === 0 || (parsedDestinations.length === 1 && !parsedDestinations[0].name)) {
+      if (parsedDestinations.length === 0 || (!parsedDestinations[parsedDestinations.length - 1].lat && !parsedDestinations[parsedDestinations.length - 1].lng)) {
         if (job.Dest_Location) {
-          parsedDestinations = [{ 
-            name: job.Dest_Location, 
-            lat: job.Delivery_Lat?.toString() || '', 
-            lng: job.Delivery_Lon?.toString() || '' 
-          }]
-        } else {
+          const lastIndex = parsedDestinations.length > 0 ? parsedDestinations.length - 1 : 0;
+          const fallbackDest = {
+            name: job.Dest_Location,
+            lat: (parsedDestinations[lastIndex]?.lat || job.Delivery_Lat)?.toString() || '',
+            lng: (parsedDestinations[lastIndex]?.lng || job.Delivery_Lon)?.toString() || ''
+          }
+          if (parsedDestinations.length > 0) {
+            parsedDestinations[lastIndex] = fallbackDest;
+          } else {
+            parsedDestinations = [fallbackDest];
+          }
+        } else if (parsedDestinations.length === 0) {
           parsedDestinations = [{ name: '', lat: '', lng: '' }]
         }
       }
