@@ -6,6 +6,7 @@ import Link from "next/link"
 import { getDriverJobs } from "@/lib/supabase/jobs"
 import { MobileJobFilter } from "@/components/mobile/job-filter"
 import { cn } from "@/lib/utils"
+import { RealtimeJobsTrigger } from "@/components/mobile/realtime-jobs-trigger"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -42,6 +43,7 @@ export default async function DriverJobsPage(props: Props) {
       <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
       
       <MobileHeader title="Management" rightElement={<MobileJobFilter />} />
+      <RealtimeJobsTrigger driverId={session.driverId} />
       
       <div className="relative z-10 space-y-8">
         {/* Header Section */}

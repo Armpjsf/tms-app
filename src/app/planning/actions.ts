@@ -451,6 +451,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
   revalidatePath('/planning')
   revalidatePath('/dashboard')
   revalidatePath('/jobs/history')
+  revalidatePath('/mobile/jobs')
 
   const uniqueDates = Array.from(new Set(finalizedData.map(j => j.Plan_Date))).filter(Boolean)
   const dateStr = uniqueDates.length === 1 ? ` for ${uniqueDates[0]}` : ""
@@ -572,6 +573,7 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   revalidatePath('/planning')
   revalidatePath('/dashboard')
   revalidatePath('/jobs/history')
+  revalidatePath('/mobile/jobs')
 
   // Log the update
   await logActivity({

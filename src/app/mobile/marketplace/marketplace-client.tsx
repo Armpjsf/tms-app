@@ -12,6 +12,8 @@ import { BottomNav } from "@/components/mobile/bottom-nav"
 import { submitBid, getMyBidsForJobs } from "@/lib/actions/marketplace-actions"
 import { toast } from "sonner"
 import type { Job } from "@/lib/supabase/jobs"
+import { createClient } from "@/utils/supabase/client"
+import { useRouter } from "next/navigation"
 
 interface MarketplaceClientProps {
     initialJobs: Job[]
@@ -28,6 +30,8 @@ export type JobBid = {
 }
 
 export function MarketplaceClient({ initialJobs, driverId, driverName }: MarketplaceClientProps) {
+    const router = useRouter()
+    const supabase = createClient()
     const [jobs] = useState<Job[]>(initialJobs)
     const [biddingJob, setBiddingJob] = useState<string | null>(null)
     const [bidAmount, setBidAmount] = useState("")
@@ -51,6 +55,25 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
         }
         checkBids()
     }, [driverId, isSubmitting])
+
+    // Real-time listener for NEW unassigned jobs
+    useEffect(() => {
+        const channel = supabase.channel('marketplace_realtime')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'Jobs_Main',
+            }, (payload) => {
+                // Only refresh if it's a potential marketplace job (no driver assigned)
+                if (!payload.new.Driver_ID) {
+                    toast.info("มีงานใหม่ในตลาดกลาง! กำลังอัปเดต...")
+                    router.refresh()
+                }
+            })
+            .subscribe()
+
+        return () => { supabase.removeChannel(channel) }
+    }, [router, supabase])
 
     // Check if missing driver details
     if (!driverId) {
