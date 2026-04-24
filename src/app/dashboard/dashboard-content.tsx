@@ -54,7 +54,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
 
     // Map results with fallbacks
     unified = results[0].status === 'fulfilled' ? results[0].value : { 
-        financial: { revenue: 0, netProfit: 0 }, 
+        financial: { revenue: 0, netProfit: 0, cost: { total: 0, driver: 0, fuel: 0, maintenance: 0 } }, 
         trend: [], 
         kpi: { margin: { current: 0 }, revenue: { current: 0 }, profit: { current: 0 }, jobs: { current: 0 } },
         esg: { fuelSaved: 0, co2Saved: 0, treesSaved: 0 }

@@ -21,6 +21,7 @@ import { getMaintenanceSchedule } from "@/lib/supabase/maintenance-schedule"
 import { getSafetyAnalytics } from "@/lib/supabase/safety-analytics"
 import { getWorkforceAnalytics } from "@/lib/supabase/workforce-analytics"
 import { getESGStats } from "@/lib/supabase/esg-analytics"
+import { getExecutiveDashboardUnified } from "@/lib/supabase/financial-analytics"
 import { ESGSection } from "@/components/analytics/esg-section"
 
 import { FinancialSummaryCards } from "@/components/analytics/summary-cards"
@@ -164,16 +165,26 @@ export function DashboardContent({
             ])
 
             setPriority({ 
-                financials: unifiedData.financial, 
-                revenueTrend: unifiedData.trend, 
-                forecastData, 
-                exeKPIs: { ...unifiedData.kpi, revenue_pipeline: unifiedData.financial.revenuePipeline }, 
-                opStats, 
-                statusDist: unifiedData.statusDist, 
-                driverLeaderboard, 
-                vehicleProfitability, 
-                branchPerf 
+                financials: unifiedData?.financial || { revenue: 0, netProfit: 0, cost: { total: 0, driver: 0, fuel: 0, maintenance: 0 } }, 
+                revenueTrend: unifiedData?.trend || [], 
+                forecastData: forecastData || [], 
+                exeKPIs: { 
+                    ...(unifiedData?.kpi || { 
+                        revenue: { current: 0, growth: 0 }, 
+                        profit: { current: 0, growth: 0 }, 
+                        margin: { current: 0, growth: 0 },
+                        jobs: { current: 0, growth: 0 }
+                    }), 
+                    revenue_pipeline: unifiedData?.financial?.revenuePipeline || 0 
+                }, 
+                opStats: opStats || {}, 
+                statusDist: unifiedData?.statusDist || [], 
+                driverLeaderboard: driverLeaderboard || [], 
+                vehicleProfitability: vehicleProfitability || [], 
+                branchPerf: branchPerf || [] 
             })
+        } catch (err) {
+            console.error("Failed to load primary analytics:", err)
         } finally {
             setLoadingPrimary(false)
         }
