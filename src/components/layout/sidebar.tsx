@@ -132,7 +132,9 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         const cachedContent = localStorage.getItem("sidebar_permissions")
         if (cachedContent) {
             try {
-                const parsed = JSON.parse(cachedContent)
+                let parsed = JSON.parse(cachedContent)
+                // If the cached list is empty, treat as null (Show All) to avoid total lockout
+                if (parsed && parsed.length === 0) parsed = null
                 setSidebarState({ allowedMenus: parsed, isLoaded: true })
             } catch (e) {}
         }

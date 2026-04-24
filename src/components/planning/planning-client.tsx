@@ -212,7 +212,7 @@ export function PlanningClient({
                                 onImport={(data) => createBulkJobs(data, branchId === 'All' ? null : branchId)}
                                 templateData={[{
                                     "รหัสงาน": "JOB-001",
-                                    "วันที่แผน": new Date().toISOString().split('T')[0],
+                                    "วันที่แผน": selectedDate || "",
                                     "ลูกค้า": "บริษัท ตัวอย่าง จำกัด",
                                     "เส้นทาง": "BKK-CNX",
                                     "รหัสคนขับ": "D001",

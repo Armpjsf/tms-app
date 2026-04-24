@@ -51,7 +51,11 @@ interface DashboardMapProps {
 
 export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRoute, routeSummary, sosDriverIds = [] }: DashboardMapProps) {
     const { t } = useLanguage()
-    const [currentTime] = useState<number>(() => Date.now())
+    const [currentTime, setCurrentTime] = useState<number>(0)
+    
+    useEffect(() => {
+        setCurrentTime(Date.now())
+    }, [])
     const [showHeatmap, setShowHeatmap] = useState(false)
     const [showHistory, setShowHistory] = useState(false)
     const [routeHistory, setRouteHistory] = useState<[number, number][]>([])
@@ -60,8 +64,14 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
     // History selection state
     const [vehicles, setVehicles] = useState<string[]>([])
     const [selectedVehicle, setSelectedVehicle] = useState('')
-    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
-    const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
+
+    useEffect(() => {
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+        setStartDate(today)
+        setEndDate(today)
+    }, [])
 
     // Map fleetStatus to LeafletMap's DriverLocation format
     const activeDrivers = useMemo(() => {
