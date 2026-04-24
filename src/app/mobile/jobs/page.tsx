@@ -142,23 +142,47 @@ export default async function DriverJobsPage(props: Props) {
                     </div>
 
                     {/* Route Details */}
-                    <div className="grid grid-cols-1 gap-5 mb-6 relative z-10">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-2xl bg-muted/50 flex flex-col items-center justify-center text-muted-foreground shrink-0 border border-border/10">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mb-1" />
-                                <div className="w-0.5 h-3 bg-muted-foreground/20" />
-                                <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">เส้นทางขนส่ง</p>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-foreground font-bold text-sm truncate">{job.Origin_Location || "คลังสินค้า"}</span>
-                                    <ArrowRight size={12} className="text-muted-foreground shrink-0" />
-                                    <span className="text-foreground font-black text-sm truncate italic">{job.Route_Name || job.Dest_Location}</span>
+                    {(() => {
+                        const routeStr = job.Route_Name || job.Dest_Location || "";
+                        const points = routeStr.split(/[→\->]/).map(p => p.trim()).filter(Boolean);
+                        
+                        // Default values
+                        let displayOrigin = job.Origin_Location || "คลังสินค้า";
+                        let displayDest = job.Route_Name || job.Dest_Location || "ปลายทาง";
+
+                        if (points.length >= 2) {
+                            // If first point is warehouse and we have more, skip it for the "Real" origin
+                            const isWarehouse = (p: string) => p.includes('คลัง') || p.toLowerCase().includes('warehouse');
+                            
+                            if (isWarehouse(points[0]) && points.length >= 2) {
+                                displayOrigin = points[1];
+                                displayDest = points[points.length - 1];
+                            } else {
+                                displayOrigin = points[0];
+                                displayDest = points[points.length - 1];
+                            }
+                        }
+
+                        return (
+                            <div className="grid grid-cols-1 gap-5 mb-6 relative z-10">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-2xl bg-muted/50 flex flex-col items-center justify-center text-muted-foreground shrink-0 border border-border/10">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mb-1" />
+                                        <div className="w-0.5 h-3 bg-muted-foreground/20" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">เส้นทางขนส่ง</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-foreground font-bold text-sm truncate">{displayOrigin}</span>
+                                            <ArrowRight size={12} className="text-muted-foreground shrink-0" />
+                                            <span className="text-foreground font-black text-sm truncate italic">{displayDest}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        );
+                    })()}
 
                     {/* Footer: Date & Action */}
                     <div className="flex items-center justify-between pt-6 border-t border-border/5 relative z-10">
