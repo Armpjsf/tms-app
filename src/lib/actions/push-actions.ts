@@ -688,16 +688,21 @@ export async function testPushNotification(target: { driverId?: string; userId?:
         const result = await sendPushToDriver(target.driverId, payload)
         // Check how many subscriptions we actually found for more context
         const supabase = await createAdminClient()
-        const { count } = await supabase
+        const { data: subs, count } = await supabase
             .from('Push_Subscriptions')
-            .select('*', { count: 'exact', head: true })
+            .select('Keys_Auth', { count: 'exact' })
             .eq('Driver_ID', target.driverId)
+            
+        const subType = subs && subs.length > 0 
+            ? (subs[0].Keys_Auth === 'FCM' ? 'APK' : 'PWA')
+            : 'Unknown'
             
         const firstError = result.results?.find((r: any) => !r.success)?.error
 
         return { 
             success: result.success, 
             subCount: count || 0, 
+            subType,
             reason: firstError || (count === 0 ? 'no_subscription' : undefined),
             debug: debugInfo 
         }

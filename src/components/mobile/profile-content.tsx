@@ -139,8 +139,8 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
       {
         loading: 'กำลังส่งสัญญาณทดสอบ...',
         success: (result: any) => {
-          if (result.subCount === 0) return '❌ ไม่พบการลงทะเบียนแจ้งเตือน (โปรดกดเปิดรับงานก่อน)'
-          return `ส่งสัญญาณแล้ว! พบ ${result.subCount} อุปกรณ์ที่ลงทะเบียนไว้`
+          if (result.subCount === 0) return '❌ ไม่พบการลงทะเบียนแจ้งเตือน'
+          return `ส่งสัญญาณแล้ว! พบ ${result.subCount} อุปกรณ์ (${result.subType})`
         },
         error: (err) => `ส่งไม่สำเร็จ: ${err.message}`
       }
