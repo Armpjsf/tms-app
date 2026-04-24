@@ -143,11 +143,17 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
             const profile = await getUserProfile()
 
             if (profile?.Role) {
-                const perms = await getPermissionsByRole(profile.Role) || []
+                let perms = await getPermissionsByRole(profile.Role)
                 
-                // --- FALLBACK: Force Danger Zones for Admins ---
-                if ((profile.Role === 'Super Admin' || profile.Role === 'Admin') && !perms.includes('navigation.danger_zones')) {
-                    perms.push('navigation.danger_zones')
+                // --- ROBUST PERMISSION HANDLING FOR ADMINS ---
+                if (profile.Role === 'Super Admin' || profile.Role === 'Admin') {
+                    // If no permissions are set or the list is empty, default to "Show All" (null)
+                    if (!perms || perms.length === 0) {
+                        perms = null
+                    } else if (!perms.includes('navigation.danger_zones')) {
+                        // If they have a restricted list but Danger Zones is missing, inject it
+                        perms.push('navigation.danger_zones')
+                    }
                 }
 
                 localStorage.setItem("sidebar_permissions", JSON.stringify(perms))
