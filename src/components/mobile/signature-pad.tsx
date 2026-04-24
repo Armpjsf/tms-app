@@ -92,4 +92,4 @@ export const SignaturePad = memo(({ onSave }: Props) => {
       </div>
     </div>
   )
-}
+})
