@@ -196,22 +196,22 @@ export default function MobileChatPage() {
 
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-64px)] bg-background overflow-hidden">
+    <div className="fixed inset-0 z-[160] flex flex-col bg-background overflow-hidden">
       <MobileHeader title="แชทกับเจ้าหน้าที่" showBack />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-16" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-24" ref={scrollRef}>
         {loading ? (
-            <div className="flex justify-center pt-10">
+            <div className="flex justify-center pt-20">
                 <Loader2 className="animate-spin text-gray-400" />
             </div>
         ) : messages.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 opacity-50 mt-10">
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 opacity-50 mt-20">
                 <MessageSquare size={48} className="mb-2" />
                 <p>ยังไม่มีข้อความ</p>
                 <p className="text-lg font-bold">พิมพ์ข้อความเพื่อเริ่มการสนทนา</p>
             </div>
         ) : (
-            <div className="space-y-4 pb-4">
+            <div className="space-y-6 pb-6">
                 {messages.map((msg) => {
                     const isMe = msg.sender_id === driverId
                     return (

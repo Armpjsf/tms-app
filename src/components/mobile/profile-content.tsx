@@ -28,6 +28,49 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
 
   const handleSubscribePush = async () => {
     try {
+      // 1. Check for Capacitor (Native APK)
+      const isCapacitor = (window as any).Capacitor?.isNativePlatform();
+      
+      if (isCapacitor) {
+          const { PushNotifications } = await import('@capacitor/push-notifications');
+          
+          let perm = await PushNotifications.checkPermissions();
+          if (perm.receive !== 'granted') {
+              perm = await PushNotifications.requestPermissions();
+          }
+          
+          if (perm.receive !== 'granted') {
+              toast.error("คุณไม่ได้อนุญาตการแจ้งเตือนในระบบ Android");
+              return;
+          }
+
+          await PushNotifications.register();
+          
+          // Token is handled via listener
+          PushNotifications.addListener('registration', async (token) => {
+              const res = await fetch('/api/push/subscribe', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      driverId: session.driverId,
+                      subscription: {
+                          endpoint: token.value,
+                          isFCM: true
+                      }
+                  })
+              });
+              if (res.ok) toast.success("ลงทะเบียนแจ้งเตือนผ่าน APK สำเร็จ!");
+              else toast.error("ลงทะเบียนผ่าน APK ไม่สำเร็จ");
+          });
+
+          PushNotifications.addListener('registrationError', (err) => {
+              toast.error("เกิดข้อผิดพลาดในการลงทะเบียน APK: " + err.error);
+          });
+
+          return;
+      }
+
+      // 2. Fallback to Web Push (PWA)
       if (!("Notification" in window)) {
         toast.error("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน")
         return
@@ -72,7 +115,7 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
       })
 
       if (res.ok) {
-        toast.success("เปิดการแจ้งเตือนเรียบร้อยแล้ว!")
+        toast.success("เปิดการแจ้งเตือน PWA เรียบร้อยแล้ว!")
       } else {
         toast.error("บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง")
       }
@@ -83,11 +126,28 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
     }
   }
 
+  const handleTestPush = async () => {
+    toast.promise(
+      async () => {
+        const { testPushNotification } = await import('@/lib/actions/push-actions')
+        const result = await testPushNotification({ driverId: session.driverId })
+        if (!result.success) throw new Error(result.reason || 'Failed')
+        return result
+      },
+      {
+        loading: 'กำลังส่งสัญญาณทดสอบ...',
+        success: 'ส่งสัญญาณทดสอบแล้ว! กรุณารอรับการแจ้งเตือน',
+        error: (err) => `ส่งไม่สำเร็จ: ${err.message}`
+      }
+    )
+  }
+
   const menuGroups = [
     {
       title: "การสื่อสารและการแจ้งเตือน",
       items: [
         { icon: Bell, label: "เปิดรับการแจ้งเตือนงาน", action: handleSubscribePush, color: 'text-blue-500' },
+        { icon: Bell, label: "🧪 ทดสอบระบบแจ้งเตือน", action: handleTestPush, color: 'text-emerald-500' },
         { icon: Bell, label: "ประวัติการแจ้งเตือน", href: "/mobile/notifications" },
         { icon: User, label: "แชทกับแอดมิน", href: "/mobile/chat", badge: unreadChatCount },
       ]

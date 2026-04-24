@@ -11,8 +11,8 @@ export function BottomNav() {
 
   if (!pathname.startsWith("/mobile")) return null
 
-  // Security: Never show BottomNav on login page
-  if (pathname === "/mobile/login") return null
+  // Security: Never show BottomNav on login or chat page
+  if (pathname === "/mobile/login" || pathname === "/mobile/chat") return null
 
   const navItems = [
     { href: "/mobile/dashboard", icon: LayoutGrid, label: "หน้าแรก" },
