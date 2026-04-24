@@ -226,27 +226,21 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
 
                             return (
                                 <div className="space-y-4 bg-muted/20 rounded-[2rem] p-6 border border-border/40 relative">
-                                    <div className="flex gap-4">
-                                        <div className="flex flex-col items-center">
-                                            <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                                            <div className="w-0.5 h-full bg-border/50 my-1" />
-                                        </div>
+                                    <div className="flex justify-between items-start gap-4">
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-black text-emerald-500/70 uppercase tracking-widest mb-1">จุดรับสินค้า</p>
-                                            <p className="text-foreground font-black text-sm break-words leading-snug">
-                                                {displayOrigin}
-                                            </p>
+                                            <p className="text-[10px] font-black text-emerald-500/70 uppercase tracking-widest mb-1">ต้นทาง</p>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                                <span className="text-foreground font-bold text-sm truncate">{displayOrigin}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <div className="flex flex-col items-center">
-                                            <MapPin size={14} className="text-accent" strokeWidth={3} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-black text-accent/70 uppercase tracking-widest mb-1">จุดส่งสินค้า</p>
-                                            <p className="text-foreground font-black text-sm break-words leading-snug">
-                                                {displayDest}
-                                            </p>
+
+                                        <div className="flex-1 min-w-0 text-right">
+                                            <p className="text-[10px] font-black text-accent/70 uppercase tracking-widest mb-1">ปลายทาง</p>
+                                            <div className="flex items-center gap-2 justify-end">
+                                                <span className="text-foreground font-bold text-sm truncate">{displayDest}</span>
+                                                <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(255,30,133,0.5)]" />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
