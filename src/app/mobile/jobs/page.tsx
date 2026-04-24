@@ -96,18 +96,32 @@ export default async function DriverJobsPage(props: Props) {
                     {/* Top Row: Job ID & Status */}
                     <div className="flex justify-between items-start mb-6 relative z-10">
                         <div className="space-y-2">
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-xl border border-border/10">
                                     <span className="text-primary font-black text-sm italic">#{job.Job_ID.slice(-8)}</span>
                                 </div>
-                                {job.Plan_Date === today && (
-                                    <div className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-xl text-primary font-black text-[10px] uppercase tracking-widest">
-                                        วันนี้
+                                
+                                {/* Pickup Badge */}
+                                {(job.Pickup_Date === today || (!job.Pickup_Date && job.Plan_Date === today)) && (
+                                    <div className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-emerald-500 font-black text-[10px] uppercase tracking-widest">
+                                        รับวันนี้
                                     </div>
                                 )}
-                                {job.Plan_Date === tomorrowStr && (
-                                    <div className="px-3 py-1 bg-accent/20 border border-accent/30 rounded-xl text-accent font-black text-[10px] uppercase tracking-widest">
-                                        พรุ่งนี้
+                                {(job.Pickup_Date === tomorrowStr || (!job.Pickup_Date && job.Plan_Date === tomorrowStr)) && (
+                                    <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-500 font-black text-[10px] uppercase tracking-widest">
+                                        รับพรุ่งนี้
+                                    </div>
+                                )}
+
+                                {/* Delivery Badge (if different from pickup) */}
+                                {job.Delivery_Date === today && job.Pickup_Date !== today && (
+                                    <div className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-500 font-black text-[10px] uppercase tracking-widest">
+                                        ส่งวันนี้
+                                    </div>
+                                )}
+                                {job.Delivery_Date === tomorrowStr && job.Pickup_Date !== tomorrowStr && (
+                                    <div className="px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 rounded-xl text-indigo-500 font-black text-[10px] uppercase tracking-widest">
+                                        ส่งพรุ่งนี้
                                     </div>
                                 )}
                             </div>
@@ -152,7 +166,11 @@ export default async function DriverJobsPage(props: Props) {
                             <div className="flex items-center gap-1.5">
                                 <Calendar size={14} className="text-primary" />
                                 <span className="text-foreground font-black text-xs uppercase italic">
-                                    {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "-"}
+                                    {job.Pickup_Date && job.Delivery_Date && job.Pickup_Date !== job.Delivery_Date ? (
+                                        `${new Date(job.Pickup_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' })} → ${new Date(job.Delivery_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' })}`
+                                    ) : (
+                                        (job.Pickup_Date || job.Plan_Date) ? new Date(job.Pickup_Date || job.Plan_Date || "").toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "-"
+                                    )}
                                 </span>
                             </div>
                             <div className="w-px h-3 bg-border/20" />
