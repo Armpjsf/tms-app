@@ -205,13 +205,15 @@ async function autoSaveOriginDestinations(branchId: string | null, originsJson?:
     return
 }
 
-export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
+export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBranchId: string | null = null) {
   const isAdminUser = await isAdmin()
   const supabase = isAdminUser ? await createAdminClient() : await createClient()
 
   // Get Branch_ID for auto-assignment
-  const userBranchId = await getUserBranchId()
-  const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : null
+  if (!effectiveBranchId || effectiveBranchId === 'All') {
+      const userBranchId = await getUserBranchId()
+      effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : 'HQ'
+  }
 
   // Fetch Master Data for lookups
   const [{ data: allDrivers }, { data: allVehicles }, { data: allCustomers }, { data: allRoutes }] = await Promise.all([
@@ -770,4 +772,23 @@ export async function cancelJobRequest(jobId: string) {
   })
 
   return { success: true, message: 'Job request cancelled successfully' }
+}
+
+export async function fixMissingBranches(targetBranchId: string) {
+    const isSuper = await isSuperAdmin()
+    if (!isSuper) return { success: false, message: 'Unauthorized' }
+    
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+        .from('Jobs_Main')
+        .update({ Branch_ID: targetBranchId })
+        .is('Branch_ID', null)
+        .select()
+        
+    if (error) return { success: false, message: error.message }
+    
+    revalidatePath('/planning')
+    revalidatePath('/dashboard')
+    
+    return { success: true, message: `Successfully updated ${data?.length || 0} jobs to branch ${targetBranchId}` }
 }

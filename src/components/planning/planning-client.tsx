@@ -209,7 +209,7 @@ export function PlanningClient({
                                     </PremiumButton>
                                 }
                                 title={t('planning.import_title') || 'Import Jobs'}
-                                onImport={createBulkJobs}
+                                onImport={(data) => createBulkJobs(data, branchId === 'All' ? null : branchId)}
                                 templateData={[{
                                     Job_ID: "JOB-001",
                                     Plan_Date: new Date().toISOString().split('T')[0],

@@ -302,16 +302,16 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                         </div>
                     </div>
                     <div className="p-0 overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
                                 <tr className="border-b-2 border-border/5 bg-muted/30">
-                                    <th className="p-10 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic">{t('common.asset_id')}</th>
-                                    <th className="p-10 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.revenue_yield')}</th>
-                                    <th className="p-10 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.driver_payout')}</th>
-                                    <th className="p-10 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.fuel_expenditure')}</th>
-                                    <th className="p-10 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.technical_maint')}</th>
-                                    <th className="p-10 text-[12px] font-black text-foreground uppercase tracking-[0.1em] italic text-right">{t('common.net_margin')}</th>
-                                    <th className="p-10 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-center">{t('common.efficiency_rating')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic">{t('common.asset_id')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.revenue_yield')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.driver_payout')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.fuel_expenditure')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.technical_maint')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-foreground uppercase tracking-[0.1em] italic text-right">{t('common.net_margin')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-center">{t('common.efficiency_rating')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
@@ -321,23 +321,23 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                         className="group/row hover:bg-white/[0.04] transition-all border-l-4 border-transparent hover:border-primary/50 cursor-pointer"
                                         onClick={() => setSelectedVehicle(item.plate)}
                                     >
-                                        <td className="p-10">
+                                        <td className="px-6 py-8">
                                             <div className="flex items-center gap-3">
                                                 <span className="font-black text-foreground text-lg tracking-tighter uppercase italic group-hover/row:translate-x-2 transition-transform duration-500">{item.plate}</span>
                                                 <Info size={14} className="text-primary opacity-0 group-hover/row:opacity-100 transition-opacity" />
                                             </div>
                                         </td>
-                                        <td className="p-10 text-right font-black text-primary text-xl tracking-tighter italic">฿{item.revenue.toLocaleString()}</td>
-                                        <td className="p-10 text-right font-black text-muted-foreground text-xl italic">฿{item.driverCost.toLocaleString()}</td>
-                                        <td className="p-10 text-right font-black text-muted-foreground text-xl italic">฿{item.fuelCost.toLocaleString()}</td>
-                                        <td className="p-10 text-right font-black text-muted-foreground text-xl italic">฿{item.maintenanceCost.toLocaleString()}</td>
+                                        <td className="px-6 py-8 text-right font-black text-primary text-xl tracking-tighter italic">฿{item.revenue.toLocaleString()}</td>
+                                        <td className="px-6 py-8 text-right font-black text-muted-foreground text-xl italic">฿{item.driverCost.toLocaleString()}</td>
+                                        <td className="px-6 py-8 text-right font-black text-muted-foreground text-xl italic">฿{item.fuelCost.toLocaleString()}</td>
+                                        <td className="px-6 py-8 text-right font-black text-muted-foreground text-xl italic">฿{item.maintenanceCost.toLocaleString()}</td>
                                         <td className={cn(
-                                            "p-10 text-right font-black text-2xl tracking-tighter italic",
+                                            "px-6 py-8 text-right font-black text-2xl tracking-tighter italic",
                                             item.netProfit > 0 ? 'text-emerald-500' : 'text-rose-500'
                                         )}>
                                             ฿{item.netProfit.toLocaleString()}
                                         </td>
-                                        <td className="p-10 text-center">
+                                        <td className="px-6 py-8 text-center">
                                             <div className={cn(
                                                 "inline-block px-6 py-2.5 rounded-2xl text-base font-bold font-black uppercase tracking-[0.2em] italic border transition-all duration-500",
                                                 item.revenue > 0 && (item.netProfit / item.revenue) > 0.2 
