@@ -68,7 +68,7 @@ interface PriorityData {
     margin: number
     growth: number
   }
-  revenueTrend: Array<{ month: string; actual: number; target: number }>
+  revenueTrend: Array<{ date: string; revenue: number; cost: number; jobCount: number }>
   forecastData: Array<{ month: string; actual: number; forecast: number }>
   exeKPIs: {
     revenue: { current: number; previous: number; growth: number; target?: number; attainment?: number }
@@ -77,7 +77,7 @@ interface PriorityData {
     revenue_pipeline?: number
   }
   opStats: Record<string, number>
-  statusDist: Array<{ name: string; value: number; color: string }>
+  statusDist: Array<{ name: string; value: number }>
   driverLeaderboard: Array<{ id: string; name: string; score: number; trips: number }>
   vehicleProfitability: Array<{ id: string; plate: string; profit: number }>
   branchPerf: Array<{ name: string; performance: number }>
@@ -154,18 +154,26 @@ export function DashboardContent({
     if (tab === 'overview' && !priority) {
         setLoadingPrimary(true)
         try {
-            const [financials, revenueTrend, forecastData, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf] = await Promise.all([
-              getFinancialStats(startDate, endDate, branchId),
-              getRevenueTrend(startDate, endDate, branchId),
+            const [unifiedData, forecastData, opStats, driverLeaderboard, vehicleProfitability, branchPerf] = await Promise.all([
+              getExecutiveDashboardUnified(branchId, startDate, endDate),
               getRevenueForecast(branchId),
-              getExecutiveKPIs(startDate, endDate, branchId),
               getOperationalStats(branchId, startDate, endDate),
-              getJobStatusDistribution(startDate, endDate, branchId),
               getDriverLeaderboard(startDate, endDate, branchId),
               getVehicleProfitability(startDate, endDate, branchId),
               getBranchPerformance(startDate, endDate),
             ])
-            setPriority({ financials, revenueTrend, forecastData, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf })
+
+            setPriority({ 
+                financials: unifiedData.financial, 
+                revenueTrend: unifiedData.trend, 
+                forecastData, 
+                exeKPIs: { ...unifiedData.kpi, revenue_pipeline: unifiedData.financial.revenuePipeline }, 
+                opStats, 
+                statusDist: unifiedData.statusDist, 
+                driverLeaderboard, 
+                vehicleProfitability, 
+                branchPerf 
+            })
         } finally {
             setLoadingPrimary(false)
         }

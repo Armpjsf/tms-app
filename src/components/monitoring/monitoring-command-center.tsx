@@ -47,6 +47,7 @@ interface MonitoringCommandCenterProps {
     initialContacts?: any[]
     allDrivers?: Driver[]
     initialHealthAlerts?: any[]
+    heatmapJobs?: any[]
 }
 
 export function MonitoringCommandCenter({ 
@@ -54,7 +55,8 @@ export function MonitoringCommandCenter({
     initialDrivers, 
     initialContacts = [], 
     allDrivers = [],
-    initialHealthAlerts = []
+    initialHealthAlerts = [],
+    heatmapJobs = []
 }: MonitoringCommandCenterProps) {
     const { t } = useLanguage()
     const [searchQuery, setSearchQuery] = useState('')
@@ -470,7 +472,7 @@ export function MonitoringCommandCenter({
             <div className="flex-1 relative">
                 <DashboardMap 
                     drivers={driversWithGPS as any} 
-                    allJobs={filteredJobs}
+                    allJobs={heatmapJobs.length > 0 ? heatmapJobs : filteredJobs}
                     focusPosition={focusPosition} 
                 />
             </div>

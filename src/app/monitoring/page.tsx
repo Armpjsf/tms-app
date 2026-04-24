@@ -5,6 +5,7 @@ import { getJobsByStatus } from '@/lib/supabase/jobs'
 import { getActiveFleetStatus } from '@/lib/supabase/gps'
 import { getChatContacts } from '@/lib/supabase/chat'
 import { getFleetHealthAlerts } from '@/lib/supabase/fleet-health'
+import { getProfitHeatmapData } from '@/lib/supabase/financial-analytics'
 import { MonitoringCommandCenter } from '@/components/monitoring/monitoring-command-center'
 import { getCustomerId, isCustomer } from '@/lib/permissions'
 
@@ -14,7 +15,7 @@ export default async function MonitoringPage() {
       getCustomerId()
   ])
 
-  const [pendingJobs, assignedJobs, confirmedJobs, pickedUpJobs, inProgressJobs, inTransitJobs, arrivedJobs, sosJobs, failedJobs, activeDrivers, chatContacts, healthAlerts] = await Promise.all([
+  const [pendingJobs, assignedJobs, confirmedJobs, pickedUpJobs, inProgressJobs, inTransitJobs, arrivedJobs, sosJobs, failedJobs, activeDrivers, chatContacts, healthAlerts, heatmapJobs] = await Promise.all([
     getJobsByStatus('Pending'),
     getJobsByStatus('Assigned'),
     getJobsByStatus('Confirmed'),
@@ -27,6 +28,7 @@ export default async function MonitoringPage() {
     getActiveFleetStatus(undefined, customerId),
     getChatContacts(),
     getFleetHealthAlerts(),
+    getProfitHeatmapData()
   ])
 
   const activeJobs = [...pendingJobs, ...assignedJobs, ...confirmedJobs, ...pickedUpJobs, ...inProgressJobs, ...inTransitJobs, ...arrivedJobs, ...sosJobs, ...failedJobs].sort((a, b) => 
@@ -41,6 +43,7 @@ export default async function MonitoringPage() {
             initialContacts={chatContacts}
             allDrivers={activeDrivers as any}
             initialHealthAlerts={healthAlerts}
+            heatmapJobs={heatmapJobs}
         />
     </DashboardLayout>
   )

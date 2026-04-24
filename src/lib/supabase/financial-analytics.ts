@@ -114,13 +114,17 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         const maintCost = (maintData.data || []).reduce((sum, r) => sum + (Number(r.Cost_Total) || 0), 0)
 
         // Trend calculation
-        const trendMap: Record<string, { total: number, completed: number }> = {}
+        const trendMap: Record<string, { total: number, completed: number, revenue: number, cost: number }> = {}
         currJobs.forEach(j => {
             const d = j.Plan_Date ? String(j.Plan_Date).split('T')[0] : 'Unknown'
             if (d !== 'Unknown') {
-                if (!trendMap[d]) trendMap[d] = { total: 0, completed: 0 }
+                if (!trendMap[d]) trendMap[d] = { total: 0, completed: 0, revenue: 0, cost: 0 }
                 trendMap[d].total++
-                if (REVENUE_STATUSES.includes(j.Job_Status)) trendMap[d].completed++
+                if (REVENUE_STATUSES.includes(j.Job_Status)) {
+                    trendMap[d].completed++
+                    trendMap[d].revenue += (Number(j.Price_Cust_Total) || 0)
+                    trendMap[d].cost += (Number(j.Cost_Driver_Total) || 0) + (Number(j.Price_Cust_Extra) || 0) + (Number(j.Cost_Driver_Extra) || 0)
+                }
             }
         })
         const trend = Object.entries(trendMap).map(([date, counts]) => ({ date, ...counts })).sort((a, b) => a.date.localeCompare(b.date))
@@ -324,40 +328,106 @@ export async function getFinancialStats(startDate?: string, endDate?: string, br
 // but the main Dashboard will now use getExecutiveDashboardUnified.
 
 export async function getRevenueTrend(startDate?: string, endDate?: string, branchId?: string) {
-  const supabase = await createAdminClient()
-  const start = formatDateSafe(startDate) || formatDateSafe(subDays(new Date(), 30))
-  const end = formatDateSafe(endDate)
-  const effectiveBranchId = await getEffectiveBranchId(branchId)
-  const customerId = await getCustomerId()
-
-  const { data } = await supabase.rpc('get_executive_summary', {
-      start_date: start,
-      end_date: end || formatDateSafe(new Date()),
-      filter_branch_id: effectiveBranchId || null,
-      filter_customer_id: customerId || null
-  })
-
-  return (data?.trend || []).map((t: any) => ({
-      date: t.date,
-      revenue: Number(t.revenue),
-      cost: Number(t.cost),
-      jobCount: Number(t.job_count)
-  }))
-}
-
-export async function getJobStatusDistribution(startDate?: string, endDate?: string, branchId?: string) {
+  try {
     const supabase = await createAdminClient()
+    const start = formatDateSafe(startDate) || formatDateSafe(subDays(new Date(), 30))
+    const end = formatDateSafe(endDate) || formatDateSafe(new Date())
     const effectiveBranchId = await getEffectiveBranchId(branchId)
     const customerId = await getCustomerId()
 
-    const { data } = await supabase.rpc('get_executive_summary', {
-        start_date: formatDateSafe(startDate) || '2000-01-01',
-        end_date: formatDateSafe(endDate) || '2099-12-31',
+    const { data, error } = await supabase.rpc('get_executive_summary', {
+        start_date: start,
+        end_date: end,
         filter_branch_id: effectiveBranchId || null,
         filter_customer_id: customerId || null
     })
 
-    return Object.entries(data?.status_dist || {}).map(([name, value]) => ({ name, value: Number(value) }))
+    if (!error && data?.trend) {
+        return (data.trend || []).map((t: any) => ({
+            date: t.date,
+            revenue: Number(t.revenue),
+            cost: Number(t.cost),
+            jobCount: Number(t.job_count)
+        }))
+    }
+
+    // Fallback: Manual aggregation
+    let query = supabase
+        .from('Jobs_Main')
+        .select('Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status, Plan_Date')
+        .gte('Plan_Date', start!)
+        .lte('Plan_Date', end!)
+    
+    if (customerId) query = query.eq('Customer_ID', customerId)
+    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+
+    const { data: jobs } = await query
+    const trendMap: Record<string, { revenue: number, cost: number, jobCount: number }> = {}
+    
+    (jobs || []).forEach(j => {
+        const d = j.Plan_Date ? String(j.Plan_Date).split('T')[0] : 'Unknown'
+        if (d !== 'Unknown') {
+            if (!trendMap[d]) trendMap[d] = { revenue: 0, cost: 0, jobCount: 0 }
+            trendMap[d].jobCount++
+            if (REVENUE_STATUSES.includes(j.Job_Status)) {
+                trendMap[d].revenue += (Number(j.Price_Cust_Total) || 0)
+                trendMap[d].cost += (Number(j.Cost_Driver_Total) || 0) + (Number(j.Price_Cust_Extra) || 0) + (Number(j.Cost_Driver_Extra) || 0)
+            }
+        }
+    })
+
+    return Object.entries(trendMap).map(([date, stats]) => ({
+        date,
+        ...stats
+    })).sort((a, b) => a.date.localeCompare(b.date))
+  } catch (e) {
+      console.error('[getRevenueTrend] error:', e)
+      return []
+  }
+}
+
+export async function getJobStatusDistribution(startDate?: string, endDate?: string, branchId?: string) {
+    try {
+        const supabase = await createAdminClient()
+        const effectiveBranchId = await getEffectiveBranchId(branchId)
+        const customerId = await getCustomerId()
+        const sDate = formatDateSafe(startDate) || '2000-01-01'
+        const eDate = formatDateSafe(endDate) || '2099-12-31'
+
+        const { data, error } = await supabase.rpc('get_executive_summary', {
+            start_date: sDate,
+            end_date: eDate,
+            filter_branch_id: effectiveBranchId || null,
+            filter_customer_id: customerId || null
+        })
+
+        if (!error && data?.status_dist) {
+            return Object.entries(data.status_dist || {}).map(([name, value]) => ({ name, value: Number(value) }))
+        }
+
+        // Fallback: Manual aggregation
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Job_Status')
+            .gte('Plan_Date', sDate)
+            .lte('Plan_Date', eDate)
+        
+        if (customerId) query = query.eq('Customer_ID', customerId)
+        if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+
+        const { data: jobs } = await query
+        const statusMap: Record<string, number> = {}
+        
+        (jobs || []).forEach(j => {
+            const s = j.Job_Status || 'Unknown'
+            statusMap[s] = (statusMap[s] || 0) + 1
+        })
+
+        return Object.entries(statusMap).map(([name, value]) => ({ name, value }))
+    } catch (e) {
+        console.error('[getJobStatusDistribution] error:', e)
+        return []
+    }
 }
 
 // ... Rest of functions (Subcontractor, Branch performance, etc.)
