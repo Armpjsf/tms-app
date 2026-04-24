@@ -221,7 +221,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[10px] font-black text-emerald-500/70 uppercase tracking-widest mb-1">จุดรับสินค้า</p>
                                     <p className="text-foreground font-black text-sm break-words leading-snug">
-                                        {currentJob.Origin_Location || "คลังสินค้าหลัก"}
+                                        {currentJob.Origin_Location || "คลังสินค้า"}
                                     </p>
                                 </div>
                             </div>
@@ -232,7 +232,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[10px] font-black text-accent/70 uppercase tracking-widest mb-1">จุดส่งสินค้า</p>
                                     <p className="text-foreground font-black text-sm break-words leading-snug">
-                                        {currentJob.Dest_Location || "ปลายทางส่งสินค้า"}
+                                        {currentJob.Route_Name || currentJob.Dest_Location || "ปลายทางส่งสินค้า"}
                                     </p>
                                 </div>
                             </div>
