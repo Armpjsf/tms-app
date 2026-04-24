@@ -221,12 +221,13 @@ export async function sendPushToDriver(driverId: string, payload: PushPayload) {
                     })
                     return { success: true }
                 } catch (err: any) {
-                    console.error(`[PUSH] FCM Send Error for token [${sub.Endpoint.slice(0, 20)}...]:`, err.message || err)
+                    const errMsg = err.message || String(err)
+                    console.error(`[PUSH] FCM Send Error:`, errMsg)
                     // Cleanup expired FCM tokens
                     if (err?.code === 'messaging/registration-token-not-registered') {
                         await supabase.from('Push_Subscriptions').delete().eq('Endpoint', sub.Endpoint)
                     }
-                    return { success: false, error: err.message }
+                    return { success: false, error: errMsg, code: err?.code }
                 }
             }
 
@@ -240,7 +241,9 @@ export async function sendPushToDriver(driverId: string, payload: PushPayload) {
     )
 
     const successCount = results.filter(r => r.status === 'fulfilled' && (r.value as any).success).length
-    return { success: successCount > 0 }
+    const detailResults = results.map(r => r.status === 'fulfilled' ? r.value : { success: false, error: 'Internal error' })
+    
+    return { success: successCount > 0, results: detailResults }
 }
 
 // ─────────────────────────────────────────────
@@ -690,7 +693,14 @@ export async function testPushNotification(target: { driverId?: string; userId?:
             .select('*', { count: 'exact', head: true })
             .eq('Driver_ID', target.driverId)
             
-        return { ...result, subCount: count || 0, debug: debugInfo }
+        const firstError = result.results?.find((r: any) => !r.success)?.error
+
+        return { 
+            success: result.success, 
+            subCount: count || 0, 
+            reason: firstError || (count === 0 ? 'no_subscription' : undefined),
+            debug: debugInfo 
+        }
     } else if (target.userId) {
         const supabase = await createAdminClient()
         const { data: subs } = await supabase
