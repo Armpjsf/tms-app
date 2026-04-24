@@ -40,6 +40,8 @@ export const SYSTEM_PERMISSIONS: Permission[] = [
   { id: 'dispatch_job', label: 'Dispatch & Assign Drivers', desc: 'จ่ายงานให้คนขับและเลือกรถขนส่ง', category: 'Operations' },
   { id: 'view_live_tracking', label: 'Live GPS Tracking', desc: 'ติดตามตำแหน่งรถแบบเรียลไทม์บนแผนที่', category: 'Operations' },
   { id: 'manage_routes', label: 'Manage Routes & Zones', desc: 'จัดการข้อมูลเส้นทางและพื้นที่ให้บริการ', category: 'Operations' },
+  { id: 'navigation.danger_zones', label: 'Manage Danger Zones', desc: 'จัดการพื้นที่อันตรายและการแจ้งเตือนความปลอดภัย', category: 'Operations' },
+
 
   // Fleet
   { id: 'manage_vehicles', label: 'Manage Vehicles Registry', desc: 'จัดการข้อมูลทะเบียนรถ ประวัติการตรวจสภาพ', category: 'Fleet' },

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { uploadFileToSupabase } from "@/lib/actions/supabase-upload"
 import { Job } from "@/lib/supabase/jobs"
 import { calculateJobCO2 } from "@/app/mobile/jobs/actions"
+import { getFuelPriceNumber, getSuggestedRate } from "./fuel-actions"
 
 /**
  * Helper to update or append quantity remark to notes
@@ -17,6 +18,37 @@ function updateNotesWithQty(currentNotes: string, qty: number): string {
     
     if (!cleanNotes) return qtyRemark
     return `${cleanNotes} ${qtyRemark}`
+}
+
+/**
+ * Helper to get the most appropriate unit price based on fuel rates or master data
+ */
+async function getSmartUnitPrice(supabase: any, customerId: string, planDate?: string, vehicleType: string = '4-Wheel'): Promise<number> {
+    if (!customerId) return 0
+    
+    try {
+        // 1. Try to find a dynamic rate based on fuel for 'SYSTEM_PER_PIECE'
+        const fuelPrice = await getFuelPriceNumber(planDate)
+        if (fuelPrice) {
+            const suggestedRate = await getSuggestedRate(customerId, 'SYSTEM_PER_PIECE', fuelPrice, vehicleType)
+            if (suggestedRate && suggestedRate > 0) {
+                console.log(`[PRICE_LOG] Using dynamic fuel-based unit price: ${suggestedRate} for customer ${customerId}`)
+                return suggestedRate
+            }
+        }
+
+        // 2. Fallback to static price in Master_Customers
+        const { data: cust } = await supabase
+            .from("Master_Customers")
+            .select("Price_Per_Unit")
+            .eq("Customer_ID", customerId)
+            .single()
+        
+        return Number(cust?.Price_Per_Unit || 0)
+    } catch (err) {
+        console.error("[PRICE_ERROR] Failed to fetch smart unit price:", err)
+        return 0
+    }
 }
 
 export async function submitJobPOD(jobId: string, formData: FormData) {
@@ -108,23 +140,19 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     // Optimized fetch: Get job data and customer unit price in parallel or robustly
     const { data: jobData } = await supabase
         .from("Jobs_Main")
-        .select("Notes, Price_Cust_Total, Customer_ID")
+        .select("Notes, Price_Cust_Total, Customer_ID, Plan_Date, Vehicle_Type")
         .eq("Job_ID", jobId)
         .single()
-
-    let unitPrice = 0
-    if (jobData?.Customer_ID) {
-        const { data: cust } = await supabase
-            .from("Master_Customers")
-            .select("Price_Per_Unit")
-            .eq("Customer_ID", jobData.Customer_ID)
-            .single()
-        unitPrice = Number(cust?.Price_Per_Unit || 0)
-    }
 
     const currentNotes = jobData?.Notes || ""
     const adminPrice = Number(jobData?.Price_Cust_Total || 0)
     const loadedQty = Number(formData.get("loaded_qty") || 0)
+    
+    // Smart Price Lookup
+    let unitPrice = 0
+    if (jobData?.Customer_ID) {
+        unitPrice = await getSmartUnitPrice(supabase, jobData.Customer_ID, jobData.Plan_Date, jobData.Vehicle_Type || '4-Wheel')
+    }
 
     const updatePayload: any = {
         Job_Status: "Completed", 
@@ -239,18 +267,14 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
     // Get job data and customer unit price
     const { data: jobData } = await supabase
         .from("Jobs_Main")
-        .select("Price_Cust_Total, Notes, Customer_ID")
+        .select("Price_Cust_Total, Notes, Customer_ID, Plan_Date, Vehicle_Type")
         .eq("Job_ID", jobId)
         .single()
 
+    // Smart Price Lookup
     let unitPrice = 0
     if (jobData?.Customer_ID) {
-        const { data: cust } = await supabase
-            .from("Master_Customers")
-            .select("Price_Per_Unit")
-            .eq("Customer_ID", jobData.Customer_ID)
-            .single()
-        unitPrice = Number(cust?.Price_Per_Unit || 0)
+        unitPrice = await getSmartUnitPrice(supabase, jobData.Customer_ID, jobData.Plan_Date, jobData.Vehicle_Type || '4-Wheel')
     }
 
     const adminPrice = Number(jobData?.Price_Cust_Total || 0)
@@ -314,10 +338,10 @@ export async function bulkSyncJobPrices(jobIds: string[]) {
     
     const supabase = createAdminClient()
     try {
-        // Fetch jobs and their customer unit prices
+        // Fetch jobs and their metadata for smart lookup
         const { data: jobs, error: fetchError } = await supabase
             .from("Jobs_Main")
-            .select("Job_ID, Price_Cust_Total, Notes, Loaded_Qty, Master_Customers(Price_Per_Unit)")
+            .select("Job_ID, Price_Cust_Total, Notes, Loaded_Qty, Plan_Date, Vehicle_Type, Customer_ID")
             .in("Job_ID", jobIds)
 
         if (fetchError) throw fetchError
@@ -326,12 +350,14 @@ export async function bulkSyncJobPrices(jobIds: string[]) {
         let updateCount = 0
         
         for (const job of jobs) {
-            const typedJob = job as unknown as (Job & { Master_Customers: { Price_Per_Unit: number } | null })
+            const typedJob = job as any
             const adminPrice = Number(typedJob.Price_Cust_Total || 0)
-            const unitPrice = Number(typedJob.Master_Customers?.Price_Per_Unit || 0)
             const loadedQty = Number(typedJob.Loaded_Qty || 0)
 
             if (loadedQty > 0) {
+                // Fetch dynamic unit price for bulk sync
+                const unitPrice = await getSmartUnitPrice(supabase, typedJob.Customer_ID, typedJob.Plan_Date, typedJob.Vehicle_Type || '4-Wheel')
+
                 const updateData: Record<string, string | number | boolean | null> = {
                     Notes: updateNotesWithQty(typedJob.Notes || "", loadedQty)
                 }

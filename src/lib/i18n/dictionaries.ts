@@ -202,6 +202,7 @@ export const dictionaries = {
       ai: 'ผู้ช่วย AI',
       request_mission: 'สั่งงานใหม่',
       routes: 'จัดการเส้นทาง',
+      danger_zones: 'พื้นที่อันตราย',
       billing_automation: 'ระบบวางบิลอัตโนมัติ',
     },
     automation: {
@@ -1610,6 +1611,7 @@ export const dictionaries = {
                 manage_users: 'จัดการผู้ใช้งานระบบ',
                 manage_system_settings: 'ตั้งค่าระบบพื้นฐาน',
                 manage_roles_permissions: 'จัดการสิทธิ์เข้าถึง',
+                'navigation.danger_zones': 'จัดการพื้นที่อันตราย',
                 view_audit_logs: 'ดูประวัติการเข้าใช้งาน'
             },
             descriptions: {
@@ -1632,6 +1634,7 @@ export const dictionaries = {
                 manage_users: 'จัดการบัญชีผู้ใช้งานระบบ เพิ่มพนักงาน และกำหนดสาขาต้นสังกัด',
                 manage_system_settings: 'แก้ไขข้อมูลบริษัทเบื้องต้น ตั้งค่าการแจ้งเตือน และการเชื่อมต่อระบบ',
                 manage_roles_permissions: 'แก้ไขสิทธิ์การเข้าถึงเมนูต่างๆ ของแต่ละตำแหน่ง',
+                'navigation.danger_zones': 'จัดการพื้นที่อันตรายและการแจ้งเตือนความปลอดภัยเมื่อรถเข้าพื้นที่',
                 view_audit_logs: 'ตรวจสอบประวัติการเข้าใช้งานและการแก้ไขข้อมูลย้อนหลัง'
             },
             toasts: {
@@ -2065,6 +2068,7 @@ export const dictionaries = {
       ai: 'AI Assistant',
       request_mission: 'New Job',
       routes: 'Routes',
+      danger_zones: 'Danger Zones',
       billing_automation: 'Billing Automation',
     },
     assignments: {
@@ -3429,6 +3433,7 @@ export const dictionaries = {
                 manage_users: 'Manage System Users',
                 manage_system_settings: 'Manage System Settings',
                 manage_roles_permissions: 'Manage Roles & Permissions',
+                'navigation.danger_zones': 'Manage Danger Zones',
                 view_audit_logs: 'View System Audit Logs'
             },
             descriptions: {
@@ -3451,6 +3456,7 @@ export const dictionaries = {
                 manage_users: 'Manage system accounts, add staff, and assign operational hubs',
                 manage_system_settings: 'Edit company profile, notification settings, and integrations',
                 manage_roles_permissions: 'Modify access rights and permissions for each system role',
+                'navigation.danger_zones': 'Manage restricted areas and real-time safety alerts',
                 view_audit_logs: 'Audit user activity history and system data changes'
             },
             toasts: {

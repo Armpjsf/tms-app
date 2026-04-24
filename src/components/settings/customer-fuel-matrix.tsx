@@ -213,6 +213,26 @@ export const CustomerFuelMatrix = forwardRef(({ customerId, customerName }: Cust
                                     </SelectTrigger>
                                     <SelectContent className="bg-card border-border/10 max-h-[400px] rounded-2xl shadow-3xl p-2">
                                         <SelectItem value="none" className="font-bold text-muted-foreground py-4 rounded-xl opacity-50">-- เลือกเส้นทาง (สาขา: {customerBranch || 'ทั้งหมด'}) --</SelectItem>
+                                        
+                                        {/* NEW: Special Per Piece Option */}
+                                        <SelectItem value="SYSTEM_PER_PIECE" className="py-4 focus:bg-emerald-500/10 rounded-xl mb-1 border border-emerald-500/20 bg-emerald-500/[0.03]">
+                                            <div className="flex items-center justify-between w-full pr-4">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                                                        <span className="font-black text-lg uppercase tracking-tighter">⭐ ราคาต่อชิ้น (PER PIECE)</span>
+                                                        {matrices.some(m => m.Route_Name === 'SYSTEM_PER_PIECE') && (
+                                                            <span className="px-2 py-0.5 bg-emerald-500 text-white text-[8px] font-black uppercase rounded shadow-sm">Configured</span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-emerald-600/60 uppercase opacity-60">
+                                                        ตั้งค่าเรทราคาแปรผันตามน้ำมัน (สำหรับงานนับชิ้น)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </SelectItem>
+
+                                        <div className="h-px bg-border/10 my-2 mx-2" />
+
                                         {routes.map(r => (
                                             <SelectItem key={r.Route_Name} value={r.Route_Name} className="py-4 focus:bg-primary/10 rounded-xl mb-1">
                                                 <div className="flex items-center justify-between w-full pr-4">

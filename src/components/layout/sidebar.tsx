@@ -29,6 +29,7 @@ import {
   Bot,
   Settings,
   ShieldCheck,
+  ShieldAlert,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
@@ -72,6 +73,7 @@ const navigation: NavGroup[] = [
     titleKey: "nav_groups.asset_control",
     items: [
       { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
+      { titleKey: "navigation.danger_zones", href: "/routes/danger-zones", icon: <ShieldAlert size={20} />, badgeColor: "red" },
       { titleKey: "navigation.drivers", href: "/drivers", icon: <Users size={20} /> },
       { titleKey: "navigation.driver_leaves", href: "/admin/driver-leaves", icon: <CalendarDays size={20} /> }, 
       { titleKey: "navigation.customers", href: "/settings/customers", icon: <Building size={20} /> },

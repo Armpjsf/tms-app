@@ -10,6 +10,7 @@ import { getUserBranchId } from '@/lib/permissions'
 import { notifyDriverNewJob, notifyMarketplaceNewJob } from '@/lib/actions/push-actions'
 import { getCustomerId, getUserId, isCustomer, isSuperAdmin, isAdmin } from '@/lib/permissions'
 import { sanitizeJobData } from '@/lib/supabase/utils'
+import { getFuelPriceNumber, getSuggestedRate } from '@/lib/actions/fuel-actions'
 
 export type JobFormData = {
   Job_ID: string
@@ -93,15 +94,10 @@ export async function createJob(data: JobFormData) {
     if (vehicle) subId = vehicle.Sub_ID || null
   }
 
-  // Get Customer Unit Price for auto-calculation if total is 0
+  // Get Smart Unit Price for auto-calculation if total is 0
   let unitPrice = 0
   if ((!data.Price_Cust_Total || Number(data.Price_Cust_Total) === 0) && data.Customer_ID) {
-    const { data: customer } = await supabase
-      .from('Master_Customers')
-      .select('Price_Per_Unit')
-      .eq('Customer_ID', data.Customer_ID)
-      .single()
-    if (customer) unitPrice = customer.Price_Per_Unit || 0
+    unitPrice = await getSmartUnitPrice(supabase, data.Customer_ID, data.Plan_Date || undefined, data.Vehicle_Type || '4-Wheel')
   }
 
   // Attempt 1
@@ -348,23 +344,18 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
     return sanitized
   }).filter(j => j.Customer_Name)
 
-  // Fetch Customer unit prices for auto-calculation
-  const uniqueCustIds = Array.from(new Set(cleanData.filter(j => j.Customer_ID).map(j => j.Customer_ID)))
-  const { data: custPrices } = await supabase.from('Master_Customers').select('Customer_ID, Price_Per_Unit').in('Customer_ID', uniqueCustIds)
-  const customerPriceMap = new Map(custPrices?.map(c => [c.Customer_ID, c.Price_Per_Unit]) || [])
-
-  // Apply Auto-calculation
-  const finalizedData = cleanData.map(j => {
+  // Apply Auto-calculation asynchronously to support fuel lookups
+  const finalizedData = await Promise.all(cleanData.map(async (j) => {
     let total = Number(j.Price_Cust_Total) || 0
     if (total === 0 && j.Customer_ID) {
-        const unitPrice = customerPriceMap.get(j.Customer_ID) || 0
+        const unitPrice = await getSmartUnitPrice(supabase, j.Customer_ID, j.Plan_Date, j.Vehicle_Type || '4-Wheel')
         const qty = Number(j.Weight_Kg || j.Volume_Cbm || 0)
         if (unitPrice > 0 && qty > 0) {
             total = Number((qty * unitPrice).toFixed(2))
         }
     }
     return { ...j, Price_Cust_Total: total }
-  })
+  }))
 
   if (finalizedData.length === 0) {
      return { success: false, message: 'ไม่พบข้อมูลที่ถูกต้อง (ต้องระบุชื่อลูกค้า)' }
@@ -509,24 +500,24 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   // Auto-calculate Price_Cust_Total for updates 
   // Trigger if Price_Cust_Total is missing/0 OR if Loaded_Qty was explicitly updated
   if ((!updateData.Price_Cust_Total || Number(updateData.Price_Cust_Total) === 0) || (data.Loaded_Qty !== undefined)) {
-     // 1. Get Customer ID and existing Loaded_Qty if needed
+     // 1. Get current job metadata
      const { data: currentJob } = await supabase
         .from('Jobs_Main')
-        .select('Customer_ID, Loaded_Qty')
+        .select('Customer_ID, Loaded_Qty, Plan_Date, Vehicle_Type')
         .eq('Job_ID', jobId)
         .single()
 
      const targetCustomerId = updateData.Customer_ID || currentJob?.Customer_ID
      
      if (targetCustomerId) {
-         // 2. Fetch Unit Price
-         const { data: customer } = await supabase
-            .from('Master_Customers')
-            .select('Price_Per_Unit')
-            .eq('Customer_ID', targetCustomerId)
-            .single()
-            
-         const unitPrice = customer?.Price_Per_Unit || 0
+         // 2. Fetch Smart Unit Price (considering fuel)
+         const unitPrice = await getSmartUnitPrice(
+             supabase, 
+             targetCustomerId, 
+             updateData.Plan_Date || currentJob?.Plan_Date,
+             updateData.Vehicle_Type || currentJob?.Vehicle_Type || '4-Wheel'
+         )
+         
          const qty = Number((updateData.Loaded_Qty ?? currentJob?.Loaded_Qty) || 0)
          
          if (unitPrice > 0 && qty > 0) {
@@ -534,6 +525,36 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
          }
      }
   }
+
+/**
+ * Helper to get the most appropriate unit price based on fuel rates or master data
+ */
+async function getSmartUnitPrice(supabase: any, customerId: string, planDate?: string, vehicleType: string = '4-Wheel'): Promise<number> {
+    if (!customerId) return 0
+    
+    try {
+        // 1. Try to find a dynamic rate based on fuel for 'SYSTEM_PER_PIECE'
+        const fuelPrice = await getFuelPriceNumber(planDate || undefined)
+        if (fuelPrice) {
+            const suggestedRate = await getSuggestedRate(customerId, 'SYSTEM_PER_PIECE', fuelPrice, vehicleType)
+            if (suggestedRate && suggestedRate > 0) {
+                return suggestedRate
+            }
+        }
+
+        // 2. Fallback to static price in Master_Customers
+        const { data: cust } = await supabase
+            .from("Master_Customers")
+            .select("Price_Per_Unit")
+            .eq("Customer_ID", customerId)
+            .single()
+        
+        return Number(cust?.Price_Per_Unit || 0)
+    } catch (err) {
+        console.error("[PRICE_ERROR] Failed to fetch smart unit price:", err)
+        return 0
+    }
+}
 
   const { error } = await supabase
     .from('Jobs_Main')
