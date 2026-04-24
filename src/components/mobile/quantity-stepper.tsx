@@ -58,10 +58,15 @@ export function QuantityStepper({
                         inputMode="decimal"
                         value={value}
                         onChange={handleInputChange}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                (e.target as HTMLInputElement).blur();
+                            }
+                        }}
                         placeholder="0"
-                        className="w-full h-20 bg-slate-950/50 border-2 border-emerald-500/30 rounded-[1.5rem] text-4xl font-black text-white text-center focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-full h-24 bg-slate-900 border-4 border-emerald-500 rounded-[2rem] text-5xl font-black text-emerald-400 text-center focus:border-emerald-400 focus:ring-8 focus:ring-emerald-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-[inset_0_4px_12px_rgba(0,0,0,0.5)]"
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500/40 font-black text-[10px] uppercase tracking-widest pointer-events-none">
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-emerald-500/60 font-black text-xs uppercase tracking-[0.2em] pointer-events-none italic">
                         ชิ้น
                     </div>
                 </div>

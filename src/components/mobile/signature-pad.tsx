@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import React, { useRef, useState, useEffect, memo } from "react"
 import SignatureCanvas from "react-signature-canvas"
 import { Button } from "@/components/ui/button"
 import { Eraser, Check } from "lucide-react"
@@ -9,26 +9,42 @@ type Props = {
   onSave: (blob: Blob | null) => void
 }
 
-export function SignaturePad({ onSave }: Props) {
+export const SignaturePad = memo(({ onSave }: Props) => {
   const sigCanvas = useRef<SignatureCanvas>(null)
   const [isEmpty, setIsEmpty] = useState(true)
+  const lastSignatureRef = useRef<string | null>(null)
+
+  // Handle resizing - Restore from saved data URL
+  useEffect(() => {
+    const handleResize = () => {
+      if (lastSignatureRef.current && sigCanvas.current) {
+        sigCanvas.current.fromDataURL(lastSignatureRef.current)
+        setIsEmpty(false)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const clear = () => {
     sigCanvas.current?.clear()
+    lastSignatureRef.current = null
     setIsEmpty(true)
-    onSave(null) // Notify parent it's cleared
+    onSave(null)
   }
 
   const save = async () => {
     if (sigCanvas.current) {
         if (sigCanvas.current.isEmpty()) {
-            onSave(null)
-            setIsEmpty(true)
+            if (!lastSignatureRef.current) {
+                onSave(null)
+                setIsEmpty(true)
+            }
         } else {
-            // Use getCanvas() instead of trimmed for reliability
-            // Convert to Base64 then Blob to ensure compatibility
             try {
                 const dataURL = sigCanvas.current.getCanvas().toDataURL("image/png")
+                lastSignatureRef.current = dataURL // Save for restore on resize
                 const blob = await (await fetch(dataURL)).blob()
                 onSave(blob)
                 setIsEmpty(false)
@@ -40,27 +56,26 @@ export function SignaturePad({ onSave }: Props) {
   }
 
   const handleEnd = () => {
-      // Short timeout to ensure canvas updates
-      setTimeout(() => save(), 100) 
+      setTimeout(() => save(), 50) 
   }
 
   return (
     <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-      <div className="border-2 border-slate-300 rounded-xl bg-white overflow-hidden touch-none relative min-h-[12rem]">
+      <div className="border-4 border-slate-700 rounded-3xl bg-white overflow-hidden touch-none relative min-h-[14rem] shadow-2xl ring-1 ring-white/10">
         <SignatureCanvas
           ref={sigCanvas}
           penColor="black"
           backgroundColor="white"
           canvasProps={{
-            className: "w-full h-48 cursor-crosshair block",
-            style: { width: '100%', height: '192px' }
+            className: "w-full h-56 cursor-crosshair block",
+            style: { width: '100%', height: '224px' }
           }}
           onBegin={() => setIsEmpty(false)}
           onEnd={handleEnd}
         />
-        {isEmpty && (
-           <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-muted-foreground">
-              เซ็นชื่อที่นี่ (หมึกสีดำ)
+        {isEmpty && !lastSignatureRef.current && (
+           <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-400 font-bold italic uppercase tracking-widest text-xs">
+              กรุณาลงลายเซ็นที่นี่
            </div>
         )}
       </div>
