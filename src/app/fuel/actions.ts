@@ -135,13 +135,26 @@ export async function updateFuelLog(logId: string, data: FuelFormData) {
 export async function updateFuelLogStatus(logId: string, status: string) {
   const supabase = await createClient()
 
-  const { error } = await supabase
+  const { error, data } = await supabase
     .from('Fuel_Logs')
     .update({ Status: status })
     .eq('Log_ID', logId)
+    .select()
 
   if (error) {
     return { success: false, message: 'Failed to update status' }
+  }
+
+  if (data && data.length > 0) {
+      const log = data[0]
+      if (log.Driver_ID) {
+          const { notifyFuelApproval } = await import('@/lib/actions/push-actions')
+          try {
+              await notifyFuelApproval(log.Driver_ID, log.Status, log.Liters || 0)
+          } catch (e) {
+              console.error("Failed to push fuel notification:", e)
+          }
+      }
   }
 
   // Log the activity

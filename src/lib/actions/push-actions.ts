@@ -735,3 +735,53 @@ export async function testPushNotification(target: { driverId?: string; userId?:
 
     return { success: false, reason: 'invalid_target', debug: debugInfo }
 }
+
+// ─────────────────────────────────────────────
+// Notify: Approval/Rejection Notifications
+// ─────────────────────────────────────────────
+export async function notifyLeaveApproval(driverId: string, status: string, leaveType: string) {
+    const isApproved = status === 'Approved'
+    await sendPushToDriver(driverId, {
+        title: isApproved ? '✅ อนุมัติการลาแล้ว' : '❌ ปฏิเสธการลา',
+        body: `คำร้องขอ${leaveType} ของคุณ${isApproved ? 'ได้รับการอนุมัติแล้ว' : 'ถูกปฏิเสธ'}`,
+        url: '/mobile/leave',
+        type: 'standard',
+        tag: `leave_status`,
+    })
+}
+
+export async function notifyFuelApproval(driverId: string, status: string, amount: number) {
+    const isApproved = status === 'Approved'
+    await sendPushToDriver(driverId, {
+        title: isApproved ? '⛽ อนุมัติเบิกน้ำมันแล้ว' : '❌ ปฏิเสธเบิกน้ำมัน',
+        body: `คำร้องขอเบิกน้ำมัน ${amount} ลิตร ของคุณ${isApproved ? 'ได้รับการอนุมัติแล้ว' : 'ถูกปฏิเสธ'}`,
+        url: '/mobile/profile', // Or wherever the fuel history is shown for drivers
+        type: 'standard',
+        tag: `fuel_status`,
+    })
+}
+
+export async function notifyMaintenanceApproval(driverId: string, status: string, vehiclePlate: string) {
+    const isApproved = status === 'Completed' || status === 'Approved' || status === 'In Progress'
+    const isRejected = status === 'Rejected' || status === 'Cancelled'
+    
+    // Default to status name if it's not a clear approved/rejected
+    let title = `🔧 อัปเดตสถานะแจ้งซ่อม`
+    let body = `รถทะเบียน ${vehiclePlate} มีสถานะเปลี่ยนเป็น: ${status}`
+    
+    if (isApproved) {
+        title = '🔧 อนุมัติแจ้งซ่อมแล้ว'
+        body = `รายการแจ้งซ่อมรถทะเบียน ${vehiclePlate} ได้รับการอนุมัติ/ดำเนินการแล้ว`
+    } else if (isRejected) {
+        title = '❌ ปฏิเสธการแจ้งซ่อม'
+        body = `รายการแจ้งซ่อมรถทะเบียน ${vehiclePlate} ถูกปฏิเสธ/ยกเลิก`
+    }
+
+    await sendPushToDriver(driverId, {
+        title,
+        body,
+        url: '/mobile/profile', 
+        type: 'standard',
+        tag: `maintenance_status`,
+    })
+}

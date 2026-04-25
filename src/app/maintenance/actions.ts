@@ -111,7 +111,7 @@ export async function updateRepairTicket(ticketId: string, data: TicketUpdateDat
 
   console.log(`[MAINTENANCE] Updating Ticket ${ticketId}:`, { status: data.Status, cost: costTotal })
 
-  const { error } = await supabase
+  const { error, data: updatedData } = await supabase
     .from('Repair_Tickets')
     .update({
       Status: data.Status,
@@ -127,8 +127,22 @@ export async function updateRepairTicket(ticketId: string, data: TicketUpdateDat
       Branch_ID: data.Branch_ID || undefined
     })
     .eq('Ticket_ID', ticketId)
+    .select()
+
 if (error) {
   return { success: false, message: `Failed to update ticket: ${error.message}` }
+}
+
+if (updatedData && updatedData.length > 0) {
+    const ticket = updatedData[0]
+    if (ticket.Driver_ID && ticket.Vehicle_Plate) {
+        const { notifyMaintenanceApproval } = await import('@/lib/actions/push-actions')
+        try {
+            await notifyMaintenanceApproval(ticket.Driver_ID, ticket.Status, ticket.Vehicle_Plate)
+        } catch (e) {
+            console.error("Failed to push maintenance notification:", e)
+        }
+    }
 }
 
 // Trigger Intelligence Analysis if Completed
