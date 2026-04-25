@@ -668,9 +668,11 @@ export async function notifySilentSOS(
  * Used for system diagnostics across Web, PWA, and APK.
  */
 export async function testPushNotification(target: { driverId?: string; userId?: string }) {
+    const now = new Date()
+    const thTime = now.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })
     const payload: PushPayload = {
         title: '🧪 ทดสอบระบบแจ้งเตือน (Push Test)',
-        body: `ทดสอบสำเร็จ! สัญญาณถูกส่งจากระบบเมื่อ ${new Date().toLocaleTimeString('th-TH')}`,
+        body: `ทดสอบสำเร็จ! สัญญาณถูกส่งจากระบบเมื่อ ${thTime}`,
         url: '/settings/notifications',
         type: 'general',
         tag: 'push_test'
