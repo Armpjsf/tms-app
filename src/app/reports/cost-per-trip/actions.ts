@@ -109,7 +109,7 @@ export async function getCostPerTrip(startDate?: string, endDate?: string): Prom
   const totalProfit = totalRevenue - totalCostSum
   const totalDistance = trips.reduce((s, t) => s + t.distance_km, 0)
 
-  const summary: CostSummary = {
+  const summary: CostSummary & { debug?: any } = {
     totalTrips,
     totalRevenue,
     totalCost: totalCostSum,
@@ -117,7 +117,8 @@ export async function getCostPerTrip(startDate?: string, endDate?: string): Prom
     totalDistance,
     avgProfitPerTrip: totalTrips > 0 ? totalProfit / totalTrips : 0,
     avgProfitPct: totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0,
-    avgCostPerKm: totalDistance > 0 ? totalCostSum / totalDistance : 0
+    avgCostPerKm: totalDistance > 0 ? totalCostSum / totalDistance : 0,
+    debug: { branchId, customerId, isUserAdmin, start, end, dataLength: data?.length || 0, error: error?.message || null }
   }
 
   return { trips, summary }

@@ -30,6 +30,15 @@ export default async function CostPerTripPage() {
               Trip PERFORMANCE
             </h1>
             <p className="text-violet-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-base font-bold">Cost Efficiency & Profitability Analysis (Last 30 Days)</p>
+            {/* DEBUG BLOCK - Temporary for troubleshooting */}
+            <div className="mt-4 p-2 bg-black/50 text-[10px] text-green-400 font-mono rounded max-w-xl break-all">
+              DEBUG: branchId={String((summary as any).debug?.branchId)} | 
+              custId={String((summary as any).debug?.customerId)} | 
+              admin={String((summary as any).debug?.isUserAdmin)} | 
+              len={String((summary as any).debug?.dataLength)} |
+              err={String((summary as any).debug?.error)} |
+              {String((summary as any).debug?.start)} to {String((summary as any).debug?.end)}
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-4 relative z-10">
