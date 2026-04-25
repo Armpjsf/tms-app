@@ -13,10 +13,12 @@ export interface TripCost {
   Job_Status: string
   Cost_Customer_Total: number
   Cost_Driver_Total: number
-  fuel_cost: number
+  fuel_real: number
+  maint_real: number
+  fuel_est: number
+  maint_est: number
   toll_cost: number
   extra_cost: number
-  maint_est: number
   total_cost: number
   profit: number
   profit_pct: number
@@ -71,14 +73,23 @@ export async function getCostPerTrip(startDate?: string, endDate?: string): Prom
 
   const trips: TripCost[] = data.map((d: any) => {
     const dist = Number(d.Est_Distance_KM) || 0
-    const fuelCost = Number(d.Fuel_Cost) || (dist > 0 ? dist * 3.5 : 0) // Fallback to 3.5 THB/KM if no fuel log
-    const tollCost = Number(d.Toll_Fee) || 0
+    
+    // Estimates (For reference only)
+    const fuelEst = dist > 0 ? dist * 3.5 : 0
+    const maintEst = dist * 1.25
+
+    // Real data
+    const fuelReal = 0 // Will read from DB if added later
+    const maintReal = 0 // Will read from DB if added later
+    const tollCost = 0 // Will read from DB if added later
+    
     const driverCost = Number(d.Cost_Driver_Total) || 0
     const extraCost = Number(d.Cost_Driver_Extra) || 0
-    const maintEst = dist * 1.25 // Estimate 1.25 THB/KM for tires, oil, wear & tear
     
     const revenue = (Number(d.Price_Cust_Total) || 0) + (Number(d.Price_Cust_Extra) || 0)
-    const totalCost = driverCost + fuelCost + tollCost + extraCost + maintEst
+    
+    // Total cost now EXCLUDES estimates, only uses real data
+    const totalCost = driverCost + fuelReal + maintReal + tollCost + extraCost
     const profit = revenue - totalCost
     const profitPct = revenue > 0 ? (profit / revenue) * 100 : 0
 
@@ -92,10 +103,12 @@ export async function getCostPerTrip(startDate?: string, endDate?: string): Prom
       Job_Status: d.Job_Status,
       Cost_Customer_Total: revenue,
       Cost_Driver_Total: driverCost,
-      fuel_cost: fuelCost,
+      fuel_real: fuelReal,
+      maint_real: maintReal,
+      fuel_est: fuelEst,
+      maint_est: maintEst,
       toll_cost: tollCost,
       extra_cost: extraCost,
-      maint_est: maintEst,
       total_cost: totalCost,
       profit,
       profit_pct: Math.round(profitPct * 10) / 10,

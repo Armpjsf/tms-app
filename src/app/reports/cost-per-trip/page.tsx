@@ -74,8 +74,8 @@ export default async function CostPerTripPage() {
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-violet-50 to-white flex justify-between items-center">
             <h2 className="font-black text-gray-900">รายละเอียดกำไร-ขาดทุนรายเที่ยว (Dynamic Profitability)</h2>
-            <div className="text-xs font-bold text-muted-foreground bg-gray-100 px-3 py-1 rounded-full italic">
-              *ต้นทุนซ่อมบำรุงเป็นการประมาณการตามระยะทางวิ่งจริง
+            <div className="text-xs font-bold text-amber-600/80 bg-amber-50 px-3 py-1 rounded-full italic">
+              * ต้นทุนคาดการณ์ (น้ำมัน/ซ่อมบำรุง) ใช้เป็นข้อมูลอ้างอิงเท่านั้น และไม่ถูกนำมาหักลบในกำไรจริง
             </div>
           </div>
 
@@ -94,9 +94,11 @@ export default async function CostPerTripPage() {
                     <th className="text-right px-4 py-3 font-black">ระยะทาง</th>
                     <th className="text-right px-4 py-3 font-black text-blue-600">รายได้</th>
                     <th className="text-right px-4 py-3 font-black">ค่าคนขับ</th>
-                    <th className="text-right px-4 py-3 font-black">น้ำมัน</th>
-                    <th className="text-right px-4 py-3 font-black">ซ่อมบำรุง*</th>
-                    <th className="text-right px-4 py-3 font-black text-red-500">ต้นทุนรวม</th>
+                    <th className="text-right px-4 py-3 font-black">น้ำมัน(จริง)</th>
+                    <th className="text-right px-4 py-3 font-black text-amber-500/80 text-sm italic">น้ำมัน(อ้างอิง)</th>
+                    <th className="text-right px-4 py-3 font-black">ซ่อมบำรุง(จริง)</th>
+                    <th className="text-right px-4 py-3 font-black text-amber-500/80 text-sm italic">ซ่อมบำรุง(อ้างอิง)</th>
+                    <th className="text-right px-4 py-3 font-black text-red-500">ต้นทุนรวม(จริง)</th>
                     <th className="text-right px-4 py-3 font-black">กำไร</th>
                   </tr>
                 </thead>
@@ -125,9 +127,15 @@ export default async function CostPerTripPage() {
                         ฿{formatMoney(trip.Cost_Driver_Total + trip.extra_cost)}
                       </td>
                       <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">
-                        ฿{formatMoney(trip.fuel_cost)}
+                        ฿{formatMoney(trip.fuel_real)}
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-400 italic whitespace-nowrap">
+                      <td className="px-4 py-3 text-right text-amber-500/70 italic whitespace-nowrap text-sm">
+                        ฿{formatMoney(trip.fuel_est)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">
+                        ฿{formatMoney(trip.maint_real)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-amber-500/70 italic whitespace-nowrap text-sm">
                         ฿{formatMoney(trip.maint_est)}
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-red-500 whitespace-nowrap">
