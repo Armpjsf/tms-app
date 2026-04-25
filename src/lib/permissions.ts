@@ -8,8 +8,8 @@ export async function getUserBranchId() {
         const session = await getSession()
         if (session) {
             console.log(`[DEBUG] Session found: userId=${session.userId}, roleId=${session.roleId}`)
-            // For Super Admin, use the selected branch from cookies if available
-            if (Number(session.roleId) === 1) {
+            // For Super Admin & Admin, use the selected branch from cookies if available
+            if (Number(session.roleId) === 1 || Number(session.roleId) === 2) {
                 const cookieStore = await cookies()
                 return cookieStore.get('selectedBranch')?.value || 'All'
             }
