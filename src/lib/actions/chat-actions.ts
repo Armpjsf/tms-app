@@ -69,7 +69,7 @@ export async function sendChatMessage(senderId: string, message: string, receive
     // ── Push Notifications ──
     // Admin sends to driver → push to driver
     if (senderId === 'admin' && receiverId !== 'admin') {
-        notifyDriverNewChat(receiverId, message).catch(() => {})
+        try { await notifyDriverNewChat(receiverId, message) } catch (e) { console.error(e) }
     }
     // Driver sends to admin → push to all admins
     else if (senderId !== 'admin' && receiverId === 'admin') {
@@ -81,7 +81,7 @@ export async function sendChatMessage(senderId: string, message: string, receive
             .select('Driver_Name')
             .eq('Driver_ID', senderId)
             .single()
-        notifyAdminNewChat(senderId, driver?.Driver_Name || 'คนขับ', message).catch(() => {})
+        try { await notifyAdminNewChat(senderId, driver?.Driver_Name || 'คนขับ', message) } catch (e) { console.error(e) }
     }
     
     return { success: true }

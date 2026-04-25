@@ -245,13 +245,13 @@ export async function sendMessage(driverId: string, driverName: string, message:
         }
 
         // Push admin fallback path
-        notifyDriverNewChat(driverId, message).catch(() => {})
+        try { await notifyDriverNewChat(driverId, message) } catch (e) { console.error(e) }
 
         return { success: true, data: adminData }
     }
 
     // Notify Driver via Push
-    notifyDriverNewChat(driverId, message).catch(() => {})
+    try { await notifyDriverNewChat(driverId, message) } catch (e) { console.error(e) }
 
     return { success: true, data }
   } catch (error) {

@@ -106,9 +106,9 @@ export async function createJob(data: JobFormData) {
   if (!error1) {
       // Send notifications
       if (data.Driver_ID) {
-          notifyDriverNewJob(data.Driver_ID, data.Job_ID, data.Customer_Name || 'ไม่ระบุ').catch(() => {})
+          try { await notifyDriverNewJob(data.Driver_ID, data.Job_ID, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
       } else {
-          notifyMarketplaceNewJob(data.Job_ID, data.Customer_Name || 'ไม่ระบุ').catch(() => {})
+          try { await notifyMarketplaceNewJob(data.Job_ID, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
       }
 
       revalidatePath('/planning')
@@ -128,9 +128,9 @@ export async function createJob(data: JobFormData) {
       if (!error2) {
           // Send notifications for regenerated ID
           if (data.Driver_ID) {
-              notifyDriverNewJob(data.Driver_ID, newId, data.Customer_Name || 'ไม่ระบุ').catch(() => {})
+              try { await notifyDriverNewJob(data.Driver_ID, newId, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
           } else {
-              notifyMarketplaceNewJob(newId, data.Customer_Name || 'ไม่ระบุ').catch(() => {})
+              try { await notifyMarketplaceNewJob(newId, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
           }
 
           revalidatePath('/planning')
@@ -424,11 +424,13 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
       let sampleJobId = ""
       let sampleCustomer = ""
 
+      const notiPromises: Promise<any>[] = []
+      
       finalizedData.forEach(j => {
           if (j.Driver_ID) {
               assignedDrivers.add(j.Driver_ID)
               // Only notify about the first job for this driver in this batch to avoid spam
-              notifyDriverNewJob(j.Driver_ID, j.Job_ID, j.Customer_Name || 'ไม่ระบุ').catch(() => {})
+              notiPromises.push(notifyDriverNewJob(j.Driver_ID, j.Job_ID, j.Customer_Name || 'ไม่ระบุ'))
           } else {
               hasMarketplaceJob = true
               sampleJobId = j.Job_ID
@@ -443,8 +445,10 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
             ? `${batchCount} งานใหม่!` 
             : sampleJobId
           
-          notifyMarketplaceNewJob(broadcastMsg, sampleCustomer).catch(() => {})
+          notiPromises.push(notifyMarketplaceNewJob(broadcastMsg, sampleCustomer))
       }
+      
+      await Promise.allSettled(notiPromises)
   } catch (notiErr) {
       console.error('[PUSH] Bulk notification error:', notiErr)
   }
