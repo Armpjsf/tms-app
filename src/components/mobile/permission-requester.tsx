@@ -13,6 +13,7 @@ type Props = { driverId: string | null }
 
 export function PermissionRequester({ driverId }: Props) {
   const [showPrompt, setShowPrompt] = useState(false)
+  const [showDeniedPrompt, setShowDeniedPrompt] = useState(false)
 
   const registerNativeFCM = useCallback(async () => {
     if (!driverId) return
@@ -90,6 +91,11 @@ export function PermissionRequester({ driverId }: Props) {
           await registerNativeFCM()
         } else if (status.receive === 'prompt') {
           setTimeout(() => setShowPrompt(true), 2000)
+        } else if (status.receive === 'denied') {
+          const hasReminded = localStorage.getItem('tms_reminded_denied_push')
+          if (!hasReminded) {
+             setTimeout(() => setShowDeniedPrompt(true), 2000)
+          }
         }
       })
     }
@@ -104,8 +110,16 @@ export function PermissionRequester({ driverId }: Props) {
           })
           .catch((err) => console.error("SW Register Error:", err))
       }
-      if ("Notification" in window && Notification.permission === "default") {
-        setTimeout(() => setShowPrompt(true), 2000)
+      
+      if ("Notification" in window) {
+        if (Notification.permission === "default") {
+          setTimeout(() => setShowPrompt(true), 2000)
+        } else if (Notification.permission === "denied") {
+          const hasReminded = localStorage.getItem('tms_reminded_denied_push')
+          if (!hasReminded) {
+             setTimeout(() => setShowDeniedPrompt(true), 2000)
+          }
+        }
       }
     }
   }, [driverId, registerNativeFCM])
@@ -219,6 +233,43 @@ export function PermissionRequester({ driverId }: Props) {
       toast.error(`ข้อผิดพลาด: ${err.message || 'ไม่สามารถเปิดแจ้งเตือนได้'}`)
       setShowPrompt(false)
     }
+  }
+
+  if (showDeniedPrompt) {
+    return (
+      <div className="fixed inset-x-4 bottom-32 z-[200] animate-in slide-in-from-bottom-20 duration-700 ease-out">
+        <div className="glass-panel rounded-[2.5rem] p-8 space-y-8 shadow-2xl shadow-rose-500/20 border-rose-500/20 bg-gradient-to-br from-card to-rose-500/5">
+          <div className="absolute top-0 right-0 p-8 text-rose-500/10 pointer-events-none">
+              <Bell size={120} strokeWidth={1} className="rotate-12" />
+          </div>
+          
+          <div className="relative z-10 flex flex-col items-center text-center space-y-4">
+              <div className="w-20 h-20 rounded-3xl bg-rose-500 flex items-center justify-center shadow-xl shadow-rose-500/30">
+                  <X size={40} className="text-white" strokeWidth={2.5} />
+              </div>
+              
+              <div className="space-y-2">
+                  <h3 className="text-2xl font-black text-foreground uppercase tracking-tight italic">การแจ้งเตือนถูกปิดกั้น</h3>
+                  <p className="text-muted-foreground text-base font-bold leading-relaxed max-w-[240px]">
+                      คุณได้ปฏิเสธการรับแจ้งเตือนไปก่อนหน้านี้ กรุณาไปที่ <span className="text-rose-500">การตั้งค่าของเครื่อง</span> เพื่อเปิดรับแจ้งเตือนงานใหม่
+                  </p>
+              </div>
+          </div>
+
+          <div className="relative z-10 grid grid-cols-1 gap-4">
+              <Button 
+                  className="h-16 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-[0.1em] shadow-xl shadow-rose-500/20 active:scale-95 transition-all"
+                  onClick={() => {
+                      localStorage.setItem('tms_reminded_denied_push', 'true')
+                      setShowDeniedPrompt(false)
+                  }}
+              >
+                  รับทราบ
+              </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!showPrompt) return null
