@@ -47,7 +47,7 @@ export async function getCostPerTrip(startDate?: string, endDate?: string): Prom
 
   let query = supabase
     .from('Jobs_Main')
-    .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Fuel_Cost, Toll_Fee, Est_Distance_KM')
+    .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Est_Distance_KM')
     .in('Job_Status', ['Completed', 'Delivered', 'Finished', 'Closed'])
     .gte('Plan_Date', start)
     .lte('Plan_Date', end)
