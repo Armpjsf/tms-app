@@ -59,11 +59,32 @@ export function SessionStabilizer({ session }: { session: Session | null }) {
                isRecoveringRef.current = false
             }
           }
+        } else {
+          // Normal case: We have a session, just refresh the data to ensure it's up to date
+          // This solves the "must reopen app to see new data" issue.
+          console.log("[PWA] App foregrounded, refreshing data...")
+          router.refresh()
         }
       }
     }
 
     document.addEventListener("visibilitychange", handleVisibilityChange)
+    
+    // For Native APK (Capacitor), visibilitychange doesn't always fire reliably
+    // We use the native appStateChange event to trigger the refresh
+    import('@capacitor/core').then(({ Capacitor }) => {
+        if (Capacitor.isNativePlatform()) {
+            import('@capacitor/app').then(({ App }) => {
+                App.addListener('appStateChange', ({ isActive }) => {
+                    if (isActive) {
+                        console.log("[APK] App foregrounded, refreshing data...")
+                        router.refresh()
+                    }
+                })
+            }).catch(e => console.error("Capacitor App module load failed", e))
+        }
+    }).catch(e => console.error("Capacitor core module load failed", e))
+
     // Also check on mount
     handleVisibilityChange()
 
