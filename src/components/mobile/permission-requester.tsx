@@ -14,11 +14,27 @@ type Props = { driverId: string | null }
 export function PermissionRequester({ driverId }: Props) {
   const [showPrompt, setShowPrompt] = useState(false)
 
-  // Register FCM token with backend silently
   const registerNativeFCM = useCallback(async () => {
     if (!driverId) return
 
     let tokenReceived = false
+    
+    // Foreground handling: Show toast when app is open
+    await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+      console.log("[APK] Push Received in Foreground:", notification);
+      toast.success(notification.title || "แจ้งเตือนใหม่", {
+        description: notification.body,
+        duration: 8000,
+      });
+      // Play local sound as fallback
+      try { 
+        const audio = new Audio('/sounds/notification.mp3');
+        audio.play().catch(() => {});
+      } catch (e) {
+        console.error("Sound play failed", e);
+      }
+    });
+
     await PushNotifications.addListener('registration', async (token) => {
       if (tokenReceived) return
       tokenReceived = true
@@ -32,9 +48,6 @@ export function PermissionRequester({ driverId }: Props) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ driverId, subscription: { endpoint: token.value, isFCM: true } })
         })
-        if (!res.ok) {
-            // Error handling ignored for silent registration
-        }
       } catch {
         // Error handling ignored for silent registration
       }
