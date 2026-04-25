@@ -1,7 +1,7 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
-import { getUserBranchId, getCustomerId } from "@/lib/permissions"
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { getUserBranchId, getCustomerId, isAdmin } from "@/lib/permissions"
 
 export interface TripCost {
   Job_ID: string
@@ -35,9 +35,12 @@ export interface CostSummary {
 }
 
 export async function getCostPerTrip(startDate?: string, endDate?: string): Promise<{ trips: TripCost[], summary: CostSummary }> {
-  const supabase = await createClient()
+  const isUserAdmin = await isAdmin()
   const branchId = await getUserBranchId()
   const customerId = await getCustomerId()
+
+  // Use Admin Client to bypass RLS if user is an Admin, otherwise they get 0 rows!
+  const supabase = isUserAdmin ? createAdminClient() : await createClient()
 
   // Default: last 30 days
   const now = new Date()
@@ -61,7 +64,10 @@ export async function getCostPerTrip(startDate?: string, endDate?: string): Prom
   }
 
   const { data, error } = await query
-  if (error || !data) return { trips: [], summary: emptySummary() }
+  if (error) {
+    throw new Error(`DB Error in getCostPerTrip: ${error.message} (Code: ${error.code})`)
+  }
+  if (!data) return { trips: [], summary: emptySummary() }
 
   const trips: TripCost[] = data.map((d: any) => {
     const dist = Number(d.Est_Distance_KM) || 0
