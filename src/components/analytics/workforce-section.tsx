@@ -225,7 +225,7 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-8 h-8 rounded-xl bg-background border border-border/20 flex items-center justify-center text-[10px] font-black text-foreground shrink-0 uppercase">
-                        {d.name.slice(0, 2)}
+                        {(d.name || '').slice(0, 2)}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-black text-foreground uppercase truncate">{d.name}</p>

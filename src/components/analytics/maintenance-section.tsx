@@ -246,7 +246,7 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-xl bg-background border border-border/20 flex items-center justify-center text-[10px] font-black text-foreground shrink-0 uppercase">
-                      {v.vehicle_plate.slice(0, 2)}
+                      {(v.vehicle_plate || '').slice(0, 2)}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-black text-foreground uppercase truncate">{v.vehicle_plate}</p>

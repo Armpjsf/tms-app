@@ -449,7 +449,7 @@ export function DashboardContent({
                                         <Users size={32} strokeWidth={1} className="mx-auto mb-3 text-muted-foreground/30" />
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.performance_data_recalibrating')}</p>
                                     </div>
-                                ) : (driverLeaderboard as any[]).slice(0, 5).map((d: any, i: number) => (
+                                ) : (driverLeaderboard || []).slice(0, 5).map((d: any, i: number) => (
                                     <div key={i} className="px-5 py-3 flex items-center justify-between group hover:bg-muted/20 transition-colors border-l-2 border-transparent hover:border-amber-500/50">
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className={cn(
@@ -496,8 +496,8 @@ export function DashboardContent({
                                         <Truck size={32} strokeWidth={1} className="mx-auto mb-3 text-muted-foreground/30" />
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.performance_data_recalibrating')}</p>
                                     </div>
-                                ) : (vehicleProfitability as any[]).slice(0, 5).map((v: any, i: number) => {
-                                    const maxProfit = Math.max(...(vehicleProfitability as any[]).map((x: any) => x.netProfit || 0), 1)
+                                ) : (vehicleProfitability || []).slice(0, 5).map((v: any, i: number) => {
+                                    const maxProfit = Math.max(...(vehicleProfitability || []).map((x: any) => x.netProfit || 0), 1)
                                     const pct = Math.max(0, Math.min(((v.netProfit || 0) / maxProfit) * 100, 100))
                                     return (
                                         <div key={i} className="px-5 py-3 group hover:bg-muted/20 transition-colors border-l-2 border-transparent hover:border-blue-500/50">
@@ -633,7 +633,7 @@ export function DashboardContent({
                         <div className="divide-y divide-white/[0.03]">
                             {driverLeaderboard.length === 0 ? (
                                 <div className="py-20 text-center text-[10px] font-black text-muted-foreground uppercase italic opacity-40">Awaiting operator telemetry data</div>
-                            ) : (driverLeaderboard.slice(0, 8) as any[]).map((driver: DriverStats, idx: number) => (
+                            ) : ((driverLeaderboard || []).slice(0, 8) as any[]).map((driver: DriverStats, idx: number) => (
                                 <div key={driver.name} className="px-6 py-3.5 flex items-center justify-between hover:bg-muted/30 transition-all group/item">
                                     <div className="flex items-center gap-4">
                                         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center font-black text-[10px] italic border border-border/5 transition-transform group-hover/item:scale-110">

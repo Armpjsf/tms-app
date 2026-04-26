@@ -196,7 +196,7 @@ export default function LeafletMap({
                                 </p>
                                 <p className="font-black text-base leading-tight mb-2 text-foreground">{mission.name}</p>
                                 <div className="flex items-center justify-between gap-2 border-t border-border/10 pt-2">
-                                    <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">ID: {mission.jobId.slice(-6)}</span>
+                                    <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">ID: {(mission.jobId || '').slice(-6)}</span>
                                     <span className={cn(
                                         "text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest",
                                         mission.status === 'SOS' ? 'bg-rose-500 text-white animate-pulse' : 'bg-muted text-muted-foreground'

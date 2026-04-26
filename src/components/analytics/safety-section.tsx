@@ -159,7 +159,7 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
                     <div key={alert.id} className="p-8 flex items-center justify-between group/alert hover:bg-muted/50 transition-all border-l-4 border-transparent hover:border-blue-500">
                         <div className="flex items-center gap-6">
                             <div className="w-14 h-14 rounded-2xl bg-background border border-slate-800 flex items-center justify-center text-[12px] font-black text-foreground shadow-xl italic group-hover/alert:scale-110 transition-transform duration-500 uppercase">
-                                {alert.vehicle.slice(0, 2)}
+                                {(alert.vehicle || '').slice(0, 2)}
                             </div>
                             <div>
                                 <div className="flex items-center gap-3">

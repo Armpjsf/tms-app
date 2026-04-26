@@ -219,7 +219,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
                      <div key={v.vehicle_plate} className="p-8 flex items-center justify-between group/v hover:bg-primary/5 transition-all border-l-4 border-transparent hover:border-primary">
                          <div className="flex items-center gap-6">
                              <div className="w-14 h-14 rounded-2xl bg-muted border border-border flex items-center justify-center text-[12px] font-black text-foreground shadow-xl italic group-hover/v:scale-110 transition-transform duration-500">
-                                {v.vehicle_plate.slice(0, 2)}
+                                {(v.vehicle_plate || '').slice(0, 2)}
                             </div>
                             <div>
                                 <div className="text-foreground tracking-tighter group-hover/v:text-orange-400 transition-colors uppercase italic">{v.vehicle_plate}</div>

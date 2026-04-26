@@ -195,7 +195,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                     <Star size={26} className="text-white fill-white" />
                                 </div>
                                 <div>
-                                    <h4 className="text-3xl font-black text-foreground tracking-tighter leading-none mb-1.5">#{currentJob.Job_ID.slice(-6).toUpperCase()}</h4>
+                                    <h4 className="text-3xl font-black text-foreground tracking-tighter leading-none mb-1.5">#{(currentJob?.Job_ID || '').slice(-6).toUpperCase()}</h4>
                                     <p className="text-muted-foreground text-sm font-bold truncate max-w-[180px]">
                                         {currentJob.Customer_Name}
                                     </p>
@@ -290,7 +290,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                             <Clock size={24} />
                                         </div>
                                         <div>
-                                            <h4 className="text-lg font-black text-foreground leading-none mb-1.5">#{job.Job_ID.slice(-6).toUpperCase()}</h4>
+                                            <h4 className="text-lg font-black text-foreground leading-none mb-1.5">#{(job.Job_ID || '').slice(-6).toUpperCase()}</h4>
                                             <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest truncate max-w-[150px] opacity-70">
                                                 {job.Customer_Name}
                                             </p>
