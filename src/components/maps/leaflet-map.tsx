@@ -116,6 +116,7 @@ export default function LeafletMap({
   routeHistory = [],
   focusPosition,
   plannedRoute = [],
+  jobMissions = [],
   profitPoints = [],
   showHeatmap = false,
   onShowRoute,
