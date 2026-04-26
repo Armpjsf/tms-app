@@ -105,6 +105,7 @@ export function DashboardClient({
     fleetStatus,
     marketplaceJobs,
     heatmapJobs = [],
+    activeJobs = [],
     fleetHealth,
     esg,
     allCustomers = [],
