@@ -246,7 +246,7 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     }
 
     // 1. Process Financials from RPC data
-    const fin = currentData.financial
+    const fin = currentData?.financial || {}
     const revenue = Number(fin.revenue) || 0
     const driverCost = Number(fin.driver_cost) || 0
     const extraCost = Number(fin.extra_cost) || 0
@@ -268,8 +268,8 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     // 3. ESG Intelligence (Dynamic)
     // Formula: Total Distance * Efficiency Factor * Improvement %
     // Heuristic: Use real distance or 12.5km per job if distance data is missing
-    const rawDistance = Number(currentData.financial?.total_distance) || 0
-    const jobCount = Number(currentData.financial?.job_count) || 0
+    const rawDistance = Number(currentData?.financial?.total_distance) || 0
+    const jobCount = Number(currentData?.financial?.job_count) || 0
     const effectiveDistance = Math.max(rawDistance, jobCount * 12.5)
     
     // TMS 2026 Goal: 8.2% Efficiency Gain Benchmark
@@ -297,14 +297,14 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             netProfit,
             profitMargin: margin
         },
-        trend: (currentData.trend || []).map((t: any) => ({
+        trend: (currentData?.trend || []).map((t: any) => ({
             date: t.date,
             total: Number(t.job_count) || 0,
             completed: Number(t.completed_count) || 0,
-            revenue: Number(t.revenue),
-            cost: Number(t.cost)
+            revenue: Number(t.revenue) || 0,
+            cost: Number(t.cost) || 0
         })),
-        statusDist: Object.entries(currentData.status_dist || {}).map(([name, value]) => ({ name, value: Number(value) })),
+        statusDist: Object.entries(currentData?.status_dist || {}).map(([name, value]) => ({ name, value: Number(value) })),
         kpi: {
             revenue: { current: revenue, previous: prevRevenue, growth: calculateGrowth(revenue, prevRevenue), target: 250000, attainment: (revenue / 250000) * 100 },
             profit: { current: netProfit, previous: prevNetProfit, growth: calculateGrowth(netProfit, prevNetProfit) },
@@ -333,19 +333,23 @@ export async function getFinancialStats(startDate?: string, endDate?: string, br
       filter_customer_id: customerId || null
   })
 
-  if (error || !metrics) return { revenue: 0, cost: { total: 0 }, netProfit: 0, profitMargin: 0 }
+  if (error || !metrics) return { revenue: 0, cost: { total: 0, driver: 0, fuel: 0, maintenance: 0, extra: 0 }, netProfit: 0, profitMargin: 0 }
+
+  const fin = metrics.financial || {}
+  const rev = Number(fin.revenue) || 0
+  const nProfit = rev - (Number(fin.total_cost) || 0)
 
   return {
-    revenue: Number(metrics.revenue),
+    revenue: rev,
     cost: { 
-        total: Number(metrics.cost.total), 
-        driver: Number(metrics.cost.driver), 
-        fuel: Number(metrics.cost.fuel), 
-        maintenance: Number(metrics.cost.maintenance), 
-        secondary: Number(metrics.cost.extra) 
+        total: Number(fin.total_cost) || 0, 
+        driver: Number(fin.driver_cost) || 0, 
+        fuel: Number(fin.fuel_cost) || 0, 
+        maintenance: Number(fin.maintenance_cost) || 0, 
+        secondary: Number(fin.extra_cost) || 0 
     },
-    netProfit: Number(metrics.net_profit),
-    profitMargin: Number(metrics.revenue) > 0 ? (Number(metrics.net_profit) / Number(metrics.revenue)) * 100 : 0
+    netProfit: nProfit,
+    profitMargin: rev > 0 ? (nProfit / rev) * 100 : 0
   }
 }
 
