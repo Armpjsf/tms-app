@@ -5,7 +5,7 @@ import { DashboardContent } from "@/components/analytics/dashboard-content"
 import { getMaintenanceSchedule } from "@/lib/supabase/maintenance-schedule"
 import { AnalyticsClient } from "./analytics-client"
 
-export const dynamic = 'force-dynamic' as const;
+export const dynamic = 'force-dynamic'
 
 export default async function AnalyticsPage(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
   const searchParams = await props.searchParams
