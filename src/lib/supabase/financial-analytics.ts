@@ -99,17 +99,21 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         }
 
         // Fetch Fuel and Maint for Fallback
-        const [fuelData, maintData] = await Promise.all([
-            supabase.from('Fuel_Logs').select('Price_Total')
-                .gte('Date_Time', sDateCurrent)
-                .lte('Date_Time', eDateCurrent)
-                .is('Branch_ID', effectiveBranchId || null),
-            supabase.from('Repair_Tickets').select('Cost_Total')
-                .in('Status', ['Completed', 'เสร็จสิ้น'])
-                .gte('Date_Finish', sDateCurrent)
-                .lte('Date_Finish', eDateCurrent)
-                .is('Branch_ID', effectiveBranchId || null)
-        ])
+        let fuelQuery = supabase.from('Fuel_Logs').select('Price_Total')
+            .gte('Date_Time', sDateCurrent)
+            .lte('Date_Time', eDateCurrent)
+        
+        let maintQuery = supabase.from('Repair_Tickets').select('Cost_Total')
+            .in('Status', ['Completed', 'เสร็จสิ้น'])
+            .gte('Date_Finish', sDateCurrent)
+            .lte('Date_Finish', eDateCurrent)
+
+        if (effectiveBranchId) {
+            fuelQuery = fuelQuery.eq('Branch_ID', effectiveBranchId)
+            maintQuery = maintQuery.eq('Branch_ID', effectiveBranchId)
+        }
+
+        const [fuelData, maintData] = await Promise.all([fuelQuery, maintQuery])
 
         const fuelCost = (fuelData.data || []).reduce((sum, l) => sum + (Number(l.Price_Total) || 0), 0)
         const maintCost = (maintData.data || []).reduce((sum, r) => sum + (Number(r.Cost_Total) || 0), 0)
@@ -143,13 +147,22 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         const fuelSaved = co2Saved / 2.68
         const treesSaved = co2Saved / 20.2
 
-        const totalCostManual = curr.cost + fuelCost + maintCost
+        const predictedFuelCost = (curr.distance / 10) * 38 // 10km/L, 38 THB/L
+        const predictedMaintCost = curr.distance * 1.5 // 1.5 THB/KM
 
         return {
             financial: { 
                 revenue: curr.revenue, 
                 revenuePipeline: curr.revenuePipeline,
-                cost: { total: totalCostManual, driver: curr.cost, extra: 0, fuel: fuelCost, maintenance: maintCost }, 
+                cost: { 
+                    total: totalCostManual, 
+                    driver: curr.cost, 
+                    extra: 0, 
+                    fuel: fuelCost, 
+                    maintenance: maintCost,
+                    predictedFuel: predictedFuelCost,
+                    predictedMaintenance: predictedMaintCost
+                }, 
                 netProfit: curr.revenue - totalCostManual, 
                 profitMargin: curr.revenue > 0 ? ((curr.revenue - totalCostManual) / curr.revenue) * 100 : 0,
                 totalQty: curr.totalQty
@@ -206,8 +219,6 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             fetchPipeline.eq('Branch_ID', effectiveBranchId)
             fetchFuel.eq('Branch_ID', effectiveBranchId)
             fetchMaint.eq('Branch_ID', effectiveBranchId)
-        } else if (!isAdmin) {
-             // If not admin and no effective branch, restrict (should not happen with getEffectiveBranchId)
         }
         
         const [pipeRes, fuelRes, maintRes] = await Promise.all([
@@ -261,6 +272,9 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     const fuelSaved = co2Saved / 2.68 
     const treesSaved = co2Saved / 20.2 
 
+    const predictedFuelCost = (effectiveDistance / 10) * 38
+    const predictedMaintCost = effectiveDistance * 1.5
+
     return {
         financial: {
             revenue,
@@ -270,7 +284,9 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
                 driver: driverCost, 
                 extra: extraCost, 
                 fuel: fuelCost, 
-                maintenance: maintenanceCost 
+                maintenance: maintenanceCost,
+                predictedFuel: predictedFuelCost,
+                predictedMaintenance: predictedMaintCost
             },
             netProfit,
             profitMargin: margin
@@ -523,7 +539,9 @@ export async function getExecutiveKPIs(startDate?: string, endDate?: string, bra
     const stats = await getExecutiveDashboardUnified(branchId, startDate, endDate)
     return {
         ...stats.kpi,
-        revenue_pipeline: stats.financial.revenuePipeline || 0
+        revenue_pipeline: stats.financial.revenuePipeline || 0,
+        predicted_fuel: stats.financial.cost.predictedFuel || 0,
+        predicted_maintenance: stats.financial.cost.predictedMaintenance || 0
     }
 }
 
@@ -674,7 +692,7 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
     const effectiveBranchId = await getEffectiveBranchId(branchId)
     const sDate = formatDateSafe(startDate); const eDate = formatDateSafe(endDate)
 
-    let query = supabase.from('Jobs_Main').select('Vehicle_Plate, Price_Cust_Total, Cost_Driver_Total').in('Job_Status', REVENUE_STATUSES)
+    let query = supabase.from('Jobs_Main').select('Vehicle_Plate, Price_Cust_Total, Cost_Driver_Total, Est_Distance_KM').in('Job_Status', REVENUE_STATUSES)
     
     if (customerId) query = query.eq('Customer_ID', customerId)
     else if (await isCustomer()) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
@@ -687,12 +705,22 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
     const stats: Record<string, any> = {}
     jobs?.forEach(j => {
         const p = j.Vehicle_Plate || 'Unknown'
-        if (!stats[p]) stats[p] = { plate: p, revenue: 0, cost: 0, netProfit: 0 }
+        if (!stats[p]) stats[p] = { plate: p, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalKm: 0, predictedFuel: 0, predictedMaintenance: 0, netProfit: 0 }
         stats[p].revenue += Number(j.Price_Cust_Total) || 0
-        stats[p].cost += Number(j.Cost_Driver_Total) || 0
-        stats[p].netProfit = stats[p].revenue - stats[p].cost
+        stats[p].driverCost += Number(j.Cost_Driver_Total) || 0
+        stats[p].totalKm += Number(j.Est_Distance_KM) || 0
+        
+        // Grouping logic for predicted
+        const km = Number(j.Est_Distance_KM) || 0
+        stats[p].predictedFuel += (km / 10) * 38
+        stats[p].predictedMaintenance += (km / 10) * 2
+        
+        // Net Profit only subtracts Driver Cost (Actual known cost in Jobs_Main)
+        // Fuel/Maintenance actuals are handled separately if data is available, 
+        // but for this ledger we show predicted as reference.
+        stats[p].netProfit = stats[p].revenue - stats[p].driverCost
     })
-    return Object.values(stats).sort((a: any, b: any) => b.netProfit - a.netProfit).slice(0, 5)
+    return Object.values(stats).sort((a: any, b: any) => b.netProfit - a.netProfit).slice(0, 10) // Show more for the ledger
 }
 
 export async function getProfitHeatmapData(startDate?: string, endDate?: string, branchId?: string) {

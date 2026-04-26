@@ -1,9 +1,11 @@
 "use server"
 
-import { createClient } from "@/utils/supabase/server"
+import { createClient, createAdminClient } from "@/utils/supabase/server"
+import { isAdmin } from "@/lib/permissions"
 
 export async function getJobGPSData(jobId: string, driverId: string, date: string) {
-    const supabase = await createClient()
+    const admin = await isAdmin()
+    const supabase = admin ? createAdminClient() : await createClient()
     
     try {
         // 1. Fetch Job Route History (Breadcrumbs)
@@ -61,8 +63,10 @@ export async function getJobGPSData(jobId: string, driverId: string, date: strin
             latest: latest ? {
                 lat: latest.latitude ?? (latest as any).Latitude ?? (latest as any).lat ?? 0,
                 lng: latest.longitude ?? (latest as any).Longitude ?? (latest as any).lng ?? 0,
-                timestamp: latest.timestamp ?? (latest as any).Timestamp ?? latest.created_at
-            } : (jobId ? null : null) // We can't access job here easily without passing it. 
+                timestamp: latest.timestamp ?? (latest as any).Timestamp ?? latest.created_at,
+                vehicle_plate: latest.vehicle_plate,
+                speed: latest.speed
+            } : null
         }
     } catch {
         return { route: [], latest: null }

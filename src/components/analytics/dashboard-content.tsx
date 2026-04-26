@@ -23,6 +23,7 @@ import { getWorkforceAnalytics } from "@/lib/supabase/workforce-analytics"
 import { getESGStats } from "@/lib/supabase/esg-analytics"
 import { getExecutiveDashboardUnified } from "@/lib/supabase/financial-analytics"
 import { ESGSection } from "@/components/analytics/esg-section"
+import { StatusDistributionChart } from "@/components/analytics/status-distribution-chart"
 
 import { FinancialSummaryCards } from "@/components/analytics/summary-cards"
 import { RevenueTrendChart } from "@/components/analytics/revenue-chart"
@@ -76,6 +77,8 @@ interface PriorityData {
     profit:  { current: number; previous: number; growth: number }
     margin:  { current: number; growth: number; target?: number }
     revenue_pipeline?: number
+    predicted_fuel?: number
+    predicted_maintenance?: number
   }
   opStats: Record<string, number>
   statusDist: Array<{ name: string; value: number }>
@@ -175,7 +178,9 @@ export function DashboardContent({
                         margin: { current: 0, growth: 0 },
                         jobs: { current: 0, growth: 0 }
                     }), 
-                    revenue_pipeline: unifiedData?.financial?.revenuePipeline || 0 
+                    revenue_pipeline: unifiedData?.financial?.revenuePipeline || 0,
+                    predicted_fuel: unifiedData?.financial?.cost?.predictedFuel || 0,
+                    predicted_maintenance: unifiedData?.financial?.cost?.predictedMaintenance || 0
                 }, 
                 opStats: opStats || {}, 
                 statusDist: unifiedData?.statusDist || [], 
@@ -258,7 +263,12 @@ export function DashboardContent({
     topCustomers = [],
     subPerf = [],
     routes = [],
-    billing = { arAging: {}, totalInvoiced: 0 } as any,
+    billing = { 
+      accountsReceivable: { totalOutstanding: 0, invoiceCount: 0, aging: { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 }, recentUnpaid: [] },
+      accountsPayable: { totalOutstanding: 0, paymentCount: 0 },
+      collectionRate: 0,
+      revenueVsPayout: []
+    } as any,
     fuel = { 
       totalLiters: 0, 
       totalCost: 0, 
@@ -410,10 +420,10 @@ export function DashboardContent({
                          <PremiumCard className="h-full bg-black/40 border border-border/5 p-6 rounded-2xl">
                             <h3 className="text-sm font-black text-foreground italic uppercase mb-6 flex items-center gap-2">
                                 <div className="w-1 h-4 bg-primary rounded-full" />
-                                {t('dashboard.current_pipeline')}
+                                {t('dashboard.performance_kpi')}
                             </h3>
                             <div className="h-[200px] flex items-center justify-center">
-                                <PerformanceCharts data={statusDist} />
+                                <StatusDistributionChart data={statusDist} />
                             </div>
                          </PremiumCard>
                     </div>

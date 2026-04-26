@@ -116,6 +116,31 @@ export async function getTodayJobs(date?: string, branchId?: string): Promise<Jo
   }
 }
 
+export async function getLiveActiveJobs(branchId?: string, customerId?: string | null): Promise<Job[]> {
+    try {
+        const isSuper = await isSuperAdmin()
+        const isRegularAdmin = await isAdmin()
+        const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
+        
+        let query = supabase
+            .from('Jobs_Main')
+            .select('*')
+            .in('Job_Status', ['Assigned', 'Confirmed', 'Picked Up', 'In Transit', 'Arrived', 'SOS'])
+
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        }
+        if (customerId) {
+            query = query.eq('Customer_ID', customerId)
+        }
+
+        const { data } = await query
+        return data || []
+    } catch {
+        return []
+    }
+}
+
 // ดึงงานตามสถานะ
 export async function getJobsByStatus(status: string): Promise<Job[]> {
   try {

@@ -14,6 +14,8 @@ import { useLanguage } from "@/components/providers/language-provider"
 import { PODDownloadButton } from "@/components/tracking/pod-download"
 
 
+import { useSearchParams } from "next/navigation"
+
 interface JobDetailClientProps {
   job: any
   routeHistory: [number, number][]
@@ -21,6 +23,11 @@ interface JobDetailClientProps {
 
 export function JobDetailClient({ job, routeHistory }: JobDetailClientProps) {
   const { t } = useLanguage()
+  const searchParams = useSearchParams()
+  const from = searchParams.get('from')
+
+  const backHref = from?.toLowerCase() === 'pod' ? '/pod' : '/jobs/history'
+  const backLabel = from?.toLowerCase() === 'pod' ? t('navigation.pod') : t('job_detail.history_link')
 
   return (
     <div className="space-y-12 pb-32 max-w-7xl mx-auto p-4 lg:p-10 bg-background">
@@ -30,9 +37,9 @@ export function JobDetailClient({ job, routeHistory }: JobDetailClientProps) {
         
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
           <div className="space-y-6">
-            <Link href="/jobs/history" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
+            <Link href={backHref} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
               <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-              {t('job_detail.history_link')}
+              {backLabel}
             </Link>
             <div className="flex flex-wrap items-center gap-6">
               <div className="p-4 bg-emerald-500/20 rounded-[2.5rem] border-2 border-emerald-500/30 shadow-[0_0_40px_rgba(16,185,129,0.2)] text-emerald-400">

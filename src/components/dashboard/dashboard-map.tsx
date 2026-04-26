@@ -37,6 +37,7 @@ interface DashboardMapProps {
         Longitude: number | null
     }[]
     allJobs?: any[]
+    activeJobs?: any[]
     focusPosition?: [number, number]
     plannedRoute?: { lat: number; lng: number; name: string; type: 'start' | 'stop' | 'end' }[]
     routeSummary?: {
@@ -49,7 +50,7 @@ interface DashboardMapProps {
     sosDriverIds?: (string | null)[]
 }
 
-export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRoute, routeSummary, sosDriverIds = [] }: DashboardMapProps) {
+export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosition, plannedRoute, routeSummary, sosDriverIds = [] }: DashboardMapProps) {
     const { t } = useLanguage()
     const [currentTime, setCurrentTime] = useState<number>(0)
     
@@ -91,6 +92,69 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
                 heading: (d as { Heading?: number }).Heading
             }))
     }, [drivers, currentTime, sosDriverIds])
+
+    // Generate Mission Locations (Origins & Destinations) for each job
+    const jobMissions = useMemo(() => {
+        const missions: any[] = []
+        // Prioritize activeJobs (live missions) over allJobs (heatmap data)
+        const jobsToUse = activeJobs.length > 0 ? activeJobs : allJobs
+        
+        jobsToUse.forEach(j => {
+            // Only show missions for non-completed jobs
+            if (['Completed', 'Delivered', 'Cancelled'].includes(j.Job_Status)) return
+
+            let oLat = Number(j.Pickup_Lat)
+            let oLng = Number(j.Pickup_Lon)
+            let dLat = Number(j.Delivery_Lat)
+            let dLng = Number(j.Delivery_Lon)
+
+            // Fallback for Origins
+            if (!oLat || !oLng) {
+                try {
+                    const json = typeof j.original_origins_json === 'string' ? JSON.parse(j.original_origins_json) : j.original_origins_json
+                    if (Array.isArray(json) && json.length > 0) {
+                        oLat = Number(json[0].lat); oLng = Number(json[0].lng)
+                    }
+                } catch(e) {}
+            }
+
+            // Fallback for Destinations
+            if (!dLat || !dLng) {
+                try {
+                    const json = typeof j.original_destinations_json === 'string' ? JSON.parse(j.original_destinations_json) : j.original_destinations_json
+                    if (Array.isArray(json) && json.length > 0) {
+                        const last = json[json.length - 1]
+                        dLat = Number(last.lat); dLng = Number(last.lng)
+                    }
+                } catch(e) {}
+            }
+
+            if (oLat && oLng) {
+                missions.push({
+                    id: `${j.Job_ID}-origin`,
+                    jobId: j.Job_ID,
+                    name: j.Origin_Location || 'Pickup',
+                    lat: oLat,
+                    lng: oLng,
+                    type: 'origin',
+                    status: j.Job_Status
+                })
+            }
+
+            if (dLat && dLng) {
+                missions.push({
+                    id: `${j.Job_ID}-destination`,
+                    jobId: j.Job_ID,
+                    name: j.Dest_Location || 'Delivery',
+                    lat: dLat,
+                    lng: dLng,
+                    type: 'destination',
+                    status: j.Job_Status
+                })
+            }
+        })
+        return missions
+    }, [allJobs, activeJobs])
 
     // Generate Profit Points for Heatmap
     const profitPoints = useMemo(() => {
@@ -174,6 +238,7 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
                 center={focusPosition || (activeDrivers.length > 0 ? [activeDrivers[0].lat, activeDrivers[0].lng] : [13.7563, 100.5018])}
                 focusPosition={focusPosition}
                 plannedRoute={plannedRoute}
+                jobMissions={jobMissions}
                 profitPoints={profitPoints}
                 showHeatmap={showHeatmap}
                 routeHistory={routeHistory}

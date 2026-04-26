@@ -144,7 +144,7 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: any
               {pods.map((pod: any) => (
                 <tr key={pod.Job_ID} className="border-b border-white/[0.02] hover:bg-muted/40 transition-all group">
                   <td className="px-6 py-3">
-                    <Link href={`/admin/jobs/${pod.Job_ID}`}>
+                    <Link href={`/admin/jobs/${pod.Job_ID}?from=pod`}>
                        <span className="text-primary font-black text-sm tracking-tighter uppercase group-hover:scale-105 block origin-left transition-transform font-display">
                           {pod.Job_ID}
                        </span>
@@ -216,7 +216,7 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: any
                     </div>
                   </td>
                   <td className="px-6 py-3 text-right">
-                    <Link href={`/admin/jobs/${pod.Job_ID}`}>
+                    <Link href={`/admin/jobs/${pod.Job_ID}?from=pod`}>
                        <button className="p-2 rounded-lg bg-muted/50 hover:bg-primary hover:text-black text-muted-foreground transition-all border border-transparent group/btn">
                           <ArrowRight size={16} className="transition-transform group-hover/btn:translate-x-1" />
                        </button>

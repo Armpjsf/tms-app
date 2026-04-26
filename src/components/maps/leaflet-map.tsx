@@ -78,6 +78,7 @@ type LeafletMapProps = {
   routeHistory?: [number, number][]
   focusPosition?: [number, number]
   plannedRoute?: { lat: number; lng: number; name: string; type: 'start' | 'stop' | 'end' }[]
+  jobMissions?: { id: string; jobId: string; name: string; lat: number; lng: number; type: 'origin' | 'destination'; status: string }[]
   profitPoints?: ProfitPoint[]
   showHeatmap?: boolean
   onShowRoute?: (plate: string) => void
@@ -150,6 +151,71 @@ export default function LeafletMap({
       {drivers.filter(d => isFinite(d.lat) && isFinite(d.lng)).map((driver) => (
         <MovingMarker key={driver.id} driver={driver} onShowRoute={onShowRoute} />
       ))}
+
+      {/* Active Job Missions (Origins & Destinations) */}
+      {jobMissions.length > 0 && (
+          <>
+            {/* 1. Connecting Lines between Origin and Destination for each job */}
+            {Array.from(new Set(jobMissions.map(m => m.jobId))).map(jobId => {
+                const points = jobMissions.filter(m => m.jobId === jobId)
+                const origin = points.find(p => p.type === 'origin')
+                const destination = points.find(p => p.type === 'destination')
+                
+                if (origin && destination) {
+                    return (
+                        <Polyline 
+                            key={`job-link-${jobId}`}
+                            positions={[[origin.lat, origin.lng], [destination.lat, destination.lng]]}
+                            color={origin.status === 'Picked Up' || origin.status === 'In Transit' ? '#10b981' : '#64748b'}
+                            dashArray="10, 10"
+                            weight={2}
+                            opacity={0.4}
+                        />
+                    )
+                }
+                return null
+            })}
+
+            {/* 2. Mission Markers & Geofences */}
+            {jobMissions.map((mission) => (
+                <div key={mission.id}>
+                    <Marker 
+                        position={[mission.lat, mission.lng]} 
+                        icon={mission.type === 'origin' ? greenIcon : redIcon}
+                    >
+                        <Popup>
+                            <div className="p-1 min-w-[150px]">
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 opacity-60">
+                                    {mission.type === 'origin' ? '📦 จุดรับสินค้า' : '🚩 จุดส่งสินค้า'}
+                                </p>
+                                <p className="font-black text-base leading-tight mb-2 text-foreground">{mission.name}</p>
+                                <div className="flex items-center justify-between gap-2 border-t border-border/10 pt-2">
+                                    <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">ID: {mission.jobId.slice(-6)}</span>
+                                    <span className={cn(
+                                        "text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest",
+                                        mission.status === 'SOS' ? 'bg-rose-500 text-white animate-pulse' : 'bg-muted text-muted-foreground'
+                                    )}>{mission.status}</span>
+                                </div>
+                            </div>
+                        </Popup>
+                    </Marker>
+                    
+                    {/* Visual Area Boundary (Geofence) */}
+                    <CircleMarker 
+                        center={[mission.lat, mission.lng]}
+                        radius={mission.type === 'origin' ? 20 : 35}
+                        pathOptions={{ 
+                            color: mission.type === 'origin' ? '#10b981' : '#f43f5e', 
+                            fillColor: mission.type === 'origin' ? '#10b981' : '#f43f5e', 
+                            fillOpacity: 0.05,
+                            weight: 1,
+                            dashArray: '5, 5'
+                        }}
+                    />
+                </div>
+            ))}
+          </>
+      )}
 
       {showCurrentPosition && currentPosition && (
         <Marker position={currentPosition}>

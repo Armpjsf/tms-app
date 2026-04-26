@@ -472,7 +472,8 @@ export function MonitoringCommandCenter({
             <div className="flex-1 relative">
                 <DashboardMap 
                     drivers={driversWithGPS as any} 
-                    allJobs={heatmapJobs.length > 0 ? heatmapJobs : filteredJobs}
+                    allJobs={heatmapJobs}
+                    activeJobs={filteredJobs}
                     focusPosition={focusPosition} 
                 />
             </div>

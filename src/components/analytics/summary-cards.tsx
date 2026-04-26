@@ -27,6 +27,8 @@ type ExecutiveKPIs = {
   profit: KPIData
   margin: KPIData
   revenue_pipeline?: number
+  predicted_fuel?: number
+  predicted_maintenance?: number
 }
 
 function GrowthBadge({ value, isPoints = false }: { value: number, isPoints?: boolean }) {
@@ -131,6 +133,24 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
             </span>
             {profit.growth !== undefined && <GrowthBadge value={profit.growth} />}
           </div>
+
+          {/* Forecast indicators — requested by user to be clear but not subtracted from profit */}
+          {(data.predicted_fuel || data.predicted_maintenance) && (
+             <div className="flex flex-col gap-1 pt-1">
+                {data.predicted_fuel && (
+                    <div className="flex items-center justify-between text-[10px] text-blue-400 font-bold uppercase tracking-widest bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10">
+                        <span>Fuel Forecast</span>
+                        <span>฿{Math.round(data.predicted_fuel).toLocaleString()}</span>
+                    </div>
+                )}
+                {data.predicted_maintenance && (
+                    <div className="flex items-center justify-between text-[10px] text-amber-500 font-bold uppercase tracking-widest bg-amber-500/5 px-2 py-1 rounded border border-amber-500/10">
+                        <span>Maint Forecast</span>
+                        <span>฿{Math.round(data.predicted_maintenance).toLocaleString()}</span>
+                    </div>
+                )}
+             </div>
+          )}
 
           {profit.previous !== undefined && profit.previous > 0 && (
             <div className="flex items-center justify-between pt-0.5 border-t border-border/5">

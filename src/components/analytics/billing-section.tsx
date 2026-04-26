@@ -19,16 +19,20 @@ function formatCompact(n: number): string {
 
 export function BillingSection({ data }: { data: BillingAnalytics }) {
   const { t } = useLanguage()
+  
+  if (!data || !data.accountsReceivable) return null
+  
   const { accountsReceivable, accountsPayable, collectionRate } = data
+  const agingData = accountsReceivable.aging || { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 }
 
   const maxAging = Math.max(
-    accountsReceivable.aging['0-30']  || 0,
-    accountsReceivable.aging['31-60'] || 0,
-    accountsReceivable.aging['61-90'] || 0,
-    accountsReceivable.aging['90+']   || 0,
+    agingData['0-30']  || 0,
+    agingData['31-60'] || 0,
+    agingData['61-90'] || 0,
+    agingData['90+']   || 0,
   ) || 1
 
-  const criticalAmt = accountsReceivable.aging['90+'] || 0
+  const criticalAmt = agingData['90+'] || 0
   const isCritical  = criticalAmt > 50_000
   const isWarning   = criticalAmt > 0 && !isCritical
 
@@ -221,7 +225,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
             </div>
           </div>
           <div className="p-5 space-y-4">
-            {Object.entries(accountsReceivable.aging).map(([range, amount]) => {
+            {Object.entries(agingData).map(([range, amount]) => {
               const pct = (amount / (maxAging as number)) * 100
               const colorBar =
                 range === '90+'   ? 'bg-gradient-to-r from-rose-600 to-rose-400'

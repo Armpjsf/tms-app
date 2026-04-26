@@ -86,7 +86,8 @@ export function JobSummaryDialog({ open, onOpenChange, job, routes }: JobSummary
     lat: latestLocation.lat,
     lng: latestLocation.lng,
     status: 'Latest Location',
-    lastUpdate: latestLocation.timestamp
+    lastUpdate: latestLocation.timestamp,
+    vehiclePlate: job.Vehicle_Plate && job.Vehicle_Plate !== 'N/A' ? job.Vehicle_Plate : (latestLocation as any)?.vehicle_plate || job.Vehicle_Plate
   }] : []
   const reportUrl = podPhotos.find((url: string) => url.toUpperCase().includes('REPORT'))
 

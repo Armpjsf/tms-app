@@ -2,7 +2,7 @@ import { DashboardClient } from "@/components/dashboard/dashboard-client"
 import { getExecutiveDashboardUnified, getProfitHeatmapData } from "@/lib/supabase/financial-analytics"
 import { getSOSDriverIds } from "@/lib/supabase/sos"
 import { getCustomerName } from "@/lib/supabase/customers"
-import { getMarketplaceJobs, getTodayJobStats } from "@/lib/supabase/jobs"
+import { getMarketplaceJobs, getTodayJobStats, getLiveActiveJobs } from "@/lib/supabase/jobs"
 import { getDriverStats } from "@/lib/supabase/drivers"
 import { isCustomer, getCustomerId, isAdmin } from "@/lib/permissions"
 import { getActiveFleetStatus } from "@/lib/supabase/gps"
@@ -35,7 +35,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   const isAdminUser = await isAdmin()
   
   // Parallel Fetching - Server Side (Ultra Fast)
-  let unified, sosIds, marketplaceJobs, heatmapJobs, customerMode, custId, dailyStats, driverStats, fleetAlerts, esgResult, allCustomers;
+  let unified, sosIds, marketplaceJobs, heatmapJobs, activeJobs, customerMode, custId, dailyStats, driverStats, fleetAlerts, esgResult, allCustomers;
 
   try {
     const results = await Promise.allSettled([
@@ -49,7 +49,8 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
       getESGStats(start || undefined, end || undefined, currentBranchId),
       getActiveFleetAlerts(),
       getProfitHeatmapData(start || undefined, end || undefined, currentBranchId),
-      getAllCustomers(1, 1000, undefined, isAdminUser ? undefined : currentBranchId)
+      getAllCustomers(1, 1000, undefined, isAdminUser ? undefined : currentBranchId),
+      getLiveActiveJobs(currentBranchId, customerMode ? custId : null)
     ]);
 
     // Map results with fallbacks
@@ -69,6 +70,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
     fleetAlerts = results[8].status === 'fulfilled' ? results[8].value : [];
     heatmapJobs = results[9].status === 'fulfilled' ? results[9].value : [];
     allCustomers = results[10].status === 'fulfilled' ? (results[10].value as any).data : [];
+    activeJobs = results[11].status === 'fulfilled' ? (results[11].value as any) : [];
 
   } catch (error) {
     console.error("[Dashboard] Critical data fetch error:", error);
@@ -128,6 +130,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
       fleetStatus={fleetStatus}
       marketplaceJobs={marketplaceJobs}
       heatmapJobs={heatmapJobs}
+      activeJobs={activeJobs}
       fleetHealth={98}
       allCustomers={allCustomers}
       initialCustomers={customers}

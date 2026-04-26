@@ -37,7 +37,7 @@ type VehicleProfitData = {
 }
 
 type Props = {
-    data: VehicleProfitData[]
+    data: (VehicleProfitData & { predictedFuel: number, predictedMaintenance: number })[]
     financials: {
         revenue: number
         cost: {
@@ -45,6 +45,8 @@ type Props = {
             driver: number
             fuel: number
             maintenance: number
+            predictedFuel?: number
+            predictedMaintenance?: number
         }
     }
     startDate?: string
@@ -151,8 +153,10 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
     
     const costBreakdownData = [
         { name: t('common.driver_payout'), value: financials.cost.driver, color: '#10b981' },
-        { name: t('dashboard.fuel_intelligence') || 'Fuel Intelligence', value: financials.cost.fuel, color: '#3b82f6' },
-        { name: t('common.technical_maint'), value: financials.cost.maintenance, color: '#f59e0b' }
+        { name: `Actual Fuel`, value: financials.cost.fuel, color: '#3b82f6' },
+        { name: `Actual Maint`, value: financials.cost.maintenance, color: '#f59e0b' },
+        { name: `Forecast Fuel`, value: financials.cost.predictedFuel || 0, color: '#3b82f6', isForecast: true },
+        { name: `Forecast Maint`, value: financials.cost.predictedMaintenance || 0, color: '#f59e0b', isForecast: true }
     ]
 
     return (
@@ -305,11 +309,11 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
                                 <tr className="border-b-2 border-border/5 bg-muted/30">
-                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic">{t('common.asset_id')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.asset_id')}</th>
                                     <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.revenue_yield')}</th>
-                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.driver_payout')}</th>
-                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.fuel_expenditure')}</th>
-                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.technical_maint')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">Actual Driver</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-blue-400 uppercase tracking-[0.1em] italic text-right">Forecast Fuel</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-amber-400 uppercase tracking-[0.1em] italic text-right">Forecast Maint</th>
                                     <th className="px-6 py-8 text-[12px] font-black text-foreground uppercase tracking-[0.1em] italic text-right">{t('common.net_margin')}</th>
                                     <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-center">{t('common.efficiency_rating')}</th>
                                 </tr>
@@ -329,8 +333,8 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                         </td>
                                         <td className="px-6 py-8 text-right font-black text-primary text-xl tracking-tighter italic">฿{item.revenue.toLocaleString()}</td>
                                         <td className="px-6 py-8 text-right font-black text-muted-foreground text-xl italic">฿{item.driverCost.toLocaleString()}</td>
-                                        <td className="px-6 py-8 text-right font-black text-muted-foreground text-xl italic">฿{item.fuelCost.toLocaleString()}</td>
-                                        <td className="px-6 py-8 text-right font-black text-muted-foreground text-xl italic">฿{item.maintenanceCost.toLocaleString()}</td>
+                                        <td className="px-6 py-8 text-right font-black text-blue-400/60 text-lg italic">฿{Math.round(item.predictedFuel || 0).toLocaleString()}</td>
+                                        <td className="px-6 py-8 text-right font-black text-amber-400/60 text-lg italic">฿{Math.round(item.predictedMaintenance || 0).toLocaleString()}</td>
                                         <td className={cn(
                                             "px-6 py-8 text-right font-black text-2xl tracking-tighter italic",
                                             item.netProfit > 0 ? 'text-emerald-500' : 'text-rose-500'
