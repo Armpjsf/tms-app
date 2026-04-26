@@ -32,7 +32,9 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     const eDatePrev = formatDateSafe(prevEnd)!
 
     const isCust = await isCustomer()
-    const finalCustomerId = customerId || (isCust ? 'RESTRICTED_ACCESS_PENDING' : null)
+    // Safety: If customer role but no customerId, they shouldn't see anything
+    const finalCustomerId = customerId || null
+    const isRestricted = isCust && !customerId
 
     // Use the new Super RPC for Current Month (Only if no specific customer names are filtered)
     let currentData, rpcError;
@@ -54,9 +56,11 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         rpcError = { message: 'Manual filtering required for customer names' }
     }
 
-    // Fallback if RPC fails or is missing
-    if (rpcError || !currentData) {
-        if (rpcError && rpcError.message) {
+    // Fallback if Restricted, RPC fails, or is missing data
+    if (isRestricted || rpcError || !currentData || !currentData.financial) {
+        if (isRestricted) {
+             console.debug('[getExecutiveDashboardUnified] Restricted access (Customer role but no Customer_ID)')
+        } else if (rpcError && rpcError.message) {
             console.debug('[getExecutiveDashboardUnified] RPC failed, using manual fallback:', rpcError.message)
         }
         
@@ -90,8 +94,8 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             return { revenue, revenuePipeline, cost, profit: revenue - cost, distance, count: jobs.length, totalQty }
         }
 
-        const curr = calcStats(currJobs)
-        const prev = calcStats(prevJobs)
+        const curr = isRestricted ? { revenue: 0, revenuePipeline: 0, cost: 0, profit: 0, distance: 0, count: 0, totalQty: 0 } : calcStats(currJobs)
+        const prev = isRestricted ? { revenue: 0, revenuePipeline: 0, cost: 0, profit: 0, distance: 0, count: 0, totalQty: 0 } : calcStats(prevJobs)
 
         const calculateGrowth = (c: number, p: number) => {
             if (p <= 0) return c > 0 ? 100 : 0
