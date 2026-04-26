@@ -123,11 +123,15 @@ export default function LeafletMap({
   onShowRoute,
   onMapClick
 }: LeafletMapProps) {
+  const [isHydrated, setIsHydrated] = useState(false)
   const mapCenter = currentPosition || (routeHistory.length > 0 ? routeHistory[0] : (plannedRoute.length > 0 ? [plannedRoute[0].lat, plannedRoute[0].lng] : center)) as [number, number]
 
   useEffect(() => {
     initIcons()
+    setIsHydrated(true)
   }, [])
+
+  if (!isHydrated || typeof window === 'undefined') return <div style={{ height, width: '100%' }} className="bg-muted animate-pulse rounded-lg" />
 
   return (
     <MapContainer 
@@ -155,7 +159,7 @@ export default function LeafletMap({
       ))}
 
       {/* Active Job Missions (Origins & Destinations) */}
-      {jobMissions.length > 0 && (
+      {jobMissions.length > 0 && defaultIcon && (
           <>
             {/* 1. Connecting Lines between Origin and Destination for each job */}
             {Array.from(new Set(jobMissions.map(m => m.jobId))).map(jobId => {
@@ -183,7 +187,7 @@ export default function LeafletMap({
                 <div key={mission.id}>
                     <Marker 
                         position={[mission.lat, mission.lng]} 
-                        icon={mission.type === 'origin' ? greenIcon : redIcon}
+                        icon={mission.type === 'origin' ? (greenIcon || defaultIcon) : (redIcon || defaultIcon)}
                     >
                         <Popup>
                             <div className="p-1 min-w-[150px]">
@@ -230,7 +234,7 @@ export default function LeafletMap({
         </Marker>
       )}
 
-      {routeHistory.length > 1 && (
+      {routeHistory.length > 1 && greenIcon && (
         <>
             <Polyline 
                 positions={routeHistory} 
@@ -249,13 +253,13 @@ export default function LeafletMap({
             <Marker position={routeHistory[0]} icon={greenIcon}>
                 <Popup><p className="font-bold">📍 จุดเริ่มต้น</p></Popup>
             </Marker>
-            <Marker position={routeHistory[routeHistory.length - 1]} icon={redIcon}>
+            <Marker position={routeHistory[routeHistory.length - 1]} icon={redIcon || defaultIcon}>
                 <Popup><p className="font-bold">🚩 ตำแหน่งล่าสุด</p></Popup>
             </Marker>
         </>
       )}
 
-      {plannedRoute.length > 0 && (
+      {plannedRoute.length > 0 && greenIcon && (
         <>
             <Polyline 
                 positions={plannedRoute.map(p => [p.lat, p.lng] as [number, number])} 
@@ -267,7 +271,7 @@ export default function LeafletMap({
                 <Marker 
                     key={idx} 
                     position={[p.lat, p.lng]} 
-                    icon={p.type === 'start' ? greenIcon : (p.type === 'end' ? redIcon : goldIcon)}
+                    icon={p.type === 'start' ? greenIcon : (p.type === 'end' ? redIcon || defaultIcon : goldIcon || defaultIcon)}
                 >
                     <Popup>
                         <div className="text-xl">
