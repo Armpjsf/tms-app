@@ -121,6 +121,8 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
 
         const fuelCost = (fuelData.data || []).reduce((sum, l) => sum + (Number(l.Price_Total) || 0), 0)
         const maintCost = (maintData.data || []).reduce((sum, r) => sum + (Number(r.Cost_Total) || 0), 0)
+        
+        const totalCostManual = curr.cost + fuelCost + maintCost
 
         // Trend calculation
         const trendMap: Record<string, { total: number, completed: number, revenue: number, cost: number }> = {}
