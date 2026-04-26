@@ -152,11 +152,11 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
     const topPerformers = [...data].sort((a, b) => b.netProfit - a.netProfit).slice(0, 5)
     
     const costBreakdownData = [
-        { name: t('common.driver_payout'), value: financials.cost.driver, color: '#10b981' },
-        { name: `Actual Fuel`, value: financials.cost.fuel, color: '#3b82f6' },
-        { name: `Actual Maint`, value: financials.cost.maintenance, color: '#f59e0b' },
-        { name: `Forecast Fuel`, value: financials.cost.predictedFuel || 0, color: '#3b82f6', isForecast: true },
-        { name: `Forecast Maint`, value: financials.cost.predictedMaintenance || 0, color: '#f59e0b', isForecast: true }
+        { name: t('common.driver_payout'), value: financials?.cost?.driver || 0, color: '#10b981' },
+        { name: `Actual Fuel`, value: financials?.cost?.fuel || 0, color: '#3b82f6' },
+        { name: `Actual Maint`, value: financials?.cost?.maintenance || 0, color: '#f59e0b' },
+        { name: `Forecast Fuel`, value: financials?.cost?.predictedFuel || 0, color: '#3b82f6', isForecast: true },
+        { name: `Forecast Maint`, value: financials?.cost?.predictedMaintenance || 0, color: '#f59e0b', isForecast: true }
     ]
 
     return (

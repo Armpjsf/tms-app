@@ -248,7 +248,7 @@ export function DashboardContent({
   const isInitialLoading = loadingPrimary && activeTab === "overview"
 
   const {
-    financials = { totalRevenue: 0, totalProfit: 0, margin: 0, growth: 0 },
+    financials = { totalRevenue: 0, totalProfit: 0, margin: 0, growth: 0, cost: { total: 0, driver: 0, fuel: 0, maintenance: 0, predictedFuel: 0, predictedMaintenance: 0 } } as any,
     revenueTrend = [],
     forecastData = [],
     exeKPIs = { revenue: { current: 0, growth: 0 }, profit: { current: 0, growth: 0 }, margin: { current: 0, growth: 0 } } as any,
