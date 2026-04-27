@@ -4,12 +4,11 @@ import { getSession } from '@/lib/session'
 import { createAdminClient } from '@/utils/supabase/server'
 import { aiToolExecutors } from '@/lib/ai/tools'
 
-// Models to try in order - use REST API directly to avoid SDK network issues
+// Confirmed available models via v1beta REST API
 const GEMINI_MODELS = [
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
     "gemini-1.5-flash",
-    "gemini-1.5-flash-8b",
+    "gemini-1.5-pro",
+    "gemini-1.0-pro",
 ]
 
 // Direct REST call to Gemini - more reliable than SDK in server context
@@ -389,7 +388,7 @@ ${JSON.stringify(workforce ?? {})}
         // ─────────────────────────────────────────────────────────────────
         // 3. CALL GEMINI (Direct REST - no SDK wrapper)
         // ─────────────────────────────────────────────────────────────────
-        let lastError = ''
+        const allErrors: string[] = []
 
         for (const modelName of GEMINI_MODELS) {
             try {
@@ -398,13 +397,15 @@ ${JSON.stringify(workforce ?? {})}
                 console.log(`[AI Chat] Success with: ${modelName}`)
                 return NextResponse.json({ response: responseText })
             } catch (err: any) {
-                lastError = err.message || String(err)
-                console.warn(`[AI Chat] ${modelName} failed: ${lastError}`)
+                const errMsg = err.message || String(err)
+                allErrors.push(`[${modelName}] ${errMsg}`)
+                console.warn(`[AI Chat] ${modelName} failed: ${errMsg}`)
                 continue
             }
         }
 
-        console.error(`[AI Chat] All models failed. Last error: ${lastError}`)
+        const lastError = allErrors.join(' | ')
+        console.error(`[AI Chat] All models failed: ${lastError}`)
 
         // ─────────────────────────────────────────────────────────────────
         // 4. SMART SAFEMODE (ไม่พึ่ง keyword เป๊ะๆ)
