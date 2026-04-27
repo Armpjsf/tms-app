@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คู่มือการใช้งาน LINE Bot (TMS & ePOD)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;800&display=swap');
+        
+        body {
+            font-family: 'Sarabun', sans-serif;
+            line-height: 1.6;
+            color: #334155;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #f8fafc;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 4px solid #0ea5e9;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #0f172a;
+            font-size: 32px;
+            font-weight: 800;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .section-title {
+            background: #0ea5e9;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: 800;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-left: 6px solid #0ea5e9;
+        }
+
+        .card h3 {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+            color: #0f172a;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .role-superadmin { border-left-color: #8b5cf6; }
+        .role-superadmin h3 { color: #8b5cf6; }
+        
+        .role-admin { border-left-color: #3b82f6; }
+        .role-admin h3 { color: #3b82f6; }
+        
+        .role-customer { border-left-color: #f59e0b; }
+        .role-customer h3 { color: #f59e0b; }
+        
+        .role-driver { border-left-color: #10b981; }
+        .role-driver h3 { color: #10b981; }
+
+        .command-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .command-list li {
+            margin-bottom: 12px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .command-list li::before {
+            content: "💬";
+            position: absolute;
+            left: 0;
+            top: 2px;
+            font-size: 14px;
+        }
+
+        .cmd {
+            font-weight: 800;
+            color: #0f172a;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .desc {
+            color: #475569;
+            font-size: 16px;
+            margin-left: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        @media print {
+            body { background: white; padding: 20px; }
+            .card { box-shadow: none; border: 1px solid #e2e8f0; border-left: 6px solid #0ea5e9; page-break-inside: avoid; }
+            .role-superadmin { border-left-color: #8b5cf6; }
+            .role-admin { border-left-color: #3b82f6; }
+            .role-customer { border-left-color: #f59e0b; }
+            .role-driver { border-left-color: #10b981; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>คู่มือการใช้งาน LINE Bot</h1>
+        <p>ระบบจัดการขนส่ง Elite TMS & ePOD</p>
+    </div>
+
+    <!-- Section 1: Registration -->
+    <div class="section-title">1. การลงทะเบียนผูกบัญชี (Registration)</div>
+    <div class="card">
+        <p>เพื่อให้ LINE Bot รู้จักตัวตนและสิทธิ์การใช้งานของคุณ กรุณาทำตามขั้นตอนดังนี้:</p>
+        <ol style="font-size: 16px; color: #475569; margin-bottom: 0;">
+            <li style="margin-bottom: 10px;"><strong>เพิ่มเพื่อน (Add Friend):</strong> สแกน QR Code หรือแอดไอดี LINE Bot ของบริษัท</li>
+            <li style="margin-bottom: 10px;"><strong>กดเมนู "ลงทะเบียน":</strong> ที่เมนูด้านล่างหน้าจอ (Rich Menu) หรือพิมพ์คำว่า <span class="cmd">ลงทะเบียน</span></li>
+            <li style="margin-bottom: 10px;"><strong>กรอกข้อมูลระบุตัวตน:</strong> ระบบจะส่งลิงก์ให้คุณกรอก <b>"เบอร์โทรศัพท์"</b> หรือ <b>"รหัสพนักงาน (Username)"</b> ที่ลงทะเบียนไว้ในระบบ TMS</li>
+            <li><strong>ยืนยันสำเร็จ:</strong> เมื่อระบบตรวจสอบข้อมูลตรงกัน คุณจะได้รับข้อความยืนยันการเชื่อมต่อ และสามารถเริ่มใช้คำสั่งต่างๆ ตามสิทธิ์ของคุณได้ทันที</li>
+        </ol>
+    </div>
+
+    <!-- Section 2: Commands -->
+    <div class="section-title">2. ชุดคำสั่งแยกตามสิทธิ์ผู้ใช้งาน (Commands)</div>
+    <p style="font-size: 16px; color: #64748b; margin-bottom: 20px;">คุณสามารถพิมพ์ข้อความเหล่านี้ลงในช่องแชทเพื่อให้บอทดึงข้อมูลให้ทันที (ข้อมูลที่แสดงจะถูกกรองตามสิทธิ์ของคุณ)</p>
+
+    <!-- Super Admin -->
+    <div class="card role-superadmin">
+        <h3>👑 สำหรับ Super Admin (ผู้บริหาร)</h3>
+        <p style="font-size: 14px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">เข้าถึงข้อมูลได้ทุกสาขาและภาพรวมบริษัท</p>
+        <ul class="command-list">
+            <li>พิมพ์ <span class="cmd">สรุปยอดวันนี้</span> <span class="desc">ดูจำนวนงานทั้งหมด, งานที่สำเร็จ, งานค้าง และเป้าหมายรายวัน</span></li>
+            <li>พิมพ์ <span class="cmd">สรุปรายได้เดือนนี้</span> <span class="desc">ดูยอดรายรับรวม, ค่าใช้จ่าย, และกำไร (Profit) แบบเรียลไทม์</span></li>
+            <li>พิมพ์ <span class="cmd">สถานะรถทั้งหมด</span> <span class="desc">ดูว่ารถคันไหนวิ่งอยู่ (Online) คันไหนจอด หรือคันไหนขาดการติดต่อ</span></li>
+            <li>พิมพ์ <span class="cmd">มีรถคันไหนซ่อมอยู่บ้าง</span> <span class="desc">ตรวจสอบรถที่แจ้งซ่อมหรือถึงกำหนดเข้าศูนย์บริการ</span></li>
+            <li>พิมพ์ <span class="cmd">แจ้งเตือน SOS</span> <span class="desc">ตรวจสอบการแจ้งเหตุฉุกเฉินจากคนขับรถในวันนี้</span></li>
+        </ul>
+    </div>
+
+    <!-- Admin / Staff -->
+    <div class="card role-admin">
+        <h3>💻 สำหรับ Admin (พนักงานสาขา)</h3>
+        <p style="font-size: 14px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">เข้าถึงข้อมูลเฉพาะสาขาที่ตนเองรับผิดชอบ</p>
+        <ul class="command-list">
+            <li>พิมพ์ <span class="cmd">งานของสาขาวันนี้</span> <span class="desc">ดูสถานะงานขนส่งเฉพาะของสาขาตัวเอง</span></li>
+            <li>พิมพ์ <span class="cmd">ตามงาน [รหัสงาน]</span> <span class="desc">เช่น 'ตามงาน JOB-12345' เพื่อดูพิกัดล่าสุดและสถานะงานนั้นๆ</span></li>
+            <li>พิมพ์ <span class="cmd">มีรถคันไหนว่างบ้าง</span> <span class="desc">เช็ครายชื่อคนขับในสาขาที่ยังไม่มีงานติดตัว</span></li>
+            <li>พิมพ์ <span class="cmd">ดูพิกัด [ทะเบียนรถ]</span> <span class="desc">ตรวจสอบตำแหน่งปัจจุบันของรถคันที่ต้องการ</span></li>
+        </ul>
+    </div>
+
+    <!-- Customer -->
+    <div class="card role-customer">
+        <h3>🏢 สำหรับ ลูกค้า (Customer)</h3>
+        <p style="font-size: 14px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">เข้าถึงข้อมูลได้เฉพาะงานขนส่งของบริษัทตนเองเท่านั้น</p>
+        <ul class="command-list">
+            <li>พิมพ์ <span class="cmd">เช็คสถานะสินค้า</span> <span class="desc">ดูรายการสินค้าที่กำลังมาส่งในวันนี้ พร้อมประเมินเวลาถึง (ETA)</span></li>
+            <li>พิมพ์ <span class="cmd">ติดตามงาน [รหัสงาน]</span> <span class="desc">ดูสถานะและตำแหน่งรถของงานที่ระบุ</span></li>
+            <li>พิมพ์ <span class="cmd">สรุปค่าใช้จ่ายเดือนนี้</span> <span class="desc">ดูยอดรวมค่าขนส่งที่ต้องชำระในรอบบิลปัจจุบัน</span></li>
+            <li>พิมพ์ <span class="cmd">ขอดูหลักฐาน [รหัสงาน]</span> <span class="desc">เรียกดูรูปถ่ายสินค้าและลายเซ็น (ePOD) ของงานที่ส่งสำเร็จแล้ว</span></li>
+        </ul>
+    </div>
+
+    <!-- Driver -->
+    <div class="card role-driver">
+        <h3>🚚 สำหรับ คนขับรถ (Driver)</h3>
+        <p style="font-size: 14px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">จัดการงานของตนเองและสื่อสารกับแอดมิน</p>
+        <ul class="command-list">
+            <li>พิมพ์ <span class="cmd">งานของฉันวันนี้</span> <span class="desc">เรียกดูรายการจุดรับ-ส่งสินค้าที่ต้องวิ่งในวันนี้</span></li>
+            <li>พิมพ์ <span class="cmd">ค่าเที่ยวเดือนนี้</span> <span class="desc">ตรวจสอบยอดเงินรวมและค่ารอบที่สะสมในเดือนปัจจุบัน (หากแอดมินเปิดให้ดูได้)</span></li>
+            <li>พิมพ์ <span class="cmd">ส่งตำแหน่ง</span> <span class="desc">(การแชร์ Location ผ่าน LINE) เพื่ออัปเดตพิกัดให้แอดมินทราบทันที</span></li>
+            <li>พิมพ์ <span class="cmd">ติดต่อแอดมิน</span> <span class="desc">ขอความช่วยเหลือหรือแจ้งปัญหาให้แอดมินสาขาทราบ</span></li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        © 2026 Elite Transport Management System (ePOD)
+    </div>
+
+</body>
+</html>

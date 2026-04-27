@@ -75,6 +75,9 @@ export const aiToolExecutors: Record<string, Function> = {
     const pending = allJobs.filter(j => PENDING_STATUS.includes(j.Job_Status || '')).length
     const cancelled = allJobs.filter(j => CANCELLED_STATUS.includes(j.Job_Status || '')).length
     
+    // Count "Others" to ensure total matches (14 - known)
+    const other = allJobs.length - (active + completed + pending + cancelled)
+    
     const statusBreakdown = allJobs.reduce((acc: Record<string,number>, j) => {
         const s = j.Job_Status || 'Unknown'
         acc[s] = (acc[s] || 0) + 1
@@ -82,7 +85,7 @@ export const aiToolExecutors: Record<string, Function> = {
     }, {})
     
     return {
-        stats: { active, completed, pending, cancelled },
+        stats: { active, completed, pending, cancelled, other },
         todayJobCount: allJobs.length,
         statusBreakdown,
         jobs: allJobs.slice(0, 5).map(j => ({ id: j.Job_ID, customer: j.Customer_Name, status: j.Job_Status, driver: j.Driver_Name }))

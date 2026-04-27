@@ -416,9 +416,11 @@ export async function POST(req: NextRequest) {
                             `⏳ รอดำเนินการ: ${today.stats.pending} งาน`,
                             `✅ เสร็จสิ้น: ${today.stats.completed} งาน`,
                             `❌ ยกเลิก: ${today.stats.cancelled} งาน`,
-                            '',
-                            '📍 5 งานล่าสุด:'
                         ]
+                        if (today.stats.other > 0) {
+                            lines.push(`❓ อื่นๆ: ${today.stats.other} งาน (รอระบุสถานะ)`)
+                        }
+                        lines.push('', '📍 5 งานล่าสุด:')
                         today.jobs.forEach((j: any) => lines.push(`- ${j.id}: ${j.customer} (${j.status})`))
                         await replyToUser(replyToken, lines.join('\n'))
                     }
