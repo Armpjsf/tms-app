@@ -29,6 +29,18 @@ export function ActivityFeed({ jobStats, sosCount, logs = [] }: ActivityFeedProp
   const stats = jobStats || { total: 0, pending: 0, inProgress: 0, delivered: 0 }
   const sCount = sosCount || 0
 
+  const formatLogTime = (dateStr?: string) => {
+    if (!dateStr) return ""
+    const date = new Date(dateStr)
+    return date.toLocaleString('th-TH', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false
+    }).replace(',', '')
+  }
+
   // Combine real logs with summary items
   const activities = [
     ...(sCount > 0 ? [{
@@ -119,7 +131,9 @@ export function ActivityFeed({ jobStats, sosCount, logs = [] }: ActivityFeedProp
                         {activity.time}
                     </span>
                     <div className="w-1 h-1 rounded-full bg-slate-700" />
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em]">{t('dashboard.activity.cycle_refreshed')}</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em]">
+                        {activity.timestamp ? formatLogTime(activity.timestamp) : t('dashboard.activity.cycle_refreshed')}
+                    </span>
                 </div>
               </div>
             </motion.div>
