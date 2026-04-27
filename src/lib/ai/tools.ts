@@ -55,17 +55,23 @@ export const aiToolExecutors: Record<string, Function> = {
     const allJobs = jobs || []
     const TERMINAL = ['Completed', 'Delivered', 'Complete', 'Cancelled', 'Cancel', 'ยกเลิก', 'เสร็จสิ้น']
     const COMPLETED_S = ['Completed', 'Delivered', 'Complete', 'เสร็จสิ้น']
-    const active = allJobs.filter(j => !TERMINAL.includes(j.Job_Status || '')).length
+    const PENDING_S = ['New', 'Pending', 'Requested', 'ยืนยันงาน', 'รอคนขับ']
+    
+    const active = allJobs.filter(j => !TERMINAL.includes(j.Job_Status || '') && !PENDING_S.includes(j.Job_Status || '')).length
     const completed = allJobs.filter(j => COMPLETED_S.includes(j.Job_Status || '')).length
+    const pending = allJobs.filter(j => PENDING_S.includes(j.Job_Status || '')).length
     const cancelled = allJobs.filter(j => ['Cancelled', 'Cancel', 'ยกเลิก'].includes(j.Job_Status || '')).length
+    
     const statusBreakdown = allJobs.reduce((acc: Record<string,number>, j) => {
         const s = j.Job_Status || 'Unknown'
         acc[s] = (acc[s] || 0) + 1
         return acc
     }, {})
+    
     console.log(`[Today Summary] Date:${targetDate} Branch:${args.branchId || 'ALL'} Total:${allJobs.length}`, statusBreakdown)
+    
     return {
-        stats: { active, completed, cancelled },
+        stats: { active, completed, pending, cancelled },
         todayJobCount: allJobs.length,
         statusBreakdown,
         jobs: allJobs.slice(0, 5).map(j => ({ id: j.Job_ID, customer: j.Customer_Name, status: j.Job_Status, driver: j.Driver_Name }))
