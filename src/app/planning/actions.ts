@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { getAllDriversFromTable } from '@/lib/supabase/drivers'
 import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
 import { logActivity } from '@/lib/supabase/logs'
-import { getUserBranchId } from '@/lib/permissions'
+import { getUserBranchId, getFixedUserBranchId } from '@/lib/permissions'
 import { notifyDriverNewJob, notifyMarketplaceNewJob } from '@/lib/actions/push-actions'
 import { getCustomerId, getUserId, isCustomer, isSuperAdmin, isAdmin } from '@/lib/permissions'
 import { sanitizeJobData } from '@/lib/supabase/utils'
@@ -57,10 +57,15 @@ export async function createJob(data: JobFormData) {
   const supabase = createAdminClient()
 
   // Auto-assign Branch_ID if missing
-  if (!data.Branch_ID) {
-    const userBranchId = await getUserBranchId()
-    if (userBranchId && userBranchId !== 'All') {
-      data.Branch_ID = userBranchId
+  if (!data.Branch_ID || data.Branch_ID === 'All') {
+    const fixedBranchId = await getFixedUserBranchId()
+    if (fixedBranchId && fixedBranchId !== 'All') {
+      data.Branch_ID = fixedBranchId
+    } else {
+      const userBranchId = await getUserBranchId()
+      if (userBranchId && userBranchId !== 'All') {
+        data.Branch_ID = userBranchId
+      }
     }
   }
 
@@ -207,8 +212,15 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
 
   // Get Branch_ID for auto-assignment
   if (!effectiveBranchId || effectiveBranchId === 'All') {
-      const userBranchId = await getUserBranchId()
-      effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : 'HQ'
+      // First try the user's REAL branch (fixed), not the filter branch
+      const fixedBranchId = await getFixedUserBranchId()
+      if (fixedBranchId && fixedBranchId !== 'All') {
+          effectiveBranchId = fixedBranchId
+      } else {
+          // If super admin (no fixed branch), fallback to filter branch or HQ
+          const userBranchId = await getUserBranchId()
+          effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : 'HQ'
+      }
   }
 
   // Fetch Master Data for lookups

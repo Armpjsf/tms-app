@@ -34,6 +34,15 @@ export async function getUserBranchId() {
     return null
 }
 
+export async function getFixedUserBranchId() {
+    try {
+        const session = await getSession()
+        return session?.branchId || null
+    } catch {
+        return null
+    }
+}
+
 export async function getUserRole() {
     const session = await getSession()
     return session?.roleId
