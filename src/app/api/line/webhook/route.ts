@@ -258,21 +258,28 @@ export async function POST(req: NextRequest) {
                         continue
                     }
 
-                    // Admin
-                    const { data: adminUser } = await supabase.from('Master_Users')
+                    // Admin (any user in Master_Users)
+                    const { data: allAdminMatches } = await supabase.from('Master_Users')
                         .select('Username, Name, Role, Role_ID, Email')
-                        .or(`Username.ilike.${id},Email.ilike.${id}`)
-                        .maybeSingle()
+                        .or(`Username.ilike.%${id}%,Email.ilike.%${id}%`)
+                        .limit(5)
 
-                    if (adminUser && (adminUser.Role_ID <= 2 || adminUser.Role === 'Executive' || adminUser.Role === 'Super Admin')) {
-                        if (phone === id || phone.toUpperCase() === 'ADMIN') {
-                            await supabase.from('Master_Users').update({ Line_User_ID: userId }).eq('Username', adminUser.Username)
-                            await replyToUser(replyToken, `✅ ยินดีต้อนรับคุณ ${adminUser.Name}!\nผูกบัญชีสำเร็จแล้วครับ`)
-                            continue
-                        }
+                    console.log(`[BIND Admin] Search "${id}" → found ${allAdminMatches?.length ?? 0}:`, allAdminMatches?.map(u => u.Username))
+
+                    const adminUser = allAdminMatches?.[0] ?? null
+
+                    if (adminUser && phone.toUpperCase() === 'ADMIN') {
+                        await supabase.from('Master_Users').update({ Line_User_ID: userId }).eq('Username', adminUser.Username)
+                        await replyToUser(replyToken, `✅ ยินดีต้อนรับคุณ ${adminUser.Name}!\nRole: ${adminUser.Role}\nผูกบัญชีสำเร็จแล้วครับ 🎉`)
+                        continue
                     }
 
-                    await replyToUser(replyToken, '❌ ไม่พบข้อมูลในระบบ\nกรุณาตรวจสอบรหัสและเบอร์โทรอีกครั้ง')
+                    // Debug: show what was found vs not
+                    if (allAdminMatches && allAdminMatches.length > 0 && phone.toUpperCase() !== 'ADMIN') {
+                        await replyToUser(replyToken, `พบผู้ใช้ "${allAdminMatches[0].Name}" ในระบบ\nแต่ต้องพิมพ์ ADMIN ต่อท้ายครับ\nตัวอย่าง: BIND ${id} ADMIN`)
+                    } else {
+                        await replyToUser(replyToken, `❌ ไม่พบผู้ใช้ "${id}" ในระบบ\nลองใช้ Email หรือ Username ที่ถูกต้องครับ\nรูปแบบ: BIND [username/email] ADMIN`)
+                    }
                     continue
                 }
 
