@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
                         '  [เลขงาน] START — เริ่มงาน',
                         '',
                         '📊 คำสั่งด่วน (ไม่ต้องใช้ AI)',
-                        '  - งานวันนี้ / สรุปงาน',
+                        '  - งานวันนี้ / งานพรุ่งนี้',
                         '  - รายได้ / กำไร (Admin)',
                         '  - รถเสีย / แจ้งซ่อม',
                         '  - สุขภาพรถ / fleet',
@@ -421,7 +421,51 @@ export async function POST(req: NextRequest) {
                         ]
                         today.jobs.forEach((j: any) => lines.push(`- ${j.id}: ${j.customer} (${j.status})`))
                         await replyToUser(replyToken, lines.join('\n'))
-                        continue
+                    }
+
+                    // --- 4.1.2 Tomorrow Jobs ---
+                    if (text.includes('งานพรุ่งนี้') || text === 'TOMORROW') {
+                        const tomorrow = new Date(Date.now() + 86400000)
+                        const tomorrowDate = tomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+                        const tomorrowDisplay = tomorrow.toLocaleDateString('th-TH')
+
+                        if (boundDriver) {
+                            const { data: jobs } = await supabase.from('Jobs_Main')
+                                .select('Job_ID, Job_Status, Customer_Name')
+                                .eq('Driver_ID', boundDriver.Driver_ID)
+                                .eq('Plan_Date', tomorrowDate)
+                            
+                            const lines = [
+                                `📅 งานพรุ่งนี้ของคุณ ${boundDriver.Driver_Name}`,
+                                `📅 วันที่ ${tomorrowDisplay}`,
+                                '',
+                                `📝 งานทั้งหมด: ${jobs?.length ?? 0} งาน`,
+                                '',
+                                '📍 รายการงาน:'
+                            ]
+                            if (!jobs || jobs.length === 0) lines.push('✅ พรุ่งนี้คุณยังไม่มีงานที่วางแผนไว้ครับ')
+                            else jobs.forEach(j => lines.push(`- ${j.Job_ID}: ${j.Customer_Name}`))
+                            
+                            await replyToUser(replyToken, lines.join('\n'))
+                            continue
+                        } else {
+                            // Admin/Customer summary for Tomorrow
+                            let q = supabase.from('Jobs_Main').select('Job_ID', { count: 'exact' }).eq('Plan_Date', tomorrowDate)
+                            if (userCustomerId) q = q.eq('Customer_ID', userCustomerId)
+                            if (targetBranchId && targetBranchId !== 'All') q = q.ilike('Branch_ID', targetBranchId)
+                            
+                            const { count } = await q
+
+                            await replyToUser(replyToken, [
+                                `📊 สรุปแผนงานวันพรุ่งนี้ (${tomorrowDisplay})`,
+                                `📍 ขอบเขต: ${scopeName}`,
+                                '',
+                                `📝 จำนวนงานที่วางแผนไว้: ${count ?? 0} รายการ`,
+                                '',
+                                '💡 เตรียมความพร้อมสำหรับวันพรุ่งนี้ด้วยนะครับ'
+                            ].join('\n'))
+                            continue
+                        }
                     }
 
                     // --- 4.2 Financial (Admin only) ---
