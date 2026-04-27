@@ -14,6 +14,24 @@ let redIcon: any;
 let goldIcon: any;
 let greenIcon: any;
 
+const createMissionIcon = (type: 'origin' | 'destination', status?: string) => {
+    const color = type === 'origin' ? '#10b981' : '#f43f5e'
+    return L.divIcon({
+        className: 'custom-mission-icon',
+        html: `
+            <div class="relative flex items-center justify-center" style="width: 32px; height: 32px;">
+                <div class="absolute inset-0 bg-background rounded-full shadow-2xl border-2" style="border-color: ${color};"></div>
+                <div class="relative z-10 w-2 h-2 rounded-full ${status === 'SOS' ? 'bg-white animate-ping' : ''}" style="background-color: ${color};"></div>
+                <!-- Pulsing ring -->
+                <div class="absolute inset-0 rounded-full animate-pulse opacity-20" style="background-color: ${color};"></div>
+            </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -10]
+    })
+}
+
 const initIcons = () => {
     if (typeof window === 'undefined' || defaultIcon) return;
     
@@ -180,7 +198,7 @@ export default function LeafletMap({
       ))}
 
       {/* Active Job Missions (Origins & Destinations) */}
-      {jobMissions.length > 0 && defaultIcon && (
+      {jobMissions.length > 0 && (
           <>
             {/* 1. Connecting Lines between Origin and Destination for each job */}
             {Array.from(new Set(jobMissions.map(m => m.jobId))).map(jobId => {
@@ -208,7 +226,7 @@ export default function LeafletMap({
                 <div key={mission.id}>
                     <Marker 
                         position={[mission.lat, mission.lng]} 
-                        icon={mission.type === 'origin' ? (greenIcon || defaultIcon) : (redIcon || defaultIcon)}
+                        icon={createMissionIcon(mission.type, mission.status)}
                     >
                         <Popup>
                             <div className="p-1 min-w-[150px]">
@@ -286,7 +304,7 @@ export default function LeafletMap({
         </Marker>
       )}
 
-      {routeHistory.length > 1 && greenIcon && (
+      {routeHistory.length > 1 && (
         <>
             <Polyline 
                 positions={routeHistory} 
@@ -302,16 +320,16 @@ export default function LeafletMap({
                     pathOptions={{ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 1 }} 
                 />
             ))}
-            <Marker position={routeHistory[0]} icon={greenIcon}>
+            <Marker position={routeHistory[0]} icon={createMissionIcon('origin')}>
                 <Popup><p className="font-bold">📍 จุดเริ่มต้น</p></Popup>
             </Marker>
-            <Marker position={routeHistory[routeHistory.length - 1]} icon={redIcon || defaultIcon}>
+            <Marker position={routeHistory[routeHistory.length - 1]} icon={createMissionIcon('destination')}>
                 <Popup><p className="font-bold">🚩 ตำแหน่งล่าสุด</p></Popup>
             </Marker>
         </>
       )}
 
-      {plannedRoute.length > 0 && greenIcon && (
+      {plannedRoute.length > 0 && (
         <>
             <Polyline 
                 positions={plannedRoute.map(p => [p.lat, p.lng] as [number, number])} 
@@ -323,7 +341,7 @@ export default function LeafletMap({
                 <Marker 
                     key={idx} 
                     position={[p.lat, p.lng]} 
-                    icon={p.type === 'start' ? greenIcon : (p.type === 'end' ? redIcon || defaultIcon : goldIcon || defaultIcon)}
+                    icon={createMissionIcon(p.type === 'start' ? 'origin' : 'destination')}
                 >
                     <Popup>
                         <div className="text-xl">
