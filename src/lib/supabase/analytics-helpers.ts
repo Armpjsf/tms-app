@@ -34,16 +34,34 @@ export const differenceInDays = (d1: Date, d2: Date) => Math.floor(Math.abs(d1.g
 export const formatDateSafe = (dateInput: string | Date | null | undefined) => {
     try {
         if (!dateInput) return null
-        const d = new Date(dateInput)
+        const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput
         if (isNaN(d.getTime())) return null
         
-        const year = d.getFullYear()
-        const month = String(d.getMonth() + 1).padStart(2, '0')
-        const day = String(d.getDate()).padStart(2, '0')
-        return `${year}-${month}-${day}`
+        // Always use Thai timezone for date strings if possible
+        const thaiStr = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }) // YYYY-MM-DD
+        return thaiStr
     } catch {
         return null
     }
+}
+
+/**
+ * Get Thailand-local date components
+ */
+export const getThaiNow = () => {
+    const now = new Date()
+    const thaiStr = now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })
+    return new Date(thaiStr)
+}
+
+/**
+ * Get Thailand-local month boundaries
+ */
+export const getThaiMonthBoundaries = () => {
+    const now = getThaiNow()
+    const start = new Date(now.getFullYear(), now.getMonth(), 1)
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    return { start, end }
 }
 
 // Helper to get vehicle plates for a branch
@@ -58,10 +76,22 @@ export async function getBranchPlates(branchId: string) {
 
 // Common helper to resolve branch filtering
 export async function getEffectiveBranchId(branchId?: string) {
-    // If 'All' is explicitly requested, we return null (no filter) immediately
-    if (branchId === 'All') return null
-
     const userBranchId = await getUserBranchId()
-    const targetBranchId = (branchId && branchId !== 'All') ? branchId : userBranchId
-    return (targetBranchId === 'All' || !targetBranchId) ? null : targetBranchId
+    let target = (branchId && branchId.toLowerCase() !== 'all') ? branchId : userBranchId
+    
+    if (!target || target.toLowerCase() === 'all') return null
+
+    // Safety: If the target looks like a full name (longer than 3-4 chars), 
+    // it might be a name passed from a legacy UI component.
+    if (target.length > 5) {
+        try {
+            const supabase = await createAdminClient()
+            const { data } = await supabase.from('Master_Branches').select('Branch_ID').ilike('Branch_Name', target).maybeSingle()
+            if (data?.Branch_ID) target = data.Branch_ID
+        } catch {
+            // Fallback to original target if lookup fails
+        }
+    }
+
+    return target
 }

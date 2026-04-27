@@ -34,6 +34,8 @@ type VehicleProfitData = {
     maintenanceCost: number
     totalCost: number
     netProfit: number
+    totalKm?: number
+    count?: number
 }
 
 type Props = {
@@ -287,7 +289,7 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                     </div>
                 </PremiumCard>
 
-                {/* Performance Ledger Table */}
+                {/* Performance Ledger Table - Full Width with Advanced Metrics */}
                 <PremiumCard className="lg:col-span-3 bg-muted/50 border border-border/10 shadow-3xl p-0 overflow-hidden rounded-br-[6rem] rounded-tl-[3rem]">
                     <div className="p-10 border-b border-border/5 bg-gradient-to-r from-slate-500/20 via-slate-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
                         <div className="absolute inset-0 bg-gradient-to-r from-slate-500/10 to-transparent pointer-events-none" />
@@ -300,26 +302,36 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                 <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.4em] mt-2">{t('analytics.detailed_audit')}</p>
                             </div>
                         </div>
-                        <div className="hidden md:flex items-center gap-4 bg-muted/50 px-6 py-3 rounded-2xl border border-border/10 backdrop-blur-md">
-                            <Zap size={14} className="text-primary animate-pulse" />
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em]">{t('analytics.live_uplink')}</span>
+                        <div className="hidden md:flex items-center gap-8 bg-muted/50 px-8 py-4 rounded-3xl border border-border/10 backdrop-blur-md">
+                            <div className="flex items-center gap-3">
+                                <Truck size={16} className="text-primary" />
+                                <span className="text-base font-black text-foreground">{data.length} <span className="text-muted-foreground text-[10px] uppercase">{t('common.vehicles')}</span></span>
+                            </div>
+                            <div className="h-6 w-px bg-border/20" />
+                            <div className="flex items-center gap-3">
+                                <Zap size={14} className="text-primary animate-pulse" />
+                                <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em]">{t('analytics.live_uplink')}</span>
+                            </div>
                         </div>
                     </div>
                     <div className="p-0 overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-left border-collapse min-w-[1000px]">
+                        <table className="w-full text-left border-collapse min-w-[1200px]">
                             <thead>
                                 <tr className="border-b-2 border-border/5 bg-muted/30">
-                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.asset_id')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic">{t('common.asset_id')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-center">Trips</th>
                                     <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">{t('common.revenue_yield')}</th>
                                     <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-right">Actual Driver</th>
                                     <th className="px-6 py-8 text-[12px] font-black text-blue-400 uppercase tracking-[0.1em] italic text-right">Forecast Fuel</th>
                                     <th className="px-6 py-8 text-[12px] font-black text-amber-400 uppercase tracking-[0.1em] italic text-right">Forecast Maint</th>
                                     <th className="px-6 py-8 text-[12px] font-black text-foreground uppercase tracking-[0.1em] italic text-right">{t('common.net_margin')}</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-emerald-400 uppercase tracking-[0.1em] italic text-right">Total KM</th>
+                                    <th className="px-6 py-8 text-[12px] font-black text-primary uppercase tracking-[0.1em] italic text-right">Yield/KM</th>
                                     <th className="px-6 py-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] italic text-center">{t('common.efficiency_rating')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {data.slice(0, 10).map((item) => (
+                                {data.slice(0, 15).map((item) => (
                                     <tr 
                                         key={item.plate} 
                                         className="group/row hover:bg-white/[0.04] transition-all border-l-4 border-transparent hover:border-primary/50 cursor-pointer"
@@ -331,6 +343,11 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                                 <Info size={14} className="text-primary opacity-0 group-hover/row:opacity-100 transition-opacity" />
                                             </div>
                                         </td>
+                                        <td className="px-6 py-8 text-center">
+                                            <Badge className="bg-primary/10 text-primary border-primary/20 font-black px-3 py-1">
+                                                {item.count || 0}
+                                            </Badge>
+                                        </td>
                                         <td className="px-6 py-8 text-right font-black text-primary text-xl tracking-tighter italic">฿{item.revenue.toLocaleString()}</td>
                                         <td className="px-6 py-8 text-right font-black text-muted-foreground text-xl italic">฿{item.driverCost.toLocaleString()}</td>
                                         <td className="px-6 py-8 text-right font-black text-blue-400/60 text-lg italic">฿{Math.round(item.predictedFuel || 0).toLocaleString()}</td>
@@ -340,6 +357,12 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                             item.netProfit > 0 ? 'text-emerald-500' : 'text-rose-500'
                                         )}>
                                             ฿{item.netProfit.toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-8 text-right font-black text-emerald-400/80 text-xl italic">
+                                            {item.totalKm?.toLocaleString()} <span className="text-[10px] text-muted-foreground uppercase not-italic">KM</span>
+                                        </td>
+                                        <td className="px-6 py-8 text-right font-black text-primary text-2xl tracking-tighter italic">
+                                            ฿{item.totalKm && item.totalKm > 0 ? (item.netProfit / item.totalKm).toFixed(1) : 0}
                                         </td>
                                         <td className="px-6 py-8 text-center">
                                             <div className={cn(

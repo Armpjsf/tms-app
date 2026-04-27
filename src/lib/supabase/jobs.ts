@@ -393,7 +393,7 @@ export async function getDriverJobs(
     
     let query = supabase
       .from('Jobs_Main')
-      .select('*')
+      .select('Job_ID, Customer_Name, Job_Status, Pickup_Date, Delivery_Date, Plan_Date, Plan_Time, Origin_Location, Dest_Location, Route_Name, Show_Price_To_Driver, Cost_Driver_Total')
       .eq('Driver_ID', driverId)
 
     // Only apply branch filter if it's NOT a driver (Admin/Staff must see their branch)
@@ -890,14 +890,16 @@ export async function getDriverDashboardStats(driverId: string) {
     const supabase = createAdminClient()
     const today = new Date().toISOString().split('T')[0]
     
-    // 1. Get ALL jobs for this driver (not just today) that are not cancelled
+    // 1. Get ONLY necessary jobs (Active OR Today's jobs) 
+    // This avoids fetching thousands of historical jobs which was causing slowness.
     const { data: jobs } = await supabase
       .from('Jobs_Main')
-      .select('*')
+      .select('Job_ID, Customer_Name, Job_Status, Origin_Location, Dest_Location, Route_Name, Plan_Date, Cost_Driver_Total, Show_Price_To_Driver')
       .eq('Driver_ID', driverId)
       .neq('Job_Status', 'Cancelled')
-      .order('Plan_Date', { ascending: true }) // Show oldest/overdue jobs first
-      .order('Created_At', { ascending: true }) 
+      .or(`Job_Status.not.in.(Completed,Delivered),Plan_Date.eq.${today}`)
+      .order('Plan_Date', { ascending: true }) 
+      .order('Created_At', { ascending: true })
 
     if (!jobs) {
       return { 
@@ -923,14 +925,21 @@ export async function getDriverDashboardStats(driverId: string) {
         j.Show_Price_To_Driver !== false // Enforce job-level visibility rule
     ).reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0) || 0) : 0
 
-    const completed = jobs?.filter(j => ['Completed', 'Delivered'].includes(j.Job_Status || '')).length || 0
+    // 2. Get All-Time Completed count for stats (efficient count query)
+    const { count: allTimeCompleted } = await supabase
+        .from('Jobs_Main')
+        .select('*', { count: 'exact', head: true })
+        .eq('Driver_ID', driverId)
+        .in('Job_Status', ['Completed', 'Delivered'])
+
+    const completedToday = jobs?.filter(j => 
+        j.Plan_Date === today && ['Completed', 'Delivered'].includes(j.Job_Status || '')
+    ).length || 0
     
-    // User requested "Remaining Jobs" as the main count
-    const total = (jobs?.length || 0) - completed
-    
-    // Find current active job (In Progress/Transit, Arrived Pickup/Dropoff) OR the first Assigned/New job
+    // activeJobs are jobs not yet completed or delivered
     const activeJobs = jobs?.filter(j => !['Completed', 'Delivered', 'Cancelled'].includes(j.Job_Status || '')) || []
     const currentJob = activeJobs.length > 0 ? activeJobs[0] : null
+    const totalRemaining = activeJobs.length
 
     // 2. Gamification Stats (Monthly)
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
@@ -951,7 +960,7 @@ export async function getDriverDashboardStats(driverId: string) {
     else if (points >= 300) { rank = 'Silver'; nextRankPoints = 700 }
 
     return {
-      stats: { total, completed },
+      stats: { total: totalRemaining, completed: allTimeCompleted || 0 },
       todayIncome,
       gamification: {
           points,

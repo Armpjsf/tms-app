@@ -8,7 +8,9 @@ import {
     subDays,
     differenceInDays,
     formatDateSafe,
-    getEffectiveBranchId
+    getEffectiveBranchId,
+    getThaiMonthBoundaries,
+    getThaiNow
 } from './analytics-helpers'
 import { CO2_COEFFICIENTS } from '../utils/esg-utils'
 
@@ -17,10 +19,9 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     const supabase = await createAdminClient()
     const customerId = await getCustomerId()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
+    console.log(`[DEBUG] getExecutiveDashboardUnified: branchId=${branchId}, effectiveBranchId=${effectiveBranchId}`)
 
-    const now = new Date()
-    const currentStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    const currentEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    const { start: currentStart, end: currentEnd } = getThaiMonthBoundaries()
     
     const duration = differenceInDays(currentEnd, currentStart)
     const prevStart = subDays(currentStart, duration + 1)
@@ -56,12 +57,14 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         rpcError = { message: 'Manual filtering required for customer names' }
     }
 
-    // Fallback if Restricted, RPC fails, or is missing data
-    if (isRestricted || rpcError || !currentData || !currentData.financial) {
+    const hasNoData = currentData && (!currentData.financial || (currentData.financial.revenue === 0 && currentData.kpi?.jobs?.current === 0))
+    
+    // Fallback if Restricted, RPC fails, or is missing/zero data
+    if (isRestricted || rpcError || !currentData || hasNoData) {
         if (isRestricted) {
              console.debug('[getExecutiveDashboardUnified] Restricted access (Customer role but no Customer_ID)')
-        } else if (rpcError && rpcError.message) {
-            console.debug('[getExecutiveDashboardUnified] RPC failed, using manual fallback:', rpcError.message)
+        } else if (rpcError) {
+            console.warn('[getExecutiveDashboardUnified] RPC failed or type mismatch, using manual fallback:', rpcError.message || rpcError)
         }
         
         // Manual fallback: Fetch Current & Previous for Comparison
@@ -73,10 +76,15 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
                 .lte('Plan_Date', end)
             
             if (finalCustomerId) query = query.eq('Customer_ID', finalCustomerId)
-            if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+            if (effectiveBranchId) {
+                console.log(`[DEBUG] fetchRange applying branch filter: "${effectiveBranchId}"`)
+                query = query.eq('Branch_ID', effectiveBranchId)
+            }
             if (customerNames && customerNames.length > 0) query = query.in('Customer_Name', customerNames)
             
-            const { data } = await query
+            console.log(`[DEBUG] fetchRange: start=${start}, end=${end}, branch=${effectiveBranchId}`)
+            const { data, error } = await query
+            if (error) console.error('[DEBUG] fetchRange Error:', error)
             return data || []
         }
 
@@ -86,9 +94,9 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         ])
 
         const calcStats = (jobs: any[]) => {
-            const revenue = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Price_Cust_Total) || 0), 0)
-            const revenuePipeline = jobs.filter(j => PIPELINE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Price_Cust_Total) || 0), 0)
-            const cost = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Cost_Driver_Total) || 0) + (Number(j.Price_Cust_Extra) || 0) + (Number(j.Cost_Driver_Extra) || 0), 0)
+            const revenue = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Price_Cust_Total) || 0) + (Number(j.Price_Cust_Extra) || 0), 0)
+            const revenuePipeline = jobs.filter(j => PIPELINE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Price_Cust_Total) || 0) + (Number(j.Price_Cust_Extra) || 0), 0)
+            const cost = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Cost_Driver_Total) || 0) + (Number(j.Cost_Driver_Extra) || 0), 0)
             const distance = jobs.reduce((sum, j) => sum + (Number(j.Est_Distance_KM) || 0), 0)
             const totalQty = jobs.reduce((sum, j) => sum + (Number(j.Loaded_Qty) || 0), 0)
             return { revenue, revenuePipeline, cost, profit: revenue - cost, distance, count: jobs.length, totalQty }
@@ -138,7 +146,12 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
                 }
             }
         })
-        const trend = Object.entries(trendMap).map(([date, counts]) => ({ date, ...counts })).sort((a, b) => a.date.localeCompare(b.date))
+        const trend = Object.entries(trendMap)
+            .map(([date, counts]) => ({ date, ...counts }))
+            .sort((a, b) => a.date.localeCompare(b.date))
+
+        // Ensure we always have at least a few points for the chart even if data is sparse
+        const finalTrend = trend.length > 0 ? trend : [{ date: sDateCurrent, total: 0, completed: 0, revenue: 0, cost: 0 }]
 
         // Status Distribution
         const statusMap: Record<string, number> = {}
@@ -173,7 +186,7 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
                 profitMargin: curr.revenue > 0 ? ((curr.revenue - totalCostManual) / curr.revenue) * 100 : 0,
                 totalQty: curr.totalQty
             },
-            trend, 
+            trend: finalTrend, 
             statusDist: Object.entries(statusMap).map(([name, value]) => ({ name, value })),
             kpi: { 
                 revenue: { current: curr.revenue, previous: prev.revenue, growth: calculateGrowth(curr.revenue, prev.revenue), target: 250000, attainment: (curr.revenue / 250000) * 100 }, 
@@ -183,7 +196,9 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
                 totalQty: { current: curr.totalQty, growth: calculateGrowth(curr.totalQty, prev.totalQty) }
             },
             esg: { fuelSaved: Math.round(fuelSaved), co2Saved: Math.round(co2Saved), treesSaved: Number(treesSaved.toFixed(1)) },
-            vehicles: []
+            vehicles: [],
+            // Pass the counts to help UI debug
+            debug: { jobCount: currJobs.length, statusMatched: curr.count }
         }
     }
 
@@ -222,6 +237,7 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             .lte('Date_Finish', `${eDateCurrent}T23:59:59`)
 
         if (effectiveBranchId) {
+            console.log(`[DEBUG] fetchPipeline/Fuel/Maint applying branch filter: "${effectiveBranchId}"`)
             fetchPipeline.eq('Branch_ID', effectiveBranchId)
             fetchFuel.eq('Branch_ID', effectiveBranchId)
             fetchMaint.eq('Branch_ID', effectiveBranchId)
@@ -430,7 +446,8 @@ export async function getJobStatusDistribution(startDate?: string, endDate?: str
             filter_customer_id: customerId || null
         })
 
-        if (!error && data?.status_dist) {
+        const hasData = !error && data?.status_dist && Object.keys(data.status_dist).length > 0
+        if (hasData) {
             return Object.entries(data.status_dist || {}).map(([name, value]) => ({ name, value: Number(value) }))
         }
 
@@ -667,9 +684,11 @@ export async function getRevenueForecast(branchId?: string): Promise<{ month: st
     try {
         const supabase = await createAdminClient()
         const effectiveBranchId = await getEffectiveBranchId(branchId)
-        const sixMonthsAgo = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+        const now = getThaiNow()
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+        const sixMonthsAgoStr = formatDateSafe(sixMonthsAgo)!
         
-        let query = supabase.from('Jobs_Main').select('Price_Cust_Total, Plan_Date').gte('Plan_Date', sixMonthsAgo.toISOString().split('T')[0]).in('Job_Status', REVENUE_STATUSES)
+        let query = supabase.from('Jobs_Main').select('Price_Cust_Total, Plan_Date').gte('Plan_Date', sixMonthsAgoStr).in('Job_Status', REVENUE_STATUSES)
         if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
 
         const { data: history } = await query
@@ -715,10 +734,11 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
     const stats: Record<string, any> = {}
     jobs?.forEach(j => {
         const p = j.Vehicle_Plate || 'Unknown'
-        if (!stats[p]) stats[p] = { plate: p, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalKm: 0, predictedFuel: 0, predictedMaintenance: 0, netProfit: 0 }
+        if (!stats[p]) stats[p] = { plate: p, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalKm: 0, count: 0, predictedFuel: 0, predictedMaintenance: 0, netProfit: 0 }
         stats[p].revenue += Number(j.Price_Cust_Total) || 0
         stats[p].driverCost += Number(j.Cost_Driver_Total) || 0
         stats[p].totalKm += Number(j.Est_Distance_KM) || 0
+        stats[p].count++
         
         // Grouping logic for predicted
         const km = Number(j.Est_Distance_KM) || 0

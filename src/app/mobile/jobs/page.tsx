@@ -7,16 +7,14 @@ import { getDriverJobs } from "@/lib/supabase/jobs"
 import { MobileJobFilter } from "@/components/mobile/job-filter"
 import { cn } from "@/lib/utils"
 import { RealtimeJobsTrigger } from "@/components/mobile/realtime-jobs-trigger"
+import { Suspense } from "react"
+import JobsLoading from "./loading"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-export default async function DriverJobsPage(props: Props) {
-  const searchParams = await props.searchParams
-  const session = await getDriverSession()
-  if (!session) redirect("/mobile/login")
-
+async function JobsContent({ driverId, searchParams }: { driverId: string, searchParams: any }) {
   const date = (searchParams.date as string) || undefined
   const status = (searchParams.status as string) || undefined
 
@@ -26,7 +24,7 @@ export default async function DriverJobsPage(props: Props) {
   const tomorrowStr = tomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
   // Fetch jobs for this driver with filters
-  const jobs = await getDriverJobs(session.driverId, { startDate: date, endDate: date, status })
+  const jobs = await getDriverJobs(driverId, { startDate: date, endDate: date, status })
 
   // Scalability: Hide old completed/cancelled jobs from default view
   let displayJobs = jobs
@@ -41,15 +39,7 @@ export default async function DriverJobsPage(props: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-32 pt-24 px-6 relative overflow-hidden">
-       {/* High-end Background Decor */}
-      <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
-      
-      <MobileHeader title="Management" rightElement={<MobileJobFilter />} />
-      <RealtimeJobsTrigger driverId={session.driverId} />
-      
-      <div className="relative z-10 space-y-8">
+    <div className="relative z-10 space-y-8">
         {/* Header Section */}
         <div className="flex justify-between items-end px-1">
             <div className="space-y-1">
@@ -146,7 +136,6 @@ export default async function DriverJobsPage(props: Props) {
                         const routeStr = job.Route_Name || job.Dest_Location || "";
                         const points = routeStr.split(/[→\->]/).map(p => p.trim()).filter(Boolean);
                         
-                        // Default values
                         let displayOrigin = job.Origin_Location || "ไม่ระบุต้นทาง";
                         let displayDest = job.Dest_Location || "ไม่ระบุปลายทาง";
 
@@ -205,7 +194,27 @@ export default async function DriverJobsPage(props: Props) {
             </Link>
             ))}
         </div>
-      </div>
+    </div>
+  )
+}
+
+export default async function DriverJobsPage(props: Props) {
+  const searchParams = await props.searchParams
+  const session = await getDriverSession()
+  if (!session) redirect("/mobile/login")
+
+  return (
+    <div className="min-h-screen bg-background pb-32 pt-24 px-6 relative overflow-hidden">
+       {/* High-end Background Decor */}
+      <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 pointer-events-none" />
+      <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
+      
+      <MobileHeader title="Management" rightElement={<MobileJobFilter />} />
+      <RealtimeJobsTrigger driverId={session.driverId} />
+      
+      <Suspense fallback={<JobsLoading />}>
+          <JobsContent driverId={session.driverId} searchParams={searchParams} />
+      </Suspense>
     </div>
   )
 }
