@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { getSession } from '@/lib/session'
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import { createAdminClient } from '@/utils/supabase/server'
 import { aiToolExecutors } from '@/lib/ai/tools'
 
 // Models to try in order - stable versions prioritized
@@ -9,8 +10,199 @@ const GEMINI_MODELS = [
     "gemini-2.0-flash",
     "gemini-1.5-flash",
     "gemini-1.5-pro",
-    "gemini-1.0-pro",
 ]
+
+// ─────────────────────────────────────────────────────────────────
+// Helper: fetch data with silent error handling
+// ─────────────────────────────────────────────────────────────────
+const safe = (result: PromiseSettledResult<any>) =>
+    result.status === 'fulfilled' ? result.value : null
+
+// ─────────────────────────────────────────────────────────────────
+// Helper: Fetch financials directly from DB (bypass fragile RPC)
+// ─────────────────────────────────────────────────────────────────
+async function getFinancialDirect(branchId?: string) {
+    try {
+        const supabase = await createAdminClient()
+        const now = new Date()
+        const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+            .toISOString().split('T')[0]
+
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status')
+            .gte('Plan_Date', firstDay)
+            .lte('Plan_Date', lastDay)
+
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        }
+
+        const { data } = await query
+        if (!data) return null
+
+        const REVENUE_STATUSES = ['Completed', 'Delivered', 'Complete']
+        const revenueJobs = data.filter(j => REVENUE_STATUSES.includes(j.Job_Status || ''))
+
+        const revenue = revenueJobs.reduce((s, j) => s + (Number(j.Price_Cust_Total) || 0) + (Number(j.Price_Cust_Extra) || 0), 0)
+        const cost = revenueJobs.reduce((s, j) => s + (Number(j.Cost_Driver_Total) || 0) + (Number(j.Cost_Driver_Extra) || 0), 0)
+        const netProfit = revenue - cost
+        const margin = revenue > 0 ? (netProfit / revenue) * 100 : 0
+
+        // Total jobs pipeline this month (for context)
+        const pipeline = data.reduce((s, j) => s + (Number(j.Price_Cust_Total) || 0), 0)
+
+        return { revenue, cost, netProfit, margin, pipeline, jobCount: data.length, revenueJobCount: revenueJobs.length }
+    } catch {
+        return null
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Helper: Fetch today's jobs directly
+// ─────────────────────────────────────────────────────────────────
+async function getTodayDirect(branchId?: string) {
+    try {
+        const supabase = await createAdminClient()
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Job_ID, Job_Status, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Origin_Location, Dest_Location, Plan_Date')
+            .eq('Plan_Date', today)
+
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        }
+
+        const { data } = await query.order('Created_At', { ascending: false }).limit(30)
+        if (!data) return null
+
+        const active = data.filter(j => ['Picked Up', 'In Transit', 'Assigned', 'Confirmed', 'Arrived'].includes(j.Job_Status)).length
+        const completed = data.filter(j => ['Completed', 'Delivered'].includes(j.Job_Status)).length
+        const pending = data.filter(j => ['New', 'Pending', 'Requested'].includes(j.Job_Status)).length
+        const sos = data.filter(j => j.Job_Status === 'SOS').length
+
+        return {
+            total: data.length,
+            active,
+            completed,
+            pending,
+            sos,
+            jobs: data.slice(0, 10).map(j => ({
+                id: j.Job_ID,
+                status: j.Job_Status,
+                customer: j.Customer_Name,
+                driver: j.Driver_Name,
+                plate: j.Vehicle_Plate,
+                route: j.Route_Name,
+                origin: j.Origin_Location,
+                dest: j.Dest_Location
+            }))
+        }
+    } catch {
+        return null
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Helper: Fetch customers directly
+// ─────────────────────────────────────────────────────────────────
+async function getCustomersDirect(branchId?: string) {
+    try {
+        const supabase = await createAdminClient()
+        let query = supabase
+            .from('Master_Customers')
+            .select('Customer_ID, Customer_Name, Contact_Person, Phone_No, Branch_ID, Active_Status')
+
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        }
+
+        const { data } = await query.limit(50)
+        return data || []
+    } catch {
+        return []
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Helper: Fetch recent job history for trend analysis
+// ─────────────────────────────────────────────────────────────────
+async function getRecentJobTrend(branchId?: string) {
+    try {
+        const supabase = await createAdminClient()
+        const sevenDaysAgo = new Date()
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
+        const startDate = sevenDaysAgo.toISOString().split('T')[0]
+
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Plan_Date, Job_Status, Price_Cust_Total, Customer_Name, Route_Name')
+            .gte('Plan_Date', startDate)
+
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        }
+
+        const { data } = await query.order('Plan_Date', { ascending: true }).limit(200)
+        if (!data) return []
+
+        // Group by date
+        const byDate: Record<string, { date: string, total: number, completed: number, revenue: number }> = {}
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(sevenDaysAgo)
+            d.setDate(sevenDaysAgo.getDate() + i)
+            const ds = d.toISOString().split('T')[0]
+            byDate[ds] = { date: ds, total: 0, completed: 0, revenue: 0 }
+        }
+
+        data.forEach(j => {
+            const ds = String(j.Plan_Date).split('T')[0]
+            if (byDate[ds]) {
+                byDate[ds].total++
+                if (['Completed', 'Delivered'].includes(j.Job_Status || '')) {
+                    byDate[ds].completed++
+                    byDate[ds].revenue += Number(j.Price_Cust_Total) || 0
+                }
+            }
+        })
+
+        return Object.values(byDate)
+    } catch {
+        return []
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Helper: Fetch billing/invoice summary
+// ─────────────────────────────────────────────────────────────────
+async function getBillingSummary(branchId?: string) {
+    try {
+        const supabase = await createAdminClient()
+        const { data } = await supabase
+            .from('Billing_Notes')
+            .select('Status, Total_Amount, Created_At')
+            .limit(100)
+            .order('Created_At', { ascending: false })
+
+        if (!data) return null
+
+        const pending = data.filter(b => ['Draft', 'Pending', 'Sent'].includes(b.Status || ''))
+        const paid = data.filter(b => b.Status === 'Paid')
+
+        return {
+            total: data.length,
+            pending: pending.length,
+            paid: paid.length,
+            pendingAmount: pending.reduce((s, b) => s + (Number(b.Total_Amount) || 0), 0),
+            paidAmount: paid.reduce((s, b) => s + (Number(b.Total_Amount) || 0), 0),
+        }
+    } catch {
+        return null
+    }
+}
 
 export async function POST(req: NextRequest) {
     try {
@@ -20,8 +212,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json().catch(() => ({}))
         const { message } = body
         if (!message) return NextResponse.json({ error: 'Message is required' }, { status: 400 })
-        
-        // Use server-side key if available, fallback to public key
+
         const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
         if (!apiKey) {
             return NextResponse.json({ response: "AI System: ไม่พบ API Key ในการตั้งค่าระบบ" })
@@ -31,13 +222,12 @@ export async function POST(req: NextRequest) {
         const selectedBranch = cookieStore.get('selectedBranch')?.value
         const branchId = selectedBranch === 'All' ? undefined : (selectedBranch || session.branchId || undefined)
 
-        // =====================================================================
-        // 1. BUILD COMPREHENSIVE KNOWLEDGE BASE
-        //    Load all system data in parallel, silently ignore failures
-        // =====================================================================
+        // ─────────────────────────────────────────────────────────────────
+        // 1. BUILD COMPREHENSIVE KNOWLEDGE BASE (Direct DB calls - more reliable)
+        // ─────────────────────────────────────────────────────────────────
         const [
-            todaySummary,
-            financial,
+            todayData,
+            financialData,
             allDrivers,
             allVehicles,
             maintenanceStats,
@@ -46,10 +236,13 @@ export async function POST(req: NextRequest) {
             fleetHealth,
             damageReports,
             driverLeaves,
+            customers,
+            jobTrend,
+            billing,
             workforceAnalytics,
         ] = await Promise.allSettled([
-            aiToolExecutors.get_today_summary({ branchId }),
-            aiToolExecutors.get_financial_summary({ branchId }),
+            getTodayDirect(branchId),
+            getFinancialDirect(branchId),
             aiToolExecutors.get_all_drivers(),
             aiToolExecutors.get_all_vehicles(),
             aiToolExecutors.get_maintenance_stats(),
@@ -58,14 +251,14 @@ export async function POST(req: NextRequest) {
             aiToolExecutors.get_fleet_health(),
             aiToolExecutors.get_damage_reports(),
             aiToolExecutors.get_driver_leaves({}),
+            getCustomersDirect(branchId),
+            getRecentJobTrend(branchId),
+            getBillingSummary(branchId),
             aiToolExecutors.get_workforce_analytics(),
         ])
 
-        const safe = (result: PromiseSettledResult<any>) =>
-            result.status === 'fulfilled' ? result.value : null
-
-        const today = safe(todaySummary)
-        const fin = safe(financial)
+        const today = safe(todayData)
+        const fin = safe(financialData)
         const drivers = safe(allDrivers) as any[] | null
         const vehicles = safe(allVehicles) as any[] | null
         const maintStats = safe(maintenanceStats)
@@ -74,158 +267,160 @@ export async function POST(req: NextRequest) {
         const health = safe(fleetHealth) as any[] | null
         const damage = safe(damageReports) as any[] | null
         const leaves = safe(driverLeaves) as any[] | null
+        const custList = safe(customers) as any[] | null
+        const trend = safe(jobTrend) as any[] | null
+        const bill = safe(billing)
         const workforce = safe(workforceAnalytics)
 
-        // =====================================================================
-        // 2. CONSTRUCT RICH SYSTEM PROMPT  
-        // =====================================================================
-        const now = new Date().toLocaleDateString('th-TH', { 
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', 
-            hour: '2-digit', minute: '2-digit' 
+        // ─────────────────────────────────────────────────────────────────
+        // 2. CONSTRUCT RICH SYSTEM PROMPT
+        // ─────────────────────────────────────────────────────────────────
+        const now = new Date().toLocaleDateString('th-TH', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
         })
+
         const systemPrompt = `
-คุณคือ "LogisPro AI Admin" ผู้ช่วยอัจฉริยะของระบบบริหารการขนส่ง LogisPro
+คุณคือ "LogisPro AI" ผู้ช่วยอัจฉริยะของระบบบริหารการขนส่ง สามารถตอบคำถามได้อย่างยืดหยุ่น ไม่จำเป็นต้องพิมพ์คำถามเป๊ะๆ
 วันที่และเวลาปัจจุบัน: ${now}
-ผู้ใช้งานปัจจุบัน: ${session.username || 'Admin'} | สาขา: ${branchId || 'ทุกสาขา'}
+ผู้ใช้งาน: ${session.username || 'Admin'} | สาขา: ${branchId || 'ทุกสาขา'}
 
-═══════════════════════════════════════════════════════
-📦 ข้อมูลงานวันนี้
-═══════════════════════════════════════════════════════
-- จำนวนงานทั้งหมด: ${today?.todayJobCount ?? 'N/A'} รายการ
-- กำลังวิ่ง: ${today?.stats?.active ?? 0} คัน
-- เสร็จแล้ว: ${today?.stats?.completed ?? 0} รายการ
-- รอดำเนินการ: ${today?.stats?.pending ?? 0} รายการ
-- งานล่าสุด 5 รายการ: ${JSON.stringify(today?.jobs ?? [])}
+═══ 📦 งานวันนี้ ═══
+- จำนวนงานทั้งหมดวันนี้: ${today?.total ?? 'ไม่มีข้อมูล'} รายการ
+- กำลังดำเนินการ / วิ่งอยู่: ${today?.active ?? 0} คัน
+- เสร็จสิ้นแล้ว: ${today?.completed ?? 0} รายการ
+- รอดำเนินการ: ${today?.pending ?? 0} รายการ
+- SOS/ฉุกเฉิน: ${today?.sos ?? 0} คัน
+- รายการงานวันนี้: ${JSON.stringify(today?.jobs ?? [])}
 
-═══════════════════════════════════════════════════════
-💰 ข้อมูลการเงิน (เดือนนี้)
-═══════════════════════════════════════════════════════
-- รายได้รวม: ฿${fin?.revenue?.toLocaleString() ?? 'N/A'}
-- ค่าใช้จ่ายรวม: ฿${fin?.cost?.toLocaleString() ?? 'N/A'}
-- กำไรสุทธิ: ฿${fin?.netProfit?.toLocaleString() ?? 'N/A'}
-- อัตรากำไร: ${fin?.margin?.toFixed(1) ?? 'N/A'}%
+═══ 📈 แนวโน้ม 7 วันที่ผ่านมา ═══
+${(trend || []).map((t: any) => `  ${t.date}: งาน ${t.total} รายการ, เสร็จ ${t.completed}, รายได้ ฿${t.revenue?.toLocaleString()}`).join('\n') || 'ไม่มีข้อมูล'}
 
-═══════════════════════════════════════════════════════
-👨‍✈️ ข้อมูลพนักงานขับรถ
-═══════════════════════════════════════════════════════
+═══ 💰 การเงินเดือนนี้ (คำนวณจากงานที่ส่งแล้ว) ═══
+- รายได้จากงานที่ส่งแล้ว: ฿${fin?.revenue?.toLocaleString() ?? 'ไม่มีข้อมูล'}
+- ยอดรวมทุกงาน (Pipeline): ฿${fin?.pipeline?.toLocaleString() ?? 'ไม่มีข้อมูล'}
+- ต้นทุนคนขับรวม: ฿${fin?.cost?.toLocaleString() ?? 'ไม่มีข้อมูล'}
+- กำไรสุทธิ: ฿${fin?.netProfit?.toLocaleString() ?? 'ไม่มีข้อมูล'}
+- อัตรากำไร: ${fin?.margin?.toFixed(1) ?? 'ไม่มีข้อมูล'}%
+- จำนวนงานที่นับรายได้แล้ว: ${fin?.revenueJobCount ?? 0} / ${fin?.jobCount ?? 0} รายการ
+
+═══ 📋 Billing/ใบวางบิล ═══
+- ใบวางบิลทั้งหมด: ${bill?.total ?? 0} ใบ
+- รอชำระ: ${bill?.pending ?? 0} ใบ (฿${bill?.pendingAmount?.toLocaleString() ?? 0})
+- ชำระแล้ว: ${bill?.paid ?? 0} ใบ (฿${bill?.paidAmount?.toLocaleString() ?? 0})
+
+═══ 👥 ลูกค้า ═══
+- จำนวนลูกค้าในระบบ: ${custList?.length ?? 0} ราย
+- รายชื่อลูกค้า (สูงสุด 15 ราย): ${custList?.slice(0, 15).map((c: any) => `${c.name || c.Customer_Name} (${c.id || c.Customer_ID})`).join(', ') ?? 'ไม่มีข้อมูล'}
+
+═══ 👨‍✈️ คนขับ ═══
 - จำนวนคนขับทั้งหมด: ${drivers?.length ?? 0} คน
-- คนขับที่ Active: ${drivers?.filter((d: any) => d.status === 'Active').length ?? 0} คน
-- รายชื่อคนขับ: ${drivers?.slice(0, 10).map((d: any) => `${d.name} (${d.id})`).join(', ') ?? 'ไม่มีข้อมูล'}
+- Active: ${drivers?.filter((d: any) => d.status === 'Active').length ?? 0} คน
+- รายชื่อ (10 คนแรก): ${drivers?.slice(0, 10).map((d: any) => `${d.name} (${d.id}) - ${d.status}`).join(', ') ?? 'ไม่มีข้อมูล'}
 
-═══════════════════════════════════════════════════════
-🚛 ข้อมูลยานพาหนะ
-═══════════════════════════════════════════════════════
+═══ 🚛 ยานพาหนะ ═══
 - จำนวนรถทั้งหมด: ${vehicles?.length ?? 0} คัน
-- รถที่ Active: ${vehicles?.filter((v: any) => v.status === 'Active').length ?? 0} คัน
-- ทะเบียนรถ (10 คันแรก): ${vehicles?.slice(0, 10).map((v: any) => v.plate).join(', ') ?? 'ไม่มีข้อมูล'}
+- Active: ${vehicles?.filter((v: any) => v.status === 'Active').length ?? 0} คัน
+- ทะเบียน (10 คันแรก): ${vehicles?.slice(0, 10).map((v: any) => `${v.plate} (${v.type || '-'})`).join(', ') ?? 'ไม่มีข้อมูล'}
 
-═══════════════════════════════════════════════════════
-🔧 ข้อมูลการซ่อมบำรุง
-═══════════════════════════════════════════════════════
+═══ 🔧 ซ่อมบำรุง ═══
 - สรุปภาพรวม: ${JSON.stringify(maintStats ?? {})}
-- ซ่อมที่รอดำเนินการ: ${repairs?.length ?? 0} รายการ
-- รายการซ่อมที่รอ: ${repairs?.slice(0, 5).map((r: any) => `${r.vehicle}: ${r.problem}`).join(' | ') ?? 'ไม่มี'}
+- รอซ่อม: ${repairs?.length ?? 0} รายการ
+- รายการซ่อม: ${repairs?.slice(0, 5).map((r: any) => `${r.vehicle}: ${r.problem} (${r.status})`).join(' | ') ?? 'ไม่มีรายการซ่อม'}
 
-═══════════════════════════════════════════════════════
-⛽ ข้อมูลการเติมน้ำมัน
-═══════════════════════════════════════════════════════
-- ค่าน้ำมันรวม: ฿${fuel?.totalFuelCost?.toLocaleString() ?? 'N/A'}
-- ปริมาณน้ำมันรวม: ${fuel?.totalLiters?.toLocaleString() ?? 'N/A'} ลิตร
-- เฉลี่ยต่อเที่ยว: ${fuel?.avgPerTrip?.toFixed(1) ?? 'N/A'} ลิตร
+═══ ⛽ น้ำมัน ═══
+- ค่าน้ำมันรวม: ฿${fuel?.totalFuelCost?.toLocaleString() ?? 'ไม่มีข้อมูล'}
+- ปริมาณน้ำมัน: ${fuel?.totalLiters?.toLocaleString() ?? 0} ลิตร
+- เฉลี่ยต่อเที่ยว: ${fuel?.avgPerTrip?.toFixed(1) ?? 0} ลิตร
 
-═══════════════════════════════════════════════════════
-🚨 สถานะสุขภาพยานพาหนะ (Fleet Health)
-═══════════════════════════════════════════════════════
-- การแจ้งเตือน: ${health?.length ?? 0} รายการ
+═══ 🚨 Fleet Health ═══
+- แจ้งเตือน: ${health?.length ?? 0} รายการ
 - รายละเอียด: ${health?.slice(0, 3).map((h: any) => `[${h.severity}] ${h.vehicle}: ${h.alert}`).join(' | ') ?? 'ไม่มีการแจ้งเตือน'}
 
-═══════════════════════════════════════════════════════
-💥 รายงานสินค้าเสียหาย
-═══════════════════════════════════════════════════════
+═══ 💥 สินค้าเสียหาย ═══
 - รายการทั้งหมด: ${damage?.length ?? 0} รายการ
-- รอการตรวจสอบ: ${damage?.filter((d: any) => d.status === 'Pending').length ?? 0} รายการ
+- รอตรวจสอบ: ${damage?.filter((d: any) => d.status === 'Pending').length ?? 0} รายการ
+- รายละเอียด: ${damage?.slice(0, 3).map((d: any) => `${d.driver}: ${d.description} (฿${d.amount})`).join(' | ') ?? 'ไม่มี'}
 
-═══════════════════════════════════════════════════════
-📅 การลาของพนักงาน
-═══════════════════════════════════════════════════════
+═══ 📅 การลา ═══
 - การลาเดือนนี้: ${leaves?.length ?? 0} รายการ
-- รอการอนุมัติ: ${leaves?.filter((l: any) => l.status === 'Pending').length ?? 0} รายการ
+- รออนุมัติ: ${leaves?.filter((l: any) => l.status === 'Pending').length ?? 0} รายการ
+- รายละเอียด: ${leaves?.slice(0, 5).map((l: any) => `${l.driver}: ${l.type} (${l.from} - ${l.to})`).join(' | ') ?? 'ไม่มี'}
 
-═══════════════════════════════════════════════════════
-📊 ข้อมูล Workforce
-═══════════════════════════════════════════════════════
+═══ 📊 Workforce ═══
 ${JSON.stringify(workforce ?? {})}
 
-═══════════════════════════════════════════════════════
-📌 คำสั่งพิเศษ
-═══════════════════════════════════════════════════════
-- ตอบคำถามทุกอย่างในระบบที่ผู้ใช้ถาม โดยใช้ข้อมูลด้านบนเป็นหลัก
-- หากถามเรื่องคนขับหรือรถเฉพาะเจาะจง ให้ค้นหาจากฐานข้อมูลด้านบนก่อน
-- ตอบเป็นภาษาไทยอย่างมืออาชีพ กระชับ และให้ข้อมูลที่แม่นยำ
-- หากถามเรื่องที่ไม่มีข้อมูล ให้บอกว่าต้องการข้อมูลเพิ่มเติมหรือให้โทรถามสาขา
-- สามารถทำสรุป วิเคราะห์แนวโน้ม หรือเสนอคำแนะนำได้
+═══ 📌 แนวทางตอบคำถาม ═══
+- ตอบเป็นภาษาไทยอย่างเป็นธรรมชาติ กระชับ และมืออาชีพ
+- เข้าใจคำถามที่หลากหลาย เช่น "วันนี้เป็นยังไงบ้าง", "มีปัญหาอะไรมั้ย", "กำไรเดือนนี้เท่าไหร่", "รถคันไหนส่งแล้ว"
+- สามารถวิเคราะห์แนวโน้ม เปรียบเทียบ หรือเสนอคำแนะนำได้
+- ถ้าข้อมูลบางส่วนเป็น 0 หรือน้อยมาก ให้บอกผู้ใช้ว่าอาจยังไม่มีงานในช่วงนั้น หรือข้อมูลยังไม่ถูก update
+- ถ้าถามเรื่องที่ไม่มีในฐานข้อมูล ให้บอกตรงๆ ว่าไม่มีข้อมูล
         `.trim()
 
-        // =====================================================================
+        // ─────────────────────────────────────────────────────────────────
         // 3. CALL GEMINI WITH FALLBACK
-        // =====================================================================
+        // ─────────────────────────────────────────────────────────────────
         const genAI = new GoogleGenerativeAI(apiKey)
 
         for (const modelName of GEMINI_MODELS) {
             try {
-                console.log(`[AI Chat] Connecting via: ${modelName}...`)
                 const model = genAI.getGenerativeModel({ model: modelName })
-                const result = await model.generateContent([systemPrompt, `User Request: ${message}`])
+                const result = await model.generateContent([systemPrompt, `คำถามจากผู้ใช้: ${message}`])
                 const responseText = result.response.text()
-                
+
                 if (responseText) {
-                    console.log(`[AI Chat] Success with: ${modelName}`)
                     return NextResponse.json({ response: responseText })
                 }
             } catch (err: any) {
                 const errMsg = err.message || ''
                 console.warn(`[AI Chat] ${modelName} failed: ${errMsg}`)
-                
-                // Critical failures (Auth/Quota) should stop the loop early
+
                 if (errMsg.includes('429') || errMsg.includes('403') || errMsg.includes('API key')) {
-                    console.error('[AI Chat] Terminating model loop due to critical API error.')
                     break
                 }
-                continue 
+                continue
             }
         }
 
-        // =====================================================================
-        // 4. SAFEMODE - Data-aware fallback
-        // =====================================================================
-        console.warn('[AI Chat] All Gemini models failed, using data-aware SafeMode...')
+        // ─────────────────────────────────────────────────────────────────
+        // 4. SMART SAFEMODE (ไม่พึ่ง keyword เป๊ะๆ)
+        // ─────────────────────────────────────────────────────────────────
         const lower = message.toLowerCase()
-        let safeResponse = "🤖 [SafeMode] ขออภัยครับ ระบบ AI หลักขัดข้องชั่วคราว"
-        
-        if (lower.includes('งาน') || lower.includes('job') || lower.includes('วันนี้')) {
-            safeResponse = `📦 [SafeMode] งานวันนี้: ${today?.todayJobCount ?? 0} รายการ | กำลังวิ่ง ${today?.stats?.active ?? 0} คัน | เสร็จแล้ว ${today?.stats?.completed ?? 0} รายการ`
-        } else if (lower.includes('รายได้') || lower.includes('กำไร') || lower.includes('เงิน')) {
-            safeResponse = `💰 [SafeMode] รายได้: ฿${fin?.revenue?.toLocaleString() ?? 0} | กำไร: ฿${fin?.netProfit?.toLocaleString() ?? 0} | Margin: ${fin?.margin?.toFixed(1) ?? 0}%`
-        } else if (lower.includes('คนขับ') || lower.includes('driver')) {
-            safeResponse = `👨‍✈️ [SafeMode] คนขับ ${drivers?.length ?? 0} คน | Active: ${drivers?.filter((d: any) => d.status === 'Active').length ?? 0} คน`
-        } else if (lower.includes('รถ') || lower.includes('vehicle')) {
-            safeResponse = `🚛 [SafeMode] รถทั้งหมด ${vehicles?.length ?? 0} คัน | Active: ${vehicles?.filter((v: any) => v.status === 'Active').length ?? 0} คัน`
-        } else if (lower.includes('ซ่อม') || lower.includes('maintenance')) {
-            safeResponse = `🔧 [SafeMode] รอซ่อม: ${repairs?.length ?? 0} รายการ`
-        } else if (lower.includes('น้ำมัน') || lower.includes('fuel')) {
-            safeResponse = `⛽ [SafeMode] ค่าน้ำมันรวม: ฿${fuel?.totalFuelCost?.toLocaleString() ?? 0}`
-        } else if (lower.includes('ลา') || lower.includes('leave')) {
-            safeResponse = `📅 [SafeMode] การลา ${leaves?.length ?? 0} รายการ | รออนุมัติ ${leaves?.filter((l: any) => l.status === 'Pending').length ?? 0} รายการ`
-        } else if (lower.includes('เสียหาย') || lower.includes('damage')) {
-            safeResponse = `💥 [SafeMode] รายงานสินค้าเสียหาย ${damage?.length ?? 0} รายการ | รอตรวจสอบ ${damage?.filter((d: any) => d.status === 'Pending').length ?? 0} รายการ`
+        const has = (...words: string[]) => words.some(w => lower.includes(w))
+
+        let safeResponse = "🤖 ระบบ AI หลักขัดข้องชั่วคราว แต่ยังมีข้อมูลพื้นฐานให้ครับ"
+
+        if (has('งาน', 'job', 'วันนี้', 'ส่งของ', 'ขนส่ง', 'เที่ยว', 'trip', 'delivery')) {
+            safeResponse = `📦 งานวันนี้รวม ${today?.total ?? 0} รายการ | กำลังวิ่ง ${today?.active ?? 0} คัน | เสร็จแล้ว ${today?.completed ?? 0} รายการ | รอ ${today?.pending ?? 0} รายการ`
+        } else if (has('รายได้', 'กำไร', 'เงิน', 'revenue', 'profit', 'การเงิน', 'ยอด', 'ราคา')) {
+            safeResponse = `💰 รายได้เดือนนี้: ฿${fin?.revenue?.toLocaleString() ?? 0} | กำไร: ฿${fin?.netProfit?.toLocaleString() ?? 0} | Margin: ${fin?.margin?.toFixed(1) ?? 0}%`
+        } else if (has('คนขับ', 'driver', 'พนักงาน', 'คน', 'ขับ')) {
+            safeResponse = `👨‍✈️ คนขับ ${drivers?.length ?? 0} คน | Active: ${drivers?.filter((d: any) => d.status === 'Active').length ?? 0} คน`
+        } else if (has('รถ', 'vehicle', 'ยานพาหนะ', 'ทะเบียน', 'fleet')) {
+            safeResponse = `🚛 รถทั้งหมด ${vehicles?.length ?? 0} คัน | Active: ${vehicles?.filter((v: any) => v.status === 'Active').length ?? 0} คัน`
+        } else if (has('ซ่อม', 'maintenance', 'บำรุง', 'repair')) {
+            safeResponse = `🔧 รอซ่อม ${repairs?.length ?? 0} รายการ`
+        } else if (has('น้ำมัน', 'fuel', 'เติม')) {
+            safeResponse = `⛽ ค่าน้ำมันรวม: ฿${fuel?.totalFuelCost?.toLocaleString() ?? 0} | ${fuel?.totalLiters?.toLocaleString() ?? 0} ลิตร`
+        } else if (has('ลา', 'leave', 'หยุด', 'วันหยุด')) {
+            safeResponse = `📅 การลา ${leaves?.length ?? 0} รายการ | รออนุมัติ ${leaves?.filter((l: any) => l.status === 'Pending').length ?? 0} รายการ`
+        } else if (has('เสียหาย', 'damage', 'แตก', 'หัก', 'สินค้า')) {
+            safeResponse = `💥 รายงานเสียหาย ${damage?.length ?? 0} รายการ | รอตรวจสอบ ${damage?.filter((d: any) => d.status === 'Pending').length ?? 0} รายการ`
+        } else if (has('ลูกค้า', 'customer', 'บริษัท', 'ลูกค้า')) {
+            safeResponse = `👥 ลูกค้าในระบบ ${custList?.length ?? 0} ราย`
+        } else if (has('billing', 'บิล', 'ใบวางบิล', 'invoice', 'ชำระ')) {
+            safeResponse = `📋 ใบวางบิล ${bill?.total ?? 0} ใบ | รอชำระ ${bill?.pending ?? 0} ใบ (฿${bill?.pendingAmount?.toLocaleString() ?? 0}) | ชำระแล้ว ${bill?.paid ?? 0} ใบ`
+        } else if (has('สรุป', 'ภาพรวม', 'summary', 'report', 'ทั้งหมด', 'overview')) {
+            safeResponse = `📊 สรุปวันนี้: งาน ${today?.total ?? 0} รายการ | รายได้ ฿${fin?.revenue?.toLocaleString() ?? 0} | รถ ${vehicles?.length ?? 0} คัน | คนขับ ${drivers?.length ?? 0} คน | รอซ่อม ${repairs?.length ?? 0} คัน`
         }
 
-        return NextResponse.json({ response: safeResponse })
+        return NextResponse.json({ response: `[SafeMode] ${safeResponse}` })
 
     } catch (error: any) {
         console.error('[AI Chat] Critical Error:', error)
-        return NextResponse.json({ 
-            response: `ระบบ AI ขัดข้อง: [${error.message}]` 
+        return NextResponse.json({
+            response: `ระบบ AI ขัดข้อง: [${error.message}]`
         })
     }
 }
