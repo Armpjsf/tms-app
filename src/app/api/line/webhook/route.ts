@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/server'
-import { replyToUser, verifyLineSignature, getMessageContent } from '@/lib/integrations/line'
+import { replyToUser, verifyLineSignature, getMessageContent, pushToUser } from '@/lib/integrations/line'
 import { aiToolExecutors } from '@/lib/ai/tools'
 
 // ─────────────────────────────────────────────────────────────────
@@ -338,10 +338,11 @@ export async function POST(req: NextRequest) {
                     const systemPrompt = await buildAIContext(branchId, userName)
                     const aiResponse = await callGeminiText(systemPrompt, rawText)
                     if (aiResponse) {
-                        // Split if response exceeds LINE's character limit
+                        // LINE replyToken is single-use — use push for overflow parts
                         const parts = splitLineMessage(aiResponse)
-                        for (const part of parts) {
-                            await replyToUser(replyToken, part)
+                        await replyToUser(replyToken, parts[0])
+                        for (let i = 1; i < parts.length; i++) {
+                            await pushToUser(userId, parts[i])
                         }
                     } else {
                         await replyToUser(replyToken, '⚠️ AI ไม่สามารถตอบได้ในขณะนี้ กรุณาลองอีกครั้งครับ')

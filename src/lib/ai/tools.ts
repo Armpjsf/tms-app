@@ -36,10 +36,13 @@ export const aiToolExecutors: Record<string, Function> = {
   },
 
   get_today_summary: async (args: { branchId?: string }) => {
-    const stats = await getOperationalStats(args.branchId)
     const todayJobs = await getTodayJobs()
+    const active = todayJobs.filter(j => ['In Progress', 'Picked Up', 'In Transit', 'Assigned', 'Confirmed', 'Arrived'].includes(j.Job_Status || '')).length
+    const completed = todayJobs.filter(j => ['Completed', 'Delivered', 'Complete'].includes(j.Job_Status || '')).length
+    const pending = todayJobs.filter(j => ['New', 'Pending', 'Requested'].includes(j.Job_Status || '')).length
+    const sos = todayJobs.filter(j => j.Job_Status === 'SOS').length
     return {
-        stats: stats?.fleet || {},
+        stats: { active, completed, pending, sos },
         todayJobCount: todayJobs.length,
         jobs: todayJobs.slice(0, 5).map(j => ({ id: j.Job_ID, customer: j.Customer_Name, status: j.Job_Status, driver: j.Driver_Name }))
     }
