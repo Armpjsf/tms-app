@@ -362,26 +362,28 @@ ${JSON.stringify(workforce ?? {})}
         // 3. CALL GEMINI WITH FALLBACK
         // ─────────────────────────────────────────────────────────────────
         const genAI = new GoogleGenerativeAI(apiKey)
+        let lastError = ''
 
         for (const modelName of GEMINI_MODELS) {
             try {
+                console.log(`[AI Chat] Trying model: ${modelName}`)
                 const model = genAI.getGenerativeModel({ model: modelName })
                 const result = await model.generateContent([systemPrompt, `คำถามจากผู้ใช้: ${message}`])
                 const responseText = result.response.text()
 
                 if (responseText) {
+                    console.log(`[AI Chat] Success with: ${modelName}`)
                     return NextResponse.json({ response: responseText })
                 }
             } catch (err: any) {
-                const errMsg = err.message || ''
-                console.warn(`[AI Chat] ${modelName} failed: ${errMsg}`)
-
-                if (errMsg.includes('429') || errMsg.includes('403') || errMsg.includes('API key')) {
-                    break
-                }
+                lastError = err.message || String(err)
+                console.warn(`[AI Chat] ${modelName} failed: ${lastError}`)
+                // Don't break early — try all models
                 continue
             }
         }
+
+        console.error(`[AI Chat] All models failed. Last error: ${lastError}`)
 
         // ─────────────────────────────────────────────────────────────────
         // 4. SMART SAFEMODE (ไม่พึ่ง keyword เป๊ะๆ)
@@ -389,7 +391,10 @@ ${JSON.stringify(workforce ?? {})}
         const lower = message.toLowerCase()
         const has = (...words: string[]) => words.some(w => lower.includes(w))
 
-        let safeResponse = "🤖 ระบบ AI หลักขัดข้องชั่วคราว แต่ยังมีข้อมูลพื้นฐานให้ครับ"
+        // Show debug error if Gemini completely failed
+        const debugNote = lastError ? `\n\n⚠️ [Debug] AI Error: ${lastError.slice(0, 120)}` : ''
+
+        let safeResponse = `🤖 ระบบ AI หลักขัดข้องชั่วคราว แต่ยังมีข้อมูลพื้นฐานให้ครับ${debugNote}`
 
         if (has('งาน', 'job', 'วันนี้', 'ส่งของ', 'ขนส่ง', 'เที่ยว', 'trip', 'delivery')) {
             safeResponse = `📦 งานวันนี้รวม ${today?.total ?? 0} รายการ | กำลังวิ่ง ${today?.active ?? 0} คัน | เสร็จแล้ว ${today?.completed ?? 0} รายการ | รอ ${today?.pending ?? 0} รายการ`
