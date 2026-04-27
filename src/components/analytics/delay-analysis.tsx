@@ -86,6 +86,16 @@ export function DelayAnalysis({ data = [] }: Props) {
                                     backdropFilter: 'blur(12px)',
                                     padding: '15px'
                                 }}
+                                labelStyle={{ 
+                                    color: '#fff', 
+                                    fontSize: '12px', 
+                                    fontWeight: '900', 
+                                    marginBottom: '8px',
+                                    textTransform: 'uppercase',
+                                    fontStyle: 'italic',
+                                    borderBottom: '1px solid rgba(244, 63, 94, 0.2)',
+                                    paddingBottom: '8px'
+                                }}
                                 itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#fff' }}
                                 formatter={(value: number | undefined) => [`${value ?? 0} ${t('common.units')}`, t('common.status')]}
                             />

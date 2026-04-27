@@ -129,7 +129,17 @@ export function RevenueForecastChart({ data = [] }: Props) {
                                             backdropFilter: 'blur(16px)',
                                             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                                         }}
-                                        itemStyle={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }}
+                                        labelStyle={{ 
+                                            color: '#fff', 
+                                            fontSize: '12px', 
+                                            fontWeight: '900', 
+                                            marginBottom: '8px',
+                                            textTransform: 'uppercase',
+                                            fontStyle: 'italic',
+                                            borderBottom: '1px solid rgba(139, 92, 246, 0.2)',
+                                            paddingBottom: '8px'
+                                        }}
+                                        itemStyle={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', color: '#fff' }}
                                         formatter={(value: number | undefined, name: string) => [
                                             `฿${(value || 0).toLocaleString()}`, 
                                             name.includes('Forecast') ? (t('analytics.forecast_revenue') || 'Forecast') : (t('analytics.actual_revenue') || 'Actual')

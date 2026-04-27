@@ -62,6 +62,16 @@ export function RevenueTrendChart({ data }: { data: RevenueData[] }) {
                 backdropFilter: 'blur(20px)',
                 boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.8)'
             }}
+            labelStyle={{ 
+                color: '#fff', 
+                fontSize: '12px', 
+                fontWeight: '900', 
+                marginBottom: '8px',
+                textTransform: 'uppercase',
+                fontStyle: 'italic',
+                borderBottom: '1px solid rgba(255, 30, 133, 0.2)',
+                paddingBottom: '8px'
+            }}
             itemStyle={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', color: '#fff' }}
             formatter={(value: number | string | undefined) => [
               new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(Number(value || 0)), 
