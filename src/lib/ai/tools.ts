@@ -40,16 +40,30 @@ export const aiToolExecutors: Record<string, Function> = {
     const supabase = createAdminClient()
     const targetDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     
+    let finalBranchId = args.branchId
+
+    // If branchId is a name (e.g. "SKN"), look up its actual ID in Master_Branches
+    if (args.branchId && args.branchId !== 'All') {
+        const { data: branchData } = await supabase
+            .from('Master_Branches')
+            .select('Branch_ID, Branch_Name')
+            .or(`Branch_ID.ilike.%${args.branchId}%,Branch_Name.ilike.%${args.branchId}%`)
+            .limit(1)
+        
+        if (branchData && branchData.length > 0) {
+            finalBranchId = branchData[0].Branch_ID
+            console.log(`[Today Summary] Mapped "${args.branchId}" to real Branch_ID: ${finalBranchId}`)
+        }
+    }
+
     let query = supabase
         .from('Jobs_Main')
         .select('Job_ID, Job_Status, Customer_Name, Driver_Name, Route_Name, Branch_ID, Customer_ID', { count: 'exact' })
-        // Use range for date to catch timestamps
-        .gte('Plan_Date', `${targetDate} 00:00:00`)
-        .lte('Plan_Date', `${targetDate} 23:59:59`)
+        .eq('Plan_Date', targetDate)
 
-    // Filter by Branch (Use Wildcard to be safe)
-    if (args.branchId && args.branchId !== 'All') {
-        query = query.ilike('Branch_ID', `%${args.branchId}%`)
+    // Filter by Mapped Branch ID
+    if (finalBranchId && finalBranchId !== 'All') {
+        query = query.eq('Branch_ID', finalBranchId)
     }
     
     // Filter by Customer
