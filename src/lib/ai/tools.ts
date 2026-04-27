@@ -1,8 +1,7 @@
-import { getJobById, getAllJobs, getTodayJobs } from "@/lib/supabase/jobs"
+import { getJobById, getAllJobs } from "@/lib/supabase/jobs"
 import { getDriverById, getAllDriversFromTable } from "@/lib/supabase/drivers"
 import { getVehicleByPlate, getAllVehiclesFromTable } from "@/lib/supabase/vehicles"
 import { getFinancialStats } from "@/lib/supabase/financial-analytics"
-import { getOperationalStats } from "@/lib/supabase/fleet-analytics"
 import { getAllCustomers } from "@/lib/supabase/customers"
 import { getDamageReports } from "@/lib/supabase/damage-reports"
 import { getDriverLeaves } from "@/lib/supabase/driver-leaves"
@@ -10,6 +9,7 @@ import { getAllRepairTickets, getRepairTicketStats, getPendingRepairTickets } fr
 import { getFuelAnalytics } from "@/lib/supabase/fuel-analytics"
 import { getFleetHealthAlerts } from "@/lib/supabase/fleet-health"
 import { getWorkforceAnalytics } from "@/lib/supabase/workforce-analytics"
+import { createAdminClient } from '@/utils/supabase/server'
 
 /**
  * Tool Executors - all system data accessible to the AI
@@ -35,26 +35,40 @@ export const aiToolExecutors: Record<string, Function> = {
     return job
   },
 
+  // Uses admin client directly — no session/cookie dependency
+  // Super Admin (no branchId) → fetches ALL branches
   get_today_summary: async (args: { branchId?: string }) => {
-    const todayJobs = await getTodayJobs()
-    // Terminal states = job is done or cancelled
+    const supabase = createAdminClient()
+    const targetDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+    let query = supabase
+        .from('Jobs_Main')
+        .select('Job_ID, Job_Status, Customer_Name, Driver_Name, Route_Name')
+        .eq('Plan_Date', targetDate)
+    if (args.branchId && args.branchId !== 'All') {
+        query = query.eq('Branch_ID', args.branchId)
+    }
+    const { data: jobs, error } = await query.order('Created_At', { ascending: false })
+    if (error) {
+        console.error('[Today Summary] Query error:', error.message)
+        return { stats: { active: 0, completed: 0, cancelled: 0 }, todayJobCount: 0, jobs: [] }
+    }
+    const allJobs = jobs || []
     const TERMINAL = ['Completed', 'Delivered', 'Complete', 'Cancelled', 'Cancel', 'ยกเลิก', 'เสร็จสิ้น']
-    const COMPLETED = ['Completed', 'Delivered', 'Complete', 'เสร็จสิ้น']
-    const active = todayJobs.filter(j => !TERMINAL.includes(j.Job_Status || '')).length
-    const completed = todayJobs.filter(j => COMPLETED.includes(j.Job_Status || '')).length
-    const cancelled = todayJobs.filter(j => ['Cancelled', 'Cancel', 'ยกเลิก'].includes(j.Job_Status || '')).length
-    // Log statuses for debugging
-    const statusSummary = todayJobs.reduce((acc: Record<string,number>, j) => {
+    const COMPLETED_S = ['Completed', 'Delivered', 'Complete', 'เสร็จสิ้น']
+    const active = allJobs.filter(j => !TERMINAL.includes(j.Job_Status || '')).length
+    const completed = allJobs.filter(j => COMPLETED_S.includes(j.Job_Status || '')).length
+    const cancelled = allJobs.filter(j => ['Cancelled', 'Cancel', 'ยกเลิก'].includes(j.Job_Status || '')).length
+    const statusBreakdown = allJobs.reduce((acc: Record<string,number>, j) => {
         const s = j.Job_Status || 'Unknown'
         acc[s] = (acc[s] || 0) + 1
         return acc
     }, {})
-    console.log('[Today Summary] Status breakdown:', statusSummary)
+    console.log(`[Today Summary] Date:${targetDate} Branch:${args.branchId || 'ALL'} Total:${allJobs.length}`, statusBreakdown)
     return {
         stats: { active, completed, cancelled },
-        todayJobCount: todayJobs.length,
-        statusBreakdown: statusSummary,
-        jobs: todayJobs.slice(0, 5).map(j => ({ id: j.Job_ID, customer: j.Customer_Name, status: j.Job_Status, driver: j.Driver_Name }))
+        todayJobCount: allJobs.length,
+        statusBreakdown,
+        jobs: allJobs.slice(0, 5).map(j => ({ id: j.Job_ID, customer: j.Customer_Name, status: j.Job_Status, driver: j.Driver_Name }))
     }
   },
 
@@ -215,15 +229,17 @@ export const aiToolExecutors: Record<string, Function> = {
     notes?: string, 
     vehicleType?: string 
   }) => {
-    const result = await createJob({
+    const supabase = createAdminClient()
+    const { data, error } = await supabase.from('Jobs_Main').insert({
         Customer_Name: args.customerName,
         Plan_Date: args.planDate || new Date().toISOString().split('T')[0],
         Route_Name: args.routeName,
         Price_Cust_Total: args.price,
         Notes: args.notes,
-        Vehicle_Type: args.vehicleType
-    })
-    return result
+        Vehicle_Type: args.vehicleType,
+        Job_Status: 'New'
+    }).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data }
   },
 
   create_fuel_log: async (args: {
