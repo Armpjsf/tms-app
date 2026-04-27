@@ -405,12 +405,12 @@ export function DashboardContent({
                            Pipeline Integrity
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {statusDist.length === 0 ? (
+                            {(statusDist || []).length === 0 ? (
                                 <div className="col-span-full py-10 text-center text-[10px] font-black text-muted-foreground uppercase italic opacity-40">No data signals detected</div>
-                            ) : statusDist.map((item: any) => (
-                                <div key={item.name} className="p-3 bg-muted/30 rounded-xl border border-border/5 group-hover:bg-muted/50 transition-colors">
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1 truncate">{item.name}</p>
-                                    <p className="text-2xl font-black text-foreground italic">{item.value}</p>
+                            ) : statusDist.filter(Boolean).map((item: any) => (
+                                <div key={item?.name || Math.random()} className="p-3 bg-muted/30 rounded-xl border border-border/5 group-hover:bg-muted/50 transition-colors">
+                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1 truncate">{item?.name || 'N/A'}</p>
+                                    <p className="text-2xl font-black text-foreground italic">{item?.value || 0}</p>
                                 </div>
                             ))}
                         </div>
@@ -444,12 +444,12 @@ export function DashboardContent({
                                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                             </div>
                             <div className="divide-y divide-white/[0.04]">
-                                {(driverLeaderboard as any[]).length === 0 ? (
+                                {(driverLeaderboard || []).length === 0 ? (
                                     <div className="py-12 text-center">
                                         <Users size={32} strokeWidth={1} className="mx-auto mb-3 text-muted-foreground/30" />
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.performance_data_recalibrating')}</p>
                                     </div>
-                                ) : (driverLeaderboard || []).slice(0, 5).map((d: any, i: number) => (
+                                ) : (driverLeaderboard || []).filter(Boolean).slice(0, 5).map((d: any, i: number) => (
                                     <div key={i} className="px-5 py-3 flex items-center justify-between group hover:bg-muted/20 transition-colors border-l-2 border-transparent hover:border-amber-500/50">
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className={cn(
@@ -491,13 +491,13 @@ export function DashboardContent({
                                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                             </div>
                             <div className="divide-y divide-white/[0.04]">
-                                {(vehicleProfitability as any[]).length === 0 ? (
+                                {(vehicleProfitability || []).length === 0 ? (
                                     <div className="py-12 text-center">
                                         <Truck size={32} strokeWidth={1} className="mx-auto mb-3 text-muted-foreground/30" />
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.performance_data_recalibrating')}</p>
                                     </div>
-                                ) : (vehicleProfitability || []).slice(0, 5).map((v: any, i: number) => {
-                                    const maxProfit = Math.max(...(vehicleProfitability || []).map((x: any) => x.netProfit || 0), 1)
+                                ) : (vehicleProfitability || []).filter(Boolean).slice(0, 5).map((v: any, i: number) => {
+                                    const maxProfit = Math.max(...(vehicleProfitability || []).filter(Boolean).map((x: any) => x.netProfit || 0), 1)
                                     const pct = Math.max(0, Math.min(((v.netProfit || 0) / maxProfit) * 100, 100))
                                     return (
                                         <div key={i} className="px-5 py-3 group hover:bg-muted/20 transition-colors border-l-2 border-transparent hover:border-blue-500/50">

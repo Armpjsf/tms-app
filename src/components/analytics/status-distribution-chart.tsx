@@ -68,7 +68,7 @@ export function StatusDistributionChart({ data }: StatusDistributionChartProps) 
                         <div key={`item-${index}`} className="flex items-center gap-1.5">
                             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: entry.color }} />
                             <span className="text-[9px] font-black text-muted-foreground uppercase tracking-wider italic">
-                                {entry.value}: {data[index].value}
+                                {entry.value}: {data[index]?.value || 0}
                             </span>
                         </div>
                     ))}
