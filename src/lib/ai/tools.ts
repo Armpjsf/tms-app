@@ -37,13 +37,23 @@ export const aiToolExecutors: Record<string, Function> = {
 
   get_today_summary: async (args: { branchId?: string }) => {
     const todayJobs = await getTodayJobs()
-    const active = todayJobs.filter(j => ['In Progress', 'Picked Up', 'In Transit', 'Assigned', 'Confirmed', 'Arrived'].includes(j.Job_Status || '')).length
-    const completed = todayJobs.filter(j => ['Completed', 'Delivered', 'Complete'].includes(j.Job_Status || '')).length
-    const pending = todayJobs.filter(j => ['New', 'Pending', 'Requested'].includes(j.Job_Status || '')).length
-    const sos = todayJobs.filter(j => j.Job_Status === 'SOS').length
+    // Terminal states = job is done or cancelled
+    const TERMINAL = ['Completed', 'Delivered', 'Complete', 'Cancelled', 'Cancel', 'ยกเลิก', 'เสร็จสิ้น']
+    const COMPLETED = ['Completed', 'Delivered', 'Complete', 'เสร็จสิ้น']
+    const active = todayJobs.filter(j => !TERMINAL.includes(j.Job_Status || '')).length
+    const completed = todayJobs.filter(j => COMPLETED.includes(j.Job_Status || '')).length
+    const cancelled = todayJobs.filter(j => ['Cancelled', 'Cancel', 'ยกเลิก'].includes(j.Job_Status || '')).length
+    // Log statuses for debugging
+    const statusSummary = todayJobs.reduce((acc: Record<string,number>, j) => {
+        const s = j.Job_Status || 'Unknown'
+        acc[s] = (acc[s] || 0) + 1
+        return acc
+    }, {})
+    console.log('[Today Summary] Status breakdown:', statusSummary)
     return {
-        stats: { active, completed, pending, sos },
+        stats: { active, completed, cancelled },
         todayJobCount: todayJobs.length,
+        statusBreakdown: statusSummary,
         jobs: todayJobs.slice(0, 5).map(j => ({ id: j.Job_ID, customer: j.Customer_Name, status: j.Job_Status, driver: j.Driver_Name }))
     }
   },
