@@ -4,11 +4,13 @@ import { getSession } from '@/lib/session'
 import { createAdminClient } from '@/utils/supabase/server'
 import { aiToolExecutors } from '@/lib/ai/tools'
 
-// Confirmed available models via v1beta REST API
+// Models matching the new API key (Gemini 2.5/3.x generation)
 const GEMINI_MODELS = [
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
-    "gemini-1.0-pro",
+    "gemini-2.5-flash-preview-04-17", // Gemini 3 Flash Preview
+    "gemini-2.5-flash",
+    "gemini-2.5-pro-preview-03-25",   // Gemini 3.1 Pro Preview
+    "gemini-2.5-pro",
+    "gemini-2.0-flash",               // Fallback stable
 ]
 
 // Direct REST call to Gemini - more reliable than SDK in server context
