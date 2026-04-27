@@ -355,22 +355,27 @@ export async function POST(req: NextRequest) {
                     const userBranchId = boundAdmin?.Branch_ID || boundDriver?.Branch_ID || undefined
                     const userCustomerId = boundCustomer?.Customer_ID || undefined
                     
-                    // Simple Branch Detection in text (e.g., "งานวันนี้ สาขา 1")
+                    // Flexible Branch Detection (e.g., "งานวันนี้ SKN" or "งานวันนี้ สาขา SKN")
                     let targetBranchId = userBranchId
-                    if (rawText.includes('สาขา')) {
-                        const match = rawText.match(/สาขา\s*(\S+)/)
-                        if (match) targetBranchId = match[1]
+                    const cmdWords = ['งานวันนี้', 'สรุปงาน', 'TODAY', 'สรุปยอด']
+                    let cleanedText = rawText
+                    cmdWords.forEach(w => { cleanedText = cleanedText.replace(w, '').trim() })
+                    
+                    if (cleanedText) {
+                        // Remove "สาขา" prefix if exists to get the pure ID
+                        targetBranchId = cleanedText.replace('สาขา', '').trim()
                     }
 
                     const scopeName = boundCustomer ? `ลูกค้า: ${boundCustomer.Customer_Name}` : (targetBranchId ? `สาขา: ${targetBranchId}` : 'ทุกสาขา')
 
                     // --- 4.1 Today Jobs ---
-                    if (text.includes('งานวันนี้') || text.includes('สรุปงาน') || text === 'TODAY') {
+                    if (text.includes('งานวันนี้') || text.includes('สรุปงาน') || text === 'TODAY' || text === 'สรุปยอด') {
                         const today = await aiToolExecutors.get_today_summary({ branchId: targetBranchId, customerId: userCustomerId })
                         const lines = [
                             `📊 สรุปงานประจำวันที่ ${new Date().toLocaleDateString('th-TH')}`,
                             `📍 ขอบเขต: ${scopeName}`,
                             '',
+                            `📝 งานทั้งหมด: ${today.todayJobCount} รายการ`,
                             `🚛 กำลังวิ่ง: ${today.stats.active} งาน`,
                             `⏳ รอดำเนินการ: ${today.stats.pending} งาน`,
                             `✅ เสร็จสิ้น: ${today.stats.completed} งาน`,

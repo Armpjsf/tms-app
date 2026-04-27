@@ -45,9 +45,9 @@ export const aiToolExecutors: Record<string, Function> = {
         .select('Job_ID, Job_Status, Customer_Name, Driver_Name, Route_Name, Branch_ID, Customer_ID')
         .eq('Plan_Date', targetDate)
 
-    // Filter by Branch
+    // Filter by Branch (Case-insensitive)
     if (args.branchId && args.branchId !== 'All') {
-        query = query.eq('Branch_ID', args.branchId)
+        query = query.ilike('Branch_ID', args.branchId)
     }
     
     // Filter by Customer (Crucial for Client access)
