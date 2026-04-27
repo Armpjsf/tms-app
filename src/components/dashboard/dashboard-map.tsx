@@ -103,79 +103,70 @@ export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosi
             // Only show missions for non-completed jobs
             if (['Completed', 'Delivered', 'Cancelled'].includes(j.Job_Status)) return
 
-            let oLat = Number(j.Pickup_Lat)
-            let oLng = Number(j.Pickup_Lon)
-            let dLat = Number(j.Delivery_Lat)
-            let dLng = Number(j.Delivery_Lon)
+            const oLat = Number(j.Pickup_Lat) || 0
+            const oLng = Number(j.Pickup_Lon) || 0
+            const dLat = Number(j.Delivery_Lat) || 0
+            const dLng = Number(j.Delivery_Lon) || 0
 
-            // Fallback for Origins
-            if (!oLat || !oLng) {
+            // 1. Resolve Origin
+            let finalOLat = oLat
+            let finalOLng = oLng
+            let oName = j.Origin_Location
+
+            if (!finalOLat || !finalOLng) {
                 try {
                     const json = typeof j.original_origins_json === 'string' ? JSON.parse(j.original_origins_json) : j.original_origins_json
                     if (Array.isArray(json) && json.length > 0) {
-                        oLat = Number(json[0].lat); oLng = Number(json[0].lng)
+                        finalOLat = Number(json[0].lat); finalOLng = Number(json[0].lng)
+                        if (!oName) oName = json[0].name
                     }
                 } catch(e) {}
             }
 
-            // Fallback for Destinations
-            if (!dLat || !dLng) {
+            // 2. Resolve Destination
+            let finalDLat = dLat
+            let finalDLng = dLng
+            let dName = j.Dest_Location
+
+            if (!finalDLat || !finalDLng) {
                 try {
                     const json = typeof j.original_destinations_json === 'string' ? JSON.parse(j.original_destinations_json) : j.original_destinations_json
                     if (Array.isArray(json) && json.length > 0) {
                         const last = json[json.length - 1]
-                        dLat = Number(last.lat); dLng = Number(last.lng)
+                        finalDLat = Number(last.lat); finalDLng = Number(last.lng)
+                        if (!dName) dName = last.name
                     }
                 } catch(e) {}
             }
 
-            if (oLat && oLng || dLat && dLng) {
-                let oName = j.Origin_Location
-                if (!oName) {
-                    try {
-                        const json = typeof j.original_origins_json === 'string' ? JSON.parse(j.original_origins_json) : j.original_origins_json
-                        if (Array.isArray(json) && json.length > 0 && json[0].name) oName = json[0].name
-                    } catch(e) {}
-                }
+            // Push Origin if valid
+            if (finalOLat && finalOLng) {
+                missions.push({
+                    id: `${j.Job_ID}-origin`,
+                    jobId: j.Job_ID,
+                    name: oName || 'Pickup',
+                    lat: finalOLat,
+                    lng: finalOLng,
+                    type: 'origin',
+                    status: j.Job_Status,
+                    originName: oName || 'Pickup',
+                    destName: dName || 'Delivery'
+                })
+            }
 
-                let dName = j.Dest_Location
-                if (!dName) {
-                    try {
-                        const json = typeof j.original_destinations_json === 'string' ? JSON.parse(j.original_destinations_json) : j.original_destinations_json
-                        if (Array.isArray(json) && json.length > 0) {
-                            const last = json[json.length - 1]
-                            if (last.name) dName = last.name
-                        }
-                    } catch(e) {}
-                }
-
-                if (oLat && oLng) {
-                    missions.push({
-                        id: `${j.Job_ID}-origin`,
-                        jobId: j.Job_ID,
-                        name: oName || 'Pickup',
-                        lat: oLat,
-                        lng: oLng,
-                        type: 'origin',
-                        status: j.Job_Status,
-                        originName: oName || 'Pickup',
-                        destName: dName || 'Delivery'
-                    })
-                }
-
-                if (dLat && dLng) {
-                    missions.push({
-                        id: `${j.Job_ID}-destination`,
-                        jobId: j.Job_ID,
-                        name: dName || 'Delivery',
-                        lat: dLat,
-                        lng: dLng,
-                        type: 'destination',
-                        status: j.Job_Status,
-                        originName: oName || 'Pickup',
-                        destName: dName || 'Delivery'
-                    })
-                }
+            // Push Destination if valid
+            if (finalDLat && finalDLng) {
+                missions.push({
+                    id: `${j.Job_ID}-destination`,
+                    jobId: j.Job_ID,
+                    name: dName || 'Delivery',
+                    lat: finalDLat,
+                    lng: finalDLng,
+                    type: 'destination',
+                    status: j.Job_Status,
+                    originName: oName || 'Pickup',
+                    destName: dName || 'Delivery'
+                })
             }
         })
         return missions

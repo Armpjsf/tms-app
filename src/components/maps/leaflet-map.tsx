@@ -20,10 +20,10 @@ const createMissionIcon = (type: 'origin' | 'destination', status?: string) => {
         className: 'custom-mission-icon',
         html: `
             <div class="relative flex items-center justify-center" style="width: 32px; height: 32px;">
-                <div class="absolute inset-0 bg-background rounded-full shadow-2xl border-2" style="border-color: ${color};"></div>
-                <div class="relative z-10 w-2 h-2 rounded-full ${status === 'SOS' ? 'bg-white animate-ping' : ''}" style="background-color: ${color};"></div>
+                <div class="absolute inset-0 bg-background/40 backdrop-blur-[2px] rounded-full shadow-lg border-2" style="border-color: ${color};"></div>
+                <div class="relative z-10 w-2.5 h-2.5 rounded-full ${status === 'SOS' ? 'bg-white animate-ping' : ''}" style="background-color: ${color}; opacity: 0.8;"></div>
                 <!-- Pulsing ring -->
-                <div class="absolute inset-0 rounded-full animate-pulse opacity-20" style="background-color: ${color};"></div>
+                <div class="absolute inset-0 rounded-full animate-pulse opacity-10" style="background-color: ${color};"></div>
             </div>
         `,
         iconSize: [32, 32],
@@ -198,7 +198,7 @@ export default function LeafletMap({
       ))}
 
       {/* Active Job Missions (Origins & Destinations) */}
-      {jobMissions.length > 0 && (
+      {jobMissions.length > 0 && showGeofences && (
           <>
             {/* 1. Connecting Lines between Origin and Destination for each job */}
             {Array.from(new Set(jobMissions.map(m => m.jobId))).map(jobId => {
