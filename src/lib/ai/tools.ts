@@ -36,39 +36,50 @@ export const aiToolExecutors: Record<string, Function> = {
   },
 
   // Uses admin client directly — no session/cookie dependency
-  // Super Admin (no branchId) → fetches ALL branches
-  get_today_summary: async (args: { branchId?: string }) => {
+  get_today_summary: async (args: { branchId?: string, customerId?: string }) => {
     const supabase = createAdminClient()
     const targetDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+    
     let query = supabase
         .from('Jobs_Main')
-        .select('Job_ID, Job_Status, Customer_Name, Driver_Name, Route_Name')
+        .select('Job_ID, Job_Status, Customer_Name, Driver_Name, Route_Name, Branch_ID, Customer_ID')
         .eq('Plan_Date', targetDate)
+
+    // Filter by Branch
     if (args.branchId && args.branchId !== 'All') {
         query = query.eq('Branch_ID', args.branchId)
     }
+    
+    // Filter by Customer (Crucial for Client access)
+    if (args.customerId) {
+        query = query.eq('Customer_ID', args.customerId)
+    }
+
     const { data: jobs, error } = await query.order('Created_At', { ascending: false })
+    
     if (error) {
         console.error('[Today Summary] Query error:', error.message)
-        return { stats: { active: 0, completed: 0, cancelled: 0 }, todayJobCount: 0, jobs: [] }
+        return { stats: { active: 0, completed: 0, cancelled: 0, pending: 0 }, todayJobCount: 0, jobs: [] }
     }
+
     const allJobs = jobs || []
-    const TERMINAL = ['Completed', 'Delivered', 'Complete', 'Cancelled', 'Cancel', 'ยกเลิก', 'เสร็จสิ้น']
-    const COMPLETED_S = ['Completed', 'Delivered', 'Complete', 'เสร็จสิ้น']
-    const PENDING_S = ['New', 'Pending', 'Requested', 'ยืนยันงาน', 'รอคนขับ']
     
-    const active = allJobs.filter(j => !TERMINAL.includes(j.Job_Status || '') && !PENDING_S.includes(j.Job_Status || '')).length
-    const completed = allJobs.filter(j => COMPLETED_S.includes(j.Job_Status || '')).length
-    const pending = allJobs.filter(j => PENDING_S.includes(j.Job_Status || '')).length
-    const cancelled = allJobs.filter(j => ['Cancelled', 'Cancel', 'ยกเลิก'].includes(j.Job_Status || '')).length
+    // Exact mapping based on Dashboard screenshots
+    const ACTIVE_STATUS = ['In Progress', 'In Transit', 'Picked Up', 'กำลังโหลด', 'ระหว่างขนส่ง', 'กำลังดำเนินการ']
+    const COMPLETED_STATUS = ['Completed', 'Delivered', 'Complete', 'เสร็จสิ้น', 'สำเร็จ', 'ส่งงานแล้ว']
+    const PENDING_STATUS = ['New', 'Pending', 'Requested', 'รอรับบริการ', 'รอดำเนินการ', 'รอคนขับ', 'ยืนยันงาน']
+    const CANCELLED_STATUS = ['Cancelled', 'Cancel', 'ยกเลิก']
+
+    const active = allJobs.filter(j => ACTIVE_STATUS.includes(j.Job_Status || '')).length
+    const completed = allJobs.filter(j => COMPLETED_STATUS.includes(j.Job_Status || '')).length
+    const pending = allJobs.filter(j => PENDING_STATUS.includes(j.Job_Status || '')).length
+    const cancelled = allJobs.filter(j => CANCELLED_STATUS.includes(j.Job_Status || '')).length
     
     const statusBreakdown = allJobs.reduce((acc: Record<string,number>, j) => {
         const s = j.Job_Status || 'Unknown'
         acc[s] = (acc[s] || 0) + 1
         return acc
     }, {})
-    
-    console.log(`[Today Summary] Date:${targetDate} Branch:${args.branchId || 'ALL'} Total:${allJobs.length}`, statusBreakdown)
     
     return {
         stats: { active, completed, pending, cancelled },

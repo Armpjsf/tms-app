@@ -352,11 +352,25 @@ export async function POST(req: NextRequest) {
 
                 // 4. SMART QUICK COMMANDS (Direct Database - No AI needed)
                 if (boundAdmin || boundDriver || boundCustomer) {
+                    const userBranchId = boundAdmin?.Branch_ID || boundDriver?.Branch_ID || undefined
+                    const userCustomerId = boundCustomer?.Customer_ID || undefined
+                    
+                    // Simple Branch Detection in text (e.g., "งานวันนี้ สาขา 1")
+                    let targetBranchId = userBranchId
+                    if (rawText.includes('สาขา')) {
+                        const match = rawText.match(/สาขา\s*(\S+)/)
+                        if (match) targetBranchId = match[1]
+                    }
+
+                    const scopeName = boundCustomer ? `ลูกค้า: ${boundCustomer.Customer_Name}` : (targetBranchId ? `สาขา: ${targetBranchId}` : 'ทุกสาขา')
+
                     // --- 4.1 Today Jobs ---
                     if (text.includes('งานวันนี้') || text.includes('สรุปงาน') || text === 'TODAY') {
-                        const today = await aiToolExecutors.get_today_summary({ branchId })
+                        const today = await aiToolExecutors.get_today_summary({ branchId: targetBranchId, customerId: userCustomerId })
                         const lines = [
                             `📊 สรุปงานประจำวันที่ ${new Date().toLocaleDateString('th-TH')}`,
+                            `📍 ขอบเขต: ${scopeName}`,
+                            '',
                             `🚛 กำลังวิ่ง: ${today.stats.active} งาน`,
                             `⏳ รอดำเนินการ: ${today.stats.pending} งาน`,
                             `✅ เสร็จสิ้น: ${today.stats.completed} งาน`,
@@ -371,9 +385,11 @@ export async function POST(req: NextRequest) {
 
                     // --- 4.2 Financial (Admin only) ---
                     if ((text.includes('รายได้') || text.includes('กำไร') || text.includes('เงิน')) && boundAdmin) {
-                        const fin = await aiToolExecutors.get_financial_summary({ branchId })
+                        const fin = await aiToolExecutors.get_financial_summary({ branchId: targetBranchId })
                         await replyToUser(replyToken, [
                             '💰 สรุปสถานะการเงิน (เดือนปัจจุบัน)',
+                            `📍 ขอบเขต: ${scopeName}`,
+                            '',
                             `💵 รายได้: ฿${fin.revenue?.toLocaleString() ?? 0}`,
                             `💸 ต้นทุน: ฿${fin.cost?.toLocaleString() ?? 0}`,
                             `📈 กำไรสุทธิ: ฿${fin.netProfit?.toLocaleString() ?? 0}`,
