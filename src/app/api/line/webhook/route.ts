@@ -33,10 +33,11 @@ function splitLineMessage(text: string, maxLen = 1900): string[] {
 // ─────────────────────────────────────────────────────────────────
 // Direct REST call to Gemini (text)
 // ─────────────────────────────────────────────────────────────────
-async function callGeminiText(systemPrompt: string, userMessage: string): Promise<string | null> {
+async function callGeminiText(systemPrompt: string, userMessage: string): Promise<{ text: string | null, error: string }> {
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
-    if (!apiKey) return null
+    if (!apiKey) return { text: null, error: 'NO_API_KEY' }
 
+    const errors: string[] = []
     for (const modelName of GEMINI_MODELS) {
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`
@@ -47,25 +48,30 @@ async function callGeminiText(systemPrompt: string, userMessage: string): Promis
                     contents: [{ parts: [{ text: `${systemPrompt}\n\nคำถาม/คำสั่ง: ${userMessage}` }] }],
                     generationConfig: { temperature: 0.7, maxOutputTokens: 1200 }
                 }),
-                signal: AbortSignal.timeout(18000)
+                signal: AbortSignal.timeout(15000)
             })
             if (!res.ok) {
                 const errBody = await res.text().catch(() => '')
-                console.warn(`[Line AI] ${modelName} HTTP ${res.status}: ${errBody.slice(0, 100)}`)
+                const msg = `${modelName}:HTTP${res.status}:${errBody.slice(0, 120)}`
+                errors.push(msg)
+                console.warn(`[Line AI] ${msg}`)
                 continue
             }
             const data = await res.json()
             const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
             if (text) {
                 console.log(`[Line AI] Success with: ${modelName}`)
-                return text
+                return { text, error: '' }
             }
+            errors.push(`${modelName}:EMPTY_RESPONSE`)
         } catch (err: any) {
-            console.warn(`[Line AI] ${modelName} failed: ${err.message}`)
+            const msg = `${modelName}:${err.message}`
+            errors.push(msg)
+            console.warn(`[Line AI] ${msg}`)
             continue
         }
     }
-    return null
+    return { text: null, error: errors.join(' | ') }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -343,7 +349,7 @@ export async function POST(req: NextRequest) {
                 // 5. AI fallback (bound users only)
                 if (boundAdmin || boundDriver || boundCustomer) {
                     const systemPrompt = await buildAIContext(branchId, userName)
-                    const aiResponse = await callGeminiText(systemPrompt, rawText)
+                    const { text: aiResponse, error: aiError } = await callGeminiText(systemPrompt, rawText)
                     if (aiResponse) {
                         // LINE replyToken is single-use — use push for overflow parts
                         const parts = splitLineMessage(aiResponse)
@@ -352,7 +358,8 @@ export async function POST(req: NextRequest) {
                             await pushToUser(userId, parts[i])
                         }
                     } else {
-                        await replyToUser(replyToken, '⚠️ AI ไม่สามารถตอบได้ในขณะนี้ กรุณาลองอีกครั้งครับ')
+                        // Show debug error so admin can diagnose
+                        await replyToUser(replyToken, `⚠️ AI Error:\n${aiError || 'Unknown error'}\n\nกรุณารอสักครู่แล้วลองใหม่ครับ`)
                     }
                     continue
                 }
