@@ -369,7 +369,43 @@ export async function POST(req: NextRequest) {
                     const scopeName = boundCustomer ? `ลูกค้า: ${boundCustomer.Customer_Name}` : (targetBranchId ? `สาขา: ${targetBranchId}` : 'ทุกสาขา')
 
                     // --- 4.1 Today Jobs ---
-                    if (text.includes('งานวันนี้') || text.includes('สรุปงาน') || text === 'TODAY' || text === 'สรุปยอด') {
+                    if (text.includes('งานวันนี้') || text.includes('สรุปงาน') || text === 'TODAY' || text === 'สรุปยอด' || text === 'งาน') {
+                        
+                        // IF DRIVER: Show personal jobs
+                        if (boundDriver) {
+                            const todayDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+                            const { data: driverJobs } = await supabase.from('Jobs_Main')
+                                .select('Job_ID, Job_Status, Customer_Name, Route_Name')
+                                .eq('Driver_ID', boundDriver.Driver_ID)
+                                .eq('Plan_Date', todayDate)
+                                .order('Created_At', { ascending: true })
+
+                            const jobs = driverJobs || []
+                            const active = jobs.filter(j => ['In Progress', 'In Transit', 'กำลังโหลด', 'ระหว่างขนส่ง'].includes(j.Job_Status || '')).length
+                            const completed = jobs.filter(j => ['Completed', 'Delivered', 'สำเร็จ', 'เสร็จสิ้น'].includes(j.Job_Status || '')).length
+                            const pending = jobs.length - active - completed
+
+                            const lines = [
+                                `👨‍✈️ งานวันนี้ของคุณ ${boundDriver.Driver_Name}`,
+                                `📅 วันที่ ${new Date().toLocaleDateString('th-TH')}`,
+                                '',
+                                `📝 งานทั้งหมด: ${jobs.length} งาน`,
+                                `🚛 กำลังทำ: ${active} | ✅ เสร็จ: ${completed} | ⏳ รอ: ${pending}`,
+                                '',
+                                '📍 รายการงาน:'
+                            ]
+                            
+                            if (jobs.length === 0) {
+                                lines.push('✅ วันนี้คุณยังไม่มีงานที่ได้รับมอบหมายครับ')
+                            } else {
+                                jobs.forEach(j => lines.push(`- ${j.Job_ID}: ${j.Customer_Name} [${j.Job_Status}]`))
+                            }
+                            
+                            await replyToUser(replyToken, lines.join('\n'))
+                            continue
+                        }
+
+                        // IF ADMIN/CUSTOMER: Show branch/client summary (original logic)
                         const today = await aiToolExecutors.get_today_summary({ branchId: targetBranchId, customerId: userCustomerId })
                         const lines = [
                             `📊 สรุปงานประจำวันที่ ${new Date().toLocaleDateString('th-TH')}`,
