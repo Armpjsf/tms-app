@@ -78,7 +78,7 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             if (finalCustomerId) query = query.eq('Customer_ID', finalCustomerId)
             if (effectiveBranchId) {
                 console.log(`[DEBUG] fetchRange applying branch filter: "${effectiveBranchId}"`)
-                query = query.eq('Branch_ID', effectiveBranchId)
+                query = query.ilike('Branch_ID', effectiveBranchId)
             }
             if (customerNames && customerNames.length > 0) query = query.in('Customer_Name', customerNames)
             
@@ -121,8 +121,8 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             .lte('Date_Finish', eDateCurrent)
 
         if (effectiveBranchId) {
-            fuelQuery = fuelQuery.eq('Branch_ID', effectiveBranchId)
-            maintQuery = maintQuery.eq('Branch_ID', effectiveBranchId)
+            fuelQuery = fuelQuery.ilike('Branch_ID', effectiveBranchId)
+            maintQuery = maintQuery.ilike('Branch_ID', effectiveBranchId)
         }
 
         const [fuelData, maintData] = await Promise.all([fuelQuery, maintQuery])

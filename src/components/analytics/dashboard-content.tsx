@@ -590,7 +590,7 @@ export function DashboardContent({
                         {loadingSecondary ? <SectionSkeleton /> : <FuelSection data={fuel} />}
                     </div>
 
-                    <div className="col-span-12 lg:col-span-7">
+                    <div className="col-span-12">
                         <ProfitabilitySection data={vehicleProfitability} financials={financials} />
                     </div>
 

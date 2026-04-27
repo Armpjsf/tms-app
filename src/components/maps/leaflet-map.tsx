@@ -136,19 +136,19 @@ export default function LeafletMap({
 
   return (
     <div className="relative w-full h-full group/map overflow-hidden rounded-xl border border-border/50 shadow-2xl">
-      {/* Dynamic Controls Overlay */}
-      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2 transition-all duration-500">
+      {/* Dynamic Controls Overlay - Moved to top-left next to zoom controls */}
+      <div className="absolute top-[10px] left-[50px] z-[1000] flex flex-col gap-2 transition-all duration-500">
           <button 
               onClick={() => setShowGeofences(!showGeofences)}
               className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all duration-300 shadow-xl border backdrop-blur-md",
+                  "flex items-center gap-2 px-3 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 shadow-xl border backdrop-blur-md",
                   showGeofences 
                     ? "bg-primary text-white border-primary/20 scale-105" 
                     : "bg-background/80 text-muted-foreground border-border hover:bg-background"
               )}
           >
               <div className={cn(
-                  "w-2 h-2 rounded-full",
+                  "w-1.5 h-1.5 rounded-full",
                   showGeofences ? "bg-white animate-pulse" : "bg-muted-foreground/30"
               )} />
               {showGeofences ? 'Hide Geofences' : 'Show Geofences'}

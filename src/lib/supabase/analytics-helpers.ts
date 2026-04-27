@@ -77,21 +77,32 @@ export async function getBranchPlates(branchId: string) {
 // Common helper to resolve branch filtering
 export async function getEffectiveBranchId(branchId?: string) {
     const userBranchId = await getUserBranchId()
-    let target = (branchId && branchId.toLowerCase() !== 'all') ? branchId : userBranchId
+    let target = (branchId && branchId.toLowerCase() !== 'all' && branchId.toLowerCase() !== 'ทุกสาขา') ? branchId : userBranchId
     
-    if (!target || target.toLowerCase() === 'all') return null
+    if (!target || target.toLowerCase() === 'all' || target.toLowerCase() === 'ทุกสาขา') return null
 
-    // Safety: If the target looks like a full name (longer than 3-4 chars), 
-    // it might be a name passed from a legacy UI component.
-    if (target.length > 5) {
+    // Robust ID Resolution:
+    // If target is NOT a known ID (e.g. it's a long name), try to find the ID.
+    // IDs are usually 2-4 uppercase characters (HQ, SKN, PTE, etc.)
+    const isName = target.length > 4 || target.includes(' ');
+    
+    if (isName) {
         try {
             const supabase = await createAdminClient()
-            const { data } = await supabase.from('Master_Branches').select('Branch_ID').ilike('Branch_Name', target).maybeSingle()
-            if (data?.Branch_ID) target = data.Branch_ID
-        } catch {
-            // Fallback to original target if lookup fails
+            const { data: branches } = await supabase.from('Master_Branches').select('Branch_ID, Branch_Name')
+            
+            if (branches) {
+                // Find by name (case-insensitive, trimmed)
+                const match = branches.find(b => 
+                    b.Branch_Name.trim().toLowerCase() === target.trim().toLowerCase() ||
+                    b.Branch_ID.trim().toLowerCase() === target.trim().toLowerCase()
+                )
+                if (match) return match.Branch_ID
+            }
+        } catch (e) {
+            console.error('[getEffectiveBranchId] Resolution error:', e)
         }
     }
 
-    return target
+    return target.trim().toUpperCase() // Default to uppercase ID (e.g. "skn" -> "SKN")
 }
