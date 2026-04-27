@@ -30,7 +30,11 @@ export async function createClient() {
   )
 }
 
+let adminClient: any = null
+
 export function createAdminClient() {
+  if (adminClient) return adminClient
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   
@@ -38,11 +42,13 @@ export function createAdminClient() {
     throw new Error("Missing Supabase configuration")
   }
 
-  return createJsClient(url, key, {
+  adminClient = createJsClient(url, key, {
     auth: {
       persistSession: false,
-      autoRefreshToken: false, // Don't need refresh for service role
+      autoRefreshToken: false,
       detectSessionInUrl: false
     }
   })
+  
+  return adminClient
 }

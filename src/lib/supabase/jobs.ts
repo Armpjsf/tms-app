@@ -890,16 +890,47 @@ export async function getDriverDashboardStats(driverId: string) {
     const supabase = createAdminClient()
     const today = new Date().toISOString().split('T')[0]
     
-    // 1. Get ONLY necessary jobs (Active OR Today's jobs) 
-    // This avoids fetching thousands of historical jobs which was causing slowness.
-    const { data: jobs } = await supabase
-      .from('Jobs_Main')
-      .select('Job_ID, Customer_Name, Job_Status, Origin_Location, Dest_Location, Route_Name, Plan_Date, Cost_Driver_Total, Show_Price_To_Driver')
-      .eq('Driver_ID', driverId)
-      .neq('Job_Status', 'Cancelled')
-      .or(`Job_Status.not.in.(Completed,Delivered),Plan_Date.eq.${today}`)
-      .order('Plan_Date', { ascending: true }) 
-      .order('Created_At', { ascending: true })
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+
+    // Execute ALL queries in parallel for maximum speed
+    const [jobsRes, profileRes, allTimeRes, monthlyRes] = await Promise.all([
+      // 1. Jobs query (Active or Today)
+      supabase
+        .from('Jobs_Main')
+        .select('Job_ID, Customer_Name, Job_Status, Origin_Location, Dest_Location, Route_Name, Plan_Date, Cost_Driver_Total, Show_Price_To_Driver')
+        .eq('Driver_ID', driverId)
+        .neq('Job_Status', 'Cancelled')
+        .or(`Job_Status.not.in.(Completed,Delivered),Plan_Date.eq.${today}`)
+        .order('Plan_Date', { ascending: true }) 
+        .order('Created_At', { ascending: true }),
+
+      // 2. Profile query
+      supabase
+        .from('Master_Drivers')
+        .select('Show_Price_Default')
+        .eq('Driver_ID', driverId)
+        .single(),
+
+      // 3. All-time completed count
+      supabase
+        .from('Jobs_Main')
+        .select('*', { count: 'exact', head: true })
+        .eq('Driver_ID', driverId)
+        .in('Job_Status', ['Completed', 'Delivered']),
+
+      // 4. Monthly completed count for Gamification
+      supabase
+        .from('Jobs_Main')
+        .select('*', { count: 'exact', head: true })
+        .eq('Driver_ID', driverId)
+        .gte('Plan_Date', startOfMonth)
+        .in('Job_Status', ['Completed', 'Delivered'])
+    ])
+
+    const jobs = jobsRes.data
+    const driverProfile = profileRes.data
+    const allTimeCompleted = allTimeRes.count
+    const monthlyCompletedCount = monthlyRes.count
 
     if (!jobs) {
       return { 
@@ -908,47 +939,19 @@ export async function getDriverDashboardStats(driverId: string) {
         currentJob: null 
       }
     }
-
-    // Check if driver has a master override to hide income
-    const { data: driverProfile } = await supabase
-        .from('Master_Drivers')
-        .select('Show_Price_Default')
-        .eq('Driver_ID', driverId)
-        .single()
     
     const isIncomeVisible = driverProfile?.Show_Price_Default !== false
 
-    // Calculate today's income (Only sum jobs where Show_Price_To_Driver is true AND master toggle is on)
+    // Calculate today's income
     const todayIncome = isIncomeVisible ? (jobs?.filter(j => 
         j.Plan_Date === today && 
         j.Job_Status !== 'Cancelled' &&
-        j.Show_Price_To_Driver !== false // Enforce job-level visibility rule
+        j.Show_Price_To_Driver !== false
     ).reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0) || 0) : 0
 
-    // 2. Get All-Time Completed count for stats (efficient count query)
-    const { count: allTimeCompleted } = await supabase
-        .from('Jobs_Main')
-        .select('*', { count: 'exact', head: true })
-        .eq('Driver_ID', driverId)
-        .in('Job_Status', ['Completed', 'Delivered'])
-
-    const completedToday = jobs?.filter(j => 
-        j.Plan_Date === today && ['Completed', 'Delivered'].includes(j.Job_Status || '')
-    ).length || 0
-    
-    // activeJobs are jobs not yet completed or delivered
     const activeJobs = jobs?.filter(j => !['Completed', 'Delivered', 'Cancelled'].includes(j.Job_Status || '')) || []
     const currentJob = activeJobs.length > 0 ? activeJobs[0] : null
     const totalRemaining = activeJobs.length
-
-    // 2. Gamification Stats (Monthly)
-    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-    const { count: monthlyCompletedCount } = await supabase
-        .from('Jobs_Main')
-        .select('*', { count: 'exact', head: true })
-        .eq('Driver_ID', driverId)
-        .gte('Plan_Date', startOfMonth)
-        .in('Job_Status', ['Completed', 'Delivered'])
 
     const points = (monthlyCompletedCount || 0) * 10
     

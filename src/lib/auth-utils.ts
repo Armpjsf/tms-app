@@ -1,10 +1,11 @@
 import { cookies } from "next/headers"
+import { cache } from "react"
 
 /**
  * Get current driver session from cookies
- * This is a helper function, not a server action, to avoid circular dependencies.
+ * Cached for the duration of the request to prevent redundant parsing.
  */
-export async function getDriverSession() {
+export const getDriverSession = cache(async () => {
   try {
     const cookieStore = await cookies()
     const driverCookie = cookieStore.get('driver_session')?.value
@@ -16,4 +17,4 @@ export async function getDriverSession() {
     console.error("[AUTH] Failed to get driver session:", error)
     return null
   }
-}
+})
