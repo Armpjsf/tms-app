@@ -134,6 +134,7 @@ export default function LeafletMap({
 
   if (!isHydrated || typeof window === 'undefined') return <div style={{ height, width: '100%' }} className="bg-muted animate-pulse rounded-lg" />
 
+  return (
     <div className="relative w-full h-full group/map overflow-hidden rounded-xl border border-border/50 shadow-2xl">
       {/* Dynamic Controls Overlay */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2 transition-all duration-500">
