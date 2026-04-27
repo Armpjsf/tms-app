@@ -1,16 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { getSession } from '@/lib/session'
-import { GoogleGenerativeAI } from "@google/generative-ai"
 import { createAdminClient } from '@/utils/supabase/server'
 import { aiToolExecutors } from '@/lib/ai/tools'
 
-// Models to try in order - stable versions prioritized
+// Models to try in order - use REST API directly to avoid SDK network issues
 const GEMINI_MODELS = [
     "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
     "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-1.5-flash-8b",
 ]
+
+// Direct REST call to Gemini - more reliable than SDK in server context
+async function callGemini(apiKey: string, model: string, systemPrompt: string, userMessage: string): Promise<string> {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{
+                parts: [
+                    { text: systemPrompt + '\n\n' + userMessage }
+                ]
+            }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+        }),
+        signal: AbortSignal.timeout(20000) // 20s timeout
+    })
+
+    if (!res.ok) {
+        const errBody = await res.text().catch(() => '')
+        throw new Error(`HTTP ${res.status}: ${errBody.slice(0, 200)}`)
+    }
+
+    const data = await res.json()
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+    if (!text) throw new Error('Empty response from model')
+    return text
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Helper: fetch data with silent error handling
@@ -359,26 +387,19 @@ ${JSON.stringify(workforce ?? {})}
         `.trim()
 
         // ─────────────────────────────────────────────────────────────────
-        // 3. CALL GEMINI WITH FALLBACK
+        // 3. CALL GEMINI (Direct REST - no SDK wrapper)
         // ─────────────────────────────────────────────────────────────────
-        const genAI = new GoogleGenerativeAI(apiKey)
         let lastError = ''
 
         for (const modelName of GEMINI_MODELS) {
             try {
                 console.log(`[AI Chat] Trying model: ${modelName}`)
-                const model = genAI.getGenerativeModel({ model: modelName })
-                const result = await model.generateContent([systemPrompt, `คำถามจากผู้ใช้: ${message}`])
-                const responseText = result.response.text()
-
-                if (responseText) {
-                    console.log(`[AI Chat] Success with: ${modelName}`)
-                    return NextResponse.json({ response: responseText })
-                }
+                const responseText = await callGemini(apiKey, modelName, systemPrompt, `คำถาม: ${message}`)
+                console.log(`[AI Chat] Success with: ${modelName}`)
+                return NextResponse.json({ response: responseText })
             } catch (err: any) {
                 lastError = err.message || String(err)
                 console.warn(`[AI Chat] ${modelName} failed: ${lastError}`)
-                // Don't break early — try all models
                 continue
             }
         }
