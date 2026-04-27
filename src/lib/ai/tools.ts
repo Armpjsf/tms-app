@@ -42,15 +42,17 @@ export const aiToolExecutors: Record<string, Function> = {
     
     let query = supabase
         .from('Jobs_Main')
-        .select('Job_ID, Job_Status, Customer_Name, Driver_Name, Route_Name, Branch_ID, Customer_ID')
-        .eq('Plan_Date', targetDate)
+        .select('Job_ID, Job_Status, Customer_Name, Driver_Name, Route_Name, Branch_ID, Customer_ID', { count: 'exact' })
+        // Use range for date to catch timestamps
+        .gte('Plan_Date', `${targetDate} 00:00:00`)
+        .lte('Plan_Date', `${targetDate} 23:59:59`)
 
-    // Filter by Branch (Case-insensitive)
+    // Filter by Branch (Use Wildcard to be safe)
     if (args.branchId && args.branchId !== 'All') {
-        query = query.ilike('Branch_ID', args.branchId)
+        query = query.ilike('Branch_ID', `%${args.branchId}%`)
     }
     
-    // Filter by Customer (Crucial for Client access)
+    // Filter by Customer
     if (args.customerId) {
         query = query.eq('Customer_ID', args.customerId)
     }
