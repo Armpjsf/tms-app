@@ -224,15 +224,18 @@ export async function POST(req: NextRequest) {
                         '👨‍✈️ คนขับ',
                         '  งาน / WORK — ดูงานของฉัน',
                         '  [เลขงาน] START — เริ่มงาน',
-                        '  JOB-[เลขงาน] — เช็คสถานะงาน',
+                        '',
+                        '📊 คำสั่งด่วน (ไม่ต้องใช้ AI)',
+                        '  - งานวันนี้ / สรุปงาน',
+                        '  - รายได้ / กำไร (Admin)',
+                        '  - รถเสีย / แจ้งซ่อม',
+                        '  - สุขภาพรถ / fleet',
+                        '  - ค่าน้ำมัน',
+                        '  - คนขับลา',
+                        '  - JOB-[เลขงาน] — เช็คสถานะงาน',
                         '',
                         '🤖 AI (ผูกบัญชีแล้ว)',
-                        '  ถามอะไรก็ได้! เช่น',
-                        '  "งานวันนี้กี่งาน?"',
-                        '  "กำไรเดือนนี้เท่าไหร่?"',
-                        '  "รถคันไหนรอซ่อม?"',
-                        '  📸 ส่งรูปใบเสร็จ — AI อ่านให้',
-                        '  🎙️ ส่งเสียง — AI แปลงเป็นคำสั่ง',
+                        '  ถามได้อิสระ เช่น "มีใครลามั่ง", "กำไรดีไหม"',
                     ].join('\n'))
                     continue
                 }
@@ -344,6 +347,113 @@ export async function POST(req: NextRequest) {
                     } else {
                         await replyToUser(replyToken, `❌ ไม่พบงาน ${text}`)
                         continue
+                    }
+                }
+
+                // 4. SMART QUICK COMMANDS (Direct Database - No AI needed)
+                if (boundAdmin || boundDriver || boundCustomer) {
+                    // --- 4.1 Today Jobs ---
+                    if (text.includes('งานวันนี้') || text.includes('สรุปงาน') || text === 'TODAY') {
+                        const today = await aiToolExecutors.get_today_summary({ branchId })
+                        const lines = [
+                            `📊 สรุปงานประจำวันที่ ${new Date().toLocaleDateString('th-TH')}`,
+                            `🚛 กำลังวิ่ง: ${today.stats.active} งาน`,
+                            `⏳ รอดำเนินการ: ${today.stats.pending} งาน`,
+                            `✅ เสร็จสิ้น: ${today.stats.completed} งาน`,
+                            `❌ ยกเลิก: ${today.stats.cancelled} งาน`,
+                            '',
+                            '📍 5 งานล่าสุด:'
+                        ]
+                        today.jobs.forEach((j: any) => lines.push(`- ${j.id}: ${j.customer} (${j.status})`))
+                        await replyToUser(replyToken, lines.join('\n'))
+                        continue
+                    }
+
+                    // --- 4.2 Financial (Admin only) ---
+                    if ((text.includes('รายได้') || text.includes('กำไร') || text.includes('เงิน')) && boundAdmin) {
+                        const fin = await aiToolExecutors.get_financial_summary({ branchId })
+                        await replyToUser(replyToken, [
+                            '💰 สรุปสถานะการเงิน (เดือนปัจจุบัน)',
+                            `💵 รายได้: ฿${fin.revenue?.toLocaleString() ?? 0}`,
+                            `💸 ต้นทุน: ฿${fin.cost?.toLocaleString() ?? 0}`,
+                            `📈 กำไรสุทธิ: ฿${fin.netProfit?.toLocaleString() ?? 0}`,
+                            `📊 Margin: ${fin.margin?.toFixed(1) ?? 0}%`,
+                        ].join('\n'))
+                        continue
+                    }
+
+                    // --- 4.3 Maintenance ---
+                    if (text.includes('รถเสีย') || text.includes('แจ้งซ่อม') || text.includes('งานซ่อม')) {
+                        const repairs = await aiToolExecutors.get_pending_repairs()
+                        const lines = [
+                            `🔧 รายการแจ้งซ่อมค้างอยู่ (${repairs.length} รายการ)`,
+                            ''
+                        ]
+                        repairs.slice(0, 10).forEach((t: any) => lines.push(`- ${t.vehicle}: ${t.problem} (${t.status})`))
+                        if (repairs.length === 0) lines.push('✅ ไม่มีรายการแจ้งซ่อมค้างครับ')
+                        await replyToUser(replyToken, lines.join('\n'))
+                        continue
+                    }
+
+                    // --- 4.4 Fuel ---
+                    if (text.includes('น้ำมัน')) {
+                        const fuel = await aiToolExecutors.get_fuel_analytics()
+                        await replyToUser(replyToken, [
+                            '⛽ สรุปการใช้พลังงาน (Fleet)',
+                            `💰 ค่าใช้จ่ายรวม: ฿${fuel.totalFuelCost?.toLocaleString() ?? 0}`,
+                            `🛢️ ปริมาณรวม: ${fuel.totalLiters?.toLocaleString() ?? 0} ลิตร`,
+                            `📈 เฉลี่ยต่อทริป: ${fuel.avgPerTrip?.toFixed(2) ?? 0} กม./ลิตร`,
+                        ].join('\n'))
+                        continue
+                    }
+
+                    // --- 4.5 Fleet Health ---
+                    if (text.includes('สุขภาพรถ') || text.includes(' fleet') || text.includes('สภาพรถ')) {
+                        const health = await aiToolExecutors.get_fleet_health()
+                        const lines = [
+                            `🚛 แจ้งเตือนสถานะยานพาหนะ (${health.length} รายการ)`,
+                            ''
+                        ]
+                        health.slice(0, 10).forEach((h: any) => lines.push(`- ${h.vehicle}: [${h.severity}] ${h.message}`))
+                        if (health.length === 0) lines.push('✅ สภาพรถทุกคันปกติดีครับ')
+                        await replyToUser(replyToken, lines.join('\n'))
+                        continue
+                    }
+
+                    // --- 4.6 Leaves ---
+                    if (text.includes('คนขับลา') || text.includes('ลาหยุด') || text.includes('ลาวันนี้')) {
+                        const now = new Date()
+                        const leaves = await aiToolExecutors.get_driver_leaves({ month: now.getMonth() + 1, year: now.getFullYear() })
+                        const lines = [
+                            '👥 รายการลาหยุด (เดือนนี้)',
+                            ''
+                        ]
+                        leaves.slice(0, 10).forEach((l: any) => lines.push(`- ${l.driver}: ${l.from} ถึง ${l.to} (${l.type})`))
+                        if (leaves.length === 0) lines.push('✅ ไม่มีคนขับลาหยุดในช่วงนี้ครับ')
+                        await replyToUser(replyToken, lines.join('\n'))
+                        continue
+                    }
+
+                    // --- 4.7 Job Search (JOB-ID) ---
+                    if (text.includes('JOB-') || text.includes('เลขงาน-')) {
+                        const jobId = rawText.split('-')[1]?.trim()
+                        if (jobId) {
+                            const job = await aiToolExecutors.get_job_details({ jobId })
+                            if (job.error) {
+                                await replyToUser(replyToken, `❌ ไม่พบงานรหัส ${jobId} ครับ`)
+                            } else {
+                                await replyToUser(replyToken, [
+                                    `📦 รายละเอียดงาน #${job.Job_ID}`,
+                                    `📍 ลูกค้า: ${job.Customer_Name}`,
+                                    `สถานะ: ${job.Job_Status}`,
+                                    `📅 วันที่: ${job.Plan_Date}`,
+                                    `🚛 คนขับ: ${job.Driver_Name || 'ยังไม่มอบหมาย'}`,
+                                    `🛻 ทะเบียน: ${job.Vehicle_Plate || '-'}`,
+                                    `🗺️ เส้นทาง: ${job.Route_Name || '-'}`,
+                                ].join('\n'))
+                            }
+                            continue
+                        }
                     }
                 }
 
