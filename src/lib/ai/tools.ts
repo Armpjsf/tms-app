@@ -61,9 +61,14 @@ export const aiToolExecutors: Record<string, Function> = {
         .select('Job_ID, Job_Status, Customer_Name, Driver_Name, Route_Name, Branch_ID, Customer_ID', { count: 'exact' })
         .eq('Plan_Date', targetDate)
 
-    // Filter by Mapped Branch ID
+    // Filter by Mapped Branch ID OR Literal String (to catch manual Supabase edits)
     if (finalBranchId && finalBranchId !== 'All') {
-        query = query.eq('Branch_ID', finalBranchId)
+        if (finalBranchId !== args.branchId) {
+            // If we found a mapping (e.g. SKN -> 5), search for both 5 and "SKN"
+            query = query.or(`Branch_ID.eq.${finalBranchId},Branch_ID.ilike.%${args.branchId}%`)
+        } else {
+            query = query.ilike('Branch_ID', `%${finalBranchId}%`)
+        }
     }
     
     // Filter by Customer
