@@ -370,10 +370,12 @@ export async function POST(req: NextRequest) {
 
                     // --- 4.1 Today Jobs ---
                     if (text.includes('งานวันนี้') || text.includes('สรุปงาน') || text === 'TODAY' || text === 'สรุปยอด' || text === 'งาน') {
+                        const now = new Date()
+                        const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' })
                         
                         // IF DRIVER: Show personal jobs
                         if (boundDriver) {
-                            const todayDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+                            const todayDate = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
                             const { data: driverJobs } = await supabase.from('Jobs_Main')
                                 .select('Job_ID, Job_Status, Customer_Name, Route_Name')
                                 .eq('Driver_ID', boundDriver.Driver_ID)
@@ -387,7 +389,7 @@ export async function POST(req: NextRequest) {
 
                             const lines = [
                                 `👨‍✈️ งานวันนี้ของคุณ ${boundDriver.Driver_Name}`,
-                                `📅 วันที่ ${new Date().toLocaleDateString('th-TH')}`,
+                                `📅 วันที่ ${now.toLocaleDateString('th-TH')} | ⏰ เวลา: ${timeStr} น.`,
                                 '',
                                 `📝 งานทั้งหมด: ${jobs.length} งาน`,
                                 `🚛 กำลังทำ: ${active} | ✅ เสร็จ: ${completed} | ⏳ รอ: ${pending}`,
@@ -408,7 +410,8 @@ export async function POST(req: NextRequest) {
                         // IF ADMIN/CUSTOMER: Show branch/client summary (original logic)
                         const today = await aiToolExecutors.get_today_summary({ branchId: targetBranchId, customerId: userCustomerId })
                         const lines = [
-                            `📊 สรุปงานประจำวันที่ ${new Date().toLocaleDateString('th-TH')}`,
+                            `📊 สรุปงานประจำวันที่ ${now.toLocaleDateString('th-TH')}`,
+                            `⏰ ข้อมูล ณ เวลา: ${timeStr} น.`,
                             `📍 ขอบเขต: ${scopeName}`,
                             '',
                             `📝 งานทั้งหมด: ${today.todayJobCount} รายการ`,
@@ -427,6 +430,8 @@ export async function POST(req: NextRequest) {
 
                     // --- 4.1.2 Tomorrow Jobs ---
                     if (text.includes('งานพรุ่งนี้') || text === 'TOMORROW') {
+                        const now = new Date()
+                        const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' })
                         const tomorrow = new Date(Date.now() + 86400000)
                         const tomorrowDate = tomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
                         const tomorrowDisplay = tomorrow.toLocaleDateString('th-TH')
@@ -439,7 +444,7 @@ export async function POST(req: NextRequest) {
                             
                             const lines = [
                                 `📅 งานพรุ่งนี้ของคุณ ${boundDriver.Driver_Name}`,
-                                `📅 วันที่ ${tomorrowDisplay}`,
+                                `📅 วันที่ ${tomorrowDisplay} | ⏰ ออกรายงาน: ${timeStr} น.`,
                                 '',
                                 `📝 งานทั้งหมด: ${jobs?.length ?? 0} งาน`,
                                 '',
