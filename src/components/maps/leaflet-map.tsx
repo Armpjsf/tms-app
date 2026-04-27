@@ -124,6 +124,7 @@ export default function LeafletMap({
   onMapClick
 }: LeafletMapProps) {
   const [isHydrated, setIsHydrated] = useState(false)
+  const [showGeofences, setShowGeofences] = useState(true)
   const mapCenter = currentPosition || (routeHistory.length > 0 ? routeHistory[0] : (plannedRoute.length > 0 ? [plannedRoute[0].lat, plannedRoute[0].lng] : center)) as [number, number]
 
   useEffect(() => {
@@ -133,13 +134,32 @@ export default function LeafletMap({
 
   if (!isHydrated || typeof window === 'undefined') return <div style={{ height, width: '100%' }} className="bg-muted animate-pulse rounded-lg" />
 
-  return (
-    <MapContainer 
-      center={mapCenter} 
-      zoom={zoom} 
-      style={{ height, width: '100%', borderRadius: '0.5rem' }}
-      className="z-0"
-    >
+    <div className="relative w-full h-full group/map overflow-hidden rounded-xl border border-border/50 shadow-2xl">
+      {/* Dynamic Controls Overlay */}
+      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2 transition-all duration-500">
+          <button 
+              onClick={() => setShowGeofences(!showGeofences)}
+              className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all duration-300 shadow-xl border backdrop-blur-md",
+                  showGeofences 
+                    ? "bg-primary text-white border-primary/20 scale-105" 
+                    : "bg-background/80 text-muted-foreground border-border hover:bg-background"
+              )}
+          >
+              <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  showGeofences ? "bg-white animate-pulse" : "bg-muted-foreground/30"
+              )} />
+              {showGeofences ? 'Hide Geofences' : 'Show Geofences'}
+          </button>
+      </div>
+
+      <MapContainer 
+        center={mapCenter} 
+        zoom={zoom} 
+        style={{ height: '100%', width: '100%' }}
+        className="z-0"
+      >
       <MapClickHandler onClick={onMapClick} />
       {focusPosition && <RecenterMap position={focusPosition} zoom={15} />}
       
@@ -207,17 +227,19 @@ export default function LeafletMap({
                     </Marker>
                     
                     {/* Visual Area Boundary (Geofence) */}
-                    <CircleMarker 
-                        center={[mission.lat, mission.lng]}
-                        radius={mission.type === 'origin' ? 20 : 35}
-                        pathOptions={{ 
-                            color: mission.type === 'origin' ? '#10b981' : '#f43f5e', 
-                            fillColor: mission.type === 'origin' ? '#10b981' : '#f43f5e', 
-                            fillOpacity: 0.05,
-                            weight: 1,
-                            dashArray: '5, 5'
-                        }}
-                    />
+                    {showGeofences && (
+                        <CircleMarker 
+                            center={[mission.lat, mission.lng]}
+                            radius={mission.type === 'origin' ? 20 : 35}
+                            pathOptions={{ 
+                                color: mission.type === 'origin' ? '#10b981' : '#f43f5e', 
+                                fillColor: mission.type === 'origin' ? '#10b981' : '#f43f5e', 
+                                fillOpacity: 0.05,
+                                weight: 1,
+                                dashArray: '5, 5'
+                            }}
+                        />
+                    )}
                 </div>
             ))}
           </>
@@ -284,6 +306,7 @@ export default function LeafletMap({
         </>
       )}
     </MapContainer>
+    </div>
   )
 }
 
