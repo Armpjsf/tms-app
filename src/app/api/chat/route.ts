@@ -6,10 +6,11 @@ import { aiToolExecutors } from '@/lib/ai/tools'
 
 // Models matching the new API key (Gemini 2.5/3.x generation)
 const GEMINI_MODELS = [
+    "gemini-3.0-flash-preview",
+    "gemini-3.1-pro-preview",
+    "gemini-3.1-flash-lite-preview",
     "gemini-1.5-flash",
     "gemini-2.0-flash",
-    "gemini-1.5-pro",
-    "gemini-2.0-flash-lite-preview-02-05",
 ]
 
 // Direct REST call to Gemini - more reliable than SDK in server context
