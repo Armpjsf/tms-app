@@ -7,11 +7,11 @@ import { aiToolExecutors } from '@/lib/ai/tools'
 // Models (same as /api/chat) - Direct REST, no SDK
 // ─────────────────────────────────────────────────────────────────
 const GEMINI_MODELS = [
-    "gemini-3.0-flash-preview",
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-pro-latest",
+    "gemini-2.0-flash-exp",
     "gemini-3.1-pro-preview",
     "gemini-3.1-flash-lite-preview",
-    "gemini-1.5-flash",
-    "gemini-2.0-flash",
 ]
 
 // LINE has 2000 char limit per bubble — split smartly
