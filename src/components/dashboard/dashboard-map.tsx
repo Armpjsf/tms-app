@@ -130,10 +130,18 @@ export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosi
             }
 
             if (oLat && oLng) {
+                let oName = j.Origin_Location
+                if (!oName) {
+                    try {
+                        const json = typeof j.original_origins_json === 'string' ? JSON.parse(j.original_origins_json) : j.original_origins_json
+                        if (Array.isArray(json) && json.length > 0 && json[0].name) oName = json[0].name
+                    } catch(e) {}
+                }
+
                 missions.push({
                     id: `${j.Job_ID}-origin`,
                     jobId: j.Job_ID,
-                    name: j.Origin_Location || 'Pickup',
+                    name: oName || 'Pickup',
                     lat: oLat,
                     lng: oLng,
                     type: 'origin',
@@ -142,10 +150,21 @@ export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosi
             }
 
             if (dLat && dLng) {
+                let dName = j.Dest_Location
+                if (!dName) {
+                    try {
+                        const json = typeof j.original_destinations_json === 'string' ? JSON.parse(j.original_destinations_json) : j.original_destinations_json
+                        if (Array.isArray(json) && json.length > 0) {
+                            const last = json[json.length - 1]
+                            if (last.name) dName = last.name
+                        }
+                    } catch(e) {}
+                }
+
                 missions.push({
                     id: `${j.Job_ID}-destination`,
                     jobId: j.Job_ID,
-                    name: j.Dest_Location || 'Delivery',
+                    name: dName || 'Delivery',
                     lat: dLat,
                     lng: dLng,
                     type: 'destination',

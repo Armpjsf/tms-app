@@ -768,7 +768,7 @@ export async function getProfitHeatmapData(startDate?: string, endDate?: string,
 
     let query = supabase
         .from('Jobs_Main')
-        .select('Delivery_Lat, Delivery_Lon, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, original_destinations_json')
+        .select('Job_ID, Job_Status, Origin_Location, Dest_Location, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, original_destinations_json, original_origins_json')
         .in('Job_Status', REVENUE_STATUSES)
     
     if (customerId) query = query.eq('Customer_ID', customerId)
@@ -782,9 +782,7 @@ export async function getProfitHeatmapData(startDate?: string, endDate?: string,
     
     // Process and normalize profit including extras
     return (data || []).map(j => ({
-        Delivery_Lat: j.Delivery_Lat,
-        Delivery_Lon: j.Delivery_Lon,
-        original_destinations_json: j.original_destinations_json,
+        ...j,
         Price_Cust_Total: (Number(j.Price_Cust_Total) || 0) + (Number(j.Price_Cust_Extra) || 0),
         Cost_Driver_Total: (Number(j.Cost_Driver_Total) || 0) + (Number(j.Cost_Driver_Extra) || 0)
     }))
