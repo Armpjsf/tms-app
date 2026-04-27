@@ -599,6 +599,10 @@ export function DashboardContent({
                     </div>
 
                     <div className="col-span-12">
+                         {loadingSecondary ? <SectionSkeleton /> : <EfficiencyCharts data={revenueTrend} />}
+                    </div>
+
+                    <div className="col-span-12">
                          {loadingSecondary ? <SectionSkeleton /> : <MaintenanceSection data={maintenance} />}
                     </div>
                 </div>

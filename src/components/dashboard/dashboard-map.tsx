@@ -129,7 +129,7 @@ export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosi
                 } catch(e) {}
             }
 
-            if (oLat && oLng) {
+            if (oLat && oLng || dLat && dLng) {
                 let oName = j.Origin_Location
                 if (!oName) {
                     try {
@@ -138,18 +138,6 @@ export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosi
                     } catch(e) {}
                 }
 
-                missions.push({
-                    id: `${j.Job_ID}-origin`,
-                    jobId: j.Job_ID,
-                    name: oName || 'Pickup',
-                    lat: oLat,
-                    lng: oLng,
-                    type: 'origin',
-                    status: j.Job_Status
-                })
-            }
-
-            if (dLat && dLng) {
                 let dName = j.Dest_Location
                 if (!dName) {
                     try {
@@ -161,15 +149,33 @@ export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosi
                     } catch(e) {}
                 }
 
-                missions.push({
-                    id: `${j.Job_ID}-destination`,
-                    jobId: j.Job_ID,
-                    name: dName || 'Delivery',
-                    lat: dLat,
-                    lng: dLng,
-                    type: 'destination',
-                    status: j.Job_Status
-                })
+                if (oLat && oLng) {
+                    missions.push({
+                        id: `${j.Job_ID}-origin`,
+                        jobId: j.Job_ID,
+                        name: oName || 'Pickup',
+                        lat: oLat,
+                        lng: oLng,
+                        type: 'origin',
+                        status: j.Job_Status,
+                        originName: oName || 'Pickup',
+                        destName: dName || 'Delivery'
+                    })
+                }
+
+                if (dLat && dLng) {
+                    missions.push({
+                        id: `${j.Job_ID}-destination`,
+                        jobId: j.Job_ID,
+                        name: dName || 'Delivery',
+                        lat: dLat,
+                        lng: dLng,
+                        type: 'destination',
+                        status: j.Job_Status,
+                        originName: oName || 'Pickup',
+                        destName: dName || 'Delivery'
+                    })
+                }
             }
         })
         return missions

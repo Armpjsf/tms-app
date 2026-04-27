@@ -137,7 +137,7 @@ export default function LeafletMap({
   return (
     <div className="relative w-full h-full group/map overflow-hidden rounded-xl border border-border/50 shadow-2xl">
       {/* Dynamic Controls Overlay - Moved to top-left next to zoom controls */}
-      <div className="absolute top-[10px] left-[50px] z-[1000] flex flex-col gap-2 transition-all duration-500">
+      <div className="absolute top-[12px] left-[44px] z-[1000] flex flex-col gap-2 transition-all duration-500">
           <button 
               onClick={() => setShowGeofences(!showGeofences)}
               className={cn(
@@ -215,7 +215,36 @@ export default function LeafletMap({
                                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 opacity-60">
                                     {mission.type === 'origin' ? '📦 จุดรับสินค้า' : '🚩 จุดส่งสินค้า'}
                                 </p>
-                                <p className="font-black text-base leading-tight mb-2 text-foreground">{mission.name}</p>
+                                <p className="font-black text-base leading-tight mb-3 text-foreground">{mission.name}</p>
+
+                                <div className="space-y-2 p-2.5 bg-muted/20 rounded-xl border border-border/5 mb-3">
+                                    <div className="flex items-start gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1" />
+                                        <div className="flex-1">
+                                            <p className="text-[8px] font-black uppercase text-muted-foreground tracking-tighter leading-none mb-0.5">ต้นทาง (Origin)</p>
+                                            <p className="text-[10px] font-bold leading-tight text-foreground/80">{(mission as any).originName || 'ไม่ระบุ'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1" />
+                                        <div className="flex-1">
+                                            <p className="text-[8px] font-black uppercase text-muted-foreground tracking-tighter leading-none mb-0.5">ปลายทาง (Destination)</p>
+                                            <p className="text-[10px] font-bold leading-tight text-foreground/80">{(mission as any).destName || 'ไม่ระบุ'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-1 mb-3">
+                                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground bg-muted/30 px-2 py-1 rounded-lg border border-border/10">
+                                        <MapPin size={10} className="text-primary" />
+                                        <span>พิกัด: {mission.lat.toFixed(6)}, {mission.lng.toFixed(6)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-border" />
+                                        <span>พื้นที่จำลอง: {mission.type === 'origin' ? '20ม.' : '35ม.'} (รัศมี)</span>
+                                    </div>
+                                </div>
+
                                 <div className="flex items-center justify-between gap-2 border-t border-border/10 pt-2">
                                     <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">ID: {(mission.jobId || '').slice(-6)}</span>
                                     <span className={cn(

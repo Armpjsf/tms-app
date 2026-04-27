@@ -87,16 +87,16 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="bg-background p-6 border border-slate-800 rounded-2xl shadow-2xl">
+                      <div className="bg-slate-900/95 p-6 border border-slate-800 rounded-2xl shadow-2xl backdrop-blur-md">
                         <p className="text-base font-bold font-black text-blue-400 uppercase tracking-widest mb-2 italic">{data.name}</p>
                         <div className="space-y-4">
                             <div className="flex justify-between gap-8">
-                                <span className="text-muted-foreground text-base font-bold font-bold uppercase">{t('charts.unit_cost')}</span>
-                                <span className="text-foreground font-black italic">฿{data.costPerJob.toLocaleString()}</span>
+                                <span className="text-white/60 text-base font-bold uppercase">{t('charts.unit_cost')}</span>
+                                <span className="text-white font-black italic">฿{data.costPerJob.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between gap-8">
-                                <span className="text-muted-foreground text-base font-bold font-bold uppercase">{t('charts.unit_revenue')}</span>
-                                <span className="text-foreground font-black italic">฿{data.revenuePerJob.toLocaleString()}</span>
+                                <span className="text-white/60 text-base font-bold uppercase">{t('charts.unit_revenue')}</span>
+                                <span className="text-white font-black italic">฿{data.revenuePerJob.toLocaleString()}</span>
                             </div>
                             <div className="pt-2 border-t border-slate-800 flex justify-between gap-8">
                                 <span className="text-emerald-400 text-base font-bold font-black uppercase">{t('charts.margin_yield')}</span>
@@ -126,8 +126,8 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
       </PremiumCard>
 
       {/* Efficiency Intelligence Hub */}
-      <div className="flex flex-col gap-6">
-        <PremiumCard className="bg-background border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem] flex-1">
+      <div className="flex flex-col gap-6 h-full">
+        <PremiumCard className="bg-background border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem] flex-1 flex flex-col justify-between">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-8 relative z-10">
               <div className="space-y-1">
