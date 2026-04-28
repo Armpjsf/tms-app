@@ -19,11 +19,10 @@ const createMissionIcon = (type: 'origin' | 'destination', status?: string) => {
     return L.divIcon({
         className: 'custom-mission-icon',
         html: `
-            <div class="relative flex items-center justify-center" style="width: 32px; height: 32px;">
-                <div class="absolute inset-0 bg-background/40 backdrop-blur-[2px] rounded-full shadow-lg border-2" style="border-color: ${color};"></div>
-                <div class="relative z-10 w-2.5 h-2.5 rounded-full ${status === 'SOS' ? 'bg-white animate-ping' : ''}" style="background-color: ${color}; opacity: 0.8;"></div>
-                <!-- Pulsing ring -->
-                <div class="absolute inset-0 rounded-full animate-pulse opacity-10" style="background-color: ${color};"></div>
+            <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+                <div style="position: absolute; inset: 0; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(2px); border-radius: 9999px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 2px solid ${color};"></div>
+                <div style="position: relative; z-index: 10; width: 10px; height: 10px; border-radius: 9999px; background-color: ${color}; opacity: 0.8; ${status === 'SOS' ? 'animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;' : ''}"></div>
+                <div style="position: absolute; inset: 0; border-radius: 9999px; background-color: ${color}; opacity: 0.1; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
             </div>
         `,
         iconSize: [32, 32],
@@ -198,7 +197,7 @@ export default function LeafletMap({
       ))}
 
       {/* Active Job Missions (Origins & Destinations) */}
-      {jobMissions.length > 0 && showGeofences && (
+      {jobMissions.length > 0 && (
           <>
             {/* 1. Connecting Lines between Origin and Destination for each job */}
             {Array.from(new Set(jobMissions.map(m => m.jobId))).map(jobId => {
