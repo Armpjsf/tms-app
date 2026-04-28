@@ -3,7 +3,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, CircleMarker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, Fragment } from 'react'
 import { Truck, MapPin } from 'lucide-react'
 import { ProfitabilityHeatmap, ProfitPoint } from './profitability-heatmap'
 import { cn } from '@/lib/utils'
@@ -222,7 +222,7 @@ export default function LeafletMap({
 
             {/* 2. Mission Markers & Geofences */}
             {jobMissions.map((mission) => (
-                <div key={mission.id}>
+                <Fragment key={mission.id}>
                     <Marker 
                         position={[mission.lat, mission.lng]} 
                         icon={createMissionIcon(mission.type, mission.status)}
@@ -287,7 +287,7 @@ export default function LeafletMap({
                             }}
                         />
                     )}
-                </div>
+                </Fragment>
             ))}
           </>
       )}
