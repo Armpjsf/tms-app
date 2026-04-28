@@ -38,7 +38,8 @@ export function DriverAutocomplete({
     query === ""
       ? drivers
       : drivers.filter((d) =>
-          (d.Driver_Name?.toLowerCase() || "").includes(query.toLowerCase())
+          (d.Driver_Name?.toLowerCase() || "").includes(query.toLowerCase()) ||
+          (d.Vehicle_Plate?.toLowerCase() || "").includes(query.toLowerCase())
         )
 
   useEffect(() => {
@@ -53,8 +54,11 @@ export function DriverAutocomplete({
 
   // Sync query with value
   useEffect(() => {
-      if (selectedDriver && selectedDriver.Driver_Name !== query && !open) {
-          setQuery(selectedDriver.Driver_Name || "")
+      if (selectedDriver && !open) {
+          const displayValue = `${selectedDriver.Driver_Name} (${selectedDriver.Vehicle_Plate || '-'})`
+          if (query !== displayValue) {
+              setQuery(displayValue)
+          }
       } else if (!value && query && !open) {
           setQuery("")
       }
@@ -64,7 +68,7 @@ export function DriverAutocomplete({
   const handleSelect = (driver: Driver) => {
     onChange(driver.Driver_ID)
     if (onSelect) onSelect(driver)
-    setQuery(driver.Driver_Name || "")
+    setQuery(`${driver.Driver_Name} (${driver.Vehicle_Plate || '-'})`)
     setOpen(false)
   }
 
@@ -120,7 +124,7 @@ export function DriverAutocomplete({
                 >
                   <div className="flex items-center gap-2">
                     <User size={14} className="text-emerald-600" />
-                    <span>{driver.Driver_Name}</span>
+                    <span>{driver.Driver_Name} <span className="text-muted-foreground ml-1">({driver.Vehicle_Plate || '-'})</span></span>
                   </div>
                   {value === driver.Driver_ID && (
                     <Check className="w-4 h-4 text-emerald-500" />

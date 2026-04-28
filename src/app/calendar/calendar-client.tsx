@@ -348,17 +348,17 @@ export function CalendarClient({
                               {job.Customer_Name || t('common.loading')}
                             </h4>
 
-                            <div className="space-y-4">
+            <div className="space-y-4">
                                 <div className="flex items-center gap-3 text-sm font-black text-muted-foreground">
                                    <MapPin size={14} className="text-primary" />
                                    <span className="truncate uppercase">{job.Route_Name || job.Dest_Location}</span>
                                 </div>
-                                <div className="flex items-center gap-6 border-t border-border/10 pt-4">
-                                   <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                                      {loadingEdit ? <Loader2 size={12} className="animate-spin" /> : <User size={12} />} {job.Driver_Name?.split(' ')[0] || t('common.auto')}
+                                 <div className="flex items-center gap-6 border-t border-border/10 pt-4">
+                                   <div className="flex items-center gap-2 text-xs font-black text-foreground uppercase tracking-widest">
+                                      {loadingEdit ? <Loader2 size={12} className="animate-spin" /> : <User size={12} className="text-primary" />} {job.Driver_Name || t('common.auto')}
                                     </div>
-                                   <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                                      <Truck size={12} /> {job.Vehicle_Plate}
+                                   <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-widest bg-muted/50 px-2 py-0.5 rounded border border-border/5">
+                                      <Truck size={12} /> {job.Vehicle_Plate || '-'}
                                    </div>
                                 </div>
                             </div>

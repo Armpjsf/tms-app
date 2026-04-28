@@ -210,8 +210,9 @@ export function MaintenanceClient({
                     {effectivePriority === 'High' ? <AlertTriangle size={24} className="animate-pulse" /> : <Wrench size={24} />}
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-xl font-black text-foreground italic tracking-widest uppercase leading-none">{ticket.Vehicle_Plate || "VOID_ID"}</h3>
+                    <h3 className="text-xl font-black text-foreground italic tracking-widest uppercase leading-none">{ticket.Driver_Name || "UNASSIGNED"}</h3>
                     <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[9px] font-black text-primary font-mono tracking-widest uppercase italic bg-primary/10 px-1.5 py-0.5 rounded-md border border-primary/10">{ticket.Vehicle_Plate || "VOID_PLATE"}</span>
                         <span className="text-[9px] font-black text-muted-foreground font-mono tracking-widest uppercase italic bg-muted/50 px-1.5 py-0.5 rounded-md border border-border/5">ID: {ticket.Ticket_ID}</span>
                         <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest bg-amber-500/10 px-1.5 py-0.5 rounded-md border border-amber-500/10">{ticket.Issue_Type}</span>
                     </div>

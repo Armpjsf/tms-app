@@ -23,7 +23,7 @@ interface Contact {
 
 interface ChatWindowProps {
   initialContacts: Contact[]
-  initialDrivers: { Driver_ID: string; Driver_Name?: string }[]
+  initialDrivers: { Driver_ID: string; Driver_Name?: string; Vehicle_Plate?: string }[]
   forcedDriverId?: string | null
 }
 
@@ -110,7 +110,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
     initialDrivers.forEach(d => {
       contactMap.set(d.Driver_ID, {
         driver_id: d.Driver_ID,
-        driver_name: d.Driver_Name || `พนักงานขับรถ (${d.Driver_ID})`,
+        driver_name: d.Driver_Name ? `${d.Driver_Name} (${d.Vehicle_Plate || '-'})` : `พนักงานขับรถ (${d.Driver_ID})`,
         last_message: 'เริ่มการสนทนา',
         unread: 0,
         updated_at: '2024-01-01T00:00:00.000Z',

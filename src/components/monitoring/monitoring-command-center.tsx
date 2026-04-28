@@ -379,12 +379,14 @@ export function MonitoringCommandCenter({
                                             <Truck size={16} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black text-foreground uppercase">{job.Vehicle_Plate || job.Job_ID}</p>
+                                            <p className="text-sm font-black text-foreground uppercase">
+                                                {job.Vehicle_Plate ? `${job.Vehicle_Plate} - ` : ''}{job.Driver_Name || (job.Driver_ID ? (allDrivers.find(d => d.Driver_ID === job.Driver_ID)?.Driver_Name || '...') : '') || job.Job_ID}
+                                            </p>
                                             <p className={cn(
                                                 "text-[10px] font-bold uppercase tracking-widest",
                                                 job.Driver_Name ? "text-muted-foreground" : "text-amber-500"
                                             )}>
-                                                {job.Driver_Name || (job.Driver_ID ? (allDrivers.find(d => d.Driver_ID === job.Driver_ID)?.Driver_Name || t('common.status_pending') || 'รอดำเนินการ') : (t('common.status_pending') || 'รอดำเนินการ'))}
+                                                {job.Customer_Name || t('common.status_pending')}
                                             </p>
                                         </div>
                                     </div>
@@ -416,8 +418,8 @@ export function MonitoringCommandCenter({
                                                 <div className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#050110]", driver.status === 'Online' ? "bg-emerald-500" : "bg-slate-500")} />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-black text-foreground uppercase">{driver.Vehicle_Plate || driver.Driver_Name}</p>
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">{driver.Driver_Name}</p>
+                                                <p className="text-sm font-black text-foreground uppercase">{driver.Driver_Name}</p>
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight italic">{driver.Vehicle_Plate || '-'}</p>
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-end gap-1.5 scale-90 origin-right">

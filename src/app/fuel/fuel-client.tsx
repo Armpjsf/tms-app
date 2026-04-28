@@ -153,7 +153,6 @@ export function FuelClient({
                     <tr>
                       <th className="text-left px-6 py-4">{t('common.date')}</th>
                       <th className="text-left px-4 py-4">{t('navigation.drivers')}</th>
-                      <th className="text-left px-4 py-4">{t('vehicles.plate')}</th>
                       <th className="text-left px-4 py-4">{t('common.status')}</th>
                       <th className="text-center px-4 py-4">{t('common.loading')}</th>
                       <th className="text-right px-4 py-4">{t('common.units')} (L)</th>
@@ -181,9 +180,11 @@ export function FuelClient({
                         }) : "VOID"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-foreground font-bold text-xs uppercase italic">{log.Driver_Name || "UNASSIGNED"}</td>
                     <td className="px-4 py-3">
-                       <span className="px-2 py-0.5 bg-muted/50 rounded-md border border-border/10 text-foreground font-black text-[10px] tracking-widest uppercase">{log.Vehicle_Plate || "VOID_ID"}</span>
+                      <div className="flex flex-col">
+                        <span className="text-foreground font-bold text-xs uppercase italic">{log.Driver_Name || "UNASSIGNED"}</span>
+                        <span className="text-[9px] text-muted-foreground font-black tracking-widest">{log.Vehicle_Plate || "-"}</span>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">

@@ -111,7 +111,7 @@ export async function getChatContacts(): Promise<ChatContact[]> {
 
     // 1. Get Drivers in my branch to filter messages (Use Admin client for names to ensure visibility)
     let allowedDriverIds: Set<string> | null = null
-    const { data: allDrivers } = await adminSupabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Branch_ID')
+    const { data: allDrivers } = await adminSupabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate, Branch_ID')
     
     if (branchId && branchId !== 'All') {
         allowedDriverIds = new Set(allDrivers?.filter(d => d.Branch_ID === branchId).map(d => d.Driver_ID) || [])
@@ -119,8 +119,8 @@ export async function getChatContacts(): Promise<ChatContact[]> {
         return []
     }
 
-    // Map to lookup driver names easily
-    const driverNameMap = new Map(allDrivers?.map(d => [d.Driver_ID, d.Driver_Name]) || [])
+    // Map to lookup driver info easily
+    const driverInfoMap = new Map(allDrivers?.map(d => [d.Driver_ID, { name: d.Driver_Name, plate: d.Vehicle_Plate }]) || [])
 
     // 2. Group by driver and find last message
     const contactMap = new Map<string, ChatContact>()
@@ -131,9 +131,12 @@ export async function getChatContacts(): Promise<ChatContact[]> {
       if (allowedDriverIds && !allowedDriverIds.has(driverId)) return
       
       if (!contactMap.has(driverId)) {
+        const info = driverInfoMap.get(driverId)
+        const displayName = info ? `${info.name} (${info.plate || '-'})` : `พนักงานขับรถ (${driverId})`
+        
         contactMap.set(driverId, {
           driver_id: driverId,
-          driver_name: driverNameMap.get(driverId) || `พนักงานขับรถ (${driverId})`,
+          driver_name: displayName,
           last_message: msg.message,
           unread: 0,
           updated_at: msg.created_at

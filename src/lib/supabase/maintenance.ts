@@ -19,6 +19,7 @@ export type RepairTicket = {
   Remark: string | null
   Odometer?: number | null
   Branch_ID?: string | null
+  Driver_Name?: string
 }
 
 // ดึง Repair Tickets ทั้งหมด (pagination + search + filters)
@@ -42,7 +43,7 @@ export async function getAllRepairTickets(
     
     let dbQuery = supabase
       .from('Repair_Tickets')
-      .select('*', { count: 'exact' })
+      .select('*, Master_Drivers(Driver_Name)', { count: 'exact' })
     
     if (isAdmin) {
       if (selectedBranch && selectedBranch !== 'All') {
@@ -72,13 +73,19 @@ export async function getAllRepairTickets(
       dbQuery = dbQuery.eq('Status', status)
     }
 
-    const { data, error, count } = await dbQuery.range(offset, offset + limit - 1)
+    const { data: rawData, error, count } = await dbQuery.range(offset, offset + limit - 1)
   
     if (error) {
       return { data: [], count: 0 }
     }
+
+    // Map the joined data to include Driver_Name at the top level
+    const data = (rawData || []).map((ticket: any) => ({
+      ...ticket,
+      Driver_Name: ticket.Master_Drivers?.Driver_Name || 'Unknown'
+    }))
   
-    return { data: data || [], count: count || 0 }
+    return { data, count: count || 0 }
   } catch (e) {
     return { data: [], count: 0 }
   }
