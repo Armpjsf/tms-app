@@ -100,9 +100,6 @@ export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosi
         const jobsToUse = activeJobs.length > 0 ? activeJobs : allJobs
         
         jobsToUse.forEach(j => {
-            // Only show missions for non-completed jobs
-            if (['Completed', 'Delivered', 'Cancelled'].includes(j.Job_Status)) return
-
             const oLat = Number(j.Pickup_Lat) || 0
             const oLng = Number(j.Pickup_Lon) || 0
             const dLat = Number(j.Delivery_Lat) || 0

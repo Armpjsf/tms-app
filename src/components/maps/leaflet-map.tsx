@@ -15,7 +15,7 @@ let goldIcon: any;
 let greenIcon: any;
 
 const createMissionIcon = (type: 'origin' | 'destination', status?: string) => {
-    const color = type === 'origin' ? '#10b981' : '#f43f5e'
+    const color = type === 'origin' ? '#a855f7' : '#f43f5e'
     return L.divIcon({
         className: 'custom-mission-icon',
         html: `
@@ -211,7 +211,7 @@ export default function LeafletMap({
                         <Polyline 
                             key={`job-link-${jobId}`}
                             positions={[[origin.lat, origin.lng], [destination.lat, destination.lng]]}
-                            color={origin.status === 'Picked Up' || origin.status === 'In Transit' ? '#10b981' : '#64748b'}
+                            color={origin.status === 'Picked Up' || origin.status === 'In Transit' ? '#a855f7' : '#64748b'}
                             dashArray="10, 10"
                             weight={2}
                             opacity={0.4}
@@ -237,7 +237,7 @@ export default function LeafletMap({
 
                                 <div className="space-y-2 p-2.5 bg-muted/20 rounded-xl border border-border/5 mb-3">
                                     <div className="flex items-start gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1" />
                                         <div className="flex-1">
                                             <p className="text-[8px] font-black uppercase text-muted-foreground tracking-tighter leading-none mb-0.5">ต้นทาง (Origin)</p>
                                             <p className="text-[10px] font-bold leading-tight text-foreground/80">{(mission as any).originName || 'ไม่ระบุ'}</p>
@@ -280,8 +280,8 @@ export default function LeafletMap({
                             center={[mission.lat, mission.lng]}
                             radius={mission.type === 'origin' ? 20 : 35}
                             pathOptions={{ 
-                                color: mission.type === 'origin' ? '#10b981' : '#f43f5e', 
-                                fillColor: mission.type === 'origin' ? '#10b981' : '#f43f5e', 
+                                color: mission.type === 'origin' ? '#a855f7' : '#f43f5e', 
+                                fillColor: mission.type === 'origin' ? '#a855f7' : '#f43f5e', 
                                 fillOpacity: 0.05,
                                 weight: 1,
                                 dashArray: '5, 5'
