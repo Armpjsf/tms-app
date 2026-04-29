@@ -49,6 +49,8 @@ export async function middleware(request: NextRequest) {
     response = await updateSession(request)
   }
 
+  // Role-based Access Control (RBAC) via Local JWT Decryption (FAST)
+  // Skip RBAC for mobile routes (they have their own session logic)
   if (!isApiRoute && !isMobile && !isLoginPage && !isPublicTrack && !isPublicInvoice && !isStaticFile && pathname !== '/' && !pathname.includes('analytics')) {
     const sessionCookie = request.cookies.get('session')
     const driverSession = request.cookies.get('driver_session')
@@ -58,7 +60,8 @@ export async function middleware(request: NextRequest) {
       const userAgent = request.headers.get('user-agent') || ''
       const isDeviceMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
       
-      if (isDeviceMobile && !pathname.startsWith('/mobile/login')) {
+      // If we are on a desktop route but it's a mobile device, redirect to mobile app
+      if (isDeviceMobile) {
         if (driverSession) {
           return NextResponse.redirect(new URL('/mobile/jobs', request.url))
         }

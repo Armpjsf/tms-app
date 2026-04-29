@@ -1,18 +1,19 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { useRouter } from "next/navigation"
+
+const REFRESH_THROTTLE = 10000 // 10 seconds
 
 export function RealtimeJobsTrigger({ driverId }: { driverId: string }) {
     const router = useRouter()
     const supabase = createClient()
+    const lastRefreshRef = useRef(0)
 
     useEffect(() => {
         if (!driverId) return
 
-        // Listen for ANY change in Jobs_Main that might affect this driver
-        // Specifically INSERT or UPDATE where Driver_ID is the current driver
         const channel = supabase
             .channel(`driver_jobs_${driverId}`)
             .on(
@@ -26,7 +27,6 @@ export function RealtimeJobsTrigger({ driverId }: { driverId: string }) {
                 (payload) => {
                     console.log('Real-time job change detected:', payload)
                     
-                    // Show a toast if it's a new job (INSERT) or a job status update
                     const isNewJob = payload.eventType === 'INSERT'
                     const isAssignment = payload.eventType === 'UPDATE' && payload.new.Driver_ID === driverId && !payload.old.Driver_ID
 
@@ -39,8 +39,12 @@ export function RealtimeJobsTrigger({ driverId }: { driverId: string }) {
                         })
                     }
 
-                    // Trigger a server component refresh
-                    router.refresh()
+                    // Trigger a server component refresh with throttle
+                    const now = Date.now()
+                    if (now - lastRefreshRef.current > REFRESH_THROTTLE) {
+                        lastRefreshRef.current = now
+                        router.refresh()
+                    }
                 }
             )
             .subscribe()

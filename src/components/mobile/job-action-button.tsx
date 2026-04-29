@@ -13,6 +13,7 @@ import { updateJobStatus } from "@/app/mobile/jobs/actions"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { parseISO, isAfter, startOfDay } from "date-fns"
 
 interface Destination {
     name: string
@@ -24,6 +25,8 @@ interface Destination {
 interface Job {
     Job_ID: string
     Job_Status: string
+    Plan_Date: string | null
+    Delivery_Date: string | null
     original_destinations_json: Destination[]
     Notes: string | null
     [key: string]: unknown
@@ -41,6 +44,30 @@ export function JobActionButton({ job }: JobActionButtonProps) {
   const currentStatus = optimisticStatus || job.Job_Status
 
   const handleStatusUpdate = async (newStatus: string) => {
+    const today = startOfDay(new Date())
+
+    // 1. Block Future Jobs (Task 2)
+    if (job.Plan_Date) {
+        const planDate = startOfDay(parseISO(job.Plan_Date))
+        if (isAfter(planDate, today)) {
+            toast.error("ไม่สามารถเริ่มงานได้ก่อนวันเริ่มงานจริง", {
+                description: `งานนี้กำหนดเริ่มวันที่ ${new Date(job.Plan_Date).toLocaleDateString('th-TH')}`
+            })
+            return
+        }
+    }
+
+    // 2. Block Early Arrival at Dropoff for Long-haul (Task 3)
+    if (newStatus === 'Arrived Dropoff' && job.Delivery_Date) {
+        const deliveryDate = startOfDay(parseISO(job.Delivery_Date))
+        if (isAfter(deliveryDate, today)) {
+            toast.error("ยังไม่ถึงกำหนดส่งงาน", {
+                description: `งานนี้กำหนดส่งวันที่ ${new Date(job.Delivery_Date).toLocaleDateString('th-TH')}`
+            })
+            return
+        }
+    }
+
     setLoading(true)
     setOptimisticStatus(newStatus)
     try {
@@ -61,6 +88,18 @@ export function JobActionButton({ job }: JobActionButtonProps) {
 
   // POD Flow
   const handlePOD = () => {
+    // 1. Block Future Delivery (Task 3)
+    if (job.Delivery_Date) {
+        const deliveryDate = startOfDay(parseISO(job.Delivery_Date))
+        const today = startOfDay(new Date())
+        
+        if (isAfter(deliveryDate, today)) {
+            toast.error("ยังไม่ถึงกำหนดส่งงาน", {
+                description: `งานนี้กำหนดส่งวันที่ ${new Date(job.Delivery_Date).toLocaleDateString('th-TH')}`
+            })
+            return
+        }
+    }
     router.push(`/mobile/jobs/${job.Job_ID}/complete`)
   }
 

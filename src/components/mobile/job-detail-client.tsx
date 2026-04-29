@@ -15,6 +15,7 @@ import { RouteStrip } from "@/components/mobile/route-strip"
 import { Job } from "@/lib/supabase/jobs"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { parseISO, isAfter, startOfDay } from "date-fns"
 
 interface JobDetailClientProps {
     job: Job
@@ -81,6 +82,23 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                          <CheckCircle size={22} />
                                      </div>
                                      <p className="font-black uppercase tracking-widest text-xs italic">อัพเดทสถานะสำเร็จ!</p>
+                                 </motion.div>
+                             )}
+
+                             {/* Future Job Warning */}
+                             {job.Plan_Date && isAfter(startOfDay(parseISO(job.Plan_Date)), startOfDay(new Date())) && (
+                                 <motion.div 
+                                     initial={{ scale: 0.95, opacity: 0 }}
+                                     animate={{ scale: 1, opacity: 1 }}
+                                     className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-4 text-amber-500 shadow-sm"
+                                 >
+                                     <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center">
+                                         <Clock size={22} />
+                                     </div>
+                                     <div className="flex-1">
+                                         <p className="font-black uppercase tracking-widest text-xs italic mb-1">งานนี้เป็นงานของวันถัดไป</p>
+                                         <p className="text-[10px] font-bold opacity-80">ระบบจะไม่อนุญาตให้เริ่มงานจนกว่าจะถึงวันที่กำหนด</p>
+                                     </div>
                                  </motion.div>
                              )}
 

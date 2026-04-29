@@ -14,6 +14,8 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { Job } from "@/lib/supabase/jobs"
+import { format, isToday, isTomorrow, parseISO } from "date-fns"
+import { th } from "date-fns/locale"
 
 interface DashboardClientProps {
     session: {
@@ -66,6 +68,19 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
         if (hour >= 12 && hour < 17) return "สวัสดีตอนบ่าย"
         return "สวัสดีตอนเย็น"
     }, [])
+
+    const formatJobDate = (dateStr: string | null) => {
+        if (!dateStr) return ""
+        try {
+            const date = parseISO(dateStr)
+            const datePart = format(date, "d MMM", { locale: th })
+            if (isToday(date)) return `วันนี้ (${datePart})`
+            if (isTomorrow(date)) return `พรุ่งนี้ (${datePart})`
+            return datePart
+        } catch {
+            return dateStr
+        }
+    }
 
     // Real-time Chat Notification for Driver
     useEffect(() => {
@@ -201,13 +216,20 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                     </p>
                                 </div>
                             </div>
-                            <div className={cn(
-                                "px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest border shadow-sm",
-                                ['In Progress', 'In Transit', 'Arrived Pickup', 'Arrived Dropoff'].includes(currentJob.Job_Status)
-                                ? "bg-accent text-white border-accent/20"
-                                : "bg-muted text-muted-foreground border-border/50"
-                            )}>
-                                {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : 'ดำเนินการอยู่'}
+                            <div className="flex flex-col items-end gap-2">
+                                <div className={cn(
+                                    "px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest border shadow-sm",
+                                    ['In Progress', 'In Transit', 'Arrived Pickup', 'Arrived Dropoff'].includes(currentJob.Job_Status)
+                                    ? "bg-accent text-white border-accent/20"
+                                    : "bg-muted text-muted-foreground border-border/50"
+                                )}>
+                                    {currentStatus === 'Assigned' || currentStatus === 'New' ? 'รอเริ่มงาน' : 'ดำเนินการอยู่'}
+                                </div>
+                                {(currentJob as any).Plan_Date && (
+                                    <span className="text-[10px] font-black text-primary/70 uppercase tracking-widest bg-primary/5 px-2 py-1 rounded-md border border-primary/10">
+                                        {formatJobDate((currentJob as any).Plan_Date)}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
@@ -296,8 +318,15 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="p-2 bg-muted/20 rounded-full">
-                                        <ChevronRight size={20} className="text-muted-foreground" />
+                                    <div className="flex flex-col items-end gap-2">
+                                        <div className="p-2 bg-muted/20 rounded-full">
+                                            <ChevronRight size={20} className="text-muted-foreground" />
+                                        </div>
+                                        {job.Plan_Date && (
+                                            <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-md">
+                                                {formatJobDate(job.Plan_Date)}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </Link>
