@@ -51,12 +51,17 @@ export async function getAllRoutes(page?: number, limit?: number, query?: string
 
     // Unified Branch Filtering
     const userBranchId = await getUserBranchId()
-    const effectiveBranchId = branchId || userBranchId
+    const isSuper = await isSuperAdmin()
 
-    if (effectiveBranchId && effectiveBranchId !== 'All') {
-        queryBuilder = queryBuilder.eq('Branch_ID', effectiveBranchId)
-    } else if (!isSuper && !isAdminUser && !effectiveBranchId) {
-        return { data: [], count: 0 }
+    // STRICT ISOLATION
+    if (!isSuper) {
+        if (userBranchId && userBranchId !== 'All') {
+            queryBuilder = queryBuilder.eq('Branch_ID', userBranchId)
+        } else {
+            return { data: [], count: 0 }
+        }
+    } else if (branchId && branchId !== 'All') {
+        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     }
     
     const { data, error, count } = await queryBuilder.order('Route_Name', { ascending: true })
@@ -74,9 +79,23 @@ export async function getAllRoutes(page?: number, limit?: number, query?: string
 // Get all branches
 export async function getBranches() {
   try {
+    const isSuper = await isSuperAdmin()
+    const userBranchId = await getUserBranchId()
     const isAdminUser = await isAdmin()
     const supabase = isAdminUser ? await createAdminClient() : await createClient()
-    const { data, error } = await supabase.from('Master_Branches').select('Branch_ID, Branch_Name').order('Branch_Name')
+    
+    let query = supabase.from('Master_Branches').select('Branch_ID, Branch_Name')
+
+    // STRICT ISOLATION for dropdowns
+    if (!isSuper) {
+        if (userBranchId && userBranchId !== 'All') {
+            query = query.eq('Branch_ID', userBranchId)
+        } else {
+            return []
+        }
+    }
+
+    const { data, error } = await query.order('Branch_Name')
     
     if (error) {
        return []

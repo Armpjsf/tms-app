@@ -109,7 +109,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
     const { data: user, error: fetchError } = await supabase
         .from('Master_Users')
         .select('Username, Password')
-        .eq('User_ID', session.userId)
+        .eq('Username', session.userId)
         .single()
 
     if (fetchError || !user) {
@@ -139,7 +139,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
     const { error: updateError } = await supabase
         .from('Master_Users')
         .update({ Password: hashedPassword })
-        .eq('User_ID', session.userId)
+        .eq('Username', session.userId)
 
     if (updateError) {
         return { success: false, error: 'ไม่สามารถบันทึกรหัสผ่านได้: ' + updateError.message }

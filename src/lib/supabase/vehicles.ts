@@ -41,10 +41,15 @@ export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
     
     let query = supabase.from('Master_Vehicles').select('*')
     
-    if (branchId && branchId !== 'All') {
+    // STRICT ISOLATION
+    if (!isSuper) {
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        } else {
+            return []
+        }
+    } else if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
-    } else if (!isSuper && !isAdminUser && !branchId) {
-        return []
     }
 
     const { data, error } = await query
@@ -171,24 +176,15 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
 
     let queryBuilder = supabase.from('Master_Vehicles').select('*', { count: 'exact' })
     
-    // Filtering logic
-    if (isSuper) {
-        // Admins can see specific branches or everything
+    // STRICT ISOLATION
+    if (!isSuper) {
         if (branchId && branchId !== 'All') {
             queryBuilder = queryBuilder.eq('Branch_ID', branchId)
         } else {
-            console.log(`[DB] Admin fetching ALL branches.`)
-        }
-    } else {
-        // Non-admin users MUST be filtered by their branch
-        const userBranch = await getUserBranchId()
-        if (userBranch && userBranch !== 'All') {
-            console.log(`[DB] User filtering by branch: ${userBranch}`)
-            queryBuilder = queryBuilder.eq('Branch_ID', userBranch)
-        } else {
-            console.warn(`[DB] Non-admin user with no branch ID attempted to fetch vehicles. Returning empty.`)
             return { data: [], count: 0 }
         }
+    } else if (providedBranchId && providedBranchId !== 'All') {
+        queryBuilder = queryBuilder.eq('Branch_ID', providedBranchId)
     }
     
     if (query) {

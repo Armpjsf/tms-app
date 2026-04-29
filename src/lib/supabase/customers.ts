@@ -32,16 +32,22 @@ export async function getAllCustomers(page?: number, limit?: number, query?: str
     let queryBuilder = supabase.from('Master_Customers').select('*', { count: 'exact' })
     
     // Filter by Branch
-    const branchId = providedBranchId || await getUserBranchId()
+    const userBranchId = await getUserBranchId()
     const customerId = await getCustomerId()
     
     if (customerId) {
         queryBuilder = queryBuilder.eq('Customer_ID', customerId)
-    } else if (branchId && branchId !== 'All' && !isSuper) {
-        // Restricted to branch for everyone except Super Admin
-        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
-    } else if (!isSuper && !isAdminUser && !branchId) {
-        return { data: [], count: 0 }
+    } else {
+        // STRICT ISOLATION
+        if (!isSuper) {
+            if (userBranchId && userBranchId !== 'All') {
+                queryBuilder = queryBuilder.eq('Branch_ID', userBranchId)
+            } else {
+                return { data: [], count: 0 }
+            }
+        } else if (providedBranchId && providedBranchId !== 'All') {
+            queryBuilder = queryBuilder.eq('Branch_ID', providedBranchId)
+        }
     }
     
     if (query) {
