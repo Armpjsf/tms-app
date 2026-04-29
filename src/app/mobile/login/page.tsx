@@ -134,7 +134,9 @@ function DriverLoginContent() {
 
             {error && (
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-lg font-bold text-center font-bold animate-shake">
-                {error}
+                {error === 'IP_PENDING' ? 'พบการเข้าใช้จากที่ใหม่ กรุณารอแอดมินอนุมัติ' : 
+                 error === 'IP_BLOCKED' ? 'IP นี้ถูกระงับการใช้งาน' : 
+                 error}
               </div>
             )}
 

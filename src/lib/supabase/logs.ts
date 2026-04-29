@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "./admin";
 import { getSession } from "../session";
+import { headers } from "next/headers";
 
 export type LogModule =
   | "Jobs"
@@ -70,6 +71,9 @@ export async function logActivity(options: LogOptions) {
       }
     }
 
+    const headerList = await headers();
+    const ip = headerList.get('x-forwarded-for')?.split(',')[0] || headerList.get('x-real-ip') || '127.0.0.1';
+
     const { error } = await supabase.from("System_Logs").insert({
       user_id,
       username,
@@ -78,8 +82,10 @@ export async function logActivity(options: LogOptions) {
       module,
       action_type,
       target_id,
-      details,
-      // IP address logging could be added here if available from request headers
+      details: {
+        ...details,
+        ip_address: ip
+      }
     });
 
     if (error) {

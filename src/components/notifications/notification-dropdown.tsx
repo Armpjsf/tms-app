@@ -135,30 +135,40 @@ export function NotificationDropdown() {
     }
   }
 
-  // Initial fetch and Realtime subscription
+  // Initial fetch and Realtime subscription with Debounce Cooldown
   useEffect(() => {
+    let lastFetch = 0
+    const cooldown = 2000 // 2 seconds cooldown
+    
+    const debouncedFetch = () => {
+      const now = Date.now()
+      if (now - lastFetch < cooldown) return
+      lastFetch = now
+      fetchNotifications()
+    }
+
     setLoading(true)
     fetchNotifications()
 
     const supabase = createClient()
     const channel = supabase.channel('admin-notifications-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'Jobs_Main' }, () => fetchNotifications())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'Chat_Messages' }, () => fetchNotifications())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'System_Logs' }, () => fetchNotifications())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sos_alerts' }, () => fetchNotifications())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'Jobs_Main' }, debouncedFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'Chat_Messages' }, debouncedFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'System_Logs' }, debouncedFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sos_alerts' }, debouncedFetch)
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  // Auto-refresh every 60s as a fallback
+  // Auto-refresh fallback extended to 5 minutes (300s)
   useEffect(() => {
     const interval = setInterval(() => {
       fetch('/api/notifications')
         .then(r => r.json())
         .then(data => setNotifications(data.notifications || []))
         .catch(() => {})
-    }, 60000)
+    }, 300000)
     return () => clearInterval(interval)
   }, [])
 

@@ -115,8 +115,10 @@ export function JobDialog({
     setInternalMode(mode)
   }, [mode])
 
-  // Initial Fuel Fetch
+  // Initial Fuel Fetch - Only on open
   useEffect(() => {
+    if (!show) return;
+    
     let isMounted = true;
     setIsSyncingFuel(true)
     
@@ -147,7 +149,7 @@ export function JobDialog({
       })
     
     return () => { isMounted = false; clearTimeout(timeoutId); }
-  }, [])
+  }, [show]) // Trigger on show
   
   const isControlled = controlledOpen !== undefined
   const show = isControlled ? controlledOpen : open

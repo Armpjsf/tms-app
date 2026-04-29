@@ -12,8 +12,8 @@ export { getDriverSession }
  * Helper to get cookies dynamically to avoid build issues in some environments.
  */
 async function getCookieStore() {
-  const { cookies } = await import("next/headers")
-  return await cookies()
+  const { cookies, headers } = await import("next/headers")
+  return { cookies: await cookies(), headers: await headers() }
 }
 
 /**
@@ -138,6 +138,42 @@ export async function loginDriver(formData: FormData) {
     userData = userData2
   }
 
+  // 3. IP-Based Security Check
+  const { headers: headerList } = await getCookieStore()
+  const ip = headerList.get('x-forwarded-for')?.split(',')[0] || headerList.get('x-real-ip') || '127.0.0.1'
+
+  const { data: ipRecord, error: ipError } = await supabase
+    .from('User_Approved_IPs')
+    .select('*')
+    .eq('username', driver.Driver_ID)
+    .eq('ip_address', ip)
+    .maybeSingle()
+
+  if (!ipRecord) {
+    // First time on this IP: Create an Approved record (Drivers change IPs frequently)
+    await supabase.from('User_Approved_IPs').insert({
+      username: driver.Driver_ID,
+      ip_address: ip,
+      status: 'Approved', 
+      device_info: headerList.get('user-agent') || 'Mobile Driver'
+    })
+    // No error return: allow driver to proceed
+  } else if (ipRecord.status === 'Pending') {
+    // If they were somehow set to pending, allow them anyway (Safe for mobile drivers)
+    // or you can choose to still block if manual intervention was intended.
+    // Let's keep it lenient for drivers unless 'Blocked'
+  }
+
+  if (ipRecord.status === 'Blocked') {
+    return { error: 'IP_BLOCKED' }
+  }
+
+  // Update last used time
+  await supabase
+    .from('User_Approved_IPs')
+    .update({ last_used_at: new Date().toISOString() })
+    .eq('id', ipRecord.id)
+
   // 4. Create Session (Cookie)
   const userPermissions = (userData as Record<string, any>)?.Permissions || (userData as Record<string, any>)?.permissions || { show_income: true }
 
@@ -149,7 +185,7 @@ export async function loginDriver(formData: FormData) {
     permissions: userPermissions
   }
 
-  const cookieStore = await getCookieStore()
+  const { cookies: cookieStore } = await getCookieStore()
   const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // Extend to 30 days for better experience
 
   cookieStore.set("driver_session", JSON.stringify(sessionData), {
@@ -169,7 +205,7 @@ export async function loginDriver(formData: FormData) {
  * RESTORED/IMPLEMENTED: Driver Logout
  */
 export async function logoutDriver() {
-  const cookieStore = await getCookieStore()
+  const { cookies: cookieStore } = await getCookieStore()
 
   // Clear cookie with specific options to ensure it is deleted
   cookieStore.set("driver_session", "", {
@@ -217,7 +253,7 @@ export async function loginWithQRToken(token: string) {
           role: "driver",
       }
 
-      const cookieStore = await getCookieStore()
+      const { cookies: cookieStore } = await getCookieStore()
       const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
       cookieStore.set("driver_session", JSON.stringify(sessionData), {
@@ -259,7 +295,7 @@ export async function recoverDriverSession(driverId: string) {
         role: "driver",
     }
 
-    const cookieStore = await getCookieStore()
+    const { cookies: cookieStore } = await getCookieStore()
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
     cookieStore.set("driver_session", JSON.stringify(sessionData), {

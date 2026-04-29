@@ -6,6 +6,7 @@ import argon2 from 'argon2'
 import { createSession, deleteSession, getSession } from '@/lib/session'
 import { logActivity } from '@/lib/supabase/logs'
 import { isRedirectError } from 'next/dist/client/components/redirect'
+import { headers } from 'next/headers'
 
 export type LoginFormState = {
   error?: string
@@ -96,6 +97,61 @@ export async function login(prevState: LoginFormState | undefined, formData: For
         return { error: 'บัญชีลูกค้าของคุณยังไม่ได้ระบุรหัสลูกค้า (Customer ID) กรุณาติดต่อแอดมิน' }
     }
     
+    // 4. IP-Based Security Check - Mandatory for Admin/Staff (Role <= 5)
+    const headerList = await headers()
+    const ip = headerList.get('x-forwarded-for')?.split(',')[0] || headerList.get('x-real-ip') || '127.0.0.1'
+    
+    // EMERGENCY BYPASS: Super Admin (roleId === 1)
+    const isSuperAdmin = roleId === 1
+    // EXEMPT: Drivers (6) and Customers (7)
+    const isMobileUser = roleId === 6 || roleId === 7
+    
+    const { data: ipRecord, error: ipError } = await supabase
+      .from('User_Approved_IPs')
+      .select('*')
+      .eq('username', users.Username)
+      .eq('ip_address', ip)
+      .maybeSingle()
+
+    if (ipError) {
+      console.error(`[AUTH] IP Check Error:`, ipError)
+    }
+
+    if (!ipRecord) {
+      // First time on this IP: Create a record
+      await supabase.from('User_Approved_IPs').insert({
+        username: users.Username,
+        ip_address: ip,
+        status: (isSuperAdmin || isMobileUser) ? 'Approved' : 'Pending', // Auto-approve Super Admin and Mobile Users
+        device_info: headerList.get('user-agent') || 'Unknown'
+      })
+
+      await logActivity({
+        module: 'Auth',
+        action_type: 'UPDATE',
+        user_id: users.Username,
+        username: users.Username,
+        details: { alert: 'NEW_IP_DETECTED', ip, status: (isSuperAdmin || isMobileUser) ? 'Approved' : 'Pending' }
+      })
+
+      if (!isSuperAdmin && !isMobileUser) return { error: 'IP_PENDING' }
+    }
+
+    if (!isSuperAdmin && !isMobileUser && ipRecord.status === 'Pending') {
+      return { error: 'IP_PENDING' }
+    }
+
+    if (ipRecord.status === 'Blocked') {
+      return { error: 'IP_BLOCKED' }
+    }
+
+    // Update last used time
+    await supabase
+      .from('User_Approved_IPs')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('id', ipRecord.id)
+
+    // 5. Create Session (Custom)
     await createSession(
       users.Username, 
       roleId, 

@@ -125,10 +125,21 @@ async function fetchFromKapook() {
     }
 }
 
+// Add a simple in-memory sync lock (last sync timestamp)
+let lastSyncTimestamp = 0
+const SYNC_COOLDOWN = 60 * 60 * 1000 // 1 hour
+
 /**
  * Sync daily fuel prices from multiple sources
  */
 export async function syncDailyFuelPrices() {
+    const now = Date.now()
+    if (now - lastSyncTimestamp < SYNC_COOLDOWN) {
+        log('Sync skipped: Cooldown active (1 hour)')
+        return { success: true, message: 'Already synced recently' }
+    }
+    
+    lastSyncTimestamp = now
     log('Starting multi-source fuel synchronization...')
     
     try {

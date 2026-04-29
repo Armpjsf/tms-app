@@ -1,16 +1,35 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Shield, ArrowLeft, Key, Lock, Smartphone, Activity, Zap, ShieldCheck, Target, Loader2 } from "lucide-react"
+import { 
+    Shield, 
+    ArrowLeft, 
+    Key, 
+    Lock, 
+    Smartphone, 
+    Activity, 
+    Zap, 
+    ShieldCheck, 
+    Target, 
+    Loader2,
+    Check,
+    X as XIcon,
+    Trash2,
+    Globe,
+    Monitor
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { createClient } from "@/utils/supabase/client"
 import { useLanguage } from "@/components/providers/language-provider"
+import { getPendingIPs, approveIP, blockIP, deleteIPRecord } from "@/lib/actions/security-actions"
+import { getSession } from "@/lib/session"
+import { Badge } from "@/components/ui/badge"
 
 export default function SecuritySettingsPage() {
   const { t } = useLanguage()
@@ -18,10 +37,55 @@ export default function SecuritySettingsPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [pendingIPs, setPendingIPs] = useState<any[]>([])
+  const [session, setSession] = useState<any>(null)
+  const [ipLoading, setIpLoading] = useState(false)
+
+  useEffect(() => {
+    async function init() {
+        const sess = await getSession()
+        setSession(sess)
+        
+        if (sess && (sess.roleId === 1 || sess.roleId === 2)) {
+            const ips = await getPendingIPs()
+            setPendingIPs(ips)
+        }
+    }
+    init()
+  }, [])
+
+  const refreshIPs = async () => {
+    const ips = await getPendingIPs()
+    setPendingIPs(ips)
+  }
+
+  const handleApproveIP = async (id: string, username: string, ip: string) => {
+    setIpLoading(true)
+    const res = await approveIP(id, username, ip)
+    if (res.success) {
+        toast.success(`Approved IP ${ip} for ${username}`)
+        refreshIPs()
+    } else {
+        toast.error(res.error)
+    }
+    setIpLoading(false)
+  }
+
+  const handleBlockIP = async (id: string, username: string, ip: string) => {
+    setIpLoading(true)
+    const res = await blockIP(id, username, ip)
+    if (res.success) {
+        toast.success(`Blocked IP ${ip}`)
+        refreshIPs()
+    } else {
+        toast.error(res.error)
+    }
+    setIpLoading(false)
+  }
 
   const handleUpdatePassword = async () => {
     if (!password) {
-        toast.warning(t('shared.toasts.error')) // Using a more generic one if available or fallback
+        toast.warning(t('shared.toasts.error'))
         return
     }
     if (password !== confirmPassword) {
@@ -150,6 +214,116 @@ export default function SecuritySettingsPage() {
                   </PremiumCard>
              </div>
 
+             {/* IP Approval Matrix - ONLY FOR ADMINS */}
+             {(session?.roleId === 1 || session?.roleId === 2) && (
+              <div className="lg:col-span-12">
+                   <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/ip">
+                       <div className="p-10 border-b border-border/5 bg-black/40 flex items-center justify-between">
+                           <div className="space-y-1">
+                               <h3 className="text-xl font-black text-foreground tracking-widest uppercase italic flex items-center gap-3">
+                                   <Globe size={20} className="text-primary" />
+                                   คำขออนุมัติ IP / อุปกรณ์ใหม่
+                               </h3>
+                               <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest italic ml-8">
+                                   จัดการการเข้าถึงระบบจากอุปกรณ์ที่ไม่รู้จัก
+                               </p>
+                           </div>
+                           <Badge variant="outline" className="px-4 py-1.5 border-primary/20 text-primary bg-primary/5 font-black uppercase italic tracking-widest">
+                                {pendingIPs.length} PENDING
+                           </Badge>
+                       </div>
+                       
+                       <div className="p-0">
+                           {pendingIPs.length === 0 ? (
+                               <div className="p-20 text-center space-y-6">
+                                   <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto text-muted-foreground border border-border/10">
+                                        <Shield size={32} className="opacity-30" />
+                                   </div>
+                                   <p className="text-xl font-black text-muted-foreground uppercase tracking-[0.2em] italic">ไม่พบคำขอที่ค้างอยู่</p>
+                               </div>
+                           ) : (
+                               <div className="overflow-x-auto">
+                                   <table className="w-full text-left border-collapse">
+                                       <thead>
+                                           <tr className="border-b border-border/5 bg-muted/10">
+                                               <th className="px-8 py-6 text-base font-bold font-black text-primary uppercase tracking-widest italic">USER / IDENTITY</th>
+                                               <th className="px-8 py-6 text-base font-bold font-black text-primary uppercase tracking-widest italic">IP ADDRESS</th>
+                                               <th className="px-8 py-6 text-base font-bold font-black text-primary uppercase tracking-widest italic">DEVICE INFO</th>
+                                               <th className="px-8 py-6 text-base font-bold font-black text-primary uppercase tracking-widest italic text-right">ACTIONS</th>
+                                           </tr>
+                                       </thead>
+                                       <tbody className="divide-y divide-border/5">
+                                           {pendingIPs.map((req) => (
+                                               <tr key={req.id} className="hover:bg-primary/5 transition-colors group/row">
+                                                   <td className="px-8 py-6">
+                                                       <div className="flex items-center gap-4">
+                                                           <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center text-foreground font-black italic border border-border/10 group-hover/row:bg-primary/20 group-hover/row:text-primary transition-all">
+                                                               {req.username.charAt(0).toUpperCase()}
+                                                           </div>
+                                                           <div className="flex flex-col">
+                                                               <span className="text-lg font-black text-foreground uppercase tracking-tight italic">{req.username}</span>
+                                                               <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest text-[10px] italic">
+                                                                   ร้องขอเมื่อ: {new Date(req.created_at).toLocaleString('th-TH')}
+                                                               </span>
+                                                           </div>
+                                                       </div>
+                                                   </td>
+                                                   <td className="px-8 py-6 font-mono text-primary font-black italic tracking-widest text-lg">
+                                                       {req.ip_address}
+                                                   </td>
+                                                   <td className="px-8 py-6">
+                                                       <div className="flex items-center gap-2 text-muted-foreground text-sm font-bold uppercase tracking-wider italic">
+                                                           <Monitor size={14} />
+                                                           <span className="truncate max-w-[200px]">{req.device_info || 'Unknown Device'}</span>
+                                                       </div>
+                                                   </td>
+                                                   <td className="px-8 py-6 text-right">
+                                                       <div className="flex items-center justify-end gap-3">
+                                                           <button 
+                                                               onClick={() => handleApproveIP(req.id, req.username, req.ip_address)}
+                                                               disabled={ipLoading}
+                                                               className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-lg shadow-emerald-500/5 disabled:opacity-50"
+                                                               title="Approve Access"
+                                                           >
+                                                               <Check size={20} strokeWidth={3} />
+                                                           </button>
+                                                           <button 
+                                                               onClick={() => handleBlockIP(req.id, req.username, req.ip_address)}
+                                                               disabled={ipLoading}
+                                                               className="p-3 bg-amber-500/10 text-amber-500 rounded-xl hover:bg-amber-500 hover:text-white transition-all shadow-lg shadow-amber-500/5 disabled:opacity-50"
+                                                               title="Block IP"
+                                                           >
+                                                               <XIcon size={20} strokeWidth={3} />
+                                                           </button>
+                                                           <button 
+                                                               onClick={async () => {
+                                                                    if (confirm('ยืนยันการลบข้อมูล?')) {
+                                                                        const res = await deleteIPRecord(req.id)
+                                                                        if (res.success) {
+                                                                            toast.success('Deleted record')
+                                                                            refreshIPs()
+                                                                        }
+                                                                    }
+                                                               }}
+                                                               disabled={ipLoading}
+                                                               className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5 disabled:opacity-50"
+                                                               title="Delete Record"
+                                                           >
+                                                               <Trash2 size={20} />
+                                                           </button>
+                                                       </div>
+                                                   </td>
+                                               </tr>
+                                           ))}
+                                       </tbody>
+                                   </table>
+                               </div>
+                           )}
+                       </div>
+                   </PremiumCard>
+              </div>
+              )}
+
              {/* 2FA Matrix */}
              <div className="lg:col-span-12">
                   <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/2fa">
@@ -197,4 +371,3 @@ export default function SecuritySettingsPage() {
     </DashboardLayout>
   )
 }
-
