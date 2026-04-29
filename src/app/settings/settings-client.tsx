@@ -118,7 +118,19 @@ export default function SettingsPage() {
   const filteredSections = settingsSections.map(section => ({
       ...section,
       items: section.items.filter(item => {
-          if (!allowedMenus) return true // Default to show (e.g. for Admin if perms not set)
+          if (loading) return false // Wait for load to prevent "มาๆหายๆ"
+          
+          if (allowedMenus === null) {
+              // Super Admin - Show all EXCEPT redundant "Change Password" card
+              if (item.permKey === 'settings.items.change_password') return false
+              return true
+          }
+          
+          const hasFullSecurity = allowedMenus.includes('settings.items.vault') || allowedMenus.includes('settings.items.security')
+          if (item.permKey === 'settings.items.change_password' && hasFullSecurity) {
+              return false
+          }
+
           return allowedMenus.includes(item.permKey || "") || allowedMenus.includes(item.labelKey)
       })
   })).filter(section => section.items.length > 0)

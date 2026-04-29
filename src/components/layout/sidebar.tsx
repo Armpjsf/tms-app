@@ -185,8 +185,20 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const filteredNavigation = navigation.map(group => ({
     ...group,
     items: group.items.filter(item => {
-        if (!isLoaded) return true 
-        if (!allowedMenus) return true 
+        if (!isLoaded) return false // Don't show until loaded to prevent "มาๆหายๆ"
+        
+        if (!allowedMenus) {
+            // Super Admin - Show all EXCEPT redundant quick link
+            if (item.titleKey === 'settings.items.change_password') return false
+            return true
+        }
+
+        // Hide "Change Password" quick link if user has full Security/Vault access to avoid redundancy
+        const hasFullSecurity = allowedMenus.includes('settings.items.vault') || allowedMenus.includes('settings.items.security')
+        if (item.titleKey === 'settings.items.change_password' && hasFullSecurity) {
+            return false
+        }
+
         return allowedMenus.includes(item.titleKey)
     })
   })).filter(group => group.items.length > 0)
