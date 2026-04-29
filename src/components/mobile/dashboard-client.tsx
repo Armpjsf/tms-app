@@ -132,7 +132,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Link href="/mobile/notifications" className="relative p-3 rounded-2xl bg-card border border-border shadow-sm active:scale-90 transition-all">
+                    <Link href="/mobile/notifications" className="relative p-3 rounded-2xl bg-card border border-border shadow-sm active:scale-90 transition-all h-12 w-12 flex items-center justify-center">
                         <Bell size={22} className="text-foreground" />
                         <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-accent rounded-full border-2 border-card shadow-sm" />
                     </Link>

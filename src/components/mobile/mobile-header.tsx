@@ -1,8 +1,10 @@
 "use client"
 
 import { MobileNotificationBadge } from "./notification-badge"
-import { ChevronLeft } from "lucide-react"
+import { ChevronLeft, RefreshCcw } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
+import { useState } from "react"
+import { toast } from "sonner"
 
 type Props = {
   title: string
@@ -13,6 +15,19 @@ type Props = {
 export function MobileHeader({ title, showBack, rightElement }: Props) {
   const router = useRouter()
   const pathname = usePathname()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  
+  const handleRefresh = () => {
+    setIsRefreshing(true)
+    router.refresh()
+    setTimeout(() => {
+        setIsRefreshing(false)
+        toast.success("อัปเดตข้อมูลแล้ว", {
+            duration: 1500,
+            position: 'top-center'
+        })
+    }, 800)
+  }
   
   const isMainTab = ['/mobile/dashboard', '/mobile/jobs', '/mobile/profile', '/mobile/login'].includes(pathname)
   const shouldShowBack = showBack !== undefined ? showBack : !isMainTab
@@ -52,7 +67,15 @@ export function MobileHeader({ title, showBack, rightElement }: Props) {
         </div>
       </div>
       
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        <button 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="w-10 h-10 rounded-2xl bg-card border border-border flex items-center justify-center text-muted-foreground active:scale-95 transition-all disabled:opacity-50"
+        >
+            <RefreshCcw size={18} className={isRefreshing ? "animate-spin text-primary" : ""} />
+        </button>
+
         {rightElement ? (
           rightElement
         ) : (
