@@ -136,19 +136,21 @@ export async function login(prevState: LoginFormState | undefined, formData: For
       if (!isSuperAdmin && !isMobileUser) return { error: 'IP_PENDING' }
     }
 
-    if (!isSuperAdmin && !isMobileUser && ipRecord.status === 'Pending') {
+    if (ipRecord && !isSuperAdmin && !isMobileUser && ipRecord.status === 'Pending') {
       return { error: 'IP_PENDING' }
     }
 
-    if (ipRecord.status === 'Blocked') {
+    if (ipRecord && ipRecord.status === 'Blocked') {
       return { error: 'IP_BLOCKED' }
     }
 
-    // Update last used time
-    await supabase
-      .from('User_Approved_IPs')
-      .update({ last_used_at: new Date().toISOString() })
-      .eq('id', ipRecord.id)
+    // Update last used time (only if record exists)
+    if (ipRecord) {
+      await supabase
+        .from('User_Approved_IPs')
+        .update({ last_used_at: new Date().toISOString() })
+        .eq('id', ipRecord.id)
+    }
 
     // 5. Create Session (Custom)
     await createSession(
