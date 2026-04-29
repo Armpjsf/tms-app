@@ -108,6 +108,20 @@ export async function getNotifications(): Promise<AppNotification[]> {
              severity: 'warning'
            })
         }
+
+        // NEW IP SECURITY ALERT
+        else if (details.alert === 'NEW_IP_DETECTED' && details.status === 'Pending') {
+           notifications.push({
+             id: `ip-alert-${log.id}`,
+             type: 'system',
+             title: `🛡️ พบการขอเข้าใช้จาก IP ใหม่`,
+             message: `ผู้ใช้: ${log.username} | IP: ${details.ip}`,
+             timestamp: log.created_at,
+             read: false,
+             severity: 'critical',
+             href: '/settings/security'
+           })
+        }
       })
     }
 
