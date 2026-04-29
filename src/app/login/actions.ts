@@ -6,6 +6,7 @@ import argon2 from 'argon2'
 import { createSession, deleteSession, getSession } from '@/lib/session'
 import { logActivity } from '@/lib/supabase/logs'
 import { headers } from 'next/headers'
+import { notifyAdminIPPending } from '@/lib/actions/push-actions'
 
 export type LoginFormState = {
   error?: string
@@ -133,7 +134,11 @@ export async function login(prevState: LoginFormState | undefined, formData: For
         details: { alert: 'NEW_IP_DETECTED', ip, status: (isSuperAdmin || isMobileUser) ? 'Approved' : 'Pending' }
       })
 
-      if (!isSuperAdmin && !isMobileUser) return { error: 'IP_PENDING' }
+      if (!isSuperAdmin && !isMobileUser) {
+        // Send Push Notification to Super Admins
+        notifyAdminIPPending(users.Username, ip).catch(err => console.error('[PUSH] Failed to notify admins:', err))
+        return { error: 'IP_PENDING' }
+      }
     }
 
     if (ipRecord && !isSuperAdmin && !isMobileUser && ipRecord.status === 'Pending') {

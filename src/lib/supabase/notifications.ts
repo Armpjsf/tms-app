@@ -2,7 +2,7 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getChatSchema } from './chat'
-import { getUserBranchId, isAdmin as isAnyAdmin } from '@/lib/permissions'
+import { getUserBranchId, isAdmin as isAnyAdmin, isSuperAdmin as isUserSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
 
 export interface AppNotification {
@@ -19,6 +19,7 @@ export interface AppNotification {
 // Generate notifications from existing data sources
 export async function getNotifications(): Promise<AppNotification[]> {
   const isAdmin = await isAnyAdmin()
+  const isSuperAdmin = await isUserSuperAdmin()
   const supabase = isAdmin ? createAdminClient() : await createClient()
   const branchId = await getUserBranchId()
   const cookieStore = await cookies()
@@ -109,8 +110,8 @@ export async function getNotifications(): Promise<AppNotification[]> {
            })
         }
 
-        // NEW IP SECURITY ALERT
-        else if (details.alert === 'NEW_IP_DETECTED' && details.status === 'Pending') {
+        // NEW IP SECURITY ALERT - Strictly for Super Admins
+        else if (details.alert === 'NEW_IP_DETECTED' && details.status === 'Pending' && isSuperAdmin) {
            notifications.push({
              id: `ip-alert-${log.id}`,
              type: 'system',

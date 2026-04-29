@@ -785,3 +785,52 @@ export async function notifyMaintenanceApproval(driverId: string, status: string
         tag: `maintenance_status`,
     })
 }
+
+// ─────────────────────────────────────────────
+// Notify: IP Pending Approval → Push to Super Admins Only
+// ─────────────────────────────────────────────
+export async function notifyAdminIPPending(username: string, ip: string) {
+    const supabase = await createAdminClient()
+
+    // 1. Fetch all admin subscriptions
+    const { data: subs } = await supabase
+        .from('Push_Subscriptions')
+        .select('*')
+        .not('User_ID', 'is', null)
+
+    if (!subs || subs.length === 0) return { success: false }
+
+    // 2. Fetch Super Admin profiles
+    const { data: profiles } = await supabase
+        .from('Master_Users')
+        .select('Username, User_ID, Role')
+        .eq('Role', 'Super Admin')
+
+    if (!profiles || profiles.length === 0) return { success: false }
+
+    // 3. Filter subscriptions for Super Admins
+    const recipients = subs.filter(sub => {
+        return profiles.some(p => p.Username === sub.User_ID || (p.User_ID && p.User_ID === sub.User_ID))
+    })
+
+    if (recipients.length === 0) return { success: true }
+
+    console.log(`[PUSH] Sending IP pending alert to ${recipients.length} Super Admin(s)`)
+
+    await Promise.allSettled(
+        recipients.map(async (sub) => {
+            const result = await sendWebPush(sub, {
+                title: '🛡️ มีรายการรออนุมัติ IP ใหม่',
+                body: `ผู้ใช้: ${username} | IP: ${ip}`,
+                url: '/settings/security',
+                type: 'system',
+                tag: `ip_pending_${username}`
+            })
+            // Clean up expired subscriptions
+            if (!result.success && (result.statusCode === 404 || result.statusCode === 410)) {
+                await supabase.from('Push_Subscriptions').delete().eq('Endpoint', sub.Endpoint)
+            }
+        })
+    )
+    return { success: true }
+}
