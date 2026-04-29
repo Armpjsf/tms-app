@@ -22,13 +22,16 @@ export async function getUserBranchId() {
             // 2. Global Users (Super Admin): Allow switching via cookie.
             if (isSuper) {
                 const cookieStore = await cookies()
-                return cookieStore.get('selectedBranch')?.value || 'All'
+                const selected = cookieStore.get('selectedBranch')?.value || 'All'
+                return (selected === 'ทุกสาขา') ? 'All' : selected
             }
 
             // 3. Regular Admins (Role 2) with no specific branch assigned:
             // Fallback to cookie BUT prevent 'All' access.
             const cookieStore = await cookies()
-            const selected = cookieStore.get('selectedBranch')?.value
+            let selected = cookieStore.get('selectedBranch')?.value
+            if (selected === 'ทุกสาขา') selected = 'All'
+            
             if (selected && selected !== 'All') return selected
             
             return 'HQ' // Fail-safe default for admins with no assigned branch

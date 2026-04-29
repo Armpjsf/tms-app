@@ -209,10 +209,7 @@ export async function getAllJobs(
     
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select(`
-        *,
-        Billing_Notes!Billing_Note_ID(Status)
-      `, { count: 'exact' })
+      .select('*', { count: 'exact' })
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
