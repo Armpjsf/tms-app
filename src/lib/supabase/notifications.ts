@@ -34,7 +34,7 @@ export async function getNotifications(): Promise<AppNotification[]> {
     const { data: adminLogs } = await supabase
       .from('System_Logs')
       .select('*')
-      .in('module', ['Jobs', 'Fuel', 'Reports', 'Maintenance'])
+      .in('module', ['Jobs', 'Fuel', 'Reports', 'Maintenance', 'Auth', 'Settings'])
       .gte('created_at', yesterday)
       .order('created_at', { ascending: false })
 

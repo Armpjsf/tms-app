@@ -134,7 +134,12 @@ export function JobDetailClient({ job, routeHistory }: JobDetailClientProps) {
                     <div className="px-4 py-1.5 bg-emerald-500/10 rounded-xl text-base font-bold font-black text-emerald-500 uppercase italic">{t('job_detail.signal_strength')}</div>
                 </div>
                 <div className="h-[500px] relative">
-                    <JobMapClient routeHistory={routeHistory} />
+                    <JobMapClient 
+                        routeHistory={routeHistory} 
+                        pickup={{ lat: job.Pickup_Lat, lng: job.Pickup_Lon, name: job.Origin_Location || job.Location_Origin_Name }}
+                        dropoff={{ lat: job.Dropoff_Lat, lng: job.Dropoff_Lon, name: job.Dest_Location || job.Location_Destination_Name }}
+                        status={job.Job_Status}
+                    />
                 </div>
             </PremiumCard>
           )}

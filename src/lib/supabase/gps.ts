@@ -112,25 +112,24 @@ export async function getLatestDriverLocations() {
 
     const branchId = await getUserBranchId();
 
-    const query = supabase
+    let query = supabase
       .from("gps_logs")
       .select(
         `
         *,
-        Master_Drivers ( Driver_Name, Branch_ID )
+        Master_Drivers!inner ( Driver_Name, Branch_ID )
       `,
       )
       .gte("timestamp", oneHourAgo);
 
-    if (branchId && branchId !== "All") {
-      // Since we need to filter by a nested field in Master_Drivers, we can't easily do .eq() on the main query for normalized data
-      // but for GPS logs, usually the driver_id is what matters.
-      // We'll filter the resulting array instead for now to keep it simple, or we'd need a more complex join query.
+    // Super Admin bypass: If 'All' or no branch selected, show all
+    if (branchId && branchId !== "All" && !isSuper) {
+       query = query.eq('Master_Drivers.Branch_ID', branchId);
     }
 
-    const { data, error } = await query.order("timestamp", {
-      ascending: false,
-    });
+    const { data, error } = await query
+      .order("timestamp", { ascending: false })
+      .limit(2000); // Increased limit to ensure coverage of more drivers
 
     if (error) {
       return [];
@@ -246,6 +245,8 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
       if (activeDriverIds.length === 0) return [];
 
       driversQuery = driversQuery.in("Driver_ID", activeDriverIds);
+    } else if (isSuper && (!effectiveBranchId || effectiveBranchId === "All")) {
+      // Super Admin viewing all: No filter
     } else if (effectiveBranchId && effectiveBranchId !== "All") {
       driversQuery = driversQuery.eq("Branch_ID", effectiveBranchId);
     } else if (!isSuper && !isAdminUser && !effectiveBranchId) {
@@ -268,7 +269,8 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
       .select("*")
       .in("driver_id", driverIds)
       .gte("timestamp", yesterday)
-      .order("timestamp", { ascending: false });
+      .order("timestamp", { ascending: false })
+      .limit(Math.max(2000, driverIds.length * 2)); // Dynamic limit to ensure enough logs are captured
 
     // 3. Map logs to drivers
     const logMap = new Map();

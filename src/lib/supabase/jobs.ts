@@ -100,7 +100,9 @@ export async function getTodayJobs(date?: string, branchId?: string): Promise<Jo
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
         const effectiveBranchId = branchId || userBranchId
-        if (effectiveBranchId && effectiveBranchId !== 'All') {
+        if (isSuper && (!effectiveBranchId || effectiveBranchId === 'All')) {
+            // Super Admin viewing all: No filter
+        } else if (effectiveBranchId && effectiveBranchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
         } else if (!isSuper && !isRegularAdmin && !userBranchId) {
             return []
@@ -127,7 +129,9 @@ export async function getLiveActiveJobs(branchId?: string, customerId?: string |
             .select('*')
             .in('Job_Status', ['Assigned', 'Confirmed', 'Picked Up', 'In Transit', 'Arrived', 'SOS'])
 
-        if (branchId && branchId !== 'All') {
+        if (isSuper && (!branchId || branchId === 'All')) {
+            // Super Admin viewing all: No filter
+        } else if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
         }
         if (customerId) {
@@ -157,6 +161,8 @@ export async function getJobsByStatus(status: string): Promise<Job[]> {
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
+    } else if (isSuper && (!branchId || branchId === 'All')) {
+        // Super Admin viewing all: No filter
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isSuper && !isRegularAdmin && !branchId) {
@@ -747,7 +753,9 @@ export async function getAllDrivers() {
             .select('Driver_ID, Driver_Name, Vehicle_Plate')
             .not('Driver_ID', 'is', null)
         
-        if (branchId && branchId !== 'All') {
+        if (isSuper && (!branchId || branchId === 'All')) {
+            // No filter
+        } else if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
         } else if (!isSuper && !isRegularAdmin && !branchId) {
             return []
@@ -784,7 +792,9 @@ export async function getAllVehicles() {
             .select('Vehicle_Plate, Driver_Name')
             .not('Vehicle_Plate', 'is', null)
 
-        if (branchId && branchId !== 'All') {
+        if (isSuper && (!branchId || branchId === 'All')) {
+            // No filter
+        } else if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
         } else if (!isSuper && !isRegularAdmin && !branchId) {
             return []
@@ -837,6 +847,8 @@ export async function getJobsForBilling(
         
         if (customerId) {
             dbQuery = dbQuery.eq('Customer_ID', customerId)
+        } else if (isSuper && (!branchId || branchId === 'All')) {
+            // No filter
         } else if (branchId && branchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', branchId)
         } else if (!isSuper && !isRegularAdmin && !branchId) {
@@ -1009,9 +1021,11 @@ export async function getBillableJobs(customerId?: string, startDate?: string, e
         dbQuery = dbQuery.lte('Plan_Date', endDate)
     }
 
-    if (branchId && branchId !== 'All') {
+    if (isSuper && (!branchId || branchId === 'All')) {
+        // No filter
+    } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !branchId) {
         return []
     }
 
@@ -1103,6 +1117,8 @@ export async function getRequestedJobs(providedBranchId?: string): Promise<Job[]
         
         if (customerId) {
             dbQuery = dbQuery.eq('Customer_ID', customerId)
+        } else if (isSuper && (!branchId || branchId === 'All')) {
+            // No filter
         } else if (branchId && branchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', branchId)
         } else if (!isSuper && !branchId) {

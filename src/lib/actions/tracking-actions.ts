@@ -30,6 +30,10 @@ export interface PublicJobDetails {
   weight?: number | null;
   volume?: number | null;
   vehicleType?: string | null;
+  pickupLat?: number | null;
+  pickupLon?: number | null;
+  dropoffLat?: number | null;
+  dropoffLon?: number | null;
 }
 
 export async function submitJobFeedback(
@@ -139,5 +143,9 @@ export async function getPublicJobDetails(
     weight: job.Weight_Kg || job.Weight || null,
     volume: job.Volume_Cbm || job.Volume || null,
     vehicleType: job.Vehicle_Type || null,
+    pickupLat: job.Pickup_Lat,
+    pickupLon: job.Pickup_Lon,
+    dropoffLat: job.Dropoff_Lat,
+    dropoffLon: job.Dropoff_Lon,
   };
 }

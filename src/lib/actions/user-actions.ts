@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import { getSession } from "@/lib/session"
 import argon2 from "argon2"
+import { logActivity } from "@/lib/supabase/logs"
 
 import { StandardRole } from "@/types/role"
 
@@ -148,6 +149,18 @@ export async function updateUser(username: string, updates: Partial<UserData>) {
 
     if (updates.Password) {
         updatePayload.Password = await argon2.hash(updates.Password)
+        
+        // Log password change for security
+        await logActivity({
+            module: 'Settings',
+            action_type: 'UPDATE',
+            target_id: username,
+            details: { 
+                action: 'PASSWORD_CHANGE',
+                updated_by: session.username,
+                target_user: username
+            }
+        })
     }
 
     const { error } = await supabase
