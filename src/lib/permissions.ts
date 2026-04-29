@@ -13,18 +13,18 @@ export async function getUserBranchId() {
         const session = await getSession()
         if (session) {
             const isSuper = Number(session.roleId) === 1
-            
-            // 1. Restricted Users: If they have a specific branch assigned in DB, FORCE it.
-            if (session.branchId && session.branchId !== 'All') {
-                return session.branchId
-            }
 
-            // 2. Global Users (Super Admin): Allow switching via cookie.
+            // 1. Super Admin ALWAYS wins — let them switch via cookie dropdown.
             if (isSuper) {
                 const cookieStore = await cookies()
                 const selected = cookieStore.get('selectedBranch')?.value
                 if (!selected || selected === 'All' || selected === 'ทุกสาขา' || selected.includes('ทุกสาขา')) return 'All'
                 return selected
+            }
+
+            // 2. Restricted Users: If they have a specific branch assigned in DB, FORCE it.
+            if (session.branchId && session.branchId !== 'All') {
+                return session.branchId
             }
 
             // 3. Regular Admins (Role 2) with no specific branch assigned:
