@@ -99,16 +99,16 @@ export async function getTodayJobs(date?: string, branchId?: string): Promise<Jo
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        // HARD RESTRICTION: For non-Super Admins, force their assigned branch.
-        // For Super Admins, allow switching via branchId argument.
-        const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : (branchId || 'All')
-        
-        if (isSuper && effectiveBranchId === 'All') {
-            // Super Admin viewing all: No filter
-        } else if (effectiveBranchId && effectiveBranchId !== 'All') {
-            dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
-        } else if (!isSuper && !isRegularAdmin && !userBranchId) {
-            return []
+        // STRICT ISOLATION: Non-SuperAdmins MUST be filtered by their branch
+        if (!isSuper) {
+            if (userBranchId && userBranchId !== 'All') {
+                dbQuery = dbQuery.eq('Branch_ID', userBranchId)
+            } else {
+                return []
+            }
+        } else if (branchId && branchId !== 'All') {
+            // SuperAdmin can filter by specific branch
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
         }
     }
 
@@ -136,11 +136,15 @@ export async function getLiveActiveJobs(branchId?: string, customerId?: string |
         if (customerId) {
             query = query.eq('Customer_ID', customerId)
         } else {
-            const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : (branchId || 'All')
-            if (isSuper && effectiveBranchId === 'All') {
-                // No filter
-            } else if (effectiveBranchId && effectiveBranchId !== 'All') {
-                query = query.eq('Branch_ID', effectiveBranchId)
+            // STRICT ISOLATION
+            if (!isSuper) {
+                if (userBranchId && userBranchId !== 'All') {
+                    query = query.eq('Branch_ID', userBranchId)
+                } else {
+                    return []
+                }
+            } else if (branchId && branchId !== 'All') {
+                query = query.eq('Branch_ID', branchId)
             }
         }
 
@@ -167,12 +171,17 @@ export async function getJobsByStatus(status: string): Promise<Job[]> {
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (isSuper && (!branchId || branchId === 'All')) {
-        // Super Admin viewing all: No filter
-    } else if (branchId && branchId !== 'All') {
-        dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isSuper && !isRegularAdmin && !branchId) {
-        return []
+    } else {
+        // STRICT ISOLATION
+        if (!isSuper) {
+            if (branchId && branchId !== 'All') {
+                dbQuery = dbQuery.eq('Branch_ID', branchId)
+            } else {
+                return []
+            }
+        } else if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
+        }
     }
 
     const { data } = await dbQuery

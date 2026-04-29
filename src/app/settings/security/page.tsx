@@ -27,12 +27,13 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { createClient } from "@/utils/supabase/client"
 import { useLanguage } from "@/components/providers/language-provider"
-import { getPendingIPs, approveIP, blockIP, deleteIPRecord, getCurrentUserSession } from "@/lib/actions/security-actions"
+import { getPendingIPs, approveIP, blockIP, deleteIPRecord, getCurrentUserSession, changePassword } from "@/lib/actions/security-actions"
 import { Badge } from "@/components/ui/badge"
 
 export default function SecuritySettingsPage() {
   const { t } = useLanguage()
   const router = useRouter()
+  const [currentPassword, setCurrentPassword] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -83,8 +84,12 @@ export default function SecuritySettingsPage() {
   }
 
   const handleUpdatePassword = async () => {
+    if (!currentPassword) {
+      toast.warning('กรุณากรอกรหัสผ่านปัจจุบัน')
+      return
+    }
     if (!password) {
-        toast.warning(t('shared.toasts.error'))
+        toast.warning('กรุณากรอกรหัสผ่านใหม่')
         return
     }
     if (password !== confirmPassword) {
@@ -98,18 +103,17 @@ export default function SecuritySettingsPage() {
 
     setLoading(true)
     try {
-        const supabase = createClient()
-        const { error } = await supabase.auth.updateUser({ password: password })
-
-        if (error) {
-            toast.error(t('security.toasts.update_failed') + error.message)
-        } else {
-            toast.success(t('security.toasts.update_success'))
+        const result = await changePassword(currentPassword, password)
+        if (result.success) {
+            toast.success('เปลี่ยนรหัสผ่านเรียบร้อยแล้ว')
+            setCurrentPassword("")
             setPassword("")
             setConfirmPassword("")
+        } else {
+            toast.error(result.error || 'ไม่สามารถเปลี่ยนรหัสผ่านได้')
         }
     } catch (e) {
-        toast.error(t('security.toasts.critical_failure') + (e as Error).message)
+        toast.error('เกิดข้อผิดพลาด: ' + (e as Error).message)
     } finally {
         setLoading(false)
     }
@@ -172,6 +176,18 @@ export default function SecuritySettingsPage() {
                               </div>
 
                               <div className="space-y-10">
+                                  <div className="space-y-4">
+                                      <Label className="text-base font-bold font-black uppercase text-muted-foreground/60 tracking-[0.1em] ml-6 flex items-center gap-2">
+                                          <Lock size={12} /> รหัสผ่านปัจจุบัน
+                                      </Label>
+                                      <Input 
+                                          type="password" 
+                                          value={currentPassword}
+                                          onChange={(e) => setCurrentPassword(e.target.value)}
+                                          className="h-16 bg-black/60 border-border/5 rounded-[1.5rem] focus:border-amber-500/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
+                                          placeholder="••••••••••••"
+                                      />
+                                  </div>
                                   <div className="space-y-4">
                                       <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
                                           <Lock size={12} /> {t('security.new_key_label')}

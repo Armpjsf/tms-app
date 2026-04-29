@@ -283,15 +283,22 @@ export async function getBillingNotes(filters?: { dateFrom?: string, dateTo?: st
         
         // Filter by Branch
         const branchId = await getUserBranchId()
-        
-        let query = supabase.from('Billing_Notes').select('*')
-        
-        if (branchId && !admin && branchId !== 'All') {
-            query = query.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
-        } else if (!admin && !branchId) {
-            return []
-        }
+        const isSuper = await isSuperAdmin()
 
+        let query = supabase.from('Billing_Notes').select('*')
+
+        // STRICT ISOLATION: Non-SuperAdmins MUST be filtered by their branch
+        if (!isSuper) {
+            if (branchId && branchId !== 'All') {
+                query = query.or(`Branch_ID.eq."${branchId}",Branch_ID.is.null`)
+            } else {
+                // If they have no branch assigned, they see nothing (safety)
+                return []
+            }
+        } else if (branchId && branchId !== 'All') {
+            // SuperAdmin can filter by specific branch
+            query = query.eq('Branch_ID', branchId)
+        }
         if (filters?.dateFrom) query = query.gte('Billing_Date', filters.dateFrom)
         if (filters?.dateTo) query = query.lte('Billing_Date', filters.dateTo)
         if (filters?.status && filters.status !== 'all') query = query.eq('Status', filters.status)
@@ -503,13 +510,19 @@ export async function getDriverPayments(filters?: { dateFrom?: string, dateTo?: 
 
         // Filter by Branch
         const branchId = await getUserBranchId()
+        const isSuper = await isSuperAdmin()
 
         let query = supabase.from('Driver_Payments').select('*')
 
-        if (branchId && !admin && branchId !== 'All') {
-            query = query.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
-        } else if (!admin && !branchId) {
-            return []
+        // STRICT ISOLATION
+        if (!isSuper) {
+            if (branchId && branchId !== 'All') {
+                query = query.or(`Branch_ID.eq."${branchId}",Branch_ID.is.null`)
+            } else {
+                return []
+            }
+        } else if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
         }
 
         if (filters?.dateFrom) query = query.gte('Payment_Date', filters.dateFrom)
