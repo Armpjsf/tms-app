@@ -324,13 +324,26 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
     const driver = driverMap.get(driverId)
     const vehicle = vehicleMap.get(vehiclePlate)
 
+    const routeName = (data.Route_Name as string)?.trim()
+    let route = routeMap.get(routeName)
+    
+    // Smart Fallback: If not found by name, try matching by Origin + Destination
+    if (!route && data.Origin_Location && data.Dest_Location) {
+        const o = String(data.Origin_Location).trim().toLowerCase()
+        const d = String(data.Dest_Location).trim().toLowerCase()
+        route = allRoutes?.find(r => 
+            r.Origin?.trim().toLowerCase() === o && 
+            r.Destination?.trim().toLowerCase() === d
+        )
+    }
+
     const sanitized = sanitizeJobData({
       Job_ID: cleanId(data.Job_ID) || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
       Branch_ID: (data.Branch_ID as string) || effectiveBranchId,
       Plan_Date: normalizeDate(data.Plan_Date) || new Date().toISOString().split('T')[0],
       Customer_ID: (data.Customer_ID as string) || customerMap.get((data.Customer_Name as string)?.toLowerCase().trim()) || null,
       Customer_Name: data.Customer_Name as string,
-      Route_Name: (data.Route_Name as string) || 'Direct',
+      Route_Name: route?.Route_Name || (data.Route_Name as string) || 'Direct',
       Driver_ID: driverId || null,
       Driver_Name: driver?.Driver_Name || null,
       Vehicle_Plate: vehiclePlate || null,
@@ -342,14 +355,14 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
       Weight_Kg: Number(data.Weight_Kg) || 0,
       Volume_Cbm: Number(data.Volume_Cbm) || 0,
       Created_At: new Date().toISOString(),
-      // Pass coordinates through
-      Pickup_Lat: data.Pickup_Lat ? Number(data.Pickup_Lat) : null,
-      Pickup_Lon: data.Pickup_Lon ? Number(data.Pickup_Lon) : null,
-      Delivery_Lat: data.Delivery_Lat ? Number(data.Delivery_Lat) : null,
-      Delivery_Lon: data.Delivery_Lon ? Number(data.Delivery_Lon) : null,
-      Origin_Location: (data.Origin_Location as string) || null,
-      Dest_Location: (data.Dest_Location as string) || null,
-      Est_Distance_KM: Number(data.Est_Distance_KM) || 0,
+      // Pass coordinates through or fallback to Route Master
+      Pickup_Lat: data.Pickup_Lat ? Number(data.Pickup_Lat) : (route?.Origin_Lat || null),
+      Pickup_Lon: data.Pickup_Lon ? Number(data.Pickup_Lon) : (route?.Origin_Lon || null),
+      Delivery_Lat: data.Delivery_Lat ? Number(data.Delivery_Lat) : (route?.Dest_Lat || null),
+      Delivery_Lon: data.Delivery_Lon ? Number(data.Delivery_Lon) : (route?.Dest_Lon || null),
+      Origin_Location: (data.Origin_Location as string) || route?.Origin || null,
+      Dest_Location: (data.Dest_Location as string) || route?.Destination || null,
+      Est_Distance_KM: Number(data.Est_Distance_KM) || route?.Distance_KM || 0,
       Show_Price_To_Driver: data.Show_Price_To_Driver !== undefined ? (data.Show_Price_To_Driver === true || data.Show_Price_To_Driver === 'true') : (j.Show_Price_To_Driver ?? true)
     })
     
