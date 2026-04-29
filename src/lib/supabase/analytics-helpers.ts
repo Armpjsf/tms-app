@@ -79,8 +79,14 @@ export async function getEffectiveBranchId(branchId?: string) {
     const userBranchId = await getUserBranchId()
     const isSuper = await isSuperAdmin()
     
-    // Only super admins can override with a provided branchId
-    let target = isSuper ? (branchId || userBranchId) : userBranchId
+    // STRICT ISOLATION: Non-SuperAdmins are HARD LOCKED to their userBranchId
+    if (!isSuper) {
+        if (!userBranchId || userBranchId.toLowerCase() === 'all') return 'RESTRICTED_ACCESS'
+        return userBranchId.trim().toUpperCase()
+    }
+
+    // Super Admin can override with provided branchId
+    let target = branchId || userBranchId
     
     if (!target || target.toLowerCase() === 'all' || target.toLowerCase() === 'ทุกสาขา') return null
 

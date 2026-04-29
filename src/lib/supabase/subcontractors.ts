@@ -2,15 +2,25 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { Subcontractor } from '@/types/subcontractor'
-import { isAdmin } from '@/lib/permissions'
+import { isAdmin, isSuperAdmin, getUserBranchId } from '@/lib/permissions'
 
 export async function getAllSubcontractors(branchId?: string): Promise<Subcontractor[]> {
     try {
+        const isSuper = await isSuperAdmin()
         const adminStatus = await isAdmin()
+        const userBranchId = await getUserBranchId()
         const supabase = adminStatus ? createAdminClient() : await createClient()
+        
         let query = supabase.from('Master_Subcontractors').select('*')
         
-        if (branchId && branchId !== 'All') {
+        // STRICT ISOLATION
+        if (!isSuper) {
+            if (userBranchId && userBranchId !== 'All') {
+                query = query.eq('Branch_ID', userBranchId)
+            } else {
+                return []
+            }
+        } else if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
         }
 

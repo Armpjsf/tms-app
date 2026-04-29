@@ -113,10 +113,15 @@ export async function getChatContacts(): Promise<ChatContact[]> {
     let allowedDriverIds: Set<string> | null = null
     const { data: allDrivers } = await adminSupabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate, Branch_ID')
     
-    if (branchId && branchId !== 'All') {
+    // STRICT ISOLATION
+    if (!isSuper) {
+        if (branchId && branchId !== 'All') {
+            allowedDriverIds = new Set(allDrivers?.filter(d => d.Branch_ID === branchId).map(d => d.Driver_ID) || [])
+        } else {
+            return []
+        }
+    } else if (branchId && branchId !== 'All') {
         allowedDriverIds = new Set(allDrivers?.filter(d => d.Branch_ID === branchId).map(d => d.Driver_ID) || [])
-    } else if (!isSuper && !isRegularAdmin && !branchId) {
-        return []
     }
 
     // Map to lookup driver info easily

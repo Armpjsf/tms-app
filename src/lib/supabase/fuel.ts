@@ -37,10 +37,15 @@ export async function getTodayFuelLogs(): Promise<FuelLog[]> {
       .select('*')
       .gte('Date_Time', today)
     
-    if (branchId && branchId !== 'All') {
+    // STRICT ISOLATION
+    if (!isAdmin) {
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        } else {
+            return []
+        }
+    } else if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
-        return []
     }
 
     const { data, error } = await query
@@ -184,10 +189,15 @@ export async function getTodayFuelStats() {
       .select('Liters, Price_Total')
       .gte('Date_Time', today)
     
-    if (branchId && branchId !== 'All') {
+    // STRICT ISOLATION
+    if (!isAdmin) {
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        } else {
+            return { totalLiters: 0, totalAmount: 0, count: 0 }
+        }
+    } else if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
-        return { totalLiters: 0, totalAmount: 0, count: 0 }
     }
 
     const { data, error } = await query

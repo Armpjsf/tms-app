@@ -30,10 +30,15 @@ export async function getActiveSOSAlerts(): Promise<SOSAlert[]> {
       .select('Job_ID, Job_Status, Plan_Date, Driver_ID, Driver_Name, Vehicle_Plate, Route_Name, Failed_Reason, Failed_Time, Delivery_Lat, Delivery_Lon')
       .eq('Job_Status', 'SOS')
     
-    if (branchId && branchId !== 'All') {
+    // STRICT ISOLATION
+    if (!isAdmin) {
+        if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
+        } else {
+            return []
+        }
+    } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
-        return []
     }
 
     const { data, error } = await dbQuery
@@ -63,10 +68,15 @@ export async function getAllSOSAlerts(): Promise<SOSAlert[]> {
       .in('Job_Status', ['SOS', 'Failed', 'Completed', 'Delivered'])
       .not('Failed_Time', 'is', null)
     
-    if (branchId && branchId !== 'All') {
+    // STRICT ISOLATION
+    if (!isAdmin) {
+        if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
+        } else {
+            return []
+        }
+    } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
-        return []
     }
 
     const { data, error } = await dbQuery
@@ -96,10 +106,15 @@ export async function getSOSCount(): Promise<number> {
       .select('*', { count: 'exact', head: true })
       .eq('Job_Status', 'SOS')
     
-    if (branchId && branchId !== 'All') {
+    // STRICT ISOLATION
+    if (!isAdmin) {
+        if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
+        } else {
+            return 0
+        }
+    } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
-        return 0
     }
 
     const { count, error } = await dbQuery
@@ -127,10 +142,15 @@ export async function getSOSDriverIds(): Promise<string[]> {
       .select('Driver_ID')
       .eq('Job_Status', 'SOS')
     
-    if (branchId && branchId !== 'All') {
+    // STRICT ISOLATION
+    if (!isAdmin) {
+        if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
+        } else {
+            return []
+        }
+    } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
-        return []
     }
 
     const { data, error } = await dbQuery

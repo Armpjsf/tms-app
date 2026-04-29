@@ -36,12 +36,17 @@ export async function getUsers(providedBranchId?: string) {
         `)
     
     // Filter by Branch
-    const branchId = providedBranchId || await getUserBranchId()
+    const branchId = await getUserBranchId()
     
-    if (branchId && branchId !== 'All') {
-        query = query.eq('Branch_ID', branchId)
-    } else if (!isSuper && !branchId) {
-        return []
+    // STRICT ISOLATION
+    if (!isSuper) {
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        } else {
+            return []
+        }
+    } else if (providedBranchId && providedBranchId !== 'All') {
+        query = query.eq('Branch_ID', providedBranchId)
     }
 
     const { data, error } = await query.order("Username")

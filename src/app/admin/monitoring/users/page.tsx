@@ -9,9 +9,18 @@ import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
 
 export default function UserMonitorPage() {
-    const { onlineUsers } = usePresence()
+    const { onlineUsers, user } = usePresence()
     const { t } = useLanguage()
     const [currentTime, setCurrentTime] = useState(new Date())
+
+    const isSuper = user?.Role === 'Super Admin'
+    const userBranch = user?.Branch_ID
+
+    const filteredUsers = onlineUsers.filter(u => {
+        if (isSuper) return true
+        // If not super admin, only show users from the same branch
+        return u.branch === userBranch
+    })
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000)
@@ -53,8 +62,8 @@ export default function UserMonitorPage() {
                         </div>
                         <span className="text-[10px] font-black text-primary uppercase tracking-widest animate-pulse">Online</span>
                     </div>
-                    <p className="text-muted-foreground text-xs font-black uppercase tracking-widest mb-1">Total Active Sessions</p>
-                    <p className="text-4xl font-black text-foreground">{onlineUsers.length}</p>
+                    <p className="text-muted-foreground text-xs font-black uppercase tracking-widest mb-1">Active Sessions ({isSuper ? 'GLOBAL' : 'BRANCH'})</p>
+                    <p className="text-4xl font-black text-foreground">{filteredUsers.length}</p>
                 </PremiumCard>
 
                 <PremiumCard className="p-6 bg-background/40 border-border/5">
@@ -66,7 +75,7 @@ export default function UserMonitorPage() {
                     </div>
                     <p className="text-muted-foreground text-xs font-black uppercase tracking-widest mb-1">Active Admins</p>
                     <p className="text-4xl font-black text-foreground">
-                        {onlineUsers.filter(u => u.role === 'Super Admin' || u.role === 'Admin').length}
+                        {filteredUsers.filter(u => u.role === 'Super Admin' || u.role === 'Admin').length}
                     </p>
                 </PremiumCard>
 
@@ -79,7 +88,7 @@ export default function UserMonitorPage() {
                     </div>
                     <p className="text-muted-foreground text-xs font-black uppercase tracking-widest mb-1">Active Branches</p>
                     <p className="text-4xl font-black text-foreground">
-                        {new Set(onlineUsers.map(u => u.branch)).size}
+                        {new Set(filteredUsers.map(u => u.branch)).size}
                     </p>
                 </PremiumCard>
             </div>
@@ -103,10 +112,10 @@ export default function UserMonitorPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/[0.02]">
-                            {onlineUsers.length === 0 ? (
+                            {filteredUsers.length === 0 ? (
                                 <tr><td colSpan={5} className="text-center py-20 opacity-30 italic font-black text-foreground">NO ACTIVE SESSIONS DETECTED</td></tr>
                             ) : (
-                                onlineUsers.map((session, idx) => (
+                                filteredUsers.map((session, idx) => (
                                     <tr key={idx} className="group/row hover:bg-emerald-500/5 transition-all duration-300">
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-4">
