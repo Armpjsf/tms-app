@@ -115,6 +115,9 @@ export function JobDialog({
     setInternalMode(mode)
   }, [mode])
 
+  const isControlled = controlledOpen !== undefined
+  const show = isControlled ? controlledOpen : open
+
   // Initial Fuel Fetch - Only on open
   useEffect(() => {
     if (!show) return;
@@ -150,9 +153,6 @@ export function JobDialog({
     
     return () => { isMounted = false; clearTimeout(timeoutId); }
   }, [show]) // Trigger on show
-  
-  const isControlled = controlledOpen !== undefined
-  const show = isControlled ? controlledOpen : open
   const setShow = isControlled ? setControlledOpen! : setOpen
   const [copied, setCopied] = useState(false)
 
