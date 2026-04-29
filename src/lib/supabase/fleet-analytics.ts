@@ -282,7 +282,7 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
 
     let jobsQuery = supabase
         .from('Jobs_Main')
-        .select('Vehicle_Plate, Price_Cust_Total, Cost_Driver_Total')
+        .select('Vehicle_Plate, Price_Cust_Total, Cost_Driver_Total, Est_Distance_KM')
         .gte('Plan_Date', firstDay)
         .lte('Plan_Date', lastDay)
         .in('Job_Status', REVENUE_STATUSES)
@@ -325,24 +325,26 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
 
     const { data: maintenance } = await maintenanceQuery
 
-    const stats: Record<string, { plate: string, revenue: number, driverCost: number, fuelCost: number, maintenanceCost: number, totalCost: number, netProfit: number }> = {}
+    const stats: Record<string, { plate: string, revenue: number, driverCost: number, fuelCost: number, maintenanceCost: number, totalCost: number, netProfit: number, totalKm: number, count: number }> = {}
 
     jobs?.forEach(job => {
         const plate = job.Vehicle_Plate!
-        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0 }
+        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0, totalKm: 0, count: 0 }
         stats[plate].revenue += (job.Price_Cust_Total || 0)
         stats[plate].driverCost += (job.Cost_Driver_Total || 0)
+        stats[plate].totalKm += (job.Est_Distance_KM || 0)
+        stats[plate].count += 1
     })
 
     fuel?.forEach(f => {
         const plate = f.Vehicle_Plate!
-        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0 }
+        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0, totalKm: 0, count: 0 }
         stats[plate].fuelCost += (f.Price_Total || 0)
     })
 
     maintenance?.forEach(m => {
         const plate = m.Vehicle_Plate!
-        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0 }
+        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0, totalKm: 0, count: 0 }
         stats[plate].maintenanceCost += (m.Cost_Total || 0)
     })
 
