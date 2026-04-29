@@ -138,7 +138,8 @@ export async function loginDriver(formData: FormData) {
     userData = userData2
   }
 
-  // 3. IP-Based Security Check
+  // 3. IP-Based Security Check (TEMPORARILY DISABLED for Drivers)
+  /*
   const { headers: headerList } = await getCookieStore()
   const ip = headerList.get('x-forwarded-for')?.split(',')[0] || headerList.get('x-real-ip') || '127.0.0.1'
 
@@ -169,6 +170,7 @@ export async function loginDriver(formData: FormData) {
       .update({ last_used_at: new Date().toISOString() })
       .eq('id', ipRecord.id)
   }
+  */
 
   // 4. Create Session (Cookie)
   const userPermissions = (userData as Record<string, any>)?.Permissions || (userData as Record<string, any>)?.permissions || { show_income: true }

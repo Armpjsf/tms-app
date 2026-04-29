@@ -103,58 +103,63 @@ export async function login(prevState: LoginFormState | undefined, formData: For
     
     // EMERGENCY BYPASS: Super Admin (roleId === 1)
     const isSuperAdmin = roleId === 1
-    // EXEMPT: Drivers (6) and Customers (7)
+    // EXEMPT: Drivers (6) and Customers (7) - Skip IP Logic
     const isMobileUser = roleId === 6 || roleId === 7
     
-    const { data: ipRecord, error: ipError } = await supabase
-      .from('user_approved_ips')
-      .select('*')
-      .eq('username', users.Username)
-      .eq('ip_address', ip)
-      .maybeSingle()
+    // Skip IP logic entirely for Mobile Users
+    if (isMobileUser) {
+        // Proceed to session creation
+    } else {
+        const { data: ipRecord, error: ipError } = await supabase
+          .from('user_approved_ips')
+          .select('*')
+          .eq('username', users.Username)
+          .eq('ip_address', ip)
+          .maybeSingle()
 
-    if (ipError) {
-      console.error(`[AUTH] IP Check Error:`, ipError)
-    }
+        if (ipError) {
+          console.error(`[AUTH] IP Check Error:`, ipError)
+        }
 
-    if (!ipRecord) {
-      // First time on this IP: Create a record
-      await supabase.from('user_approved_ips').insert({
-        username: users.Username,
-        ip_address: ip,
-        status: (isSuperAdmin || isMobileUser) ? 'Approved' : 'Pending', // Auto-approve Super Admin and Mobile Users
-        device_info: headerList.get('user-agent') || 'Unknown'
-      })
+        if (!ipRecord) {
+          // First time on this IP: Create a record
+          await supabase.from('user_approved_ips').insert({
+            username: users.Username,
+            ip_address: ip,
+            status: isSuperAdmin ? 'Approved' : 'Pending', 
+            device_info: headerList.get('user-agent') || 'Unknown'
+          })
 
-      await logActivity({
-        module: 'Auth',
-        action_type: 'UPDATE',
-        user_id: users.Username,
-        username: users.Username,
-        details: { alert: 'NEW_IP_DETECTED', ip, status: (isSuperAdmin || isMobileUser) ? 'Approved' : 'Pending' }
-      })
+          await logActivity({
+            module: 'Auth',
+            action_type: 'UPDATE',
+            user_id: users.Username,
+            username: users.Username,
+            details: { alert: 'NEW_IP_DETECTED', ip, status: isSuperAdmin ? 'Approved' : 'Pending' }
+          })
 
-      if (!isSuperAdmin && !isMobileUser) {
-        // Send Push Notification to Super Admins
-        notifyAdminIPPending(users.Username, ip).catch(err => console.error('[PUSH] Failed to notify admins:', err))
-        return { error: 'IP_PENDING' }
-      }
-    }
+          if (!isSuperAdmin) {
+            // Send Push Notification to Super Admins
+            notifyAdminIPPending(users.Username, ip).catch(err => console.error('[PUSH] Failed to notify admins:', err))
+            return { error: 'IP_PENDING' }
+          }
+        }
 
-    if (ipRecord && !isSuperAdmin && !isMobileUser && ipRecord.status === 'Pending') {
-      return { error: 'IP_PENDING' }
-    }
+        if (ipRecord && !isSuperAdmin && ipRecord.status === 'Pending') {
+          return { error: 'IP_PENDING' }
+        }
 
-    if (ipRecord && ipRecord.status === 'Blocked') {
-      return { error: 'IP_BLOCKED' }
-    }
+        if (ipRecord && ipRecord.status === 'Blocked') {
+          return { error: 'IP_BLOCKED' }
+        }
 
-    // Update last used time (only if record exists)
-    if (ipRecord) {
-      await supabase
-        .from('user_approved_ips')
-        .update({ last_used_at: new Date().toISOString() })
-        .eq('id', ipRecord.id)
+        // Update last used time (only if record exists)
+        if (ipRecord) {
+          await supabase
+            .from('user_approved_ips')
+            .update({ last_used_at: new Date().toISOString() })
+            .eq('id', ipRecord.id)
+        }
     }
 
     // 5. Create Session (Custom)
