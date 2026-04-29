@@ -268,6 +268,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
     
     normalized.Origin_Location = getValue(['Origin_Location', 'origin', 'ต้นทาง', 'รับที่'])
     normalized.Dest_Location = getValue(['Dest_Location', 'destination', 'ปลายทาง', 'ส่งที่'])
+    normalized.Est_Distance_KM = getValue(['Est_Distance_KM', 'distance', 'km', 'ระยะทาง', 'กิโลเมตร'])
     normalized.Pickup_Lat = getValue(['pickup_lat', 'origin_lat', 'lat_start', 'ละติจูดต้นทาง', 'lat_ต้นทาง'])
     normalized.Pickup_Lon = getValue(['pickup_lon', 'origin_lon', 'lon_start', 'ลองติจูดต้นทาง', 'lon_ต้นทาง'])
     normalized.Delivery_Lat = getValue(['delivery_lat', 'dest_lat', 'lat_end', 'ละติจูดปลายทาง', 'lat_ปลายทาง'])
@@ -348,6 +349,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
       Delivery_Lon: data.Delivery_Lon ? Number(data.Delivery_Lon) : null,
       Origin_Location: (data.Origin_Location as string) || null,
       Dest_Location: (data.Dest_Location as string) || null,
+      Est_Distance_KM: Number(data.Est_Distance_KM) || 0,
       Show_Price_To_Driver: data.Show_Price_To_Driver !== undefined ? (data.Show_Price_To_Driver === true || data.Show_Price_To_Driver === 'true') : (j.Show_Price_To_Driver ?? true)
     })
     
