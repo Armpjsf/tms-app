@@ -69,16 +69,16 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
         return "สวัสดีตอนเย็น"
     }, [])
 
-    const formatJobDate = (dateStr: string | null) => {
-        if (!dateStr) return ""
+    const getJobDateInfo = (dateStr: string | null) => {
+        if (!dateStr) return { label: "", type: 'other' }
         try {
             const date = parseISO(dateStr)
             const datePart = format(date, "d MMM", { locale: th })
-            if (isToday(date)) return `วันนี้ (${datePart})`
-            if (isTomorrow(date)) return `พรุ่งนี้ (${datePart})`
-            return datePart
+            if (isToday(date)) return { label: `วันนี้ (${datePart})`, type: 'today' }
+            if (isTomorrow(date)) return { label: `พรุ่งนี้ (${datePart})`, type: 'tomorrow' }
+            return { label: datePart, type: 'other' }
         } catch {
-            return dateStr
+            return { label: dateStr, type: 'other' }
         }
     }
 
@@ -225,11 +225,20 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                 )}>
                                     {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : 'ดำเนินการอยู่'}
                                 </div>
-                                {(currentJob as any).Plan_Date && (
-                                    <span className="text-[10px] font-black text-primary/70 uppercase tracking-widest bg-primary/5 px-2 py-1 rounded-md border border-primary/10">
-                                        {formatJobDate((currentJob as any).Plan_Date)}
-                                    </span>
-                                )}
+                                {(() => {
+                                    const dateInfo = getJobDateInfo((currentJob as any).Plan_Date)
+                                    if (!dateInfo.label) return null
+                                    return (
+                                        <span className={cn(
+                                            "text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border shadow-sm",
+                                            dateInfo.type === 'today' ? "bg-emerald-500 text-white border-emerald-400" :
+                                            dateInfo.type === 'tomorrow' ? "bg-yellow-400 text-black border-yellow-300" :
+                                            "bg-primary/5 text-primary/70 border-primary/10"
+                                        )}>
+                                            {dateInfo.label}
+                                        </span>
+                                    )
+                                })()}
                             </div>
                         </div>
 
@@ -322,11 +331,20 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                         <div className="p-2 bg-muted/20 rounded-full">
                                             <ChevronRight size={20} className="text-muted-foreground" />
                                         </div>
-                                        {job.Plan_Date && (
-                                            <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-md">
-                                                {formatJobDate(job.Plan_Date)}
-                                            </span>
-                                        )}
+                                        {(() => {
+                                            const dateInfo = getJobDateInfo(job.Plan_Date)
+                                            if (!dateInfo.label) return null
+                                            return (
+                                                <span className={cn(
+                                                    "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border",
+                                                    dateInfo.type === 'today' ? "bg-emerald-500 text-white border-emerald-400" :
+                                                    dateInfo.type === 'tomorrow' ? "bg-yellow-400 text-black border-yellow-300" :
+                                                    "bg-primary/5 text-primary/60 border-primary/10"
+                                                )}>
+                                                    {dateInfo.label}
+                                                </span>
+                                            )
+                                        })()}
                                     </div>
                                 </div>
                             </Link>
