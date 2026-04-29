@@ -22,10 +22,9 @@ interface DashboardContentProps {
 }
 
 export async function DashboardContent({ searchParams }: DashboardContentProps) {
-  // Directly resolve branch from cookies (Safe since this is a Server Component)
-  const cookieStore = await cookies()
-  const branchFromCookie = cookieStore.get('selectedBranch')?.value || 'All'
-  const branch = searchParams.branch || branchFromCookie || 'All'
+  // Resolve branch using strict permission logic
+  const userBranchId = await getUserBranchId()
+  const branch = (userBranchId && userBranchId !== 'All') ? userBranchId : (searchParams.branch || 'All')
   const start = searchParams.start
   const end = searchParams.end
   const customers = searchParams.customers ? searchParams.customers.split(',') : []

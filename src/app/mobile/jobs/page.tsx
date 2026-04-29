@@ -7,6 +7,7 @@ import { getDriverJobs } from "@/lib/supabase/jobs"
 import { MobileJobFilter } from "@/components/mobile/job-filter"
 import { cn } from "@/lib/utils"
 import { RealtimeJobsTrigger } from "@/components/mobile/realtime-jobs-trigger"
+import { MobileRefreshButton } from "@/components/mobile/refresh-button"
 import { Suspense } from "react"
 import JobsLoading from "./loading"
 
@@ -46,10 +47,11 @@ async function JobsContent({ driverId, searchParams }: { driverId: string, searc
                 <p className="text-accent text-xs font-black uppercase tracking-[0.3em]">LogisPro Fleet</p>
                 <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase italic">รายการงาน</h2>
             </div>
-            <div className="text-right pb-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
+            <div className="flex items-center gap-3 pb-1">
+                <MobileRefreshButton />
+                <div className="inline-flex items-center gap-1.5 h-11 px-4 bg-primary/10 rounded-2xl border border-primary/20 shadow-sm">
                     <span className="text-primary font-black text-xl leading-none">{displayJobs.length}</span>
-                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">งาน</span>
+                    <span className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">งาน</span>
                 </div>
             </div>
         </div>

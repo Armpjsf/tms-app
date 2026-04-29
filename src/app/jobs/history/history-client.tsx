@@ -238,18 +238,18 @@ export function HistoryClient({
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border/5 bg-muted/30">
-                    <th className="text-left py-4 px-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.action')} ID</th>
-                    <th className="text-left py-4 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.reports')}</th>
-                    <th className="text-left py-4 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.vehicles')}</th>
-                    <th className="text-center py-4 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.integrity')}</th>
-                    <th className="text-center py-4 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.pod')}</th>
-                    {canViewPrice && <th className="text-right py-4 px-4 text-[10px] font-black text-primary uppercase tracking-[0.3em]">Matrix</th>}
-                    <th className="text-left py-4 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.status')}</th>
-                    <th className="text-right py-4 px-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.action')}</th>
+            <div className="overflow-x-auto custom-scrollbar max-h-[70vh] overflow-y-auto relative">
+              <table className="w-full border-separate border-spacing-0">
+                <thead className="sticky top-0 z-20">
+                  <tr className="bg-muted/90 backdrop-blur-xl">
+                    <th className="text-left py-5 px-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('common.action')} ID</th>
+                    <th className="text-left py-5 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('navigation.reports')}</th>
+                    <th className="text-left py-5 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('navigation.vehicles')}</th>
+                    <th className="text-center py-5 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('common.integrity')}</th>
+                    <th className="text-center py-5 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('navigation.pod')}</th>
+                    {canViewPrice && <th className="text-right py-5 px-4 text-[10px] font-black text-primary uppercase tracking-[0.3em] border-b border-border/10">Matrix</th>}
+                    <th className="text-left py-5 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('common.status')}</th>
+                    <th className="text-right py-5 px-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('common.action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">

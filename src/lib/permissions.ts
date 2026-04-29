@@ -3,20 +3,28 @@
 import { getSession } from "@/lib/session"
 import { cookies } from "next/headers"
 
+/**
+ * Enhanced Branch ID resolver with strict isolation logic.
+ * - Restricted Admins/Staff: Strictly returns their assigned Branch_ID.
+ * - Global Users (Super Admin): Returns selected cookie branch or 'All'.
+ */
 export async function getUserBranchId() {
     try {
         const session = await getSession()
         if (session) {
-            console.log(`[DEBUG] Session found: userId=${session.userId}, roleId=${session.roleId}`)
-            // For Super Admin & Admin, use the selected branch from cookies if available
-            if (Number(session.roleId) === 1 || Number(session.roleId) === 2) {
-                const cookieStore = await cookies()
-                return cookieStore.get('selectedBranch')?.value || 'All'
+            // If the user is assigned to a specific branch (Restricted Admin/Staff), 
+            // they MUST be restricted to it. They cannot see 'All' or other branches.
+            if (session.branchId && session.branchId !== 'All') {
+                return session.branchId
             }
-            return session.branchId
+
+            // For Global Users (Super Admin or any user assigned to 'All' branches)
+            // allow switching via the 'selectedBranch' cookie.
+            const cookieStore = await cookies()
+            return cookieStore.get('selectedBranch')?.value || 'All'
         }
 
-        // fallback to driver session
+        // Fallback to driver session if no staff session exists
         const cookieStore = await cookies()
         const driverSessionStr = cookieStore.get('driver_session')?.value
         if (driverSessionStr) {
@@ -27,11 +35,11 @@ export async function getUserBranchId() {
                 return null
             }
         }
+        
+        return 'All'
     } catch {
-        return null
+        return 'All'
     }
-
-    return null
 }
 
 export async function getFixedUserBranchId() {
@@ -83,18 +91,12 @@ export async function hasPermission(permission: string) {
 export async function isSuperAdmin() {
     const roleId = await getUserRole()
     const result = Number(roleId) === 1
-    if (result) {
-        console.log(`[AUTH] User identified as SUPER_ADMIN (Role: ${roleId})`)
-    }
     return result
 }
 
 export async function isAdmin() {
     const roleId = await getUserRole()
     const result = Number(roleId) === 1 || Number(roleId) === 2
-    if (result) {
-        console.log(`[AUTH] User identified as ADMIN/MANAGER (Role: ${roleId})`)
-    }
     return result
 }
 
