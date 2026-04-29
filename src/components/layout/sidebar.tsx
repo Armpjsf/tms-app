@@ -152,9 +152,10 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                     // If no permissions are set or the list is empty, default to "Show All" (null)
                     if (!perms || perms.length === 0) {
                         perms = null
-                    } else if (!perms.includes('navigation.danger_zones')) {
-                        // If they have a restricted list but Danger Zones is missing, inject it
-                        perms.push('navigation.danger_zones')
+                    } else {
+                        // Ensure critical admin menus are present
+                        if (!perms.includes('navigation.danger_zones')) perms.push('navigation.danger_zones')
+                        if (!perms.includes('navigation.customers')) perms.push('navigation.customers')
                     }
                 }
 

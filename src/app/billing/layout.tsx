@@ -6,10 +6,14 @@ export default async function BillingLayout({
 }: {
   children: React.ReactNode
 }) {
-  const canView = await hasPermission('billing_view')
+  const [canViewBilling, canViewInvoices, canViewPayouts] = await Promise.all([
+    hasPermission('navigation.billing_customer'),
+    hasPermission('navigation.invoices'),
+    hasPermission('navigation.payouts')
+  ])
   
-  if (!canView) {
-    redirect('/')
+  if (!canViewBilling && !canViewInvoices && !canViewPayouts) {
+    redirect('/dashboard')
   }
 
   return <>{children}</>

@@ -217,13 +217,13 @@ export async function getAllJobs(
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        const effectiveBranchId = (branchId && branchId !== 'All') ? branchId : (userBranchId || 'All')
+        const effectiveBranchId = (branchId && branchId !== 'All') ? branchId : 'All'
         
         if (isSuper && effectiveBranchId === 'All') {
             // No filter
         } else if (effectiveBranchId && effectiveBranchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
-        } else if (!isSuper && !isRegularAdmin && !userBranchId) {
+        } else if (!isSuper && !isRegularAdmin && !branchId) {
             return { data: [], count: 0 }
         }
     }

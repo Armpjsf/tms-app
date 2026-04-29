@@ -39,7 +39,9 @@ export async function getAllDriversFromTable(): Promise<Driver[]> {
     
     let dbQuery = supabase.from('Master_Drivers').select('*')
     
-    if (branchId && branchId !== 'All') {
+    if (branchId && branchId !== 'All' && !isSuper) {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (isSuper && branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return []
@@ -172,7 +174,9 @@ export async function getActiveDrivers() {
       .select('*')
       .eq('Active_Status', 'Active')
     
-    if (branchId && branchId !== 'All') {
+    if (branchId && branchId !== 'All' && !isSuper) {
+        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+    } else if (isSuper && branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return []
@@ -197,7 +201,9 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
     
     let queryBuilder = supabase.from('Master_Drivers').select('*', { count: 'exact' })
     
-    if (branchId && branchId !== 'All') {
+    if (branchId && branchId !== 'All' && !isSuper) {
+        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+    } else if (isSuper && branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return { data: [], count: 0 }
@@ -231,7 +237,9 @@ export async function getDriverStats(providedBranchId?: string) {
     
     let query = supabase.from('Master_Drivers').select('*')
     
-    if (branchId && branchId !== 'All') {
+    if (branchId && branchId !== 'All' && !isSuper) {
+        query = query.eq('Branch_ID', branchId)
+    } else if (isSuper && branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return { total: 0, active: 0, onJob: 0 }
@@ -249,7 +257,9 @@ export async function getDriverStats(providedBranchId?: string) {
       .not('Driver_ID', 'is', null)
       .in('Job_Status', ['Pending', 'Confirmed', 'In Progress'])
 
-    if (branchId && branchId !== 'All') {
+    if (branchId && branchId !== 'All' && !isSuper) {
+        onJobQuery = onJobQuery.eq('Branch_ID', branchId)
+    } else if (isSuper && branchId && branchId !== 'All') {
         onJobQuery = onJobQuery.eq('Branch_ID', branchId)
     }
 

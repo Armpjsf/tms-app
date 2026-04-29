@@ -45,6 +45,7 @@ import { Tabs, TabsContent, List as TabsList, TabsTrigger } from "@/components/u
 import { CustomerFuelMatrix } from "@/components/settings/customer-fuel-matrix"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useBranch } from "@/components/providers/branch-provider"
 import { isAdmin } from "@/lib/permissions"
 
 interface ExecutiveKPIs {
@@ -77,18 +78,21 @@ export default function CustomersSettingsPage() {
   })
   const [saving, setSaving] = useState(false)
 
+  const { selectedBranch } = useBranch()
+  const router = useRouter()
+
   const loadCustomers = useCallback(async () => {
     setLoading(true)
     const [result, kpiData, adminStatus] = await Promise.all([
-        getAllCustomers(1, 100, searchQuery),
-        getExecutiveKPIs(),
+        getAllCustomers(1, 100, searchQuery, selectedBranch),
+        getExecutiveKPIs(undefined, undefined, selectedBranch),
         isAdmin()
     ])
     setCustomers(result.data)
     setKpis(kpiData as unknown as ExecutiveKPIs)
     setIsAdminUser(adminStatus)
     setLoading(false)
-  }, [searchQuery])
+  }, [searchQuery, selectedBranch])
 
   useEffect(() => {
     loadCustomers()

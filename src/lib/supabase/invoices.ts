@@ -41,7 +41,9 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
       .from('invoices')
       .select('*, Master_Customers(Customer_Name)')
     
-    if (branchId && !isAdminUser) {
+    if (branchId && branchId !== 'All' && !isAdminUser) {
+        invQuery = invQuery.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
+    } else if (isAdminUser && branchId && branchId !== 'All') {
         invQuery = invQuery.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
     } else if (!isAdminUser && !branchId) {
         invQuery = invQuery.eq('id', 'non-existent') // Effectively empty
@@ -56,7 +58,9 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
       .from('Billing_Notes')
       .select('*')
     
-    if (branchId && !isAdminUser) {
+    if (branchId && branchId !== 'All' && !isAdminUser) {
+        bnQuery = bnQuery.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
+    } else if (isAdminUser && branchId && branchId !== 'All') {
         bnQuery = bnQuery.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
     } else if (!isAdminUser && !branchId) {
         bnQuery = bnQuery.eq('id', 'non-existent')

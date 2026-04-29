@@ -23,7 +23,7 @@ export default async function DriversPage(props: Props) {
   const query = (searchParams.query as string) || ''
   
   // Fetch drivers with pagination and search
-  const { data: drivers, count } = await getAllDrivers(page, 12, query)
+  const { data: drivers, count } = await getAllDrivers(page, 12, query, searchParams.branchId as string)
   
   // Fetch vehicles and subcontractors for the dialogs
   const { data: vehicles } = await getAllVehicles()

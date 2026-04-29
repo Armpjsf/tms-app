@@ -53,7 +53,7 @@ export async function getAllRoutes(page?: number, limit?: number, query?: string
     const userBranchId = await getUserBranchId()
     const effectiveBranchId = branchId || userBranchId
 
-    if (effectiveBranchId && effectiveBranchId !== 'All' && !isAdminUser) {
+    if (effectiveBranchId && effectiveBranchId !== 'All' && !isSuper) {
         queryBuilder = queryBuilder.eq('Branch_ID', effectiveBranchId)
     } else if (!isAdminUser && !effectiveBranchId) {
         return { data: [], count: 0 }
@@ -336,17 +336,31 @@ export async function getUniqueLocations() {
     const isAdminUser = await isAdmin()
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
+    const branchId = await getUserBranchId()
+    
     // Fetch unique Origins
-    const { data: origins } = await supabase
+    let originsQuery = supabase
       .from('Master_Routes')
       .select('Origin')
       .not('Origin', 'is', null)
       
+    if (branchId && branchId !== 'All' && !isSuper) {
+        originsQuery = originsQuery.eq('Branch_ID', branchId)
+    }
+
+    const { data: origins } = await originsQuery
+      
     // Fetch unique Destinations
-    const { data: destinations } = await supabase
+    let destsQuery = supabase
       .from('Master_Routes')
       .select('Destination')
       .not('Destination', 'is', null)
+
+    if (branchId && branchId !== 'All' && !isSuper) {
+        destsQuery = destsQuery.eq('Branch_ID', branchId)
+    }
+
+    const { data: destinations } = await destsQuery
 
     const locationSet = new Set<string>()
     

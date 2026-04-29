@@ -15,9 +15,19 @@ export default async function AdminLeavesPage() {
   if (!session) redirect("/login")
 
   const supabase = await createAdminClient()
-  const { data: leaves, error } = await supabase
+  const { getUserBranchId, isSuperAdmin } = await import("@/lib/permissions")
+  const branchId = await getUserBranchId()
+  const isSuper = await isSuperAdmin()
+
+  let query = supabase
     .from('Driver_Leaves')
-    .select('*')
+    .select('*, Master_Drivers!inner(Branch_ID)')
+
+  if (branchId && branchId !== 'All' && !isSuper) {
+    query = query.eq('Master_Drivers.Branch_ID', branchId)
+  }
+
+  const { data: leaves, error } = await query
     .order('Created_At', { ascending: false })
 
   return (
