@@ -143,7 +143,7 @@ export async function loginDriver(formData: FormData) {
   const ip = headerList.get('x-forwarded-for')?.split(',')[0] || headerList.get('x-real-ip') || '127.0.0.1'
 
   const { data: ipRecord, error: ipError } = await supabase
-    .from('User_Approved_IPs')
+    .from('user_approved_ips')
     .select('*')
     .eq('username', driver.Driver_ID)
     .eq('ip_address', ip)
@@ -151,7 +151,7 @@ export async function loginDriver(formData: FormData) {
 
   if (!ipRecord) {
     // First time on this IP: Create an Approved record (Drivers change IPs frequently)
-    await supabase.from('User_Approved_IPs').insert({
+    await supabase.from('user_approved_ips').insert({
       username: driver.Driver_ID,
       ip_address: ip,
       status: 'Approved', 
@@ -165,7 +165,7 @@ export async function loginDriver(formData: FormData) {
 
     // Update last used time
     await supabase
-      .from('User_Approved_IPs')
+      .from('user_approved_ips')
       .update({ last_used_at: new Date().toISOString() })
       .eq('id', ipRecord.id)
   }

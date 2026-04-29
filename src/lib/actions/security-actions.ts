@@ -13,7 +13,7 @@ export async function getCurrentUserSession() {
 export async function getPendingIPs() {
     const supabase = createAdminClient()
     const { data, error } = await supabase
-        .from('User_Approved_IPs')
+        .from('user_approved_ips')
         .select('*')
         .eq('status', 'Pending')
         .order('created_at', { ascending: false })
@@ -28,7 +28,7 @@ export async function approveIP(id: string, username: string, ip: string) {
 
     const supabase = createAdminClient()
     const { error } = await supabase
-        .from('User_Approved_IPs')
+        .from('user_approved_ips')
         .update({ 
             status: 'Approved',
             approved_by: adminSession.username,
@@ -46,7 +46,7 @@ export async function approveIP(id: string, username: string, ip: string) {
         details: { action: 'APPROVE_IP', target_user: username, target_ip: ip }
     })
 
-    revalidatePath('/admin/security')
+    revalidatePath('/settings/security')
     return { success: true }
 }
 
@@ -56,7 +56,7 @@ export async function blockIP(id: string, username: string, ip: string) {
 
     const supabase = createAdminClient()
     const { error } = await supabase
-        .from('User_Approved_IPs')
+        .from('user_approved_ips')
         .update({ 
             status: 'Blocked',
             approved_by: adminSession.username,
@@ -74,7 +74,7 @@ export async function blockIP(id: string, username: string, ip: string) {
         details: { action: 'BLOCK_IP', target_user: username, target_ip: ip }
     })
 
-    revalidatePath('/admin/security')
+    revalidatePath('/settings/security')
     return { success: true }
 }
 
@@ -84,12 +84,12 @@ export async function deleteIPRecord(id: string) {
 
     const supabase = createAdminClient()
     const { error } = await supabase
-        .from('User_Approved_IPs')
+        .from('user_approved_ips')
         .delete()
         .eq('id', id)
     
     if (error) return { success: false, error: error.message }
 
-    revalidatePath('/admin/security')
+    revalidatePath('/settings/security')
     return { success: true }
 }

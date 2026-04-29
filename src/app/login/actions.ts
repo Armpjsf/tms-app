@@ -106,7 +106,7 @@ export async function login(prevState: LoginFormState | undefined, formData: For
     const isMobileUser = roleId === 6 || roleId === 7
     
     const { data: ipRecord, error: ipError } = await supabase
-      .from('User_Approved_IPs')
+      .from('user_approved_ips')
       .select('*')
       .eq('username', users.Username)
       .eq('ip_address', ip)
@@ -118,7 +118,7 @@ export async function login(prevState: LoginFormState | undefined, formData: For
 
     if (!ipRecord) {
       // First time on this IP: Create a record
-      await supabase.from('User_Approved_IPs').insert({
+      await supabase.from('user_approved_ips').insert({
         username: users.Username,
         ip_address: ip,
         status: (isSuperAdmin || isMobileUser) ? 'Approved' : 'Pending', // Auto-approve Super Admin and Mobile Users
@@ -147,7 +147,7 @@ export async function login(prevState: LoginFormState | undefined, formData: For
     // Update last used time (only if record exists)
     if (ipRecord) {
       await supabase
-        .from('User_Approved_IPs')
+        .from('user_approved_ips')
         .update({ last_used_at: new Date().toISOString() })
         .eq('id', ipRecord.id)
     }
