@@ -106,10 +106,21 @@ export default async function CostPerTripPage() {
                   {trips.map(trip => (
                     <tr key={trip.Job_ID} className={`hover:bg-gray-50/50 transition-colors ${trip.profit < 0 ? 'bg-rose-50/30' : ''}`}>
                       <td className="px-4 py-3">
-                        <p className="text-lg font-bold text-muted-foreground">
-                          {trip.Plan_Date ? new Date(trip.Plan_Date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : '-'}
-                        </p>
-                        <p className="text-xs font-black uppercase tracking-widest">{trip.Job_ID}</p>
+                        <div className="flex flex-col">
+                          <p className="text-lg font-bold text-slate-900 leading-none mb-1.5">
+                            {trip.Plan_Date ? new Date(trip.Plan_Date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : '-'}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black text-violet-600 bg-violet-100/50 px-2 py-0.5 rounded-lg border border-violet-200 uppercase tracking-tighter shadow-sm">
+                              #{trip.Job_ID.slice(-8).toUpperCase()}
+                            </span>
+                            {trip.Vehicle_Plate && (
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                                {trip.Vehicle_Plate}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <p className="font-medium text-gray-900 max-w-[150px] truncate">{trip.Customer_Name || '-'}</p>
