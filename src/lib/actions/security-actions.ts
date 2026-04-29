@@ -4,6 +4,11 @@ import { createAdminClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import { logActivity } from "@/lib/supabase/logs"
 import { getAdminSession } from "./auth-actions"
+import { getSession } from "@/lib/session"
+
+export async function getCurrentUserSession() {
+    return await getSession()
+}
 
 export async function getPendingIPs() {
     const supabase = createAdminClient()

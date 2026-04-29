@@ -27,8 +27,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { createClient } from "@/utils/supabase/client"
 import { useLanguage } from "@/components/providers/language-provider"
-import { getPendingIPs, approveIP, blockIP, deleteIPRecord } from "@/lib/actions/security-actions"
-import { getSession } from "@/lib/session"
+import { getPendingIPs, approveIP, blockIP, deleteIPRecord, getCurrentUserSession } from "@/lib/actions/security-actions"
 import { Badge } from "@/components/ui/badge"
 
 export default function SecuritySettingsPage() {
@@ -43,7 +42,7 @@ export default function SecuritySettingsPage() {
 
   useEffect(() => {
     async function init() {
-        const sess = await getSession()
+        const sess = await getCurrentUserSession()
         setSession(sess)
         
         if (sess && (sess.roleId === 1 || sess.roleId === 2)) {
