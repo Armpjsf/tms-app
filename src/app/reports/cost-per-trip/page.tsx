@@ -2,8 +2,9 @@ export const dynamic = 'force-dynamic'
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { getCostPerTrip } from "./actions"
-import { DollarSign, TrendingUp, TrendingDown, Truck, MapPin, User, ArrowLeft } from "lucide-react"
+import { DollarSign, TrendingUp, TrendingDown, Truck, MapPin, User, ArrowLeft, Calendar } from "lucide-react"
 import Link from "next/link"
+import React from "react"
 
 function formatMoney(n: number) {
   return n.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -85,88 +86,105 @@ export default async function CostPerTripPage() {
               <p className="font-bold">ไม่พบข้อมูลในช่วงเวลาที่เลือก</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xl">
-                <thead>
-                  <tr className="bg-gray-50/80 text-lg font-bold text-muted-foreground uppercase tracking-wider">
-                    <th className="text-left px-4 py-3 font-black">วันที่ / งาน</th>
-                    <th className="text-left px-4 py-3 font-black">ลูกค้า / เส้นทาง</th>
-                    <th className="text-right px-4 py-3 font-black">ระยะทาง</th>
-                    <th className="text-right px-4 py-3 font-black text-blue-600">รายได้</th>
-                    <th className="text-right px-4 py-3 font-black">ค่าคนขับ</th>
-                    <th className="text-right px-4 py-3 font-black">น้ำมัน(จริง)</th>
-                    <th className="text-right px-4 py-3 font-black text-amber-500/80 text-sm italic">น้ำมัน(อ้างอิง)</th>
-                    <th className="text-right px-4 py-3 font-black">ซ่อมบำรุง(จริง)</th>
-                    <th className="text-right px-4 py-3 font-black text-amber-500/80 text-sm italic">ซ่อมบำรุง(อ้างอิง)</th>
-                    <th className="text-right px-4 py-3 font-black text-red-500">ต้นทุนรวม(จริง)</th>
-                    <th className="text-right px-4 py-3 font-black">กำไร</th>
+            <div className="max-h-[700px] overflow-auto relative">
+              <table className="w-full text-xl border-collapse">
+                <thead className="sticky top-0 z-30">
+                  <tr className="bg-slate-50/95 backdrop-blur-md text-lg font-bold text-muted-foreground uppercase tracking-wider border-b border-gray-200">
+                    <th className="text-left px-4 py-4 font-black">วันที่ / งาน</th>
+                    <th className="text-left px-4 py-4 font-black">ลูกค้า / เส้นทาง</th>
+                    <th className="text-right px-4 py-4 font-black">ระยะทาง</th>
+                    <th className="text-right px-4 py-4 font-black text-blue-600">รายได้</th>
+                    <th className="text-right px-4 py-4 font-black">ค่าคนขับ</th>
+                    <th className="text-right px-4 py-4 font-black">น้ำมัน(จริง)</th>
+                    <th className="text-right px-4 py-4 font-black text-amber-500/80 text-sm italic">น้ำมัน(อ้างอิง)</th>
+                    <th className="text-right px-4 py-4 font-black">ซ่อมบำรุง(จริง)</th>
+                    <th className="text-right px-4 py-4 font-black text-amber-500/80 text-sm italic">ซ่อมบำรุง(อ้างอิง)</th>
+                    <th className="text-right px-4 py-4 font-black text-red-500">ต้นทุนรวม(จริง)</th>
+                    <th className="text-right px-4 py-4 font-black">กำไร</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {trips.map(trip => (
-                    <tr key={trip.Job_ID} className={`hover:bg-gray-50/50 transition-colors ${trip.profit < 0 ? 'bg-rose-50/30' : ''}`}>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col">
-                          <p className="text-lg font-bold text-slate-900 leading-none mb-1.5">
-                            {trip.Plan_Date ? new Date(trip.Plan_Date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : '-'}
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black text-violet-600 bg-violet-100/50 px-2 py-0.5 rounded-lg border border-violet-200 uppercase tracking-tighter shadow-sm">
-                              #{trip.Job_ID.slice(-8).toUpperCase()}
+                  {trips.map((trip, idx) => {
+                    const prevTrip = trips[idx - 1]
+                    const showDateHeader = !prevTrip || prevTrip.Plan_Date !== trip.Plan_Date
+
+                    return (
+                      <React.Fragment key={trip.Job_ID}>
+                        {showDateHeader && (
+                          <tr className="bg-slate-100/80 sticky top-[60px] z-20 backdrop-blur-sm">
+                            <td colSpan={11} className="px-6 py-2.5">
+                              <div className="flex items-center gap-2 text-slate-600 font-black text-xs uppercase tracking-[0.2em]">
+                                <Calendar size={14} className="text-slate-400" />
+                                {trip.Plan_Date ? new Date(trip.Plan_Date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' }) : 'ไม่ระบุวันที่'}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        <tr className={`hover:bg-violet-50/30 transition-colors group ${trip.profit < 0 ? 'bg-rose-50/30' : ''}`}>
+                          <td className="px-4 py-4">
+                            <div className="flex flex-col">
+                              <p className="text-sm font-bold text-slate-400 leading-none mb-2">
+                                {trip.Plan_Date ? new Date(trip.Plan_Date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : '-'}
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black text-violet-600 bg-violet-100/50 px-2 py-0.5 rounded-lg border border-violet-200 uppercase tracking-tighter shadow-sm group-hover:bg-violet-500 group-hover:text-white transition-colors">
+                                  #{trip.Job_ID.slice(-8).toUpperCase()}
+                                </span>
+                                {trip.Vehicle_Plate && (
+                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                                    {trip.Vehicle_Plate}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <p className="font-black text-slate-700 max-w-[200px] truncate">{trip.Customer_Name || '-'}</p>
+                            <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground truncate opacity-70">
+                              <MapPin size={10} /> {trip.Route_Name || '-'}
                             </span>
-                            {trip.Vehicle_Plate && (
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
-                                {trip.Vehicle_Plate}
+                          </td>
+                          <td className="px-4 py-4 text-right font-bold text-slate-500">
+                            {trip.distance_km.toLocaleString()} KM
+                          </td>
+                          <td className="px-4 py-4 text-right font-black text-blue-600 whitespace-nowrap">
+                            ฿{formatMoney(trip.Cost_Customer_Total)}
+                          </td>
+                          <td className="px-4 py-4 text-right text-slate-600 whitespace-nowrap font-bold">
+                            ฿{formatMoney(trip.Cost_Driver_Total + trip.extra_cost)}
+                          </td>
+                          <td className="px-4 py-4 text-right text-slate-600 whitespace-nowrap">
+                            ฿{formatMoney(trip.fuel_real)}
+                          </td>
+                          <td className="px-4 py-4 text-right text-amber-500/70 italic whitespace-nowrap text-sm">
+                            ฿{formatMoney(trip.fuel_est)}
+                          </td>
+                          <td className="px-4 py-4 text-right text-slate-600 whitespace-nowrap">
+                            ฿{formatMoney(trip.maint_real)}
+                          </td>
+                          <td className="px-4 py-4 text-right text-amber-500/70 italic whitespace-nowrap text-sm">
+                            ฿{formatMoney(trip.maint_est)}
+                          </td>
+                          <td className="px-4 py-4 text-right font-bold text-red-500 whitespace-nowrap bg-red-50/20">
+                            ฿{formatMoney(trip.total_cost)}
+                          </td>
+                          <td className="px-4 py-4 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              {trip.profit >= 0 ? (
+                                <TrendingUp size={14} className="text-emerald-500" />
+                              ) : (
+                                <TrendingDown size={14} className="text-red-500" />
+                              )}
+                              <span className={`font-black text-2xl tracking-tighter ${trip.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                ฿{formatMoney(trip.profit)}
                               </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-gray-900 max-w-[150px] truncate">{trip.Customer_Name || '-'}</p>
-                        <span className="flex items-center gap-1 text-sm font-bold text-muted-foreground truncate">
-                          <MapPin size={10} /> {trip.Route_Name || '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-slate-500">
-                        {trip.distance_km.toLocaleString()} KM
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-blue-600 whitespace-nowrap">
-                        ฿{formatMoney(trip.Cost_Customer_Total)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">
-                        ฿{formatMoney(trip.Cost_Driver_Total + trip.extra_cost)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">
-                        ฿{formatMoney(trip.fuel_real)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-amber-500/70 italic whitespace-nowrap text-sm">
-                        ฿{formatMoney(trip.fuel_est)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">
-                        ฿{formatMoney(trip.maint_real)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-amber-500/70 italic whitespace-nowrap text-sm">
-                        ฿{formatMoney(trip.maint_est)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-red-500 whitespace-nowrap">
-                        ฿{formatMoney(trip.total_cost)}
-                      </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1">
-                          {trip.profit >= 0 ? (
-                            <TrendingUp size={14} className="text-emerald-500" />
-                          ) : (
-                            <TrendingDown size={14} className="text-red-500" />
-                          )}
-                          <span className={`font-black ${trip.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                            ฿{formatMoney(trip.profit)}
-                          </span>
-                        </div>
-                        <p className={`text-base font-bold ${trip.profit >= 0 ? 'text-gray-400' : 'text-red-400'}`}>{trip.profit_pct}%</p>
-                      </td>
-                    </tr>
-                  ))}
+                            </div>
+                            <p className={`text-sm font-black uppercase tracking-widest ${trip.profit >= 0 ? 'text-emerald-500/60' : 'text-red-400'}`}>{trip.profit_pct}% Margin</p>
+                          </td>
+                        </tr>
+                      </React.Fragment>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
