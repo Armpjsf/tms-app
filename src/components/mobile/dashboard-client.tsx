@@ -223,7 +223,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                     ? "bg-accent text-white border-accent/20"
                                     : "bg-muted text-muted-foreground border-border/50"
                                 )}>
-                                    {currentStatus === 'Assigned' || currentStatus === 'New' ? 'รอเริ่มงาน' : 'ดำเนินการอยู่'}
+                                    {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : 'ดำเนินการอยู่'}
                                 </div>
                                 {(currentJob as any).Plan_Date && (
                                     <span className="text-[10px] font-black text-primary/70 uppercase tracking-widest bg-primary/5 px-2 py-1 rounded-md border border-primary/10">
