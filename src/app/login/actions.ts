@@ -5,7 +5,6 @@ import { createAdminClient } from '@/utils/supabase/server'
 import argon2 from 'argon2'
 import { createSession, deleteSession, getSession } from '@/lib/session'
 import { logActivity } from '@/lib/supabase/logs'
-import { isRedirectError } from 'next/dist/client/components/redirect'
 import { headers } from 'next/headers'
 
 export type LoginFormState = {
@@ -172,7 +171,6 @@ export async function login(prevState: LoginFormState | undefined, formData: For
     })
     
   } catch (err) {
-    if (isRedirectError(err)) throw err
     console.error(`[AUTH] Critical Login Error:`, err)
     return { error: 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง' }
   }
