@@ -223,7 +223,7 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
 
     // 1. Get all drivers
     const sessionBranchId = await getUserBranchId();
-    const effectiveBranchId = branchId || sessionBranchId;
+    const effectiveBranchId = isSuper ? (branchId || sessionBranchId) : sessionBranchId;
 
     // 1. Get all drivers with their current location from Master_Drivers
     let driversQuery = supabase

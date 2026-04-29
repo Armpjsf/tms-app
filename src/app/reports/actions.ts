@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
-import { getUserBranchId, isAdmin } from '@/lib/permissions'
+import { getUserBranchId, isAdmin, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
 
 export interface ReportFilters {
@@ -24,7 +24,8 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{
   const cookieStore = await cookies()
   const selectedBranch = cookieStore.get('selectedBranch')?.value
 
-  const effectiveBranch = admin 
+  const isSuper = await isSuperAdmin()
+  const effectiveBranch = isSuper 
     ? (filters.branchId || selectedBranch || 'All')
     : userBranchId
 

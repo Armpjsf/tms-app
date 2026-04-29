@@ -210,18 +210,18 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
   const isAdminUser = await isAdmin()
   const supabase = isAdminUser ? await createAdminClient() : await createClient()
 
+  const userBranchId = await getUserBranchId()
+  const isSuper = await isSuperAdmin()
+  
   // Get Branch_ID for auto-assignment
-  if (!effectiveBranchId || effectiveBranchId === 'All') {
-      // First try the user's REAL branch (fixed), not the filter branch
-      const fixedBranchId = await getFixedUserBranchId()
-      if (fixedBranchId && fixedBranchId !== 'All') {
-          effectiveBranchId = fixedBranchId
-      } else {
-          // If super admin (no fixed branch), fallback to filter branch or HQ
-          const userBranchId = await getUserBranchId()
-          effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : 'HQ'
-      }
+  // HARD RESTRICTION: Non-Super Admins are locked to their branch.
+  let branchId = (userBranchId && userBranchId !== 'All') ? userBranchId : (effectiveBranchId || 'All')
+  
+  if (branchId === 'All' && !isSuper) {
+      branchId = 'HQ'
   }
+  
+  effectiveBranchId = branchId
 
   // Fetch Master Data for lookups
   const [{ data: allDrivers }, { data: allVehicles }, { data: allCustomers }, { data: allRoutes }] = await Promise.all([
@@ -657,7 +657,7 @@ export async function getJobCreationData() {
   let routes = routesResult.data || []
   let subcontractors = subcontractorsResult.data || []
 
-  if (branchId && branchId !== 'All' && !isSuper && !isAdminUser) {
+  if (branchId && branchId !== 'All' && !isSuper) {
       customers = customers.filter(c => c.Branch_ID === branchId)
       routes = routes.filter(r => r.Branch_ID === branchId)
       subcontractors = subcontractors.filter(s => s.Branch_ID === branchId)

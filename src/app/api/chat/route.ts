@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { getSession } from '@/lib/session'
 import { createAdminClient } from '@/utils/supabase/server'
 import { aiToolExecutors } from '@/lib/ai/tools'
+import { getUserBranchId } from '@/lib/permissions'
 
 // Models matching the new API key (Gemini 2.5/3.x generation)
 const GEMINI_MODELS = [
@@ -247,9 +248,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ response: "AI System: ไม่พบ API Key ในการตั้งค่าระบบ" })
         }
 
-        const cookieStore = await cookies()
-        const selectedBranch = cookieStore.get('selectedBranch')?.value
-        const branchId = selectedBranch === 'All' ? undefined : (selectedBranch || session.branchId || undefined)
+        const userBranchId = await getUserBranchId()
+        const branchId = (userBranchId && userBranchId !== 'All') ? userBranchId : undefined
 
         // ─────────────────────────────────────────────────────────────────
         // 1. BUILD COMPREHENSIVE KNOWLEDGE BASE (Direct DB calls - more reliable)

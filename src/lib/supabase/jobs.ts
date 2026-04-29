@@ -99,8 +99,11 @@ export async function getTodayJobs(date?: string, branchId?: string): Promise<Jo
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        const effectiveBranchId = branchId || userBranchId
-        if (isSuper && (!effectiveBranchId || effectiveBranchId === 'All')) {
+        // HARD RESTRICTION: For non-Super Admins, force their assigned branch.
+        // For Super Admins, allow switching via branchId argument.
+        const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : (branchId || 'All')
+        
+        if (isSuper && effectiveBranchId === 'All') {
             // Super Admin viewing all: No filter
         } else if (effectiveBranchId && effectiveBranchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
@@ -122,6 +125,7 @@ export async function getLiveActiveJobs(branchId?: string, customerId?: string |
     try {
         const isSuper = await isSuperAdmin()
         const isRegularAdmin = await isAdmin()
+        const userBranchId = await getUserBranchId()
         const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
         
         let query = supabase
@@ -129,13 +133,15 @@ export async function getLiveActiveJobs(branchId?: string, customerId?: string |
             .select('*')
             .in('Job_Status', ['Assigned', 'Confirmed', 'Picked Up', 'In Transit', 'Arrived', 'SOS'])
 
-        if (isSuper && (!branchId || branchId === 'All')) {
-            // Super Admin viewing all: No filter
-        } else if (branchId && branchId !== 'All') {
-            query = query.eq('Branch_ID', branchId)
-        }
         if (customerId) {
             query = query.eq('Customer_ID', customerId)
+        } else {
+            const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : (branchId || 'All')
+            if (isSuper && effectiveBranchId === 'All') {
+                // No filter
+            } else if (effectiveBranchId && effectiveBranchId !== 'All') {
+                query = query.eq('Branch_ID', effectiveBranchId)
+            }
         }
 
         const { data } = await query
@@ -210,12 +216,16 @@ export async function getAllJobs(
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (isSuper && (!branchId || branchId === 'All')) {
-        // No filter
-    } else if (branchId && branchId !== 'All') {
-        dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isSuper && !isRegularAdmin && !branchId) {
-        return { data: [], count: 0 }
+    } else {
+        const effectiveBranchId = (branchId && branchId !== 'All') ? branchId : (userBranchId || 'All')
+        
+        if (isSuper && effectiveBranchId === 'All') {
+            // No filter
+        } else if (effectiveBranchId && effectiveBranchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
+        } else if (!isSuper && !isRegularAdmin && !userBranchId) {
+            return { data: [], count: 0 }
+        }
     }
 
     if (startDate) {
@@ -272,8 +282,12 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        const effectiveBranchId = branchId || userBranchId
-        if (effectiveBranchId && effectiveBranchId !== 'All') {
+        // HARD RESTRICTION: For non-Super Admins, force their assigned branch.
+        const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : (branchId || 'All')
+
+        if (isSuper && effectiveBranchId === 'All') {
+            // No filter for global Super Admin
+        } else if (effectiveBranchId && effectiveBranchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
         } else if (!isSuper && !isRegularAdmin && !userBranchId) {
             return { total: 0, delivered: 0, inProgress: 0, pending: 0, totalQty: 0 }
@@ -319,8 +333,13 @@ export async function getJobStatsSummary(query = '', startDate = '', endDate = '
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (branchId && branchId !== 'All') {
-        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else {
+        // Inherit user branch restriction
+        if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
+        } else if (!isSuper && !isRegularAdmin && !branchId) {
+            return { success: 0, failed: 0, cancelled: 0, total: 0 }
+        }
     }
 
     if (startDate) dbQuery = dbQuery.gte('Plan_Date', startDate)
@@ -363,8 +382,10 @@ export async function getTodayFinancials(branchId?: string) {
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        const effectiveBranchId = branchId || userBranchId
-        if (effectiveBranchId && effectiveBranchId !== 'All') {
+        const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : (branchId || 'All')
+        if (isSuper && effectiveBranchId === 'All') {
+            // No filter
+        } else if (effectiveBranchId && effectiveBranchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
         } else if (!isSuper && !isRegularAdmin && !userBranchId) {
             return { revenue: 0 }

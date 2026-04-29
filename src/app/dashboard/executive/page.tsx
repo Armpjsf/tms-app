@@ -9,6 +9,7 @@ import {
 } from "@/lib/supabase/fleet-analytics"
 import { getSetting } from "@/lib/supabase/settings"
 import { cookies } from "next/headers"
+import { getUserBranchId } from "@/lib/permissions"
 import { Suspense } from "react"
 
 export const dynamic = 'force-dynamic'
@@ -70,8 +71,8 @@ async function ExecutiveContent({ branch }: { branch: string }) {
 
 export default async function ExecutiveDashboardPage(props: PageProps) {
     const searchParams = await props.searchParams
-    const cookieStore = await cookies()
-    const branch = searchParams.branch || cookieStore.get('selectedBranch')?.value || 'All'
+    const userBranchId = await getUserBranchId()
+    const branch = (userBranchId && userBranchId !== 'All') ? userBranchId : (searchParams.branch || 'All')
 
     return (
         <Suspense fallback={

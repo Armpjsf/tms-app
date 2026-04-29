@@ -2,7 +2,7 @@
 // Note: No "use server" here — this is consumed by server action files
 
 import { createAdminClient } from '@/utils/supabase/server'
-import { getUserBranchId } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 export type FinancialJob = {
     Price_Cust_Total: number;
@@ -77,7 +77,10 @@ export async function getBranchPlates(branchId: string) {
 // Common helper to resolve branch filtering
 export async function getEffectiveBranchId(branchId?: string) {
     const userBranchId = await getUserBranchId()
-    let target = (branchId && branchId.toLowerCase() !== 'all' && branchId.toLowerCase() !== 'ทุกสาขา') ? branchId : userBranchId
+    const isSuper = await isSuperAdmin()
+    
+    // Only super admins can override with a provided branchId
+    let target = isSuper ? (branchId || userBranchId) : userBranchId
     
     if (!target || target.toLowerCase() === 'all' || target.toLowerCase() === 'ทุกสาขา') return null
 

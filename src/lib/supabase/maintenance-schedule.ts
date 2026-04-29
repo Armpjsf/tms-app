@@ -46,11 +46,13 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
     .from('Master_Vehicles')
     .select('Vehicle_Plate, Vehicle_Type, Active_Status, Insurance_Expiry, Tax_Expiry, Last_Service_Date, Last_Service_Odometer, Next_Service_Mileage, Current_Mileage')
 
-  if (isAdmin) {
+  const isSuper = await isSuperAdmin()
+
+  if (isSuper) {
     if (selectedBranch && selectedBranch !== 'All') {
       vehicleQuery = vehicleQuery.eq('Branch_ID', selectedBranch)
     }
-  } else if (branchId) {
+  } else if (branchId && branchId !== 'All') {
     vehicleQuery = vehicleQuery.eq('Branch_ID', branchId)
   }
 
@@ -61,12 +63,11 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
     .from('Repair_Tickets')
     .select('Ticket_ID, Vehicle_Plate, Status, Date_Report, Cost_Total, Date_Finish')
   
-  if (isAdmin) {
+  if (isSuper) {
     if (selectedBranch && selectedBranch !== 'All') {
-      // Repair_Tickets uses 'Branch_ID' (uppercase)
       activeQuery = activeQuery.eq('Branch_ID', selectedBranch)
     }
-  } else if (branchId) {
+  } else if (branchId && branchId !== 'All') {
     activeQuery = activeQuery.eq('Branch_ID', branchId)
   }
 

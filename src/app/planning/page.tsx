@@ -1,6 +1,6 @@
 import { getTodayJobStats, getTodayJobs, getRequestedJobs } from "@/lib/supabase/jobs"
 import { getJobCreationData, createBulkJobs } from "@/app/planning/actions"
-import { hasPermission, isAdmin } from "@/lib/permissions"
+import { hasPermission, isAdmin, getUserBranchId } from "@/lib/permissions"
 import { PlanningClient } from "@/components/planning/planning-client"
 import { cookies } from "next/headers"
 import { Suspense } from "react"
@@ -53,8 +53,8 @@ async function PlanningContent({ branch, date }: { branch: string, date?: string
 
 export default async function PlanningPage(props: PageProps) {
   const searchParams = await props.searchParams
-  const cookieStore = await cookies()
-  const branch = searchParams.branch || cookieStore.get('selectedBranch')?.value || 'All'
+  const userBranchId = await getUserBranchId()
+  const branch = (userBranchId && userBranchId !== 'All') ? userBranchId : (searchParams.branch || 'All')
   const date = searchParams.date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
 
   return (

@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { isSuperAdmin } from "@/lib/permissions"
+import { isSuperAdmin, getUserBranchId } from "@/lib/permissions"
 import { cookies } from "next/headers"
 import { DashboardContent } from "@/components/analytics/dashboard-content"
 import { getMaintenanceSchedule } from "@/lib/supabase/maintenance-schedule"
@@ -9,8 +9,8 @@ export const dynamic = 'force-dynamic'
 
 export default async function AnalyticsPage(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
   const searchParams = await props.searchParams
-  const cookieStore = await cookies()
-  const branchId = searchParams.branch || cookieStore.get("selectedBranch")?.value || 'All'
+  const userBranchId = await getUserBranchId()
+  const branchId = (userBranchId && userBranchId !== 'All') ? userBranchId : (searchParams.branch || 'All')
   const superAdmin = await isSuperAdmin()
   const maintenance = await getMaintenanceSchedule()
 

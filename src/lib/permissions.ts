@@ -12,16 +12,26 @@ export async function getUserBranchId() {
     try {
         const session = await getSession()
         if (session) {
-            // If the user is assigned to a specific branch (Restricted Admin/Staff), 
-            // they MUST be restricted to it. They cannot see 'All' or other branches.
+            const isSuper = session.roleId === 1
+            
+            // 1. Restricted Users: If they have a specific branch assigned in DB, FORCE it.
             if (session.branchId && session.branchId !== 'All') {
                 return session.branchId
             }
 
-            // For Global Users (Super Admin or any user assigned to 'All' branches)
-            // allow switching via the 'selectedBranch' cookie.
+            // 2. Global Users (Super Admin): Allow switching via cookie.
+            if (isSuper) {
+                const cookieStore = await cookies()
+                return cookieStore.get('selectedBranch')?.value || 'All'
+            }
+
+            // 3. Regular Admins (Role 2) with no specific branch assigned:
+            // Fallback to cookie BUT prevent 'All' access.
             const cookieStore = await cookies()
-            return cookieStore.get('selectedBranch')?.value || 'All'
+            const selected = cookieStore.get('selectedBranch')?.value
+            if (selected && selected !== 'All') return selected
+            
+            return 'HQ' // Fail-safe default for admins with no assigned branch
         }
 
         // Fallback to driver session if no staff session exists

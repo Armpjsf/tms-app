@@ -4,7 +4,7 @@ import { getSOSDriverIds } from "@/lib/supabase/sos"
 import { getCustomerName } from "@/lib/supabase/customers"
 import { getMarketplaceJobs, getTodayJobStats, getLiveActiveJobs } from "@/lib/supabase/jobs"
 import { getDriverStats } from "@/lib/supabase/drivers"
-import { isCustomer, getCustomerId, isAdmin } from "@/lib/permissions"
+import { isCustomer, getCustomerId, isAdmin, getUserBranchId } from "@/lib/permissions"
 import { getActiveFleetStatus } from "@/lib/supabase/gps"
 import { getActiveFleetAlerts } from "@/lib/actions/fleet-intelligence-actions"
 import { getESGStats } from "@/lib/supabase/esg-analytics"
@@ -46,7 +46,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
       getTodayJobStats(currentBranchId, start || undefined, end || undefined, customers),
       getDriverStats(currentBranchId),
       getESGStats(start || undefined, end || undefined, currentBranchId),
-      getActiveFleetAlerts(),
+      getActiveFleetAlerts(undefined, currentBranchId),
       getProfitHeatmapData(start || undefined, end || undefined, currentBranchId),
       getAllCustomers(1, 1000, undefined, isAdminUser ? undefined : currentBranchId),
       getLiveActiveJobs(currentBranchId, customerMode ? custId : null)

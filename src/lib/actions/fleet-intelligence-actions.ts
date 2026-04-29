@@ -115,7 +115,7 @@ export async function deleteMaintenanceStandard(name: string) {
 /**
  * ALERTS
  */
-export async function getActiveFleetAlerts(vehiclePlate?: string) {
+export async function getActiveFleetAlerts(vehiclePlate?: string, branchId?: string) {
     const supabase = createAdminClient()
     let query = supabase
         .from('Fleet_Intelligence_Alerts')
@@ -125,6 +125,10 @@ export async function getActiveFleetAlerts(vehiclePlate?: string) {
     
     if (vehiclePlate) {
         query = query.eq('Vehicle_Plate', vehiclePlate)
+    }
+
+    if (branchId && branchId !== 'All') {
+        query = query.eq('master_vehicles.Branch_ID', branchId)
     }
 
     const { data, error } = await query
