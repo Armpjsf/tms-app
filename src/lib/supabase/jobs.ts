@@ -203,7 +203,7 @@ export async function getAllJobs(
     const isRegularAdmin = await isAdmin()
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? createAdminClient() : await createClient()
     
     const offset = (page - 1) * limit
     
@@ -216,9 +216,7 @@ export async function getAllJobs(
     } else {
         const effectiveBranchId = (branchId && branchId !== 'All') ? branchId : 'All'
         
-        if (isSuper && effectiveBranchId === 'All') {
-            // No filter
-        } else if (effectiveBranchId && effectiveBranchId !== 'All') {
+        if (effectiveBranchId && effectiveBranchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
         } else if (!isSuper && !isRegularAdmin && !branchId) {
             return { data: [], count: 0 }

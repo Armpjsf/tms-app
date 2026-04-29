@@ -36,7 +36,7 @@ export async function getCurrentUserRole() {
 export async function getAllRoutes(page?: number, limit?: number, query?: string, branchId?: string) {
   try {
     const isAdminUser = await isAdmin()
-    const supabase = isAdminUser ? await createAdminClient() : await createClient()
+    const supabase = isAdminUser ? createAdminClient() : await createClient()
     let queryBuilder = supabase.from('Master_Routes').select('*', { count: 'exact' })
     
     if (page && limit) {
@@ -53,9 +53,9 @@ export async function getAllRoutes(page?: number, limit?: number, query?: string
     const userBranchId = await getUserBranchId()
     const effectiveBranchId = branchId || userBranchId
 
-    if (effectiveBranchId && effectiveBranchId !== 'All' && !isSuper) {
+    if (effectiveBranchId && effectiveBranchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', effectiveBranchId)
-    } else if (!isAdminUser && !effectiveBranchId) {
+    } else if (!isSuper && !isAdminUser && !effectiveBranchId) {
         return { data: [], count: 0 }
     }
     

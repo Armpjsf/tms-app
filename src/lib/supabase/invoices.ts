@@ -41,9 +41,7 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
       .from('invoices')
       .select('*, Master_Customers(Customer_Name)')
     
-    if (branchId && branchId !== 'All' && !isAdminUser) {
-        invQuery = invQuery.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
-    } else if (isAdminUser && branchId && branchId !== 'All') {
+    if (branchId && branchId !== 'All') {
         invQuery = invQuery.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
     } else if (!isAdminUser && !branchId) {
         invQuery = invQuery.eq('id', 'non-existent') // Effectively empty

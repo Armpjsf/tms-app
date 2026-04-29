@@ -12,7 +12,7 @@ export async function getUserBranchId() {
     try {
         const session = await getSession()
         if (session) {
-            const isSuper = session.roleId === 1
+            const isSuper = Number(session.roleId) === 1
             
             // 1. Restricted Users: If they have a specific branch assigned in DB, FORCE it.
             if (session.branchId && session.branchId !== 'All') {
@@ -22,17 +22,18 @@ export async function getUserBranchId() {
             // 2. Global Users (Super Admin): Allow switching via cookie.
             if (isSuper) {
                 const cookieStore = await cookies()
-                const selected = cookieStore.get('selectedBranch')?.value || 'All'
-                return (selected === 'ทุกสาขา') ? 'All' : selected
+                const selected = cookieStore.get('selectedBranch')?.value
+                if (!selected || selected === 'All' || selected === 'ทุกสาขา' || selected.includes('ทุกสาขา')) return 'All'
+                return selected
             }
 
             // 3. Regular Admins (Role 2) with no specific branch assigned:
             // Fallback to cookie BUT prevent 'All' access.
             const cookieStore = await cookies()
-            let selected = cookieStore.get('selectedBranch')?.value
-            if (selected === 'ทุกสาขา') selected = 'All'
+            const selected = cookieStore.get('selectedBranch')?.value
+            const isAll = !selected || selected === 'All' || selected === 'ทุกสาขา' || selected.includes('ทุกสาขา')
             
-            if (selected && selected !== 'All') return selected
+            if (!isAll && selected) return selected
             
             return 'HQ' // Fail-safe default for admins with no assigned branch
         }
