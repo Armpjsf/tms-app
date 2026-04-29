@@ -29,6 +29,8 @@ import { createClient } from "@/utils/supabase/client"
 import { useLanguage } from "@/components/providers/language-provider"
 import { getPendingIPs, approveIP, blockIP, deleteIPRecord, getCurrentUserSession, changePassword } from "@/lib/actions/security-actions"
 import { Badge } from "@/components/ui/badge"
+import { getUserProfile } from "@/lib/supabase/users"
+import { getPermissionsByRole } from "@/lib/actions/permission-actions"
 
 export default function SecuritySettingsPage() {
   const { t } = useLanguage()
@@ -40,12 +42,22 @@ export default function SecuritySettingsPage() {
   const [pendingIPs, setPendingIPs] = useState<any[]>([])
   const [session, setSession] = useState<any>(null)
   const [ipLoading, setIpLoading] = useState(false)
+  const [allowedMenus, setAllowedMenus] = useState<string[] | null>(null)
+  const [isPermsLoaded, setIsPermsLoaded] = useState(false)
 
   useEffect(() => {
     async function init() {
         const sess = await getCurrentUserSession()
         setSession(sess)
         
+        // Fetch permissions
+        const profile = await getUserProfile()
+        if (profile?.Role) {
+            const perms = await getPermissionsByRole(profile.Role)
+            setAllowedMenus(perms)
+        }
+        setIsPermsLoaded(true)
+
         if (sess && (sess.roleId === 1 || sess.roleId === 2)) {
             const ips = await getPendingIPs()
             setPendingIPs(ips)
@@ -137,9 +149,15 @@ export default function SecuritySettingsPage() {
                     </div>
                     <div>
                         <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
-                            {t('settings.items.security')}
+                            {!allowedMenus || allowedMenus.includes('settings.items.vault') || allowedMenus.includes('settings.items.security') 
+                                ? t('settings.items.security') 
+                                : t('settings.items.change_password')}
                         </h1>
-                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings.items.security_desc')}</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">
+                            {!allowedMenus || allowedMenus.includes('settings.items.vault') || allowedMenus.includes('settings.items.security') 
+                                ? t('settings.items.security_desc') 
+                                : t('settings.items.change_password_desc')}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -244,7 +262,7 @@ export default function SecuritySettingsPage() {
                                </p>
                            </div>
                            <Badge variant="outline" className="px-4 py-1.5 border-primary/20 text-primary bg-primary/5 font-black uppercase italic tracking-widest">
-                                {pendingIPs.length} PENDING
+                                 {pendingIPs.length} PENDING
                            </Badge>
                        </div>
                        
@@ -339,31 +357,33 @@ export default function SecuritySettingsPage() {
               </div>
               )}
 
-             {/* 2FA Matrix */}
-             <div className="lg:col-span-12">
-                  <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/2fa">
-                      <div className="p-10 border-b border-border/5 bg-black/40 flex items-center justify-between">
-                          <h3 className="text-xl font-black text-foreground tracking-widest uppercase italic flex items-center gap-3">
-                              <Smartphone size={20} className="text-indigo-400" />
-                              {t('security.mfa_title')}
-                          </h3>
-                          <div className="px-5 py-1.5 rounded-xl bg-indigo-500/10 text-base font-bold font-black text-indigo-400 uppercase tracking-[0.1em] border border-indigo-500/20 italic">
-                              {t('security.mfa_status')}
-                          </div>
-                      </div>
-                      <div className="p-12 flex flex-col md:flex-row items-center justify-between gap-10">
-                          <div className="space-y-4 text-center md:text-left">
-                              <p className="text-xl font-black text-foreground uppercase tracking-widest italic">{t('security.mfa_desc_title')}</p>
-                              <p className="text-base font-bold font-black text-muted-foreground leading-relaxed uppercase tracking-[0.2em] italic">
-                                  {t('security.mfa_desc')}
-                              </p>
-                          </div>
-                          <PremiumButton variant="outline" disabled className="h-16 px-10 rounded-2xl border-border/10 text-muted-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.1em] cursor-not-allowed italic">
-                              {t('security.system_lock')}
-                          </PremiumButton>
-                      </div>
-                  </PremiumCard>
-             </div>
+             {/* 2FA Matrix - ONLY IF HAS FULL SECURITY PERMS */}
+             {(!allowedMenus || allowedMenus.includes('settings.items.vault') || allowedMenus.includes('settings.items.security')) && (
+              <div className="lg:col-span-12">
+                   <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/2fa">
+                       <div className="p-10 border-b border-border/5 bg-black/40 flex items-center justify-between">
+                           <h3 className="text-xl font-black text-foreground tracking-widest uppercase italic flex items-center gap-3">
+                               <Smartphone size={20} className="text-indigo-400" />
+                               {t('security.mfa_title')}
+                           </h3>
+                           <div className="px-5 py-1.5 rounded-xl bg-indigo-500/10 text-base font-bold font-black text-indigo-400 uppercase tracking-[0.1em] border border-indigo-500/20 italic">
+                               {t('security.mfa_status')}
+                           </div>
+                       </div>
+                       <div className="p-12 flex flex-col md:flex-row items-center justify-between gap-10">
+                           <div className="space-y-4 text-center md:text-left">
+                               <p className="text-xl font-black text-foreground uppercase tracking-widest italic">{t('security.mfa_desc_title')}</p>
+                               <p className="text-base font-bold font-black text-muted-foreground leading-relaxed uppercase tracking-[0.2em] italic">
+                                   {t('security.mfa_desc')}
+                               </p>
+                           </div>
+                           <PremiumButton variant="outline" disabled className="h-16 px-10 rounded-2xl border-border/10 text-muted-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.1em] cursor-not-allowed italic">
+                               {t('security.system_lock')}
+                           </PremiumButton>
+                       </div>
+                   </PremiumCard>
+              </div>
+             )}
         </div>
 
         {/* Global Advisory */}

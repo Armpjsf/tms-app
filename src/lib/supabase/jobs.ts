@@ -223,12 +223,15 @@ export async function getAllJobs(
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        const effectiveBranchId = (branchId && branchId !== 'All') ? branchId : 'All'
-        
-        if (effectiveBranchId && effectiveBranchId !== 'All') {
-            dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
-        } else if (!isSuper && !isRegularAdmin && !branchId) {
-            return { data: [], count: 0 }
+        // STRICT ISOLATION
+        if (!isSuper) {
+            if (userBranchId && userBranchId !== 'All') {
+                dbQuery = dbQuery.eq('Branch_ID', userBranchId)
+            } else {
+                return { data: [], count: 0 }
+            }
+        } else if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
         }
     }
 
@@ -286,15 +289,16 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        // HARD RESTRICTION: For non-Super Admins, force their assigned branch.
-        const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : (branchId || 'All')
-
-        if (isSuper && effectiveBranchId === 'All') {
-            // No filter for global Super Admin
-        } else if (effectiveBranchId && effectiveBranchId !== 'All') {
-            dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
-        } else if (!isSuper && !isRegularAdmin && !userBranchId) {
-            return { total: 0, delivered: 0, inProgress: 0, pending: 0, totalQty: 0 }
+        // STRICT ISOLATION: Non-SuperAdmins MUST be filtered by their branch
+        if (!isSuper) {
+            if (userBranchId && userBranchId !== 'All') {
+                dbQuery = dbQuery.eq('Branch_ID', userBranchId)
+            } else {
+                return { total: 0, delivered: 0, inProgress: 0, pending: 0, totalQty: 0 }
+            }
+        } else if (branchId && branchId !== 'All') {
+            // SuperAdmin can filter by specific branch
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
         }
 
         if (customerNames && customerNames.length > 0) {
@@ -338,11 +342,13 @@ export async function getJobStatsSummary(query = '', startDate = '', endDate = '
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        // Inherit user branch restriction
-        if (branchId && branchId !== 'All') {
-            dbQuery = dbQuery.eq('Branch_ID', branchId)
-        } else if (!isSuper && !isRegularAdmin && !branchId) {
-            return { success: 0, failed: 0, cancelled: 0, total: 0 }
+        // STRICT ISOLATION
+        if (!isSuper) {
+            if (branchId && branchId !== 'All') {
+                dbQuery = dbQuery.eq('Branch_ID', branchId)
+            } else {
+                return { success: 0, failed: 0, cancelled: 0, total: 0 }
+            }
         }
     }
 
@@ -386,13 +392,15 @@ export async function getTodayFinancials(branchId?: string) {
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : (branchId || 'All')
-        if (isSuper && effectiveBranchId === 'All') {
-            // No filter
-        } else if (effectiveBranchId && effectiveBranchId !== 'All') {
-            dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
-        } else if (!isSuper && !isRegularAdmin && !userBranchId) {
-            return { revenue: 0 }
+        // STRICT ISOLATION
+        if (!isSuper) {
+            if (userBranchId && userBranchId !== 'All') {
+                dbQuery = dbQuery.eq('Branch_ID', userBranchId)
+            } else {
+                return { revenue: 0 }
+            }
+        } else if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
         }
     }
 
@@ -778,12 +786,14 @@ export async function getAllDrivers() {
             .select('Driver_ID, Driver_Name, Vehicle_Plate')
             .not('Driver_ID', 'is', null)
         
-        if (isSuper && (!branchId || branchId === 'All')) {
-            // No filter
+        if (!isSuper) {
+            if (branchId && branchId !== 'All') {
+                query = query.eq('Branch_ID', branchId)
+            } else {
+                return []
+            }
         } else if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
-        } else if (!isSuper && !isRegularAdmin && !branchId) {
-            return []
         }
 
         const { data } = await query
@@ -817,12 +827,14 @@ export async function getAllVehicles() {
             .select('Vehicle_Plate, Driver_Name')
             .not('Vehicle_Plate', 'is', null)
 
-        if (isSuper && (!branchId || branchId === 'All')) {
-            // No filter
+        if (!isSuper) {
+            if (branchId && branchId !== 'All') {
+                query = query.eq('Branch_ID', branchId)
+            } else {
+                return []
+            }
         } else if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
-        } else if (!isSuper && !isRegularAdmin && !branchId) {
-            return []
         }
 
         const { data } = await query
@@ -872,12 +884,15 @@ export async function getJobsForBilling(
         
         if (customerId) {
             dbQuery = dbQuery.eq('Customer_ID', customerId)
-        } else if (isSuper && (!branchId || branchId === 'All')) {
-            // No filter
+        } else if (!isSuper) {
+            // STRICT ISOLATION
+            if (branchId && branchId !== 'All') {
+                dbQuery = dbQuery.eq('Branch_ID', branchId)
+            } else {
+                return []
+            }
         } else if (branchId && branchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', branchId)
-        } else if (!isSuper && !isRegularAdmin && !branchId) {
-            return []
         }
 
         let query = dbQuery

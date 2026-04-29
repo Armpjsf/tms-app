@@ -38,13 +38,17 @@ export async function getAllDriversFromTable(): Promise<Driver[]> {
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
     let dbQuery = supabase.from('Master_Drivers').select('*')
-    
-    if (branchId && branchId !== 'All' && !isSuper) {
+    // Branch Filtering
+    if (!isSuper) {
+        // STRICT ISOLATION: Non-SuperAdmins MUST be filtered by their branch
+        if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
+        } else {
+            return []
+        }
+    } else if (branchId && branchId !== 'All') {
+        // SuperAdmin can filter by specific branch
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (isSuper && branchId && branchId !== 'All') {
-        dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isSuper && !isAdminUser && !branchId) {
-        return []
     }
 
     const { data, error } = await dbQuery

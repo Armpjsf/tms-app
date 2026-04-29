@@ -105,6 +105,7 @@ const MODULE_GROUPS = [
       { key: "settings.items.accounting", label: "เชื่อมต่อระบบบัญชี", icon: Database },
       { key: "settings.items.expense_types", label: "จัดการประเภทค่าใช้จ่าย", icon: Receipt },
       { key: "settings.items.vault", label: "ระบบสำรองข้อมูล & Security", icon: Shield },
+      { key: "settings.items.change_password", label: "เปลี่ยนรหัสผ่าน", icon: Shield },
     ]
   }
 ]

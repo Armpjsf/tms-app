@@ -39,6 +39,7 @@ const settingsSections = [
     items: [
       { labelKey: "settings.items.identity", descKey: "settings.items.identity_desc", path: "/settings/profile", permKey: "settings.items.identity" },
       { labelKey: "settings.items.security", descKey: "settings.items.security_desc", path: "/settings/security", permKey: "settings.items.security" },
+      { labelKey: "settings.items.change_password", descKey: "settings.items.change_password_desc", path: "/settings/security", permKey: "settings.items.change_password" },
     ]
   },
   {

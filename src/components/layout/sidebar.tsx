@@ -30,6 +30,7 @@ import {
   Settings,
   ShieldCheck,
   ShieldAlert,
+  Key,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
@@ -106,6 +107,7 @@ const navigation: NavGroup[] = [
     items: [
       { titleKey: "navigation.settings", href: "/settings", icon: <Settings size={20} /> },
       { titleKey: "navigation.fleet_standards", href: "/settings/fleet-standards", icon: <ShieldCheck size={20} /> },
+      { titleKey: "settings.items.change_password", href: "/settings/security", icon: <Key size={20} /> },
     ],
   },
 ]
