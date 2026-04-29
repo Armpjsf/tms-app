@@ -158,21 +158,17 @@ export async function loginDriver(formData: FormData) {
       device_info: headerList.get('user-agent') || 'Mobile Driver'
     })
     // No error return: allow driver to proceed
-  } else if (ipRecord.status === 'Pending') {
-    // If they were somehow set to pending, allow them anyway (Safe for mobile drivers)
-    // or you can choose to still block if manual intervention was intended.
-    // Let's keep it lenient for drivers unless 'Blocked'
-  }
+  } else {
+    if (ipRecord.status === 'Blocked') {
+      return { error: 'IP_BLOCKED' }
+    }
 
-  if (ipRecord.status === 'Blocked') {
-    return { error: 'IP_BLOCKED' }
+    // Update last used time
+    await supabase
+      .from('User_Approved_IPs')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('id', ipRecord.id)
   }
-
-  // Update last used time
-  await supabase
-    .from('User_Approved_IPs')
-    .update({ last_used_at: new Date().toISOString() })
-    .eq('id', ipRecord.id)
 
   // 4. Create Session (Cookie)
   const userPermissions = (userData as Record<string, any>)?.Permissions || (userData as Record<string, any>)?.permissions || { show_income: true }
