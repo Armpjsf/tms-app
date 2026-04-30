@@ -79,18 +79,15 @@ export default async function BillingPrintPage(props: Props) {
         discountPercent = (discountAmount / totalPreTax) * 100
     }
 
-    const totalAfterDiscount = totalPreTax - discountAmount
-    const vatAmount = Number(note.VAT_Amount || 0)
-    const totalWithVat = totalAfterDiscount + vatAmount
+    const subTotal = totalPreTax - discountAmount;
+    const vatAmount = Number(note.VAT_Amount || 0);
+    const totalWithVat = subTotal + vatAmount;
 
-    const whtRate = Number(note.WHT_Rate || 0)
+    const whtRate = Number(note.WHT_Rate || 0);
     const wht = (note.WHT_Amount && note.WHT_Amount > 0) 
         ? Number(note.WHT_Amount) 
-        : (totalAfterDiscount * whtRate / 100)
+        : (subTotal * whtRate / 100);
         
-    // Recalculate total to match the aggregated items fix (ensures 17 baht fix is reflected)
-    const subTotal = totalPreTax - discountAmount;
-    const totalWithVat = subTotal + vatAmount;
     const netTotal = totalWithVat - wht;
 
     const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
