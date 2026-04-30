@@ -102,12 +102,16 @@ export default async function PublicInvoicePage(props: Props) {
     let minDate: Date | null = null
     let maxDate: Date | null = null
 
+    // Helper to format date range in Thai/BE
     function formatBEDateRange(start: Date, end: Date) {
         const sD = start.getDate()
         const eD = end.getDate()
         const sM = start.getMonth() + 1
         const sY = start.getFullYear() + 543
-        if (sD === eD && start.getMonth() === end.getMonth()) return `${sD}/${sM}/${sY}`
+        
+        if (sD === eD && start.getMonth() === end.getMonth()) {
+            return `${sD}/${sM}/${sY}`
+        }
         return `${sD}-${eD}/${sM}/${sY}`
     }
 
@@ -190,24 +194,26 @@ export default async function PublicInvoicePage(props: Props) {
             }
         }
     })
-
+    
     const freightItem = aggregatedItems.get('FREIGHT')
     if (freightItem && minDate && maxDate) {
         freightItem.subDescription = `--ค่าขนส่งสินค้า วันที่ ${formatBEDateRange(minDate, maxDate)}`
     }
 
+    const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
+    const issueDate = note.Billing_Date ? new Date(note.Billing_Date) : new Date();
+    const dueDate = !isNaN(issueDate.getTime()) 
+        ? new Date(issueDate.getTime() + (note.Credit_Days || 15) * 24 * 60 * 60 * 1000)
+        : new Date();
+
     const displayItems = Array.from(aggregatedItems.values()).map(item => ({
         ...item,
-        unitPrice: item.totalBeforeTax / item.qty 
+        unitPrice: item.qty > 0 ? (item.totalBeforeTax / item.qty) : 0
     }))
     
     const totalPreTax = displayItems.reduce((acc, curr) => acc + curr.totalBeforeTax, 0)
     const wht = note.WHT_Amount ?? ((totalPreTax - (note.Discount_Amount || 0)) * (note.WHT_Rate || 1) / 100)
     const netTotal = (note.Total_Amount || (totalPreTax - (note.Discount_Amount || 0) + (note.VAT_Amount || 0))) - wht
-
-    const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
-    const issueDate = new Date(note.Billing_Date);
-    const dueDate = new Date(issueDate.getTime() + (note.Credit_Days || 15) * 24 * 60 * 60 * 1000);
 
     return (
         <div className="bg-slate-100 min-h-screen py-12 px-4 font-sans print:p-0 print:bg-white">
