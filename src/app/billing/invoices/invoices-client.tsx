@@ -465,9 +465,14 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                                                         return Number(displayTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })
                                                     })()}
                                                 </span>
-                                                {job.Loaded_Qty && job.Price_Per_Unit && (
+                                                {job.Loaded_Qty && (
                                                     <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-0.5 opacity-50">
-                                                        {job.Loaded_Qty} {language === 'th' ? 'ชิ้น' : 'pcs'} x ฿{job.Price_Per_Unit.toLocaleString()}
+                                                        {job.Loaded_Qty} {language === 'th' ? 'ชิ้น' : 'pcs'} x ฿{(() => {
+                                                            const total = job.Price_Cust_Total || 0;
+                                                            const qty = job.Loaded_Qty || 1;
+                                                            const unit = total > 0 ? (total / qty) : (job.Price_Per_Unit || 0);
+                                                            return unit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                                        })()}
                                                     </span>
                                                 )}
                                             </div>
