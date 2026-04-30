@@ -117,17 +117,21 @@ export function aggregateBillingJobs(jobs: any[], lang: 'th' | 'en' = 'th', cust
             basePrice = qty * unitPrice;
         }
 
-        // Group by freight and unit price to separate different rates (e.g. 16 vs 17 baht)
-        const freightKey = `FREIGHT-${unitPrice.toFixed(2)}`;
+        // Group all freight costs into a single consolidated row (Simplified view)
+        const freightKey = `FREIGHT-CONSOLIDATED`;
         const existingFreight = aggregatedItems.get(freightKey);
         if (existingFreight) {
-            existingFreight.qty += qty; // Accumulate actual quantity (pieces)
+            existingFreight.qty += 1; // Increment trip count
             existingFreight.totalBeforeTax += basePrice;
+            // Update description with new count
+            existingFreight.description = lang === 'th' 
+                ? `ค่าขนส่งสินค้า (${job.Customer_ID || 'P00001'}) (${existingFreight.qty} เที่ยว)` 
+                : `Freight Cost (${job.Customer_ID || 'P00001'}) (${existingFreight.qty} trips)`;
         } else {
             aggregatedItems.set(freightKey, {
-                description: lang === 'th' ? `ค่าขนส่งสินค้า (${job.Customer_ID || 'P00001'})` : `Freight Cost (${job.Customer_ID || 'P00001'})`,
-                qty: qty,
-                unitPrice: unitPrice,
+                description: lang === 'th' ? `ค่าขนส่งสินค้า (${job.Customer_ID || 'P00001'}) (1 เที่ยว)` : `Freight Cost (${job.Customer_ID || 'P00001'}) (1 trip)`,
+                qty: 1, // Start trip count
+                unitPrice: basePrice,
                 totalBeforeTax: basePrice,
                 isExtra: false
             });
@@ -185,17 +189,18 @@ export function aggregateBillingJobs(jobs: any[], lang: 'th' | 'en' = 'th', cust
     });
 
     // Post-processing: Add sub-description to Freight
-    const freightItem = aggregatedItems.get('FREIGHT');
+    const freightItem = aggregatedItems.get('FREIGHT-CONSOLIDATED');
     if (freightItem && minDate && maxDate) {
         const dateRange = formatBEDateRange(minDate, maxDate);
         freightItem.subDescription = lang === 'th' 
             ? `--ค่าขนส่งสินค้า วันที่ ${dateRange}`
             : `--Freight during ${dateRange}`;
+        
+        // For consolidated view, we show qty as 1.00 and price as the full amount
+        freightItem.unitPrice = freightItem.totalBeforeTax;
+        freightItem.qty = 1;
     }
 
-    // Convert Map to Array and calculate unit prices
-    return Array.from(aggregatedItems.values()).map(item => ({
-        ...item,
-        unitPrice: item.qty > 0 ? (item.totalBeforeTax / item.qty) : 0
-    }));
+    // Convert Map to Array
+    return Array.from(aggregatedItems.values());
 }

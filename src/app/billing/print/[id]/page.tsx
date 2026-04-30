@@ -268,18 +268,16 @@ export default async function BillingPrintPage(props: Props) {
                         </div>
 
                         {/* Net Total after WHT if applicable */}
-                        {(wht > 0) && (
-                            <div className="mt-3 space-y-1">
-                                <div className="flex justify-between text-[11px] px-2 text-slate-500 italic">
-                                    <span>หัก ณ ที่จ่าย ({note.WHT_Rate}%)</span>
-                                    <span>-{wht.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                </div>
-                                <div className="flex justify-between text-[12px] px-2 font-bold text-blue-900 border-t border-blue-100 pt-1">
-                                    <span>ยอดชำระสุทธิ</span>
-                                    <span>{netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                </div>
+                        <div className="mt-3 space-y-1">
+                            <div className="flex justify-between text-[11px] px-2 text-slate-500 italic">
+                                <span>หัก ณ ที่จ่าย ({note.WHT_Rate || 0}%)</span>
+                                <span>-{wht.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
-                        )}
+                            <div className="flex justify-between text-[13px] px-2 font-bold text-blue-900 border-t border-blue-100 pt-1 mt-1">
+                                <span>ยอดชำระสุทธิ</span>
+                                <span className="text-[15px]">{netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

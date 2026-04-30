@@ -208,7 +208,7 @@ export default async function PublicInvoicePage({ params, searchParams }: PagePr
                                     <p className="text-3xl font-black italic tracking-tighter uppercase leading-none">Net Total</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-5xl font-black tracking-tighter text-blue-400 italic leading-none mb-1">
+                                    <p className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter text-blue-400 italic leading-none mb-1">
                                         {netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </p>
                                     <p className="text-[10px] font-bold text-slate-500">BAHT / THB</p>
