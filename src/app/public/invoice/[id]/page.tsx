@@ -91,16 +91,28 @@ function aggregateBillingJobs(jobs: any[], lang: 'th' | 'en' = 'th'): Aggregated
     };
 
     jobs.forEach((job) => {
+        let unitPrice = Number(job.Price_Per_Unit || 0);
+        
+        // Special adjustment for dates 21-23 April as requested
+        if (job.Plan_Date && note.Customer_Name?.includes('สยามรุ่งเรือง')) {
+            const d = new Date(job.Plan_Date);
+            const day = d.getDate();
+            const month = d.getMonth();
+            if (month === 3 && day >= 21 && day <= 23) {
+                unitPrice = 17;
+            }
+        }
+
         if (job.Plan_Date) {
             const jobDate = new Date(job.Plan_Date);
             if (!minDate || jobDate < minDate) minDate = jobDate;
             if (!maxDate || jobDate > maxDate) maxDate = jobDate;
         }
 
-        const unitPrice = Number(job.Price_Per_Unit || 0);
         let basePrice = Number(job.Price_Cust_Total || 0);
         
-        if (basePrice <= 0 && unitPrice > 0) {
+        // Recalculate basePrice if Price_Cust_Total is zero or if we overridden unitPrice
+        if ((basePrice <= 0 || unitPrice === 17) && unitPrice > 0) {
             const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 1);
             basePrice = qty * unitPrice;
         }
@@ -227,8 +239,9 @@ export default async function PublicInvoicePage({ params, searchParams }: PagePr
     const discountAmt = note.Discount_Amount || 0;
     const vatAmt = note.VAT_Amount || 0;
     const whtAmt = note.WHT_Amount ?? ((totalPreTax - discountAmt) * (note.WHT_Rate || 1) / 100);
-    const grandTotal = (note.Total_Amount || (totalPreTax - discountAmt + vatAmt));
-    const netTotal = grandTotal - whtAmt;
+    // Recalculate total to ensure consistency with price hotfix
+    const calculatedGrandTotal = totalPreTax - discountAmt + (note.VAT_Amount ?? ((totalPreTax - discountAmt) * 0.07));
+    const netTotal = calculatedGrandTotal - whtAmt;
 
     return (
         <div className="bg-slate-100 min-h-screen py-12 px-4 font-sans print:p-0 print:bg-white">
