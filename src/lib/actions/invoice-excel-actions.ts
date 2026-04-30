@@ -61,10 +61,14 @@ export async function exportInvoiceExcel(invoiceId: string) {
         // 3. Clear Dynamic Range ONLY (Protect Main Headers)
         // Clear only I7-L7 (Dynamic headers)
         for (let c = 9; c <= 12; c++) { worksheet.getRow(7).getCell(c).value = null }
-        // Clear data rows 10-26 (Template default)
-        for (let r = 10; r <= 26; r++) {
+        // Clear data rows 10-50 (Template default and potential footer area)
+        for (let r = 10; r <= 50; r++) {
             const row = worksheet.getRow(r)
-            for (let c = 1; c <= 13; c++) { row.getCell(c).value = null }
+            for (let c = 1; c <= 13; c++) { 
+                const cell = row.getCell(c)
+                cell.value = null 
+                // Don't clear borders yet, we'll re-apply them for data rows
+            }
         }
 
         // 4. Handle Dynamic Rows for > 17 jobs
@@ -202,61 +206,95 @@ export async function exportInvoiceExcel(invoiceId: string) {
             })
         })
 
-        // 7. Summary Row (Dynamic Position)
-        const footerRowIndex = 10 + Math.max(templateRows, jobsCount)
-        const footerRow = worksheet.getRow(footerRowIndex)
-        for (let c = 8; c <= 13; c++) {
-            footerRow.getCell(c).value = summaryTotals[c]
-            footerRow.getCell(c).numFmt = '#,##0.00'
-            footerRow.getCell(c).border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            }
-        }
-
-        // 7.1 Discount Row (If applicable)
-        let lastRowIndex = footerRowIndex
-        if ((finalDoc.Discount_Amount || 0) > 0) {
-            lastRowIndex++
-            const discountRow = worksheet.getRow(lastRowIndex)
-            // Merge cells for label if needed, or just set value
-            discountRow.getCell(6).value = `ส่วนลด ${finalDoc.Discount_Percent || 0}% เมื่อใช้บริการครบ...`
-            discountRow.getCell(13).value = finalDoc.Discount_Amount
-            discountRow.getCell(13).numFmt = '#,##0.00'
-            
-            // Border and Style
-            discountRow.getCell(6).alignment = { horizontal: 'left' }
-            discountRow.getCell(13).font = { bold: true }
-            for (let c = 6; c <= 13; c++) {
-                discountRow.getCell(c).border = {
-                    top: { style: 'thin' },
-                    left: { style: 'thin' },
-                    bottom: { style: 'thin' },
-                    right: { style: 'thin' }
-                }
-            }
-        }
-
-        // 7.2 Grand Total Row
-        lastRowIndex++
-        const grandTotalRow = worksheet.getRow(lastRowIndex)
-        grandTotalRow.getCell(6).value = "จำนวนเงินทั้งสิ้น"
-        grandTotalRow.getCell(13).value = finalDoc.Grand_Total || finalDoc.Total_Amount || summaryTotals[13]
-        grandTotalRow.getCell(13).numFmt = '#,##0.00'
+        // 7. Summary and Totals (Dynamic Position)
+        // Find where the jobs ended
+        const jobsEndRow = 10 + jobs.length
         
-        // Border and Style
-        grandTotalRow.getCell(6).alignment = { horizontal: 'left' }
-        grandTotalRow.getCell(6).font = { bold: true }
-        grandTotalRow.getCell(13).font = { bold: true }
-        for (let c = 6; c <= 13; c++) {
-            grandTotalRow.getCell(c).border = {
+        // Add a small gap or start summary immediately after jobs
+        // We will place the summary starting from the next row
+        let currentRowIndex = jobsEndRow
+        
+        // Function to style a summary cell
+        const styleSummaryCell = (cell: ExcelJS.Cell, isLabel = false) => {
+            cell.border = {
                 top: { style: 'thin' },
                 left: { style: 'thin' },
                 bottom: { style: 'thin' },
                 right: { style: 'thin' }
             }
+            if (isLabel) {
+                cell.font = { bold: true }
+                cell.alignment = { horizontal: 'right' }
+            } else {
+                cell.numFmt = '#,##0.00'
+                cell.font = { bold: true }
+            }
+        }
+
+        // 7.1 Subtotal Row
+        const subtotalRow = worksheet.getRow(currentRowIndex)
+        subtotalRow.getCell(6).value = "รวมเป็นเงิน (Subtotal)"
+        subtotalRow.getCell(13).value = summaryTotals[13]
+        styleSummaryCell(subtotalRow.getCell(6), true)
+        styleSummaryCell(subtotalRow.getCell(13))
+        // Apply border to middle cells
+        for(let c=7; c<=12; c++) styleSummaryCell(subtotalRow.getCell(c))
+        
+        // 7.2 Discount Row
+        const discountAmount = Number(finalDoc.Discount_Amount || 0)
+        if (discountAmount > 0) {
+            currentRowIndex++
+            const discountRow = worksheet.getRow(currentRowIndex)
+            const dRate = finalDoc.Discount_Rate || finalDoc.Discount_Percent || 0
+            discountRow.getCell(6).value = `ส่วนลด (Discount) ${dRate > 0 ? dRate + '%' : ''}`
+            discountRow.getCell(13).value = discountAmount
+            styleSummaryCell(discountRow.getCell(6), true)
+            styleSummaryCell(discountRow.getCell(13))
+            discountRow.getCell(13).font = { bold: true, color: { argb: 'FFFF0000' } } // Red for discount
+            for(let c=7; c<=12; c++) styleSummaryCell(discountRow.getCell(c))
+        }
+
+        // 7.3 VAT Row
+        const vatAmount = Number(finalDoc.VAT_Amount || 0)
+        if (vatAmount > 0) {
+            currentRowIndex++
+            const vatRow = worksheet.getRow(currentRowIndex)
+            vatRow.getCell(6).value = `ภาษีมูลค่าเพิ่ม (VAT) ${finalDoc.VAT_Rate || 0}%`
+            vatRow.getCell(13).value = vatAmount
+            styleSummaryCell(vatRow.getCell(6), true)
+            styleSummaryCell(vatRow.getCell(13))
+            for(let c=7; c<=12; c++) styleSummaryCell(vatRow.getCell(c))
+        }
+
+        // 7.4 Grand Total Row
+        currentRowIndex++
+        const grandTotalRow = worksheet.getRow(currentRowIndex)
+        grandTotalRow.getCell(6).value = "จำนวนเงินรวมทั้งสิ้น (Grand Total)"
+        grandTotalRow.getCell(13).value = finalDoc.Grand_Total || (summaryTotals[13] - discountAmount + vatAmount)
+        styleSummaryCell(grandTotalRow.getCell(6), true)
+        styleSummaryCell(grandTotalRow.getCell(13))
+        grandTotalRow.getCell(6).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F0F0' } }
+        grandTotalRow.getCell(13).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F0F0' } }
+        for(let c=7; c<=12; c++) styleSummaryCell(grandTotalRow.getCell(c))
+
+        // 7.5 WHT Row (If applicable)
+        const whtAmount = Number(finalDoc.WHT_Amount || 0)
+        if (whtAmount > 0) {
+            currentRowIndex++
+            const whtRow = worksheet.getRow(currentRowIndex)
+            whtRow.getCell(6).value = `หักภาษี ณ ที่จ่าย (WHT) ${finalDoc.WHT_Rate || 0}%`
+            whtRow.getCell(13).value = whtAmount
+            styleSummaryCell(whtRow.getCell(6), true)
+            styleSummaryCell(whtRow.getCell(13))
+            for(let c=7; c<=12; c++) styleSummaryCell(whtRow.getCell(c))
+
+            currentRowIndex++
+            const netRow = worksheet.getRow(currentRowIndex)
+            netRow.getCell(6).value = "ยอดจ่ายสุทธิ (Net Total)"
+            netRow.getCell(13).value = finalDoc.Net_Total || (Number(grandTotalRow.getCell(13).value) - whtAmount)
+            styleSummaryCell(netRow.getCell(6), true)
+            styleSummaryCell(netRow.getCell(13))
+            for(let c=7; c<=12; c++) styleSummaryCell(netRow.getCell(c))
         }
 
         // 8. Static Headers
