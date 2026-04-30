@@ -36,7 +36,7 @@ export interface CostSummary {
   avgCostPerKm: number
 }
 
-export async function getCostPerTrip(startDate?: string, endDate?: string): Promise<{ trips: TripCost[], summary: CostSummary }> {
+export async function getCostPerTrip(startDate?: string, endDate?: string, customerNames?: string[]): Promise<{ trips: TripCost[], summary: CostSummary }> {
   const isUserAdmin = await isAdmin()
   const branchId = await getUserBranchId()
   const customerId = await getCustomerId()
@@ -61,8 +61,13 @@ export async function getCostPerTrip(startDate?: string, endDate?: string): Prom
 
   if (customerId) {
     query = query.eq('Customer_ID', customerId)
-  } else if (branchId && branchId !== 'All') {
-    query = query.eq('Branch_ID', branchId)
+  } else {
+    if (branchId && branchId !== 'All') {
+      query = query.eq('Branch_ID', branchId)
+    }
+    if (customerNames && customerNames.length > 0) {
+      query = query.in('Customer_Name', customerNames)
+    }
   }
 
   const { data, error } = await query

@@ -5,13 +5,31 @@ import { getCostPerTrip } from "./actions"
 import { DollarSign, TrendingUp, TrendingDown, Truck, MapPin, User, ArrowLeft, Calendar } from "lucide-react"
 import Link from "next/link"
 import React from "react"
+import { getAllCustomers } from "@/lib/supabase/customers"
+import { ProfitReportFilters } from "./profit-report-filters"
 
 function formatMoney(n: number) {
   return n.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
-export default async function CostPerTripPage() {
-  const { trips, summary } = await getCostPerTrip()
+interface PageProps {
+  searchParams: Promise<{ 
+    start?: string; 
+    end?: string;
+    customers?: string;
+  }>
+}
+
+export default async function CostPerTripPage(props: PageProps) {
+  const params = await props.searchParams
+  const start = params.start
+  const end = params.end
+  const customers = params.customers ? params.customers.split(',') : []
+
+  const [{ trips, summary }, { data: allCustomers }] = await Promise.all([
+    getCostPerTrip(start, end, customers),
+    getAllCustomers(1, 1000)
+  ])
 
   return (
     <DashboardLayout>
@@ -30,7 +48,7 @@ export default async function CostPerTripPage() {
               </div>
               Trip PERFORMANCE
             </h1>
-            <p className="text-violet-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-base font-bold">Cost Efficiency & Profitability Analysis (Last 30 Days)</p>
+            <p className="text-violet-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-base font-bold">Cost Efficiency & Profitability Analysis {start || end ? `(${start} to ${end})` : '(Last 30 Days)'}</p>
           </div>
 
           <div className="flex flex-wrap gap-4 relative z-10">
@@ -40,6 +58,13 @@ export default async function CostPerTripPage() {
             </div>
           </div>
         </div>
+
+        <ProfitReportFilters 
+            allCustomers={allCustomers} 
+            initialCustomers={customers} 
+            initialStart={start || ""} 
+            initialEnd={end || ""} 
+        />
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">

@@ -242,13 +242,26 @@ export default async function BillingPrintPage(props: Props) {
     })
     
     const totalPreTax = displayItems.reduce((acc, curr) => acc + curr.totalBeforeTax, 0)
+    
+    // Robust Discount Calculation
+    let discountAmount = Number(note.Discount_Amount || 0)
+    let discountPercent = Number(note.Discount_Percent || 0)
+    if (discountPercent > 0 && discountAmount === 0) {
+        discountAmount = (totalPreTax * discountPercent) / 100
+    } else if (discountAmount > 0 && discountPercent === 0) {
+        discountPercent = (discountAmount / totalPreTax) * 100
+    }
 
-    const whtRate = Number(note.WHT_Rate || 1)
+    const totalAfterDiscount = totalPreTax - discountAmount
+    const vatAmount = Number(note.VAT_Amount || 0)
+    const totalWithVat = totalAfterDiscount + vatAmount
+
+    const whtRate = Number(note.WHT_Rate || 0)
     const wht = (note.WHT_Amount && note.WHT_Amount > 0) 
         ? Number(note.WHT_Amount) 
-        : ((totalPreTax - (note.Discount_Amount || 0)) * whtRate / 100)
+        : (totalAfterDiscount * whtRate / 100)
         
-    const netTotal = (note.Total_Amount || (totalPreTax - (note.Discount_Amount || 0) + (note.VAT_Amount || 0))) - wht
+    const netTotal = totalWithVat - wht
 
     const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
     const issueDate = note.Billing_Date ? new Date(note.Billing_Date) : new Date();
@@ -352,7 +365,7 @@ export default async function BillingPrintPage(props: Props) {
                                 <td className="py-1.5 px-2 text-center align-top">{item.qty.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                 <td className="py-1.5 px-2 text-right align-top">{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                 <td className="py-1.5 px-2 text-right align-top">
-                                    {(note.Discount_Percent || 0) > 0 ? `${note.Discount_Percent}%` : '0.00'}
+                                    {discountPercent > 0 ? `${discountPercent}%` : '0.00'}
                                 </td>
                                 <td className="py-1.5 px-2 text-center align-top">ไม่มี</td>
                                 <td className="py-1.5 px-2 text-right align-top">{item.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
@@ -399,12 +412,12 @@ export default async function BillingPrintPage(props: Props) {
                                 <div className="p-2 text-right font-bold">{totalPreTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                             </div>
                             
-                            {(note.Discount_Amount || 0) > 0 && (
+                            {discountAmount > 0 && (
                                 <div className="grid grid-cols-[1fr_110px] border-b border-slate-800">
                                     <div className="p-2 font-bold border-r border-slate-800 text-[11px] leading-tight flex items-center">
-                                        ส่วนลด {note.Discount_Percent || 0}% {(note.Discount_Percent || 0) >= 3 ? 'เมื่อใช้บริการครบ...' : ''}
+                                        ส่วนลด {discountPercent.toFixed(discountPercent % 1 === 0 ? 0 : 2)}%
                                     </div>
-                                    <div className="p-2 text-right font-bold text-red-600">-{ (note.Discount_Amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 }) }</div>
+                                    <div className="p-2 text-right font-bold text-red-600">-{ discountAmount.toLocaleString(undefined, { minimumFractionDigits: 2 }) }</div>
                                 </div>
                             )}
 
@@ -417,12 +430,12 @@ export default async function BillingPrintPage(props: Props) {
 
                             <div className="grid grid-cols-[1fr_110px] bg-slate-900 text-white">
                                 <div className="p-2.5 font-bold border-r border-slate-700 text-[13px]">จำนวนเงินทั้งสิ้น</div>
-                                <div className="p-2.5 text-right font-bold text-[15px]">{(note.Total_Amount || (totalPreTax - (note.Discount_Amount || 0) + (note.VAT_Amount || 0))).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                <div className="p-2.5 text-right font-bold text-[15px]">{totalWithVat.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                             </div>
                         </div>
                         
                         <div className="mt-2 text-center text-[10px] font-bold text-slate-700 italic px-2 leading-tight">
-                            ({ArabicNumberToText(note.Total_Amount || (totalPreTax - (note.Discount_Amount || 0) + (note.VAT_Amount || 0)))})
+                            ({ArabicNumberToText(totalWithVat)})
                         </div>
 
                         {/* Net Total after WHT if applicable */}
@@ -455,11 +468,11 @@ export default async function BillingPrintPage(props: Props) {
                     <div className="w-6 flex justify-center mt-0.5"><PenTool size={16} className="text-slate-800" /></div>
                     <div className="font-bold w-16">รับรอง</div>
                     <div className="flex-1 flex gap-4">
-                        <div className="w-24 shrink-0 flex flex-col items-center">
+                        <div className="w-24 h-24 shrink-0 flex flex-col items-center">
                             <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเปิดเอกสาร</div>
-                            <div className="w-20 h-20 bg-white flex items-center justify-center p-1 border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                            <div className="w-24 h-24 bg-white flex items-center justify-center p-1.5 border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden group/qr hover:border-blue-400 transition-colors">
                                 <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${baseUrl}/public/invoice/${id}?lang=${lang}&mode=print`)}`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&ecc=M&qzone=1&data=${encodeURIComponent(`${baseUrl}/public/invoice/${id}?lang=${lang}&mode=print`)}`}
                                     alt="Billing QR Code"
                                     className="w-full h-full object-contain"
                                 />

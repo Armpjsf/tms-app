@@ -263,7 +263,29 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
         let origin = (job.Origin_Location || '').trim()
         let dest = (job.Dest_Location || '').trim()
         
-        // Fallback to Route_Name if locations are missing
+        // Advanced fallback for JSON structured data
+        if (!origin && job.original_origins_json) {
+            try {
+                const origins = typeof job.original_origins_json === 'string' 
+                    ? JSON.parse(job.original_origins_json) 
+                    : job.original_origins_json
+                if (Array.isArray(origins) && origins.length > 0) {
+                    origin = origins[0].name || origins[0].address || origins[0].Location_Name || ''
+                }
+            } catch {}
+        }
+        if (!dest && job.original_destinations_json) {
+            try {
+                const destinations = typeof job.original_destinations_json === 'string'
+                    ? JSON.parse(job.original_destinations_json)
+                    : job.original_destinations_json
+                if (Array.isArray(destinations) && destinations.length > 0) {
+                    dest = destinations[destinations.length - 1].name || destinations[destinations.length - 1].address || destinations[destinations.length - 1].Location_Name || ''
+                }
+            } catch {}
+        }
+
+        // Final fallback to Route_Name
         if ((!origin || !dest) && job.Route_Name) {
             const parts = job.Route_Name.split(/[-→/]/)
             if (parts.length >= 2) {

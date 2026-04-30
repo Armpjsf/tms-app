@@ -218,7 +218,7 @@ export function DashboardClient({
                                     )}
                                 >
                                     <Users size={14} />
-                                    {selectedCustomers.length > 0 ? `${selectedCustomers.length} Focus` : "Customer Portfolio"}
+                                    {selectedCustomers.length > 0 ? `${selectedCustomers.length} เลือกแล้ว` : "เลือกตามรายลูกค้า"}
                                 </button>
 
                                 {isCustomerMenuOpen && (
@@ -226,7 +226,7 @@ export function DashboardClient({
                                         <div className="fixed inset-0 z-40" onClick={() => setIsCustomerMenuOpen(false)} />
                                         <div className="absolute right-0 mt-2 w-72 bg-background/95 backdrop-blur-2xl border border-border/10 rounded-2xl shadow-2xl z-50 p-5 animate-in fade-in zoom-in duration-200">
                                             <div className="flex items-center justify-between mb-4">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Target Accounts</p>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">รายชื่อลูกค้า</p>
                                                 {pinnedCustomers.length > 0 && (
                                                     <button onClick={applyPinned} className="text-[9px] font-black text-primary hover:underline uppercase">Use Pinned</button>
                                                 )}
