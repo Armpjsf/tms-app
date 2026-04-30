@@ -2,7 +2,7 @@ import { getPublicBillingNoteById } from "@/lib/supabase/billing"
 import { notFound } from "next/navigation"
 import { 
     Phone, Mail, User, FileText, CreditCard, MessageSquare, 
-    PenTool, CalendarDays, ShieldCheck, Printer, Download
+    ShieldCheck
 } from "lucide-react"
 import dynamic from 'next/dynamic'
 
@@ -60,8 +60,10 @@ export default async function PublicInvoicePage(props: Props) {
         : new Date();
 
     const totalPreTax = displayItems.reduce((acc, curr) => acc + curr.totalBeforeTax, 0)
-    const wht = note.WHT_Amount ?? ((totalPreTax - (note.Discount_Amount || 0)) * (note.WHT_Rate || 1) / 100)
-    const netTotal = (note.Total_Amount || (totalPreTax - (note.Discount_Amount || 0) + (note.VAT_Amount || 0))) - wht
+    const discountAmount = note.Discount_Amount || 0
+    const vatAmount = note.VAT_Amount || 0
+    const wht = note.WHT_Amount ?? ((totalPreTax - discountAmount) * (note.WHT_Rate || 1) / 100)
+    const netTotal = (note.Total_Amount || (totalPreTax - discountAmount + vatAmount)) - wht
 
     return (
         <div className="bg-slate-100 min-h-screen py-12 px-4 font-sans print:p-0 print:bg-white">
@@ -198,7 +200,7 @@ export default async function PublicInvoicePage(props: Props) {
                         </div>
                         <div className="flex justify-between text-slate-400 italic text-[11px] tracking-widest">
                             <span>ส่วนลด (Discount)</span>
-                            <span>-{(note.Discount_Amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span>-{(discountAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div className="flex justify-between text-rose-500 font-bold uppercase text-[11px] tracking-widest pt-2 border-t border-slate-100">
                             <span>หัก ณ ที่จ่าย (WHT {note.WHT_Rate || 1}%)</span>
@@ -244,7 +246,7 @@ export default async function PublicInvoicePage(props: Props) {
                 @page { size: A4; margin: 0; }
                 body { background: white !important; }
                 .print-hidden { display: none !important; }
-                #printable-content { padding: 0 !important; shadow: none !important; border: none !important; width: 100% !important; max-width: none !important; }
+                #printable-content { padding: 0 !important; border: none !important; width: 100% !important; max-width: none !important; }
             ` }} />
         </div>
     )
