@@ -399,6 +399,5 @@ export default async function PublicInvoicePage(props: Props) {
                 #printable-content { p: 0 !important; shadow: none !important; border: none !important; width: 100% !important; max-width: none !important; }
             ` }} />
         </div>
-        </div>
     )
 }
