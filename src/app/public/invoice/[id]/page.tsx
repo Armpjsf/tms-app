@@ -4,7 +4,11 @@ import {
     Phone, Mail, User, FileText, CreditCard, MessageSquare, 
     PenTool, CalendarDays, ShieldCheck, Printer, Download
 } from "lucide-react"
-import { AutoPrint } from "@/components/utils/auto-print"
+import dynamic from 'next/dynamic'
+
+const AutoPrint = dynamic(() => import("@/components/utils/auto-print").then(mod => mod.AutoPrint), { 
+    ssr: false 
+})
 import { PrintButton } from "@/components/billing/print-button"
 
 import { 

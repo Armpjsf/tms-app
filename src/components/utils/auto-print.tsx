@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useEffect } from "react"
+import * as React from "react"
 
 /**
  * AutoPrint Component
@@ -9,7 +9,7 @@ import { useEffect } from "react"
  * Used in invoice and billing pages for automated workflows.
  */
 export function AutoPrint() {
-  useEffect(() => {
+  React.useEffect(() => {
     // Small delay to ensure content is fully rendered and hydrated
     const timer = setTimeout(() => {
       try {
