@@ -136,7 +136,7 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* 2. Info Section */}
-                <div className="flex flex-col md:flex-row justify-between gap-6 mb-3 text-slate-800 text-[12px]">
+                <div className="flex flex-row justify-between gap-4 mb-3 text-slate-800 text-[12px]">
                     <div className="flex-1 space-y-4">
                         <div className="grid grid-cols-[80px_1fr] gap-x-2 gap-y-0.5">
                             <div className="font-bold">ผู้ขาย :</div>
@@ -157,7 +157,7 @@ export default async function BillingPrintPage(props: Props) {
                         </div>
                     </div>
                     
-                    <div className="w-full md:w-[220px] shrink-0 text-right">
+                    <div className="w-[220px] shrink-0 text-right">
                         <div className="text-[11px] space-y-0.5">
                             <div className="font-bold text-slate-400 uppercase tracking-widest text-[9px] mb-1">ติดต่อเรา</div>
                             <div className="flex items-center justify-end gap-2"><span className="text-slate-600">{contactName}</span> <User size={10} className="text-slate-400"/></div>
@@ -203,7 +203,7 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* 4. Summary Section & Payment */}
-                <div className="mt-4 flex flex-col md:flex-row justify-between gap-8">
+                <div className="mt-4 flex flex-row justify-between gap-8">
                     {/* Left side: Notes & Text Amount */}
                     <div className="flex-1">
 
@@ -224,7 +224,7 @@ export default async function BillingPrintPage(props: Props) {
                     </div>
 
                     {/* Right side: Calculations Table */}
-                    <div className="w-full md:w-[320px] shrink-0">
+                    <div className="w-[320px] shrink-0">
                         <div className="border-2 border-slate-800 rounded-sm overflow-hidden">
                             <div className="grid grid-cols-[1fr_110px] border-b border-slate-800">
                                 <div className="p-2 font-bold border-r border-slate-800 bg-slate-50">มูลค่ารวม (Total)</div>
@@ -272,12 +272,12 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* 6. Notes Section */}
-                <div className="border-t border-slate-200 pt-4 mt-2 flex flex-col sm:flex-row gap-4 text-[11px]">
+                <div className="border-t border-slate-200 pt-4 mt-2 flex flex-row gap-4 text-[11px]">
                     <div className="flex items-center gap-2">
                         <div className="w-6 flex justify-center"><MessageSquare size={16} className="text-slate-800" /></div>
                         <div className="font-bold w-16">หมายเหตุ</div>
                     </div>
-                    <div className="text-slate-700 whitespace-pre-wrap flex-1 leading-relaxed italic opacity-80 pl-8 sm:pl-0">
+                    <div className="text-slate-700 whitespace-pre-wrap flex-1 leading-relaxed italic opacity-80">
                         {note.Remarks || company?.invoice_notes || '"DD TRANSPORT ขอแจ้งการปรับเปลี่ยนสัญลักษณ์องค์กรใหม่ (LOGO) เพื่อเพิ่มความทันสมัยและสอดคล้องกับวิสัยทัศน์การเติบโตของบริษัทในอนาคต โดยมีผลตั้งแต่วันที่ 1 เมษายน 2567 เป็นต้นไป"'}
                     </div>
                 </div>
@@ -288,7 +288,7 @@ export default async function BillingPrintPage(props: Props) {
                         <div className="w-6 flex justify-center"><PenTool size={16} className="text-slate-800" /></div>
                         <div className="font-bold w-16">รับรอง</div>
                     </div>
-                    <div className="flex-1 flex flex-col sm:flex-row gap-8">
+                    <div className="flex-1 flex flex-row gap-8">
                         <div className="w-full sm:w-32 shrink-0 flex flex-col items-center mx-auto sm:mx-0">
                             <div className="text-[10px] text-slate-500 mb-2 text-center font-bold uppercase tracking-widest">สแกนเพื่อตรวจสอบ</div>
                             <div className="w-24 h-24 bg-white flex items-center justify-center p-2 border-4 border-slate-900 rounded-2xl shadow-xl overflow-hidden group/qr hover:scale-105 transition-transform duration-500">
@@ -299,7 +299,7 @@ export default async function BillingPrintPage(props: Props) {
                                 />
                             </div>
                         </div>
-                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-5 gap-4 text-center text-[10px] items-end pb-1">
+                        <div className="flex-1 grid grid-cols-5 gap-4 text-center text-[10px] items-end pb-1">
                             <div>
                                 <div className="h-10 border-b border-dashed border-slate-400 mb-1 mx-1"></div>
                                 <div className="font-bold mb-0.5 whitespace-nowrap">ผู้ออกเอกสาร (ผู้ขาย)</div>
