@@ -259,22 +259,37 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
     if (selectedItems.length === 0) return
     const jobsToExport = initialJobs.filter(j => selectedItems.includes(j.Job_ID))
     
-    const dataToExport = jobsToExport.map(job => ({
-        'Job ID': job.Job_ID,
-        'วันที่': job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-',
-        'คนขับ': job.Driver_Name || 
-                drivers.find(d => d.Driver_ID === job.Driver_ID)?.Driver_Name || 
-                drivers.find(d => d.Vehicle_Plate === job.Vehicle_Plate)?.Driver_Name || 
-                '-',
-        'ทะเบียนรถ': job.Vehicle_Plate || '-',
-        'ต้นทาง': job.Origin_Location || '-',
-        'ปลายทาง': job.Dest_Location || '-',
-        'ลูกค้า': job.Customer_Name || '-',
-        'ต้นทุนคนขับ (Base)': job.Cost_Driver_Total || 0,
-        'ค่าใช้จ่ายเพิ่มเติม': getJobTotal(job) - (job.Cost_Driver_Total || 0),
-        'รวมทั้งหมด': getJobTotal(job),
-        'สถานะ': job.Job_Status
-    }))
+    const dataToExport = jobsToExport.map(job => {
+        let origin = (job.Origin_Location || '').trim()
+        let dest = (job.Dest_Location || '').trim()
+        
+        // Fallback to Route_Name if locations are missing
+        if ((!origin || !dest) && job.Route_Name) {
+            const parts = job.Route_Name.split(/[-→/]/)
+            if (parts.length >= 2) {
+                if (!origin) origin = parts[0].trim()
+                if (!dest) dest = parts.slice(1).join(' - ').trim()
+            }
+        }
+
+        return {
+            'Job ID': job.Job_ID,
+            'วันที่': job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-',
+            'คนขับ': job.Driver_Name || 
+                    drivers.find(d => d.Driver_ID === job.Driver_ID)?.Driver_Name || 
+                    drivers.find(d => d.Vehicle_Plate === job.Vehicle_Plate)?.Driver_Name || 
+                    '-',
+            'ทะเบียนรถ': job.Vehicle_Plate || '-',
+            'ต้นทาง': origin || '-',
+            'ปลายทาง': dest || job.Route_Name || '-',
+            'ลูกค้า': job.Customer_Name || '-',
+            'จำนวนชิ้น': job.Loaded_Qty || 0,
+            'ต้นทุนคนขับ (Base)': job.Cost_Driver_Total || 0,
+            'ค่าใช้จ่ายเพิ่มเติม': getJobTotal(job) - (job.Cost_Driver_Total || 0),
+            'รวมทั้งหมด': getJobTotal(job),
+            'สถานะ': job.Job_Status
+        }
+    })
 
     exportToCSV(dataToExport, `Driver_Payment_Selection`)
   }
