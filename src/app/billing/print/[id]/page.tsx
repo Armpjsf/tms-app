@@ -228,10 +228,18 @@ export default async function BillingPrintPage(props: Props) {
     }
 
     // Convert Map to list for display
-    const displayItems = Array.from(aggregatedItems.values()).map(item => ({
-        ...item,
-        unitPrice: item.totalBeforeTax / item.qty 
-    }))
+    const displayItems = Array.from(aggregatedItems.values()).map(item => {
+        const actualQty = item.qty
+        return {
+            ...item,
+            // Add quantity count to description if more than 1
+            description: actualQty > 1 
+                ? `${item.description} (${actualQty.toLocaleString()} ${item.isExtra ? 'ครั้ง' : 'เที่ยว'})` 
+                : item.description,
+            qty: 1,
+            unitPrice: item.totalBeforeTax
+        }
+    })
     
     const totalPreTax = displayItems.reduce((acc, curr) => acc + curr.totalBeforeTax, 0)
 
