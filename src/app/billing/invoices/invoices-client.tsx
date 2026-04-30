@@ -166,15 +166,6 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                 <span className="font-black uppercase tracking-widest text-xs font-bold">{t('invoices.btn_sync')}</span>
             </PremiumButton>
 
-            {activeTab !== 'create' && (
-                <PremiumButton 
-                    onClick={() => setActiveTab('create')}
-                    className="h-12 px-8 rounded-xl shadow-[0_10px_20px_rgba(255,30,133,0.2)] text-sm font-black tracking-widest group"
-                >
-                    <Plus size={18} className="mr-2 group-hover:rotate-90 transition-transform duration-500" strokeWidth={3} />
-                    {t('invoices.new_invoice')}
-                </PremiumButton>
-            )}
         </div>
       </div>
 
@@ -344,7 +335,7 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                 </div>
                 </div>
 
-                <div className="relative w-full overflow-auto custom-scrollbar">
+                <div className="relative w-full overflow-auto custom-scrollbar max-h-[600px] border-b border-border/5">
                     <table className="w-full text-sm text-left border-collapse">
                     <thead>
                         <tr className="bg-muted/30 border-b border-border/5">
@@ -389,19 +380,19 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                         ) : (
                             filteredInvoices.map((inv) => (
                                 <tr key={`${inv.Type}-${inv.Invoice_ID}`} className="group/row hover:bg-primary/[0.03] transition-all duration-500 cursor-pointer" onClick={() => router.push(`/billing/invoices/${inv.Invoice_ID}`)}>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-2">
                                         <span className="font-black text-foreground text-sm tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{inv.Invoice_ID}</span>
                                     </td>
-                                    <td className="px-4 py-4">
+                                    <td className="px-4 py-2">
                                         <span className="font-bold text-muted-foreground text-sm uppercase tracking-tight">{inv.Customer_Name}</span>
                                     </td>
-                                    <td className="px-4 py-4 text-center text-muted-foreground font-black uppercase tracking-widest text-[10px]">
+                                    <td className="px-4 py-2 text-center text-muted-foreground font-black uppercase tracking-widest text-[10px]">
                                         {inv.Issue_Date ? new Date(inv.Issue_Date).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US') : '-'}
                                     </td>
-                                    <td className="px-4 py-4 text-right">
+                                    <td className="px-4 py-2 text-right">
                                         <span className="text-base font-black text-foreground tracking-tighter group-hover/row:text-primary transition-colors bg-muted/50 px-3 py-1 rounded-lg">฿{Number(inv.Grand_Total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                     </td>
-                                    <td className="px-6 py-4 text-center">
+                                    <td className="px-6 py-2 text-center">
                                         <div className={cn(
                                             "inline-flex items-center gap-2 px-4 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all duration-500",
                                             inv.Status === 'Paid' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-primary/10 text-primary border-primary/20"
@@ -409,7 +400,7 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                                             {inv.Status}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                    <td className="px-6 py-2 text-center" onClick={(e) => e.stopPropagation()}>
                                         <InvoiceRowActions id={inv.Invoice_ID} type={inv.Type} status={inv.Status} language={language} />
                                     </td>
                                 </tr>
@@ -433,7 +424,7 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                                         )}
                                         onClick={() => toggleJob(job.Job_ID)}
                                     >
-                                        <td className="px-6 py-4 w-12">
+                                        <td className="px-6 py-2 w-12">
                                             <div className={cn(
                                                 "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-500",
                                                 selectedJobIds.includes(job.Job_ID) ? "bg-primary border-primary rotate-12 scale-110 shadow-lg" : "border-border/20 group-hover/row:border-primary/50"
@@ -441,10 +432,10 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                                                 {selectedJobIds.includes(job.Job_ID) && <CheckCircle2 size={12} className="text-white" strokeWidth={3} />}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-2">
                                             <span className="font-black text-foreground text-sm tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{job.Job_ID}</span>
                                         </td>
-                                        <td className="px-4 py-4">
+                                        <td className="px-4 py-2">
                                             <div className="flex items-center gap-3">
                                                 <div className="p-1.5 bg-muted/50 rounded-lg group-hover/row:bg-primary/20 transition-colors">
                                                     <Building2 className="w-4 h-4 text-muted-foreground group-hover/row:text-primary transition-colors" />
@@ -452,10 +443,10 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                                                 <span className="font-bold text-muted-foreground text-sm uppercase tracking-tight">{job.Customer_Name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-4 text-center text-muted-foreground font-black uppercase tracking-widest text-[10px]">
+                                        <td className="px-4 py-2 text-center text-muted-foreground font-black uppercase tracking-widest text-[10px]">
                                         {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US') : '-'}
                                         </td>
-                                        <td className="px-4 py-4 text-right">
+                                        <td className="px-4 py-2 text-right">
                                             <div className="flex flex-col items-end">
                                                 <span className="text-base font-black text-foreground tracking-tighter group-hover/row:text-primary transition-colors bg-muted/50 px-3 py-1 rounded-lg">
                                                     ฿{(() => {
@@ -477,12 +468,12 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-center">
+                                        <td className="px-6 py-2 text-center">
                                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest">
                                                 {t('invoices.status_completed')}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 w-16"></td>
+                                        <td className="px-6 py-2 w-16"></td>
                                     </tr>
                                 ))
                             )
