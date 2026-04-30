@@ -208,6 +208,55 @@ export async function exportInvoiceExcel(invoiceId: string) {
         for (let c = 8; c <= 13; c++) {
             footerRow.getCell(c).value = summaryTotals[c]
             footerRow.getCell(c).numFmt = '#,##0.00'
+            footerRow.getCell(c).border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            }
+        }
+
+        // 7.1 Discount Row (If applicable)
+        let lastRowIndex = footerRowIndex
+        if ((finalDoc.Discount_Amount || 0) > 0) {
+            lastRowIndex++
+            const discountRow = worksheet.getRow(lastRowIndex)
+            // Merge cells for label if needed, or just set value
+            discountRow.getCell(6).value = `ส่วนลด ${finalDoc.Discount_Percent || 0}% เมื่อใช้บริการครบ...`
+            discountRow.getCell(13).value = finalDoc.Discount_Amount
+            discountRow.getCell(13).numFmt = '#,##0.00'
+            
+            // Border and Style
+            discountRow.getCell(6).alignment = { horizontal: 'left' }
+            discountRow.getCell(13).font = { bold: true }
+            for (let c = 6; c <= 13; c++) {
+                discountRow.getCell(c).border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                }
+            }
+        }
+
+        // 7.2 Grand Total Row
+        lastRowIndex++
+        const grandTotalRow = worksheet.getRow(lastRowIndex)
+        grandTotalRow.getCell(6).value = "จำนวนเงินทั้งสิ้น"
+        grandTotalRow.getCell(13).value = finalDoc.Grand_Total || finalDoc.Total_Amount || summaryTotals[13]
+        grandTotalRow.getCell(13).numFmt = '#,##0.00'
+        
+        // Border and Style
+        grandTotalRow.getCell(6).alignment = { horizontal: 'left' }
+        grandTotalRow.getCell(6).font = { bold: true }
+        grandTotalRow.getCell(13).font = { bold: true }
+        for (let c = 6; c <= 13; c++) {
+            grandTotalRow.getCell(c).border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            }
         }
 
         // 8. Static Headers
