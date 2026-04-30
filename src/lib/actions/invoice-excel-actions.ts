@@ -173,8 +173,17 @@ export async function exportInvoiceExcel(invoiceId: string) {
             if (isPerUnit) {
                 // Per Unit Mapping: H=Qty, I=UnitPrice, M=Total
                 const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 0)
-                const unitPrice = Number(job.Price_Per_Unit || customerUnitPrice)
-                const lineTotal = Number((qty * unitPrice).toFixed(2))
+                let basePrice = Number(job.Price_Cust_Total || 0)
+                let unitPrice = Number(job.Price_Per_Unit || customerUnitPrice)
+
+                // Dynamic Unit Price Calculation: Total / Qty (as requested by user)
+                if (basePrice > 0 && qty > 0) {
+                    unitPrice = basePrice / qty
+                } else if (basePrice <= 0 && unitPrice > 0) {
+                    basePrice = qty * unitPrice
+                }
+
+                const lineTotal = Number(basePrice.toFixed(2))
                 
                 row.getCell(8).value = qty
                 row.getCell(9).value = unitPrice
@@ -298,7 +307,9 @@ export async function exportInvoiceExcel(invoiceId: string) {
         currentRowIndex++
         const grandTotalRow = worksheet.getRow(currentRowIndex)
         grandTotalRow.getCell(6).value = "จำนวนเงินรวมทั้งสิ้น (Grand Total)"
-        grandTotalRow.getCell(13).value = finalDoc.Grand_Total || (summaryTotals[13] - discountAmount + vatAmount)
+        // Force recalculation based on summaryTotals[13] to ensure consistency with price hotfix
+        const calculatedGrandTotal = summaryTotals[13] - discountAmount + vatAmount
+        grandTotalRow.getCell(13).value = calculatedGrandTotal
         styleSummaryCell(grandTotalRow.getCell(6), true)
         styleSummaryCell(grandTotalRow.getCell(13))
         grandTotalRow.getCell(6).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F0F0' } }
@@ -319,7 +330,9 @@ export async function exportInvoiceExcel(invoiceId: string) {
             currentRowIndex++
             const netRow = worksheet.getRow(currentRowIndex)
             netRow.getCell(6).value = "ยอดจ่ายสุทธิ (Net Total)"
-            netRow.getCell(13).value = finalDoc.Net_Total || (Number(grandTotalRow.getCell(13).value) - whtAmount)
+            // Force recalculation based on adjusted Grand Total
+            const calculatedNetTotal = Number(grandTotalRow.getCell(13).value) - whtAmount
+            netRow.getCell(13).value = calculatedNetTotal
             styleSummaryCell(netRow.getCell(6), true)
             styleSummaryCell(netRow.getCell(13))
             for(let c=7; c<=12; c++) styleSummaryCell(netRow.getCell(c))
