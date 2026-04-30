@@ -386,12 +386,13 @@ export default async function PublicInvoicePage(props: Props) {
                 </div>
             </div>
 
-            <style type="text/css" media="print">{`
+            <style type="text/css" media="print" dangerouslySetInnerHTML={{ __html: `
                 @page { size: A4; margin: 0; }
                 body { background: white !important; }
                 .print-hidden { display: none !important; }
                 #printable-content { p: 0 !important; shadow: none !important; border: none !important; width: 100% !important; max-width: none !important; }
-            `}</style>
+            ` }} />
+        </div>
         </div>
     )
 }

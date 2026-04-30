@@ -317,6 +317,7 @@ export default async function BillingPrintPage(props: Props) {
                             <div className="font-bold">เลขที่ภาษี :</div>
                             <div>{note.Customer_Tax_ID || '-'}</div>
                     </div>
+                    </div>
                     
                     <div className="w-full md:w-[300px] shrink-0">
                         <div className="bg-slate-100/80 p-3 rounded-lg border border-slate-200 mb-2">
@@ -525,15 +526,16 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
                 </div>
 
-                <style type="text/css" media="print">{`
-                @page { size: A4; margin: 5mm 8mm; }
-                body { visibility: hidden; background: white !important; -webkit-print-color-adjust: exact !important; }
-                #printable-content, #printable-content * { visibility: visible; }
-                #printable-content { width: 100%; background: white !important; padding: 0 !important; }
-                .page-break-avoid { break-inside: avoid; }
-                img { display: block !important; opacity: 1 !important; }
-                table { page-break-inside: auto; }
-                tr { page-break-inside: avoid; page-break-after: auto; }
-                `}</style>        </div>
-    )
-}
+                <style type="text/css" media="print" dangerouslySetInnerHTML={{ __html: `
+                    @page { size: A4; margin: 5mm 8mm; }
+                    body { visibility: hidden; background: white !important; -webkit-print-color-adjust: exact !important; }
+                    #printable-content, #printable-content * { visibility: visible; }
+                    #printable-content { width: 100%; background: white !important; padding: 0 !important; }
+                    .page-break-avoid { break-inside: avoid; }
+                    img { display: block !important; opacity: 1 !important; }
+                    table { page-break-inside: auto; }
+                    tr { page-break-inside: avoid; page-break-after: auto; }
+                ` }} />
+            </div>
+        )
+    }
