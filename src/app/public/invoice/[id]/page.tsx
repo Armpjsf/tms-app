@@ -23,10 +23,10 @@ type Props = {
     searchParams: Promise<{ lang?: string; mode?: string }>;
 }
 
-export default async function PublicInvoicePage(props: Props) {
-    const params = await props.params;
-    const searchParams = await props.searchParams;
-    const { id } = params
+export default async function PublicInvoicePage(args: Props) {
+    const params = await args.params;
+    const searchParams = await args.searchParams;
+    const id = params.id
     const lang = (searchParams?.lang as 'th' | 'en') || 'th'
     
     const data = await getPublicBillingNoteById(id)

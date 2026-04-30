@@ -8,8 +8,8 @@
  * Converts a number to Thai Baht text format.
  * Example: 123.45 -> "หนึ่งร้อยยี่สิบสามบาทสี่สิบห้าสตางค์"
  */
-export function ArabicNumberToText(Number: number): string {
-    const numStr = Number.toFixed(2);
+export function ArabicNumberToText(value: number): string {
+    const numStr = value.toFixed(2);
     const parts = numStr.split('.');
     const integerPart = parts[0];
     const fractionalPart = parts[1];
