@@ -112,10 +112,17 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
 
   const selectedJobs = availableJobs.filter(j => selectedJobIds.includes(j.Job_ID))
   const subtotal = selectedJobs.reduce((sum, job) => {
+      const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 0)
+      const unitPrice = Number(job.Price_Per_Unit || 0)
       const storedPrice = parsePrice(job.Price_Cust_Total)
-      if (storedPrice > 0) return sum + storedPrice
-      const calculatedPrice = (Number(job.Price_Per_Unit || 0) * Number(job.Loaded_Qty || 0))
-      return sum + calculatedPrice
+      
+      // Force use of calculated price if it differs from stored price (handling rate changes)
+      const calculatedPrice = Number((unitPrice * qty).toFixed(2))
+      const finalPrice = (unitPrice > 0 && qty > 0 && Math.abs(storedPrice - calculatedPrice) > 0.5) 
+        ? calculatedPrice 
+        : (storedPrice > 0 ? storedPrice : calculatedPrice)
+        
+      return sum + finalPrice
   }, 0)
   
   const discountAmount = subtotal * (Number(discountRate || 0) / 100)
@@ -146,13 +153,18 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
             Status: 'Draft',
             Notes: notes,
             Items_JSON: selectedJobs.map(job => {
-                const storedPrice = parsePrice(job.Price_Cust_Total)
                 const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 0)
                 const unitPrice = Number(job.Price_Per_Unit || 0)
+                const storedPrice = parsePrice(job.Price_Cust_Total)
                 
+                const calculatedPrice = Number((unitPrice * qty).toFixed(2))
+                const finalPrice = (unitPrice > 0 && qty > 0 && Math.abs(storedPrice - calculatedPrice) > 0.5) 
+                    ? calculatedPrice 
+                    : (storedPrice > 0 ? storedPrice : calculatedPrice)
+
                 return {
                     ...job,
-                    Price_Cust_Total: storedPrice > 0 ? storedPrice : (unitPrice * qty)
+                    Price_Cust_Total: finalPrice
                 }
             }), // Enhanced Snapshot
         })
@@ -245,7 +257,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                         <span className="font-bold uppercase tracking-widest text-xs">กำลังโหลดข้อมูลงาน...</span>
                     </div>
                 ) : (
-                    <div className="p-0">
+                    <div className="p-0 overflow-auto max-h-[400px] custom-scrollbar">
                         <Table>
                             <TableHeader className="bg-muted/30">
                                 <TableRow className="border-border/5 hover:bg-transparent">
@@ -301,20 +313,20 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                                                         className="border-border/20 scale-90 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                                                     />
                                                 </TableCell>
-                                                <TableCell className="font-black text-muted-foreground text-xs py-3">
+                                                <TableCell className="font-black text-muted-foreground text-xs py-1.5">
                                                     <div className="flex flex-col">
                                                         <span>{job.Job_ID}</span>
                                                         <span className="text-[8px] uppercase opacity-50 truncate max-w-[120px]">{job.Route_Name}</span>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-muted-foreground font-bold text-[10px]">{new Date(job.Plan_Date).toLocaleDateString('th-TH')}</TableCell>
-                                                <TableCell className="text-center font-bold text-muted-foreground text-[10px]">
+                                                <TableCell className="text-muted-foreground font-bold text-[10px] py-1.5">{new Date(job.Plan_Date).toLocaleDateString('th-TH')}</TableCell>
+                                                <TableCell className="text-center font-bold text-muted-foreground text-[10px] py-1.5">
                                                     {isPerItem ? qty.toLocaleString() : '1 (เที่ยว)'}
                                                 </TableCell>
-                                                <TableCell className="text-right font-bold text-muted-foreground text-[10px]">
+                                                <TableCell className="text-right font-bold text-muted-foreground text-[10px] py-1.5">
                                                     {isPerItem ? unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 }) : '-'}
                                                 </TableCell>
-                                                <TableCell className="text-right font-black text-muted-foreground pr-6">
+                                                <TableCell className="text-right font-black text-muted-foreground pr-6 py-1.5">
                                                     <div className="flex flex-col items-end">
                                                         <div className="flex items-center gap-1.5">
                                                             {storedPrice === 0 && isPerItem && (
