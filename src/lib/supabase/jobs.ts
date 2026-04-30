@@ -885,21 +885,28 @@ export async function getJobsForBilling(
         if (customerId) {
             dbQuery = dbQuery.eq('Customer_ID', customerId)
         } else if (!isSuper) {
-            // STRICT ISOLATION
+            // STRICT ISOLATION for regular staff
             if (branchId && branchId !== 'All') {
                 dbQuery = dbQuery.eq('Branch_ID', branchId)
             } else {
+                // If regular staff tries to access 'All' or has no branch, return nothing for safety
                 return []
             }
         } else if (branchId && branchId !== 'All') {
+            // SuperAdmin only filters if a specific branch is selected
             dbQuery = dbQuery.eq('Branch_ID', branchId)
         }
 
         let query = dbQuery
             .order('Plan_Date', { ascending: false })
             
+        // Add default date range if not provided (e.g. last 30 days) to keep initial load snappy
         if (startDate) {
             query = query.gte('Plan_Date', startDate)
+        } else if (!explicitCustomerId) {
+            const defaultPast = new Date()
+            defaultPast.setDate(defaultPast.getDate() - 45)
+            query = query.gte('Plan_Date', defaultPast.toISOString().split('T')[0])
         }
         if (endDate) {
             query = query.lte('Plan_Date', endDate)
@@ -910,6 +917,14 @@ export async function getJobsForBilling(
         if (!data || data.length === 0) {
             return []
         }
+
+        const uniqueCustomerIds = Array.from(new Set(data.filter(j => j.Customer_ID).map(j => j.Customer_ID)))
+        const { data: customerPrices } = await supabase
+            .from('Master_Customers')
+            .select('Customer_ID, Price_Per_Unit')
+            .in('Customer_ID', uniqueCustomerIds)
+
+        const priceMap = new Map(customerPrices?.map(c => [c.Customer_ID, c.Price_Per_Unit]) || [])
 
         // Process each job to find the best matching price for its specific date
         const enhancedJobs = await Promise.all(data.map(async (job) => {

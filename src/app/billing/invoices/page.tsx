@@ -27,11 +27,12 @@ export default async function InvoicesPage({
   const query = resolvedParams?.query || ""
   
   const cookieStore = await cookies()
+  const selectedBranch = cookieStore.get('selectedBranch')?.value || "All"
   
   // Fetch all required data: Invoices, Billable Jobs, and Customers
   const [invoicesRes, billableJobs, { getAllCustomers }] = await Promise.all([
     getInvoices(1, 100, query),
-    getJobsForBilling(),
+    getJobsForBilling(undefined, undefined, undefined, 'customer'),
     import("@/lib/supabase/customers")
   ])
   const customersRes = await getAllCustomers()

@@ -61,15 +61,28 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
   const [activeTab, setActiveTab] = useState<'missions' | 'ledger' | 'create'>('missions')
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState(query)
-  const [displayJobs, setDisplayJobs] = useState<Job[]>(billableJobs)
+  const [displayJobs, setDisplayJobs] = useState<Job[]>(billableJobs || [])
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("all")
   const [isSyncing, setIsSyncing] = useState(false)
 
-  const filteredJobs = displayJobs.filter(job => {
-      if (searchQuery && !job.Job_ID.toLowerCase().includes(searchQuery.toLowerCase()) && !job.Customer_Name?.toLowerCase().includes(searchQuery.toLowerCase())) return false
-      return true
+  // Auto-refresh displayJobs if billableJobs from server changes
+  useEffect(() => {
+    if (billableJobs && billableJobs.length > 0 && displayJobs.length === 0) {
+      setDisplayJobs(billableJobs)
+    }
+  }, [billableJobs])
+
+  const filteredJobs = (displayJobs || []).filter(job => {
+      if (!job) return false
+      const matchesSearch = !searchQuery || 
+          job.Job_ID.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          (job.Customer_Name && job.Customer_Name.toLowerCase().includes(searchQuery.toLowerCase()))
+      
+      const matchesCustomer = selectedCustomerId === 'all' || job.Customer_ID === selectedCustomerId
+      
+      return matchesSearch && matchesCustomer
   })
 
   const filteredInvoices = initialInvoices.filter(inv => {
