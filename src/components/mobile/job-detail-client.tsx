@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { 
@@ -24,6 +24,11 @@ interface JobDetailClientProps {
 
 export function JobDetailClient({ job, success }: JobDetailClientProps) {
     const [activeTab, setActiveTab] = useState<'mission' | 'info'>('mission')
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const destinations = typeof job?.original_destinations_json === 'string' 
         ? JSON.parse(job.original_destinations_json) 
@@ -86,7 +91,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                              )}
 
                              {/* Future Job Warning */}
-                             {job.Plan_Date && isAfter(startOfDay(parseISO(job.Plan_Date)), startOfDay(new Date())) && (
+                             {mounted && job.Plan_Date && isAfter(startOfDay(parseISO(job.Plan_Date)), startOfDay(new Date())) && (
                                  <motion.div 
                                      initial={{ scale: 0.95, opacity: 0 }}
                                      animate={{ scale: 1, opacity: 1 }}

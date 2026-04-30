@@ -61,6 +61,11 @@ const item = {
 
 export function DashboardClient({ session, currentJob, activeJobs = [], gamification, todayIncome }: Omit<DashboardClientProps, 'stats'>) {
     const supabase = createClient()
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const greeting = useMemo(() => {
         const hour = new Date().getHours()
@@ -225,7 +230,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                 )}>
                                     {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : 'ดำเนินการอยู่'}
                                 </div>
-                                {(() => {
+                                {mounted && (() => {
                                     const dateInfo = getJobDateInfo((currentJob as any).Plan_Date)
                                     if (!dateInfo.label) return null
                                     return (
@@ -331,7 +336,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                         <div className="p-2 bg-muted/20 rounded-full">
                                             <ChevronRight size={20} className="text-muted-foreground" />
                                         </div>
-                                        {(() => {
+                                        {mounted && (() => {
                                             const dateInfo = getJobDateInfo(job.Plan_Date)
                                             if (!dateInfo.label) return null
                                             return (
