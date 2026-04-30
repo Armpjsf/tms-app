@@ -83,7 +83,7 @@ export type AggregatedItem = {
 /**
  * Aggregates job costs into a structured format for printing.
  */
-export function aggregateBillingJobs(jobs: any[], lang: 'th' | 'en' = 'th'): AggregatedItem[] {
+export function aggregateBillingJobs(jobs: any[], lang: 'th' | 'en' = 'th', customerName?: string): AggregatedItem[] {
     const aggregatedItems = new Map<string, AggregatedItem>();
 
     let minDate: Date | null = null;
@@ -97,6 +97,18 @@ export function aggregateBillingJobs(jobs: any[], lang: 'th' | 'en' = 'th'): Agg
     };
 
     jobs.forEach((job) => {
+        let unitPrice = Number(job.Price_Per_Unit || 0);
+        
+        // Special adjustment for dates 21-23 April as requested (Fuel rate increase)
+        if (job.Plan_Date && customerName?.includes('สยามรุ่งเรือง')) {
+            const d = new Date(job.Plan_Date);
+            const day = d.getDate();
+            const month = d.getMonth();
+            if (month === 3 && day >= 21 && day <= 23) {
+                unitPrice = 17;
+            }
+        }
+
         // Track dates
         if (job.Plan_Date) {
             const jobDate = new Date(job.Plan_Date);
@@ -105,11 +117,10 @@ export function aggregateBillingJobs(jobs: any[], lang: 'th' | 'en' = 'th'): Agg
         }
 
         // 1. Freight Cost
-        const unitPrice = Number(job.Price_Per_Unit || 0);
         let basePrice = Number(job.Price_Cust_Total || 0);
         
-        // Fallback calculation if basePrice is missing
-        if (basePrice <= 0 && unitPrice > 0) {
+        // Fallback calculation if basePrice is missing or if we overridden unitPrice
+        if ((basePrice <= 0 || unitPrice === 17) && unitPrice > 0) {
             const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 1);
             basePrice = qty * unitPrice;
         }

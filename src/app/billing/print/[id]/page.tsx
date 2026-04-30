@@ -64,7 +64,7 @@ export default async function BillingPrintPage(props: Props) {
 
 
     // Use shared aggregation logic
-    const baseItems = aggregateBillingJobs(jobs, lang === 'en' ? 'en' : 'th')
+    const baseItems = aggregateBillingJobs(jobs, lang === 'en' ? 'en' : 'th', note.Customer_Name || undefined)
     
     const displayItems = baseItems.map(item => {
         const actualQty = item.qty
@@ -99,7 +99,10 @@ export default async function BillingPrintPage(props: Props) {
         ? Number(note.WHT_Amount) 
         : (totalAfterDiscount * whtRate / 100)
         
-    const netTotal = totalWithVat - wht
+    // Recalculate total to match the aggregated items fix (ensures 17 baht fix is reflected)
+    const subTotal = totalPreTax - discountAmount;
+    const totalWithVat = subTotal + vatAmount;
+    const netTotal = totalWithVat - wht;
 
     const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
     const issueDate = note.Billing_Date ? new Date(note.Billing_Date) : new Date();
