@@ -189,19 +189,20 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                             type="button"
                             disabled={availableJobs.length === 0}
                             onClick={() => {
-                                const calculable = availableJobs.filter(j => Number(j.Price_Cust_Total || 0) === 0 && Number(j.Price_Per_Unit || 0) > 0 && Number(j.Loaded_Qty || 0) > 0)
-                                if (calculable.length === 0) {
-                                    toast.info("ไม่พบรายการที่แนะนำให้คำนวณราคาย้อนหลัง")
-                                    return
-                                }
-                                if (confirm(`คุณต้องการใช้ราคาแนะนำสำหรับ ${calculable.length} รายการที่ราคาเป็น 0 หรือไม่? (จะเป็นการคำนวณชั่วคราวในหน้านี้)`)) {
+                                // We now force recalculate Price_Cust_Total based on Price_Per_Unit for ALL selected items
+                                // specifically focusing on those that might have changed due to fuel rates
+                                if (confirm(`คุณต้องการปรับปรุงราคาสำหรับ ${selectedJobs.length} รายการที่เลือก ตามราคาต่อหน่วยแนะนำหรือไม่?`)) {
                                     setAvailableJobs(prev => prev.map(j => {
-                                        if (Number(j.Price_Cust_Total || 0) === 0 && Number(j.Price_Per_Unit || 0) > 0 && Number(j.Loaded_Qty || 0) > 0) {
-                                            return { ...j, Price_Cust_Total: Number((Number(j.Loaded_Qty) * Number(j.Price_Per_Unit)).toFixed(2)) }
+                                        if (selectedJobIds.includes(j.Job_ID)) {
+                                            const qty = Number(j.Weight_Kg || j.Volume_Cbm || j.Loaded_Qty || 0)
+                                            const unitPrice = Number(j.Price_Per_Unit || 0)
+                                            if (unitPrice > 0 && qty > 0) {
+                                                return { ...j, Price_Cust_Total: Number((qty * unitPrice).toFixed(2)) }
+                                            }
                                         }
                                         return j
                                     }))
-                                    toast.success("ปรับปรุงราคาชั่วคราวเรียบร้อย")
+                                    toast.success("ปรับปรุงราคาตามเรทน้ำมันเรียบร้อย")
                                 }
                             }}
                             className="bg-amber-500/10 text-amber-500 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border border-amber-500/20 hover:bg-amber-500/20 transition-all flex items-center gap-1.5 group"
