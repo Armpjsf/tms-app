@@ -462,7 +462,7 @@ export default async function BillingPrintPage(props: Props) {
                         <div className="font-bold w-16">หมายเหตุ</div>
                     </div>
                     <div className="text-slate-700 whitespace-pre-wrap flex-1 leading-relaxed italic opacity-80 pl-8 sm:pl-0">
-                        {note.Remarks || company?.invoice_notes || '"DD TRANSPORT ขอแจ้งการปรับเปลี่ยนสัญลักษณ์องค์กรใหม่ (LOGO)...'}
+                        {note.Remarks || company?.invoice_notes || '"DD TRANSPORT ขอแจ้งการปรับเปลี่ยนสัญลักษณ์องค์กรใหม่ (LOGO) เพื่อเพิ่มความทันสมัยและสอดคล้องกับวิสัยทัศน์การเติบโตของบริษัทในอนาคต โดยมีผลตั้งแต่วันที่ 1 เมษายน 2567 เป็นต้นไป"'}
                     </div>
                 </div>
 
