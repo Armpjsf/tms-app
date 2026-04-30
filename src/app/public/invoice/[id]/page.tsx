@@ -230,10 +230,10 @@ export default async function PublicInvoicePage(props: Props) {
             </div>
 
             {/* Document Twin */}
-            <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-12 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-sm print:shadow-none print:p-0 print:w-full">
+            <div id="printable-content" className="w-full max-w-[210mm] mx-auto bg-white p-4 sm:p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-3xl sm:rounded-sm print:shadow-none print:p-0 print:w-full">
                 
                 {/* Header */}
-                <div className="flex justify-between items-start mb-10">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-6 mb-10">
                     <div className="flex items-center gap-4">
                         {logoUrl && (
                             <img src={logoUrl} alt="Logo" className="h-16 w-auto object-contain" />
@@ -245,8 +245,8 @@ export default async function PublicInvoicePage(props: Props) {
                     </div>
                 </div>
 
-                <div className="flex justify-between gap-6 mb-10 text-slate-800 text-[13px]">
-                    <div className="flex-1 space-y-4">
+                <div className="flex flex-col md:flex-row justify-between gap-8 mb-10 text-slate-800 text-[13px]">
+                    <div className="flex-1 space-y-6">
                         <div className="grid grid-cols-[100px_1fr] gap-x-2 gap-y-1">
                             <div className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">ผู้ขาย :</div>
                             <div className="font-black text-lg text-slate-900 leading-none">{sellerName}</div>
@@ -266,7 +266,7 @@ export default async function PublicInvoicePage(props: Props) {
                         </div>
                     </div>
                     
-                    <div className="w-[320px]">
+                    <div className="w-full md:w-[320px] shrink-0">
                         <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-4 shadow-inner">
                             <div className="grid grid-cols-[130px_1fr] gap-y-2">
                                 <div className="font-bold text-slate-500 uppercase text-[10px] tracking-widest">เลขที่เอกสาร :</div>
@@ -288,33 +288,35 @@ export default async function PublicInvoicePage(props: Props) {
                     </div>
                 </div>
 
-                <table className="w-full mb-10 border-collapse">
-                    <thead>
-                        <tr className="bg-slate-900 text-white text-[12px]">
-                            <th className="py-3 px-4 text-left font-black uppercase tracking-widest w-12">#</th>
-                            <th className="py-3 px-4 text-left font-black uppercase tracking-widest">คำอธิบาย</th>
-                            <th className="py-3 px-4 text-center font-black uppercase tracking-widest w-24">จำนวน</th>
-                            <th className="py-3 px-4 text-right font-black uppercase tracking-widest w-32">ราคา/หน่วย</th>
-                            <th className="py-3 px-4 text-right font-black uppercase tracking-widest w-32">รวมเงิน</th>
-                        </tr>
-                    </thead>
-                    <tbody className="text-[13px]">
-                        {displayItems.map((item, idx) => (
-                            <tr key={idx} className={`border-b border-slate-100 ${item.isExtra ? 'text-slate-500 italic' : 'font-black text-slate-900'}`}>
-                                <td className="py-4 px-4 text-center align-top opacity-30">{idx + 1}</td>
-                                <td className="py-4 px-4 align-top">
-                                    <div>{item.description}</div>
-                                    {item.subDescription && <div className="text-[11px] text-slate-400 font-normal mt-1 italic">{item.subDescription}</div>}
-                                </td>
-                                <td className="py-4 px-4 text-center align-top">{item.qty.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                <td className="py-4 px-4 text-right align-top">{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                <td className="py-4 px-4 text-right align-top">{item.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-10">
+                    <table className="w-full border-collapse min-w-[650px] md:min-w-0">
+                        <thead>
+                            <tr className="bg-slate-900 text-white text-[12px]">
+                                <th className="py-3 px-4 text-left font-black uppercase tracking-widest w-12">#</th>
+                                <th className="py-3 px-4 text-left font-black uppercase tracking-widest">คำอธิบาย</th>
+                                <th className="py-3 px-4 text-center font-black uppercase tracking-widest w-24">จำนวน</th>
+                                <th className="py-3 px-4 text-right font-black uppercase tracking-widest w-32">ราคา/หน่วย</th>
+                                <th className="py-3 px-4 text-right font-black uppercase tracking-widest w-32">รวมเงิน</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="text-[13px]">
+                            {displayItems.map((item, idx) => (
+                                <tr key={idx} className={`border-b border-slate-100 ${item.isExtra ? 'text-slate-500 italic' : 'font-black text-slate-900'}`}>
+                                    <td className="py-4 px-4 text-center align-top opacity-30">{idx + 1}</td>
+                                    <td className="py-4 px-4 align-top">
+                                        <div>{item.description}</div>
+                                        {item.subDescription && <div className="text-[11px] text-slate-400 font-normal mt-1 italic">{item.subDescription}</div>}
+                                    </td>
+                                    <td className="py-4 px-4 text-center align-top">{item.qty.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                    <td className="py-4 px-4 text-right align-top">{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                    <td className="py-4 px-4 text-right align-top">{item.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
-                <div className="border-t-2 border-slate-200 pt-6 mt-10 flex gap-10">
+                <div className="border-t-2 border-slate-200 pt-8 mt-10 flex flex-col md:flex-row gap-10">
                     <div className="flex-1 space-y-6">
                         <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-[0.03] rotate-12"><MessageSquare size={80} /></div>
@@ -335,7 +337,7 @@ export default async function PublicInvoicePage(props: Props) {
                         </div>
                     </div>
 
-                    <div className="w-[400px] space-y-4">
+                    <div className="w-full md:w-[400px] space-y-4">
                         <div className="flex justify-between text-slate-500 font-bold uppercase text-[11px] tracking-widest">
                             <span>มูลค่าก่อนส่วนลด</span>
                             <span className="text-slate-900">{totalPreTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
@@ -370,7 +372,7 @@ export default async function PublicInvoicePage(props: Props) {
                     </div>
                 </div>
 
-                <div className="mt-12 pt-8 border-t border-slate-100 flex justify-between items-center text-slate-300">
+                <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-6 text-slate-300">
                     <div className="flex items-center gap-4">
                         <ShieldCheck size={24} className="text-emerald-500/30" />
                         <div>

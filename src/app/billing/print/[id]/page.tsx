@@ -276,7 +276,7 @@ export default async function BillingPrintPage(props: Props) {
                 <PrintButton />
             </div>
             
-            <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-4 print:w-full print:max-w-none print:p-0 text-[12px]">
+            <div id="printable-content" className="w-full max-w-[210mm] mx-auto bg-white p-2 sm:p-4 md:p-6 print:w-full print:max-w-none print:p-0 text-[12px] shadow-2xl sm:shadow-none rounded-3xl sm:rounded-none">
                 
                 {/* 1. Header Section */}
                 <div className="flex justify-between items-start mb-4">
@@ -298,8 +298,8 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* 2. Info Section */}
-                <div className="flex justify-between gap-4 mb-4 text-slate-800 text-[12px]">
-                    <div className="flex-1 space-y-2">
+                <div className="flex flex-col md:flex-row justify-between gap-6 mb-6 text-slate-800 text-[12px]">
+                    <div className="flex-1 space-y-4">
                         <div className="grid grid-cols-[80px_1fr] gap-x-2 gap-y-0.5">
                             <div className="font-bold">ผู้ขาย :</div>
                             <div className="font-bold">{sellerName}</div>
@@ -316,10 +316,9 @@ export default async function BillingPrintPage(props: Props) {
                             <div className="leading-tight">{note.Customer_Address || '-'}</div>
                             <div className="font-bold">เลขที่ภาษี :</div>
                             <div>{note.Customer_Tax_ID || '-'}</div>
-                        </div>
                     </div>
                     
-                    <div className="w-[280px]">
+                    <div className="w-full md:w-[300px] shrink-0">
                         <div className="bg-slate-100/80 p-3 rounded-lg border border-slate-200 mb-2">
                             <div className="grid grid-cols-[110px_1fr] gap-y-1">
                                 <div className="font-bold text-slate-700">เลขที่เอกสาร :</div>
@@ -342,7 +341,8 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* 3. Items Table */}
-                <table className="w-full mb-4 border-collapse">
+                <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0 mb-6">
+                    <table className="w-full border-collapse min-w-[600px] md:min-w-0">
                     <thead>
                         <tr className="bg-[#eef2ff] text-slate-800 text-[12px] border-b-2 border-slate-300">
                             <th className="py-1.5 px-2 text-left font-bold w-10">ลำดับ</th>
@@ -372,10 +372,11 @@ export default async function BillingPrintPage(props: Props) {
                             </tr>
                         ))}
                     </tbody>
-                </table>
+                    </table>
+                </div>
 
                 {/* 4. Summary Section & Payment */}
-                <div className="mt-6 flex justify-between gap-6">
+                <div className="mt-8 flex flex-col md:flex-row justify-between gap-8">
                     {/* Left side: Notes & Text Amount */}
                     <div className="flex-1">
                         <div className="mb-4">
@@ -405,7 +406,7 @@ export default async function BillingPrintPage(props: Props) {
                     </div>
 
                     {/* Right side: Calculations Table */}
-                    <div className="w-[320px] shrink-0">
+                    <div className="w-full md:w-[320px] shrink-0">
                         <div className="border-2 border-slate-800 rounded-sm overflow-hidden">
                             <div className="grid grid-cols-[1fr_110px] border-b border-slate-800">
                                 <div className="p-2 font-bold border-r border-slate-800 bg-slate-50">มูลค่ารวม (Total)</div>
@@ -455,30 +456,34 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* 6. Notes Section */}
-                <div className="border-t border-slate-200 pt-3 mt-4 flex gap-4 text-[11px]">
-                    <div className="w-6 flex justify-center mt-0.5"><MessageSquare size={16} className="text-slate-800" /></div>
-                    <div className="font-bold w-16">หมายเหตุ</div>
-                    <div className="text-slate-700 whitespace-pre-wrap flex-1 leading-relaxed italic opacity-80">
+                <div className="border-t border-slate-200 pt-4 mt-6 flex flex-col sm:flex-row gap-4 text-[11px]">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 flex justify-center"><MessageSquare size={16} className="text-slate-800" /></div>
+                        <div className="font-bold w-16">หมายเหตุ</div>
+                    </div>
+                    <div className="text-slate-700 whitespace-pre-wrap flex-1 leading-relaxed italic opacity-80 pl-8 sm:pl-0">
                         {note.Remarks || company?.invoice_notes || '"DD TRANSPORT ขอแจ้งการปรับเปลี่ยนสัญลักษณ์องค์กรใหม่ (LOGO)...'}
                     </div>
                 </div>
 
                 {/* 7. Signatures Section */}
-                <div className="border-t border-slate-200 pt-3 mt-4 flex gap-4 text-[11px] page-break-avoid">
-                    <div className="w-6 flex justify-center mt-0.5"><PenTool size={16} className="text-slate-800" /></div>
-                    <div className="font-bold w-16">รับรอง</div>
-                    <div className="flex-1 flex gap-4">
-                        <div className="w-24 h-24 shrink-0 flex flex-col items-center">
-                            <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเปิดเอกสาร</div>
-                            <div className="w-24 h-24 bg-white flex items-center justify-center p-1.5 border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden group/qr hover:border-blue-400 transition-colors">
+                <div className="border-t border-slate-200 pt-6 mt-8 flex flex-col md:flex-row gap-8 text-[11px] page-break-avoid">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 flex justify-center"><PenTool size={16} className="text-slate-800" /></div>
+                        <div className="font-bold w-16">รับรอง</div>
+                    </div>
+                    <div className="flex-1 flex flex-col sm:flex-row gap-8">
+                        <div className="w-full sm:w-32 shrink-0 flex flex-col items-center mx-auto sm:mx-0">
+                            <div className="text-[10px] text-slate-500 mb-2 text-center font-bold uppercase tracking-widest">สแกนเพื่อตรวจสอบ</div>
+                            <div className="w-32 h-32 bg-white flex items-center justify-center p-2 border-4 border-slate-900 rounded-2xl shadow-xl overflow-hidden group/qr hover:scale-105 transition-transform duration-500">
                                 <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&ecc=M&qzone=1&data=${encodeURIComponent(`${baseUrl}/public/invoice/${id}?lang=${lang}&mode=print`)}`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&qzone=2&data=${encodeURIComponent(`${baseUrl}/public/invoice/${id}?lang=${lang}&mode=print`)}`}
                                     alt="Billing QR Code"
                                     className="w-full h-full object-contain"
                                 />
                             </div>
                         </div>
-                        <div className="flex-1 grid grid-cols-5 gap-2 text-center text-[10px] items-end pb-1">
+                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-5 gap-4 text-center text-[10px] items-end pb-1">
                             <div>
                                 <div className="h-10 border-b border-dashed border-slate-400 mb-1 mx-1"></div>
                                 <div className="font-bold mb-0.5 whitespace-nowrap">ผู้ออกเอกสาร (ผู้ขาย)</div>
