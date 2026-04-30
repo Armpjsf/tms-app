@@ -4,7 +4,10 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { CO2_COEFFICIENTS } from '@/lib/utils/esg-utils'
 import ExcelJS from 'exceljs'
 import { getSystemSetting } from './system-settings-actions'
-import { INVOICE_TEMPLATE_BASE64 } from '../templates/invoice_template_base64'
+import { 
+    INVOICE_TEMPLATE_LUMP_SUM_BASE64, 
+    INVOICE_TEMPLATE_PER_UNIT_BASE64 
+} from '../templates/invoice_template_base64'
 
 // 4. Localization: Map for English keys to Thai labels
 const EXPENSE_MAP: Record<string, string> = {
@@ -51,23 +54,30 @@ export async function exportInvoiceExcel(invoiceId: string) {
             tax_id: "0745559001353 (สำนักงานใหญ่)"
         })
 
+        // 1.5 Determine Template Type
+        // If any job has Price_Per_Unit > 0, we use PER_UNIT template
+        const isPerUnit = jobs.some(j => Number(j.Price_Per_Unit) > 0 || Number(customerUnitPrice) > 0)
+        const templateBase64 = isPerUnit ? INVOICE_TEMPLATE_PER_UNIT_BASE64 : INVOICE_TEMPLATE_LUMP_SUM_BASE64
+
         // 2. Load Template (Vercel Fix: Embedded Base64)
         const workbook = new ExcelJS.Workbook()
-        const templateBuffer = Buffer.from(INVOICE_TEMPLATE_BASE64, 'base64')
+        const templateBuffer = Buffer.from(templateBase64, 'base64')
         await workbook.xlsx.load(templateBuffer)
         const worksheet = workbook.getWorksheet(1)
         if (!worksheet) throw new Error("Worksheet not found")
 
         // 3. Clear Dynamic Range ONLY (Protect Main Headers)
-        // Clear only I7-L7 (Dynamic headers)
-        for (let c = 9; c <= 12; c++) { worksheet.getRow(7).getCell(c).value = null }
+        // Clear only I7-L7 (Dynamic headers - Only for Lump Sum)
+        if (!isPerUnit) {
+            for (let c = 9; c <= 12; c++) { worksheet.getRow(7).getCell(c).value = null }
+        }
+        
         // Clear data rows 10-50 (Template default and potential footer area)
         for (let r = 10; r <= 50; r++) {
             const row = worksheet.getRow(r)
             for (let c = 1; c <= 13; c++) { 
                 const cell = row.getCell(c)
                 cell.value = null 
-                // Don't clear borders yet, we'll re-apply them for data rows
             }
         }
 
@@ -91,45 +101,48 @@ export async function exportInvoiceExcel(invoiceId: string) {
             }
         }
 
-        // 5. Identify Extra Cost Types (Thai labels)
-        const extraTypesSet = new Set<string>()
-        jobs.forEach(job => {
-            ['Price_Cust_Extra', 'Charge_Labor', 'Charge_Wait', 'Price_Cust_Other'].forEach(col => {
-                if (Number(job[col]) > 0) {
-                    extraTypesSet.add(EXPENSE_MAP[col])
+        // 5. Identify Extra Cost Types (Thai labels) - Only for Lump Sum
+        const columnMap: Record<string, number> = {}
+        if (!isPerUnit) {
+            const extraTypesSet = new Set<string>()
+            jobs.forEach(job => {
+                ['Price_Cust_Extra', 'Charge_Labor', 'Charge_Wait', 'Price_Cust_Other'].forEach(col => {
+                    if (Number(job[col]) > 0) {
+                        extraTypesSet.add(EXPENSE_MAP[col])
+                    }
+                })
+                if (job.extra_costs_json) {
+                    let costs = job.extra_costs_json
+                    if (typeof costs === 'string') { try { costs = JSON.parse(costs) } catch {} }
+                    if (Array.isArray(costs)) {
+                        costs.forEach((c: any) => {
+                            if (c.type && (Number(c.charge_cust) || 0) > 0) {
+                                extraTypesSet.add(EXPENSE_MAP[c.type] || c.type)
+                            }
+                        })
+                    }
                 }
             })
-            if (job.extra_costs_json) {
-                let costs = job.extra_costs_json
-                if (typeof costs === 'string') { try { costs = JSON.parse(costs) } catch {} }
-                if (Array.isArray(costs)) {
-                    costs.forEach((c: any) => {
-                        if (c.type && (Number(c.charge_cust) || 0) > 0) {
-                            extraTypesSet.add(EXPENSE_MAP[c.type] || c.type)
-                        }
-                    })
-                }
-            }
-        })
 
-        const allExtraTypes = Array.from(extraTypesSet).slice(0, 4)
-        const columnMap: Record<string, number> = {}
-        const headerRow = worksheet.getRow(7)
-        
-        for (let i = 0; i < 4; i++) {
-            const colIndex = 9 + i 
-            const typeName = allExtraTypes[i]
-            const cell = headerRow.getCell(colIndex)
-            if (typeName) {
-                cell.value = typeName
-                columnMap[typeName] = colIndex
-            } else {
-                cell.value = '-'
+            const allExtraTypes = Array.from(extraTypesSet).slice(0, 4)
+            const headerRow = worksheet.getRow(7)
+            
+            for (let i = 0; i < 4; i++) {
+                const colIndex = 9 + i 
+                const typeName = allExtraTypes[i]
+                const cell = headerRow.getCell(colIndex)
+                if (typeName) {
+                    cell.value = typeName
+                    columnMap[typeName] = colIndex
+                } else {
+                    cell.value = '-'
+                }
             }
         }
 
         // 6. Fill Job Data
         const summaryTotals: any = { 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0 }
+        let totalQuantity = 0
 
         jobs.forEach((job, index) => {
             const r = 10 + index
@@ -140,65 +153,74 @@ export async function exportInvoiceExcel(invoiceId: string) {
             row.getCell(3).value = job.Vehicle_Type || '-'
             row.getCell(4).value = Number(job.Total_Drop || 1)
             
-            // Fix Origin/Destination: If Origin or Destination is empty, try to split from Route_Name
+            // Origin / Destination
             let origin = (job.Origin_Location || '').trim()
             let dest = (job.Dest_Location || '').trim()
-            
             if ((!origin || !dest) && job.Route_Name) {
-                // Support multiple separators: -, →, /
                 const parts = job.Route_Name.split(/[-→/]/)
                 if (parts.length >= 2) {
                     if (!origin) origin = parts[0].trim()
                     if (!dest) dest = parts.slice(1).join(' - ').trim()
                 }
             }
-            
             row.getCell(5).value = origin || ''
             row.getCell(6).value = dest || job.Route_Name || ''
+            
+            // Carbon Footprint
             const effectiveDist = Number(job.Est_Distance_KM) || 12.5
             row.getCell(7).value = Number((effectiveDist * CO2_COEFFICIENTS['default']).toFixed(2))
 
-            let basePrice = Number(job.Price_Cust_Total || 0)
-            if (basePrice === 0) {
+            if (isPerUnit) {
+                // Per Unit Mapping: H=Qty, I=UnitPrice, M=Total
                 const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 0)
                 const unitPrice = Number(job.Price_Per_Unit || customerUnitPrice)
-                if (unitPrice > 0 && qty > 0) basePrice = Number((qty * unitPrice).toFixed(2))
-            }
-            row.getCell(8).value = basePrice
-            summaryTotals[8] += basePrice
+                const lineTotal = Number((qty * unitPrice).toFixed(2))
+                
+                row.getCell(8).value = qty
+                row.getCell(9).value = unitPrice
+                row.getCell(13).value = lineTotal
+                
+                totalQuantity += qty
+                summaryTotals[13] += lineTotal
+            } else {
+                // Lump Sum Mapping: H=Base, I-L=Extras, M=Total
+                let basePrice = Number(job.Price_Cust_Total || 0)
+                row.getCell(8).value = basePrice
+                summaryTotals[8] += basePrice
 
-            const jobExtras: Record<number, number> = { 9: 0, 10: 0, 11: 0, 12: 0 }
-            if (Number(job.Price_Cust_Extra) > 0) jobExtras[columnMap[EXPENSE_MAP['Price_Cust_Extra']] || 12] += Number(job.Price_Cust_Extra)
-            if (Number(job.Charge_Labor) > 0) jobExtras[columnMap[EXPENSE_MAP['Charge_Labor']] || 12] += Number(job.Charge_Labor)
-            if (Number(job.Charge_Wait) > 0) jobExtras[columnMap[EXPENSE_MAP['Charge_Wait']] || 12] += Number(job.Charge_Wait)
-            if (Number(job.Price_Cust_Other) > 0) jobExtras[columnMap[EXPENSE_MAP['Price_Cust_Other']] || 12] += Number(job.Price_Cust_Other)
+                const jobExtras: Record<number, number> = { 9: 0, 10: 0, 11: 0, 12: 0 }
+                if (Number(job.Price_Cust_Extra) > 0) jobExtras[columnMap[EXPENSE_MAP['Price_Cust_Extra']] || 12] += Number(job.Price_Cust_Extra)
+                if (Number(job.Charge_Labor) > 0) jobExtras[columnMap[EXPENSE_MAP['Charge_Labor']] || 12] += Number(job.Charge_Labor)
+                if (Number(job.Charge_Wait) > 0) jobExtras[columnMap[EXPENSE_MAP['Charge_Wait']] || 12] += Number(job.Charge_Wait)
+                if (Number(job.Price_Cust_Other) > 0) jobExtras[columnMap[EXPENSE_MAP['Price_Cust_Other']] || 12] += Number(job.Price_Cust_Other)
 
-            if (job.extra_costs_json) {
-                let costs = job.extra_costs_json
-                if (typeof costs === 'string') { try { costs = JSON.parse(costs) } catch {} }
-                if (Array.isArray(costs)) {
-                    costs.forEach((c: any) => {
-                        const val = Number(c.charge_cust) || 0
-                        const thName = EXPENSE_MAP[c.type] || c.type
-                        if (val > 0) {
-                            const colIdx = columnMap[thName] || 12
-                            jobExtras[colIdx] += val
-                        }
-                    })
+                if (job.extra_costs_json) {
+                    let costs = job.extra_costs_json
+                    if (typeof costs === 'string') { try { costs = JSON.parse(costs) } catch {} }
+                    if (Array.isArray(costs)) {
+                        costs.forEach((c: any) => {
+                            const val = Number(c.charge_cust) || 0
+                            const thName = EXPENSE_MAP[c.type] || c.type
+                            if (val > 0) {
+                                const colIdx = columnMap[thName] || 12
+                                jobExtras[colIdx] += val
+                            }
+                        })
+                    }
                 }
-            }
 
-            let totalRowExtras = 0
-            for (let c = 9; c <= 12; c++) {
-                if (jobExtras[c] > 0) {
-                    row.getCell(c).value = jobExtras[c]
-                    summaryTotals[c] += jobExtras[c]
-                    totalRowExtras += jobExtras[c]
+                let totalRowExtras = 0
+                for (let c = 9; c <= 12; c++) {
+                    if (jobExtras[c] > 0) {
+                        row.getCell(c).value = jobExtras[c]
+                        summaryTotals[c] += jobExtras[c]
+                        totalRowExtras += jobExtras[c]
+                    }
                 }
-            }
 
-            row.getCell(13).value = basePrice + totalRowExtras
-            summaryTotals[13] += (basePrice + totalRowExtras)
+                row.getCell(13).value = basePrice + totalRowExtras
+                summaryTotals[13] += (basePrice + totalRowExtras)
+            }
 
             // Styling for data rows
             row.eachCell((cell) => {
@@ -207,14 +229,9 @@ export async function exportInvoiceExcel(invoiceId: string) {
         })
 
         // 7. Summary and Totals (Dynamic Position)
-        // Find where the jobs ended
         const jobsEndRow = 10 + jobs.length
-        
-        // Add a small gap or start summary immediately after jobs
-        // We will place the summary starting from the next row
         let currentRowIndex = jobsEndRow
         
-        // Function to style a summary cell
         const styleSummaryCell = (cell: ExcelJS.Cell, isLabel = false) => {
             cell.border = {
                 top: { style: 'thin' },
@@ -231,13 +248,24 @@ export async function exportInvoiceExcel(invoiceId: string) {
             }
         }
 
+        // 7.0 Extra Total Quantity Row for Per Unit
+        if (isPerUnit) {
+            const qtyRow = worksheet.getRow(currentRowIndex)
+            qtyRow.getCell(6).value = "รวมจำนวนชิ้นทั้งสิ้น"
+            qtyRow.getCell(8).value = totalQuantity
+            qtyRow.getCell(8).numFmt = '#,##0'
+            styleSummaryCell(qtyRow.getCell(6), true)
+            styleSummaryCell(qtyRow.getCell(8))
+            for(let c=7; c<=12; c++) if(c!==8) styleSummaryCell(qtyRow.getCell(c))
+            currentRowIndex++
+        }
+
         // 7.1 Subtotal Row
         const subtotalRow = worksheet.getRow(currentRowIndex)
         subtotalRow.getCell(6).value = "รวมเป็นเงิน (Subtotal)"
         subtotalRow.getCell(13).value = summaryTotals[13]
         styleSummaryCell(subtotalRow.getCell(6), true)
         styleSummaryCell(subtotalRow.getCell(13))
-        // Apply border to middle cells
         for(let c=7; c<=12; c++) styleSummaryCell(subtotalRow.getCell(c))
         
         // 7.2 Discount Row
@@ -250,7 +278,7 @@ export async function exportInvoiceExcel(invoiceId: string) {
             discountRow.getCell(13).value = discountAmount
             styleSummaryCell(discountRow.getCell(6), true)
             styleSummaryCell(discountRow.getCell(13))
-            discountRow.getCell(13).font = { bold: true, color: { argb: 'FFFF0000' } } // Red for discount
+            discountRow.getCell(13).font = { bold: true, color: { argb: 'FFFF0000' } } 
             for(let c=7; c<=12; c++) styleSummaryCell(discountRow.getCell(c))
         }
 
