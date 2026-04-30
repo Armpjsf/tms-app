@@ -72,29 +72,35 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
             // Recalculate Price_Cust_Total for jobs where it's 0 OR where we want to trust the dynamic Price_Per_Unit
             const enriched = (jobs || []).map(j => {
                 const qty = Number(j.Weight_Kg || j.Volume_Cbm || j.Loaded_Qty || 0)
-                const unitPrice = Number(j.Price_Per_Unit || 0)
+                let unitPrice = Number(j.Price_Per_Unit || 0)
                 const storedTotal = Number(j.Price_Cust_Total || 0)
                 
-                // If we have a unit price and either no total OR a mismatch, we suggest recalculation
-                // However for initial load, if Price_Cust_Total exists and > 0, we respect it 
-                // UNLESS it looks like it was using the old 16 rate while new rate is 17
+                // EXTRA FAIL-SAFE: Force 17 for 21-23 April 2026
+                const jobDate = j.Plan_Date ? new Date(j.Plan_Date) : null
+                if (jobDate && jobDate.getFullYear() === 2026 && jobDate.getMonth() === 3 && [21, 22, 23].includes(jobDate.getDate())) {
+                    unitPrice = 17
+                }
+
                 let finalTotal = storedTotal
                 if (unitPrice > 0 && qty > 0) {
                     const expectedTotal = Number((qty * unitPrice).toFixed(2))
-                    if (storedTotal === 0 || Math.abs(storedTotal - expectedTotal) > 0.1) {
+                    if (storedTotal === 0 || Math.abs(storedTotal - expectedTotal) > 0.5) {
                         finalTotal = expectedTotal
                     }
                 }
 
                 return {
                     ...j,
+                    Price_Per_Unit: unitPrice,
                     Price_Cust_Total: finalTotal
                 }
             })
 
             setAvailableJobs(enriched)
             setFetchingJobs(false)
-            if (initialJobIds.length > 0 && selectedJobIds.length === 0) {
+            
+            // SYNC SELECTION: If we have initial IDs, apply them to the selection
+            if (initialJobIds.length > 0) {
                 setSelectedJobIds(initialJobIds)
             }
         })
@@ -102,7 +108,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
         setAvailableJobs([])
         setSelectedJobIds([])
     }
-  }, [customerId, initialJobIds.length])
+  }, [customerId, initialData?.jobIds])
 
   const parsePrice = (val: string | number | null | undefined) => {
     if (typeof val === 'number') return val
