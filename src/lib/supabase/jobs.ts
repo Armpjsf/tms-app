@@ -913,9 +913,10 @@ export async function getJobsForBilling(
 
         // Process each job to find the best matching price for its specific date
         const enhancedJobs = await Promise.all(data.map(async (job) => {
-            let finalPrice = job.Price_Per_Unit || priceMap.get(job.Customer_ID) || 0
+            let finalPrice = priceMap.get(job.Customer_ID) || job.Price_Per_Unit || 0
             
-            // If the job has a route and customer, try to find a date-specific rate from fuel matrix
+            // If the job has a route and customer, strictly try to find a date-specific rate from fuel matrix
+            // This ensures historical rates are applied correctly
             if (job.Customer_ID && job.Route_Name && job.Plan_Date) {
                 const suggestedRate = await getSuggestedRate(
                     job.Customer_ID, 
@@ -1097,9 +1098,10 @@ export async function getBillableJobs(customerId?: string, startDate?: string, e
 
         // Process each job to find the best matching price for its specific date
         const enhancedJobs = await Promise.all(data.map(async (job) => {
-            let finalPrice = job.Price_Per_Unit || priceMap.get(job.Customer_ID) || 0
+            let finalPrice = priceMap.get(job.Customer_ID) || job.Price_Per_Unit || 0
             
-            // If the job has a route and customer, try to find a date-specific rate from fuel matrix
+            // If the job has a route and customer, strictly try to find a date-specific rate from fuel matrix
+            // This ensures historical rates are applied correctly
             if (job.Customer_ID && job.Route_Name && job.Plan_Date) {
                 const suggestedRate = await getSuggestedRate(
                     job.Customer_ID, 
