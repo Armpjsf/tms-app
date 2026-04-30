@@ -7,6 +7,7 @@ import Link from "next/link"
 import React from "react"
 import { getAllCustomers } from "@/lib/supabase/customers"
 import { ProfitReportFilters } from "./profit-report-filters"
+import { ExportCSVButton } from "./export-csv-button"
 
 function formatMoney(n: number) {
   return n.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -52,6 +53,7 @@ export default async function CostPerTripPage(props: PageProps) {
           </div>
 
           <div className="flex flex-wrap gap-4 relative z-10">
+            <ExportCSVButton data={trips} />
             <div className="flex items-center gap-3 px-6 py-3 bg-violet-500/10 rounded-2xl border border-violet-500/20">
               <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
               <span className="text-base font-bold font-black text-violet-400 uppercase tracking-widest">Live Financial Audit</span>
