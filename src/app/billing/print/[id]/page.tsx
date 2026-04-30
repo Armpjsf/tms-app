@@ -106,7 +106,7 @@ export default async function BillingPrintPage(props: Props) {
             <div id="printable-content" className="w-full max-w-[210mm] mx-auto bg-white p-2 sm:p-4 md:p-6 print:w-full print:max-w-none print:p-0 text-[12px] shadow-2xl sm:shadow-none rounded-3xl sm:rounded-none">
                 
                 {/* 1. Header Section */}
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-4">
                         {logoUrl && (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -120,12 +120,12 @@ export default async function BillingPrintPage(props: Props) {
                     </div>
                     <div className="text-right">
                         <div className="text-[11px] text-slate-600 mb-0 font-bold">(ต้นฉบับ)</div>
-                        <div className="text-4xl font-bold text-blue-500 tracking-tight leading-none">ใบวางบิล</div>
+                        <div className="text-3xl font-bold text-blue-500 tracking-tight leading-none">ใบวางบิล</div>
                     </div>
                 </div>
 
                 {/* 2. Info Section */}
-                <div className="flex flex-col md:flex-row justify-between gap-6 mb-6 text-slate-800 text-[12px]">
+                <div className="flex flex-col md:flex-row justify-between gap-6 mb-3 text-slate-800 text-[12px]">
                     <div className="flex-1 space-y-4">
                         <div className="grid grid-cols-[80px_1fr] gap-x-2 gap-y-0.5">
                             <div className="font-bold">ผู้ขาย :</div>
@@ -169,7 +169,7 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* 3. Items Table */}
-                <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0 mb-6">
+                <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0 mb-3">
                     <table className="w-full border-collapse min-w-[600px] md:min-w-0">
                     <thead>
                         <tr className="bg-[#eef2ff] text-slate-800 text-[12px] border-b-2 border-slate-300">
@@ -204,7 +204,7 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* 4. Summary Section & Payment */}
-                <div className="mt-8 flex flex-col md:flex-row justify-between gap-8">
+                <div className="mt-4 flex flex-col md:flex-row justify-between gap-8">
                     {/* Left side: Notes & Text Amount */}
                     <div className="flex-1">
                         <div className="mb-4">
@@ -212,7 +212,7 @@ export default async function BillingPrintPage(props: Props) {
                                 <FileText size={14} className="text-blue-600" />
                                 หมายเหตุ (Notes)
                             </div>
-                            <div className="text-[11px] text-slate-600 italic whitespace-pre-wrap leading-relaxed border border-slate-200 p-3 rounded-lg bg-slate-50/30 min-h-[80px]">
+                            <div className="text-[11px] text-slate-600 italic whitespace-pre-wrap leading-relaxed border border-slate-200 p-3 rounded-lg bg-slate-50/30 min-h-[40px]">
                                 {note.Remarks || company?.invoice_notes || '-'}
                             </div>
                         </div>
@@ -282,7 +282,7 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* 6. Notes Section */}
-                <div className="border-t border-slate-200 pt-4 mt-6 flex flex-col sm:flex-row gap-4 text-[11px]">
+                <div className="border-t border-slate-200 pt-4 mt-2 flex flex-col sm:flex-row gap-4 text-[11px]">
                     <div className="flex items-center gap-2">
                         <div className="w-6 flex justify-center"><MessageSquare size={16} className="text-slate-800" /></div>
                         <div className="font-bold w-16">หมายเหตุ</div>
@@ -293,7 +293,7 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* 7. Signatures Section */}
-                <div className="border-t border-slate-200 pt-6 mt-8 flex flex-col md:flex-row gap-8 text-[11px] page-break-avoid">
+                <div className="border-t border-slate-200 pt-4 mt-3 flex flex-col md:flex-row gap-8 text-[11px] page-break-avoid">
                     <div className="flex items-center gap-2">
                         <div className="w-6 flex justify-center"><PenTool size={16} className="text-slate-800" /></div>
                         <div className="font-bold w-16">รับรอง</div>
@@ -301,7 +301,7 @@ export default async function BillingPrintPage(props: Props) {
                     <div className="flex-1 flex flex-col sm:flex-row gap-8">
                         <div className="w-full sm:w-32 shrink-0 flex flex-col items-center mx-auto sm:mx-0">
                             <div className="text-[10px] text-slate-500 mb-2 text-center font-bold uppercase tracking-widest">สแกนเพื่อตรวจสอบ</div>
-                            <div className="w-32 h-32 bg-white flex items-center justify-center p-2 border-4 border-slate-900 rounded-2xl shadow-xl overflow-hidden group/qr hover:scale-105 transition-transform duration-500">
+                            <div className="w-24 h-24 bg-white flex items-center justify-center p-2 border-4 border-slate-900 rounded-2xl shadow-xl overflow-hidden group/qr hover:scale-105 transition-transform duration-500">
                                 <img
                                     src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&qzone=2&data=${encodeURIComponent(`${baseUrl}/public/invoice/${id}?lang=${lang}&mode=print`)}`}
                                     alt="Billing QR Code"
@@ -352,7 +352,7 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 <style type="text/css" media="print" dangerouslySetInnerHTML={{ __html: `
-                    @page { size: A4; margin: 5mm 8mm; }
+                    @page { size: A4; margin: 3mm 5mm; }
                     body { visibility: hidden; background: white !important; -webkit-print-color-adjust: exact !important; }
                     #printable-content, #printable-content * { visibility: visible; }
                     #printable-content { width: 100%; background: white !important; padding: 0 !important; }
