@@ -342,8 +342,10 @@ export default async function BillingPrintPage(props: Props) {
                                     {item.subDescription && <div className="text-[10px] text-slate-500 font-normal mt-0">{item.subDescription}</div>}
                                 </td>
                                 <td className="py-1.5 px-2 text-center align-top">{item.qty.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                <td className="py-1.5 px-2 text-right align-top">{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                <td className="py-1.5 px-2 text-right align-top">0.00</td>
+                                <td className="py-1.5 px-2 text-right align-top">{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td className="py-1.5 px-2 text-right align-top">
+                                    {(note.Discount_Percent || 0) > 0 ? `${note.Discount_Percent}%` : '0.00'}
+                                </td>
                                 <td className="py-1.5 px-2 text-center align-top">ไม่มี</td>
                                 <td className="py-1.5 px-2 text-right align-top">{item.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             </tr>
@@ -392,9 +394,9 @@ export default async function BillingPrintPage(props: Props) {
                             {(note.Discount_Amount || 0) > 0 && (
                                 <div className="grid grid-cols-[1fr_110px] border-b border-slate-800">
                                     <div className="p-2 font-bold border-r border-slate-800 text-[11px] leading-tight flex items-center">
-                                        ส่วนลด {note.Discount_Percent || 0}% {note.Discount_Percent >= 3 ? 'เมื่อใช้บริการครบ...' : ''}
+                                        ส่วนลด {note.Discount_Percent || 0}% {(note.Discount_Percent || 0) >= 3 ? 'เมื่อใช้บริการครบ...' : ''}
                                     </div>
-                                    <div className="p-2 text-right font-bold text-red-600">-{note.Discount_Amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                    <div className="p-2 text-right font-bold text-red-600">-{ (note.Discount_Amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 }) }</div>
                                 </div>
                             )}
 

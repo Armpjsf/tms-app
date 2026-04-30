@@ -367,7 +367,7 @@ export async function getBillingNoteByIdWithJobs(id: string) {
                 VAT_Rate: inv.VAT_Rate,
                 VAT_Amount: inv.VAT_Amount,
                 Discount_Amount: inv.Discount_Amount,
-                Discount_Percent: inv.Discount_Percent,
+                Discount_Percent: inv.Discount_Percent || inv.Discount_Rate,
                 WHT_Rate: inv.WHT_Rate,
                 WHT_Amount: inv.WHT_Amount,
                 Credit_Days: inv.Credit_Days || 15
