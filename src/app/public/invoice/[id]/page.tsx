@@ -1,8 +1,9 @@
+import React from "react"
 import { getPublicBillingNoteById } from "@/lib/supabase/billing"
 import { notFound } from "next/navigation"
 import { 
     Phone, Mail, User, FileText, CreditCard, MessageSquare, 
-    ShieldCheck
+    ShieldCheck, Printer, Download
 } from "lucide-react"
 import dynamic from 'next/dynamic'
 
@@ -18,58 +19,54 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-type Props = {
+interface PageProps {
     params: Promise<{ id: string }>;
     searchParams: Promise<{ lang?: string; mode?: string }>;
 }
 
-export default async function PublicInvoicePage(args: Props) {
-    const params = await args.params;
-    const searchParams = await args.searchParams;
-    const id = params.id
-    const lang = (searchParams?.lang as 'th' | 'en') || 'th'
+export default async function PublicInvoicePage({ params, searchParams }: PageProps) {
+    const resolvedParams = await params;
+    const resolvedSearchParams = await searchParams;
+    const invoiceId = resolvedParams.id;
+    const lang = (resolvedSearchParams.lang as 'th' | 'en') || 'th';
     
-    const data = await getPublicBillingNoteById(id)
+    const data = await getPublicBillingNoteById(invoiceId);
 
     if (!data || !data.note) {
-        return notFound()
+        return notFound();
     }
 
-    const { note, jobs, company } = data
+    const { note, jobs, company } = data;
 
-    // Unified Data Access
-    const logoUrl = company?.logo_url || company?.Logo_URL || '/images/account logo.png'
-    const sellerName = company?.company_name_th || company?.Company_Name_TH || (lang === 'th' ? company?.company_name : company?.company_name_en)
-    const sellerAddress = company?.address || company?.Address
-    const sellerTaxId = company?.tax_id || company?.Tax_ID
-    const sellerPhone = company?.phone || company?.Phone
-    const sellerEmail = company?.email || company?.Email
+    // Data Mapping
+    const logoUrl = company?.logo_url || company?.Logo_URL || '/images/account logo.png';
+    const sellerName = company?.company_name_th || company?.Company_Name_TH || (lang === 'th' ? company?.company_name : company?.company_name_en);
+    const sellerAddress = company?.address || company?.Address;
+    const sellerTaxId = company?.tax_id || company?.Tax_ID;
+    const sellerPhone = company?.phone || company?.Phone;
+    const sellerEmail = company?.email || company?.Email;
     
-    const bankName = company?.bank_name || company?.Bank_Name || 'ธนาคารไทยพาณิชย์ (SCB)'
-    const bankAccNo = company?.bank_account_no || company?.Bank_Account_No
-    const bankAccName = company?.bank_account_name || company?.Bank_Account_Name
-    const contactName = company?.contact_name || company?.Contact_Name || 'ฝ่ายบัญชี'
+    const bankName = company?.bank_name || company?.Bank_Name || 'ธนาคารไทยพาณิชย์ (SCB)';
+    const bankAccNo = company?.bank_account_no || company?.Bank_Account_No;
+    const bankAccName = company?.bank_account_name || company?.Bank_Account_Name;
+    const contactName = company?.contact_name || company?.Contact_Name || 'ฝ่ายบัญชี';
 
-    // Use shared aggregation logic
-    const displayItems = aggregateBillingJobs(jobs, lang)
-    
-    const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
+    const displayItems = aggregateBillingJobs(jobs, lang);
+    const localeStr = lang === 'th' ? 'th-TH' : 'en-US';
     const issueDate = note.Billing_Date ? new Date(note.Billing_Date) : new Date();
-    const dueDate = !isNaN(issueDate.getTime()) 
-        ? new Date(issueDate.getTime() + (note.Credit_Days || 15) * 24 * 60 * 60 * 1000)
-        : new Date();
+    const dueDate = new Date(issueDate.getTime() + (note.Credit_Days || 15) * 24 * 60 * 60 * 1000);
 
-    const totalPreTax = displayItems.reduce((acc, curr) => acc + curr.totalBeforeTax, 0)
-    const discountAmount = note.Discount_Amount || 0
-    const vatAmount = note.VAT_Amount || 0
-    const wht = note.WHT_Amount ?? ((totalPreTax - discountAmount) * (note.WHT_Rate || 1) / 100)
-    const netTotal = (note.Total_Amount || (totalPreTax - discountAmount + vatAmount)) - wht
+    const totalPreTax = displayItems.reduce((acc, curr) => acc + curr.totalBeforeTax, 0);
+    const discountAmt = note.Discount_Amount || 0;
+    const vatAmt = note.VAT_Amount || 0;
+    const whtAmt = note.WHT_Amount ?? ((totalPreTax - discountAmt) * (note.WHT_Rate || 1) / 100);
+    const grandTotal = (note.Total_Amount || (totalPreTax - discountAmt + vatAmt));
+    const netTotal = grandTotal - whtAmt;
 
     return (
         <div className="bg-slate-100 min-h-screen py-12 px-4 font-sans print:p-0 print:bg-white">
-            {searchParams?.mode === 'print' && <AutoPrint />}
+            {resolvedSearchParams.mode === 'print' && <AutoPrint />}
             
-            {/* Toolbar for Public View */}
             <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center print:hidden">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-blue-600 rounded-lg text-white shadow-lg">
@@ -85,10 +82,8 @@ export default async function PublicInvoicePage(args: Props) {
                 </div>
             </div>
 
-            {/* Document Twin */}
             <div id="printable-content" className="w-full max-w-[210mm] mx-auto bg-white p-4 sm:p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-3xl sm:rounded-sm print:shadow-none print:p-0 print:w-full">
                 
-                {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-6 mb-10">
                     <div className="flex items-center gap-4">
                         {logoUrl && (
@@ -200,11 +195,11 @@ export default async function PublicInvoicePage(args: Props) {
                         </div>
                         <div className="flex justify-between text-slate-400 italic text-[11px] tracking-widest">
                             <span>ส่วนลด (Discount)</span>
-                            <span>-{(discountAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span>-{(discountAmt).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div className="flex justify-between text-rose-500 font-bold uppercase text-[11px] tracking-widest pt-2 border-t border-slate-100">
                             <span>หัก ณ ที่จ่าย (WHT {note.WHT_Rate || 1}%)</span>
-                            <span>-{wht.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span>-{(whtAmt).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                         
                         <div className="mt-6 bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
