@@ -8,6 +8,11 @@ import {
 import { AutoPrint } from "@/components/utils/auto-print"
 import { PrintButton } from "@/components/billing/print-button"
 
+import { 
+    aggregateBillingJobs, 
+    ArabicNumberToText 
+} from "@/lib/billing-utils"
+
 export const dynamic = 'force-dynamic'
 
 type Props = {
@@ -15,58 +20,11 @@ type Props = {
     searchParams: Promise<{ lang?: string; mode?: string }>;
 }
 
-function ArabicNumberToText(Number: number) {
-    const numStr = Number.toFixed(2);
-    const parts = numStr.split('.');
-    const integerPart = parts[0];
-    const fractionalPart = parts[1];
-
-    const numbers = ['ศูนย์', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า'];
-    const positions = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน', 'ล้าน'];
-
-    function readNumber(num: string) {
-        if (num === '0' || num === '00') return '';
-        let result = '';
-        const len = num.length;
-        for (let i = 0; i < len; i++) {
-            const digit = parseInt(num.charAt(i), 10);
-            const pos = (len - i - 1) % 6;
-            const isMillion = (len - i - 1) >= 6 && pos === 0;
-            
-            if (digit !== 0) {
-                if (pos === 1 && digit === 1) {
-                    result += 'สิบ';
-                } else if (pos === 1 && digit === 2) {
-                    result += 'ยี่สิบ';
-                } else if (pos === 0 && digit === 1 && len > 1 && num.charAt(len-2) !== '0') {
-                    result += 'เอ็ด';
-                } else {
-                    result += numbers[digit] + positions[pos];
-                }
-            }
-            if (isMillion) {
-                result += 'ล้าน';
-            }
-        }
-        return result;
-    }
-
-    let text = readNumber(integerPart);
-    if (text === '') text = 'ศูนย์';
-    text += 'บาท';
-    if (fractionalPart === '00') {
-        text += 'ถ้วน';
-    } else {
-        text += readNumber(fractionalPart) + 'สตางค์';
-    }
-    return text;
-}
-
 export default async function PublicInvoicePage(props: Props) {
     const params = await props.params;
     const searchParams = await props.searchParams;
     const { id } = params
-    const lang = searchParams?.lang || 'th'
+    const lang = (searchParams?.lang as 'th' | 'en') || 'th'
     
     const data = await getPublicBillingNoteById(id)
 
@@ -89,128 +47,15 @@ export default async function PublicInvoicePage(props: Props) {
     const bankAccName = company?.bank_account_name || company?.Bank_Account_Name
     const contactName = company?.contact_name || company?.Contact_Name || 'ฝ่ายบัญชี'
 
-    // Use the same aggregation logic as the print page for consistency
-    const aggregatedItems = new Map<string, { 
-        description: string; 
-        subDescription?: string; 
-        qty: number; 
-        unitPrice: number; 
-        totalBeforeTax: number; 
-        isExtra: boolean; 
-    }>()
-
-    let minDate: Date | null = null
-    let maxDate: Date | null = null
-
-    // Helper to format date range in Thai/BE
-    function formatBEDateRange(start: Date, end: Date) {
-        const sD = start.getDate()
-        const eD = end.getDate()
-        const sM = start.getMonth() + 1
-        const sY = start.getFullYear() + 543
-        
-        if (sD === eD && start.getMonth() === end.getMonth()) {
-            return `${sD}/${sM}/${sY}`
-        }
-        return `${sD}-${eD}/${sM}/${sY}`
-    }
-
-    jobs.forEach((job) => {
-        const jobDate = new Date(job.Plan_Date)
-        if (!minDate || jobDate < minDate) minDate = jobDate
-        if (!maxDate || jobDate > maxDate) maxDate = jobDate
-
-        const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 1)
-        const unitPrice = Number(job.Price_Per_Unit || 0)
-        
-        let basePrice = Number(job.Price_Cust_Total || 0)
-        if (basePrice <= 0 && unitPrice > 0) basePrice = qty * unitPrice
-
-        const freightKey = 'FREIGHT'
-        const existingFreight = aggregatedItems.get(freightKey)
-        if (existingFreight) {
-            existingFreight.qty += 1
-            existingFreight.totalBeforeTax += basePrice
-        } else {
-            aggregatedItems.set(freightKey, {
-                description: `ค่าขนส่งสินค้า (${job.Customer_ID || 'P00001'})`,
-                qty: 1,
-                unitPrice: 0,
-                totalBeforeTax: basePrice,
-                isExtra: false
-            })
-        }
-
-        const EXPENSE_MAP: Record<string, string> = {
-            'Price_Cust_Extra': 'เพิ่มจุดลงของ',
-            'Charge_Labor': 'แรงงานยกของ',
-            'Charge_Wait': 'รอลงเกินเวลา',
-            'Price_Cust_Other': 'อื่นๆ'
-        }
-
-        const standardExtras = ['Price_Cust_Extra', 'Charge_Labor', 'Charge_Wait', 'Price_Cust_Other']
-        standardExtras.forEach(col => {
-            const val = Number(job[col] || 0)
-            if (val > 0) {
-                const key = `EXTRA-${col}`
-                const existing = aggregatedItems.get(key)
-                if (existing) {
-                    existing.qty += 1
-                    existing.totalBeforeTax += val
-                } else {
-                    aggregatedItems.set(key, {
-                        description: lang === 'th' ? EXPENSE_MAP[col] : col.replace(/_/g, ' '),
-                        qty: 1,
-                        unitPrice: 0,
-                        totalBeforeTax: val,
-                        isExtra: true
-                    })
-                }
-            }
-        })
-
-        if (job.extra_costs_json) {
-            let costs = job.extra_costs_json
-            if (typeof costs === 'string') { try { costs = JSON.parse(costs) } catch {} }
-            if (Array.isArray(costs)) {
-                costs.filter(e => Number(e.charge_cust) > 0).forEach((extra) => {
-                    const val = Number(extra.charge_cust)
-                    const typeLabel = extra.type || (lang === 'th' ? 'ค่าใช้จ่ายเพิ่มเติม' : 'Extra Cost')
-                    const key = `JSON-${typeLabel}`
-                    const existing = aggregatedItems.get(key)
-                    if (existing) {
-                        existing.qty += 1
-                        existing.totalBeforeTax += val
-                    } else {
-                        aggregatedItems.set(key, {
-                            description: typeLabel === 'Pallet' ? 'ค่าพาเลท' : typeLabel,
-                            qty: 1,
-                            unitPrice: 0,
-                            totalBeforeTax: val,
-                            isExtra: true
-                        })
-                    }
-                })
-            }
-        }
-    })
+    // Use shared aggregation logic
+    const displayItems = aggregateBillingJobs(jobs, lang)
     
-    const freightItem = aggregatedItems.get('FREIGHT')
-    if (freightItem && minDate && maxDate) {
-        freightItem.subDescription = `--ค่าขนส่งสินค้า วันที่ ${formatBEDateRange(minDate, maxDate)}`
-    }
-
     const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
     const issueDate = note.Billing_Date ? new Date(note.Billing_Date) : new Date();
     const dueDate = !isNaN(issueDate.getTime()) 
         ? new Date(issueDate.getTime() + (note.Credit_Days || 15) * 24 * 60 * 60 * 1000)
         : new Date();
 
-    const displayItems = Array.from(aggregatedItems.values()).map(item => ({
-        ...item,
-        unitPrice: item.qty > 0 ? (item.totalBeforeTax / item.qty) : 0
-    }))
-    
     const totalPreTax = displayItems.reduce((acc, curr) => acc + curr.totalBeforeTax, 0)
     const wht = note.WHT_Amount ?? ((totalPreTax - (note.Discount_Amount || 0)) * (note.WHT_Rate || 1) / 100)
     const netTotal = (note.Total_Amount || (totalPreTax - (note.Discount_Amount || 0) + (note.VAT_Amount || 0))) - wht
