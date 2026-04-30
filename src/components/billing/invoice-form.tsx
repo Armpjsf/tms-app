@@ -58,7 +58,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
   const [issueDate, setIssueDate] = useState<Date>(new Date())
   const [dueDate, setDueDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() + 30)))
   const [vatRate, setVatRate] = useState(0)
-  const [discountRate, setDiscountRate] = useState<number | "">("")
+  const [discountRate, setDiscountRate] = useState<number>(0)
   const [whtRate, setWhtRate] = useState(0)
   const [notes, setNotes] = useState("")
 
@@ -69,7 +69,30 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
     if (customerId) {
         setFetchingJobs(true)
         getBillableJobsAction(customerId).then(jobs => {
-            setAvailableJobs(jobs || [])
+            // Recalculate Price_Cust_Total for jobs where it's 0 OR where we want to trust the dynamic Price_Per_Unit
+            const enriched = (jobs || []).map(j => {
+                const qty = Number(j.Weight_Kg || j.Volume_Cbm || j.Loaded_Qty || 0)
+                const unitPrice = Number(j.Price_Per_Unit || 0)
+                const storedTotal = Number(j.Price_Cust_Total || 0)
+                
+                // If we have a unit price and either no total OR a mismatch, we suggest recalculation
+                // However for initial load, if Price_Cust_Total exists and > 0, we respect it 
+                // UNLESS it looks like it was using the old 16 rate while new rate is 17
+                let finalTotal = storedTotal
+                if (unitPrice > 0 && qty > 0) {
+                    const expectedTotal = Number((qty * unitPrice).toFixed(2))
+                    if (storedTotal === 0 || Math.abs(storedTotal - expectedTotal) > 0.1) {
+                        finalTotal = expectedTotal
+                    }
+                }
+
+                return {
+                    ...j,
+                    Price_Cust_Total: finalTotal
+                }
+            })
+
+            setAvailableJobs(enriched)
             setFetchingJobs(false)
             if (initialJobIds.length > 0 && selectedJobIds.length === 0) {
                 setSelectedJobIds(initialJobIds)
@@ -338,7 +361,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                         <Input 
                             type="number"
                             value={discountRate} 
-                            onChange={(e) => setDiscountRate(e.target.value === "" ? "" : Number(e.target.value))} 
+                            onChange={(e) => setDiscountRate(Number(e.target.value) || 0)} 
                             className="bg-card/50 border-border/10 rounded-xl h-11 text-xs font-bold text-muted-foreground focus:ring-purple-500/20" 
                             placeholder="0%"
                         />
