@@ -82,7 +82,7 @@ export async function exportInvoiceExcel(invoiceId: string) {
                 targetRow.height = sourceRow.height
                 sourceRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
                     const targetCell = targetRow.getCell(colNumber)
-                    targetCell.style = { ...cell.style }
+                    targetCell.style = cell.style
                 })
             }
         }
