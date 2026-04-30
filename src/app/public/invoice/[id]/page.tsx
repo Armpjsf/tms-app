@@ -1,4 +1,3 @@
-import React from "react"
 import { getPublicBillingNoteById } from "@/lib/supabase/billing"
 import { notFound } from "next/navigation"
 import { 
