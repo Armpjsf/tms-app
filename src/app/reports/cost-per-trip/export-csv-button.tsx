@@ -24,7 +24,9 @@ export function ExportCSVButton({ data }: ExportCSVButtonProps) {
                 "Job ID",
                 "ทะเบียนรถ",
                 "ลูกค้า",
-                "เส้นทาง",
+                "ต้นทาง",
+                "ปลายทาง",
+                "เส้นทางรวม",
                 "ระยะทาง (KM)",
                 "รายได้ (THB)",
                 "ค่าคนขับ (THB)",
@@ -38,23 +40,39 @@ export function ExportCSVButton({ data }: ExportCSVButtonProps) {
             ]
 
             // 2. Map Data to Rows
-            const rows = data.map(t => [
-                t.Plan_Date || "-",
-                t.Job_ID,
-                t.Vehicle_Plate || "-",
-                t.Customer_Name || "-",
-                t.Route_Name || "-",
-                t.distance_km || 0,
-                t.Cost_Customer_Total || 0,
-                (t.Cost_Driver_Total || 0) + (t.extra_cost || 0),
-                t.fuel_real || 0,
-                t.fuel_est || 0,
-                t.maint_real || 0,
-                t.maint_est || 0,
-                t.total_cost || 0,
-                t.profit || 0,
-                t.profit_pct || 0
-            ])
+            const rows = data.map(t => {
+                let origin = (t.Origin_Location || "").trim()
+                let dest = (t.Dest_Location || "").trim()
+
+                // Fallback: Parse from Route_Name if locations are missing
+                if ((!origin || !dest) && t.Route_Name) {
+                    const parts = t.Route_Name.split(/[-→/]/)
+                    if (parts.length >= 2) {
+                        if (!origin) origin = parts[0].trim()
+                        if (!dest) dest = parts.slice(1).join(" - ").trim()
+                    }
+                }
+
+                return [
+                    t.Plan_Date || "-",
+                    t.Job_ID,
+                    t.Vehicle_Plate || "-",
+                    t.Customer_Name || "-",
+                    origin || "-",
+                    dest || "-",
+                    t.Route_Name || "-",
+                    t.distance_km || 0,
+                    t.Cost_Customer_Total || 0,
+                    (t.Cost_Driver_Total || 0) + (t.extra_cost || 0),
+                    t.fuel_real || 0,
+                    t.fuel_est || 0,
+                    t.maint_real || 0,
+                    t.maint_est || 0,
+                    t.total_cost || 0,
+                    t.profit || 0,
+                    t.profit_pct || 0
+                ]
+            })
 
             // 3. Convert to CSV String
             // We use \ufeff (BOM) to ensure Excel opens Thai characters correctly

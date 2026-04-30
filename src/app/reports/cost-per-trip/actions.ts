@@ -8,6 +8,8 @@ export interface TripCost {
   Plan_Date: string | null
   Customer_Name: string | null
   Route_Name: string | null
+  Origin_Location: string | null
+  Dest_Location: string | null
   Driver_Name: string | null
   Vehicle_Plate: string | null
   Job_Status: string
@@ -52,7 +54,7 @@ export async function getCostPerTrip(startDate?: string, endDate?: string, custo
 
   let query = supabase
     .from('Jobs_Main')
-    .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Est_Distance_KM')
+    .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Origin_Location, Dest_Location, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Est_Distance_KM')
     .in('Job_Status', ['Completed', 'Delivered', 'Finished', 'Closed'])
     .gte('Plan_Date', start)
     .lte('Plan_Date', end)
@@ -103,6 +105,8 @@ export async function getCostPerTrip(startDate?: string, endDate?: string, custo
       Plan_Date: d.Plan_Date,
       Customer_Name: d.Customer_Name,
       Route_Name: d.Route_Name,
+      Origin_Location: d.Origin_Location,
+      Dest_Location: d.Dest_Location,
       Driver_Name: d.Driver_Name,
       Vehicle_Plate: d.Vehicle_Plate,
       Job_Status: d.Job_Status,
