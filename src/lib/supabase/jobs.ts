@@ -1038,9 +1038,10 @@ export async function getDriverDashboardStats(driverId: string) {
 // Get billable jobs (Complete/Delivered and NOT yet invoiced)
 export async function getBillableJobs(customerId?: string, startDate?: string, endDate?: string) {
   try {
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
     const branchId = await getUserBranchId()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isRegularAdmin) ? await createAdminClient() : await createClient()
 
     let dbQuery = supabase
       .from('Jobs_Main')
