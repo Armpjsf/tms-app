@@ -51,7 +51,7 @@ export async function confirmInvoiceAndCreateBillingNote(invoiceId: string) {
                 Due_Date: invoice.Due_Date,
                 Total_Amount: invoice.Grand_Total || invoice.Subtotal,
                 Discount_Amount: invoice.Discount_Amount || 0,
-                Discount_Percent: invoice.Discount_Percent || 0,
+                Discount_Percent: invoice.Discount_Percent || invoice.Discount_Rate || 0,
                 VAT_Amount: invoice.VAT_Amount || 0,
                 VAT_Rate: invoice.VAT_Rate || 0,
                 WHT_Amount: invoice.WHT_Amount || 0,
