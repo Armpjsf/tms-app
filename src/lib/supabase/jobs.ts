@@ -928,11 +928,18 @@ export async function getJobsForBilling(
 
         // Process each job to find the best matching price for its specific date
         const enhancedJobs = await Promise.all(data.map(async (job) => {
+            const dateStr = String(job.Plan_Date || "")
+            const jobDate = job.Plan_Date ? new Date(job.Plan_Date) : null
+            const isApril21_23 = (jobDate && jobDate.getFullYear() === 2026 && jobDate.getMonth() === 3 && [21, 22, 23].includes(jobDate.getDate())) ||
+                                 dateStr.includes("-04-21") || dateStr.includes("-04-22") || dateStr.includes("-04-23")
+            
             let finalPrice = priceMap.get(job.Customer_ID) || job.Price_Per_Unit || 0
             
             // If the job has a route and customer, strictly try to find a date-specific rate from fuel matrix
             // This ensures historical rates are applied correctly
-            if (job.Customer_ID && job.Route_Name && job.Plan_Date) {
+            if (isApril21_23) {
+                finalPrice = 17
+            } else if (job.Customer_ID && job.Route_Name && job.Plan_Date) {
                 const suggestedRate = await getSuggestedRate(
                     job.Customer_ID, 
                     job.Route_Name, 
@@ -1113,11 +1120,18 @@ export async function getBillableJobs(customerId?: string, startDate?: string, e
 
         // Process each job to find the best matching price for its specific date
         const enhancedJobs = await Promise.all(data.map(async (job) => {
+            const dateStr = String(job.Plan_Date || "")
+            const jobDate = job.Plan_Date ? new Date(job.Plan_Date) : null
+            const isApril21_23 = (jobDate && jobDate.getFullYear() === 2026 && jobDate.getMonth() === 3 && [21, 22, 23].includes(jobDate.getDate())) ||
+                                 dateStr.includes("-04-21") || dateStr.includes("-04-22") || dateStr.includes("-04-23")
+            
             let finalPrice = priceMap.get(job.Customer_ID) || job.Price_Per_Unit || 0
             
             // If the job has a route and customer, strictly try to find a date-specific rate from fuel matrix
             // This ensures historical rates are applied correctly
-            if (job.Customer_ID && job.Route_Name && job.Plan_Date) {
+            if (isApril21_23) {
+                finalPrice = 17
+            } else if (job.Customer_ID && job.Route_Name && job.Plan_Date) {
                 const suggestedRate = await getSuggestedRate(
                     job.Customer_ID, 
                     job.Route_Name, 
