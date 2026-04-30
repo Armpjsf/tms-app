@@ -121,6 +121,17 @@ export default async function BillingPrintPage(props: Props) {
                     <div className="text-right">
                         <div className="text-[11px] text-slate-600 mb-0 font-bold">(ต้นฉบับ)</div>
                         <div className="text-3xl font-bold text-blue-500 tracking-tight leading-none">ใบวางบิล</div>
+                        
+                        <div className="mt-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-left">
+                            <div className="grid grid-cols-[80px_1fr] gap-y-0.5 text-[11px]">
+                                <div className="font-bold text-slate-600 uppercase tracking-tighter">เลขที่เอกสาร :</div>
+                                <div className="font-bold">{note.Billing_Note_ID}</div>
+                                <div className="font-bold text-slate-600 uppercase tracking-tighter">วันที่ออก :</div>
+                                <div>{safeLocaleDateString(issueDate, localeStr)}</div>
+                                <div className="font-bold text-slate-600 uppercase tracking-tighter">วันที่ครบกำหนด :</div>
+                                <div>{safeLocaleDateString(dueDate, localeStr)}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -143,27 +154,15 @@ export default async function BillingPrintPage(props: Props) {
                             <div className="leading-tight">{note.Customer_Address || '-'}</div>
                             <div className="font-bold">เลขที่ภาษี :</div>
                             <div>{note.Customer_Tax_ID || '-'}</div>
-                    </div>
+                        </div>
                     </div>
                     
-                    <div className="w-full md:w-[300px] shrink-0">
-                        <div className="bg-slate-100/80 p-3 rounded-lg border border-slate-200 mb-2">
-                            <div className="grid grid-cols-[110px_1fr] gap-y-1">
-                                <div className="font-bold text-slate-700">เลขที่เอกสาร :</div>
-                                <div>{note.Billing_Note_ID}</div>
-                                <div className="font-bold text-slate-700">วันที่ออก :</div>
-                                <div>{safeLocaleDateString(issueDate, localeStr)}</div>
-                                <div className="font-bold text-slate-700">เครดิต :</div>
-                                <div>{note.Credit_Days || '15'} วัน</div>
-                                <div className="font-bold text-slate-700">วันที่ครบกำหนด :</div>
-                                <div>{safeLocaleDateString(dueDate, localeStr)}</div>
-                            </div>
-                        </div>
-                        <div className="pl-3 border-l-2 border-slate-200 text-[11px]">
-                            <div className="font-bold mb-1">ติดต่อกลับที่ :</div>
-                            <div className="flex items-center gap-2 mb-0.5"><User size={12} className="text-slate-600"/> {contactName}</div>
-                            <div className="flex items-center gap-2 mb-0.5"><Phone size={12} className="text-slate-600"/> {sellerPhone || '-'}</div>
-                            <div className="flex items-center gap-2"><Mail size={12} className="text-slate-600"/> {sellerEmail || '-'}</div>
+                    <div className="w-full md:w-[220px] shrink-0 text-right">
+                        <div className="text-[11px] space-y-0.5">
+                            <div className="font-bold text-slate-400 uppercase tracking-widest text-[9px] mb-1">ติดต่อเรา</div>
+                            <div className="flex items-center justify-end gap-2"><span className="text-slate-600">{contactName}</span> <User size={10} className="text-slate-400"/></div>
+                            <div className="flex items-center justify-end gap-2"><span className="text-slate-600">{sellerPhone || '-'}</span> <Phone size={10} className="text-slate-400"/></div>
+                            <div className="flex items-center justify-end gap-2"><span className="text-slate-600">{sellerEmail || '-'}</span> <Mail size={10} className="text-slate-400"/></div>
                         </div>
                     </div>
                 </div>
@@ -207,15 +206,6 @@ export default async function BillingPrintPage(props: Props) {
                 <div className="mt-4 flex flex-col md:flex-row justify-between gap-8">
                     {/* Left side: Notes & Text Amount */}
                     <div className="flex-1">
-                        <div className="mb-4">
-                            <div className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5 mb-1.5">
-                                <FileText size={14} className="text-blue-600" />
-                                หมายเหตุ (Notes)
-                            </div>
-                            <div className="text-[11px] text-slate-600 italic whitespace-pre-wrap leading-relaxed border border-slate-200 p-3 rounded-lg bg-slate-50/30 min-h-[40px]">
-                                {note.Remarks || company?.invoice_notes || '-'}
-                            </div>
-                        </div>
 
                         <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                              <div className="w-10 h-10 flex items-center justify-center overflow-hidden bg-white p-1 rounded border border-slate-100 shrink-0">
