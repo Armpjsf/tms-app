@@ -244,7 +244,7 @@ export default async function PublicInvoicePage(props: Props) {
                 @page { size: A4; margin: 0; }
                 body { background: white !important; }
                 .print-hidden { display: none !important; }
-                #printable-content { p: 0 !important; shadow: none !important; border: none !important; width: 100% !important; max-width: none !important; }
+                #printable-content { padding: 0 !important; shadow: none !important; border: none !important; width: 100% !important; max-width: none !important; }
             ` }} />
         </div>
     )
