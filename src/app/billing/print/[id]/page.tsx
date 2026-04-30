@@ -351,67 +351,83 @@ export default async function BillingPrintPage(props: Props) {
                     </tbody>
                 </table>
 
-                {/* 4. Summary Section */}
-                <div className="border-t border-slate-200 pt-3 mt-4 flex gap-4 text-[12px]">
-                    <div className="w-6 flex justify-center mt-0.5"><FileText size={16} className="text-slate-800" /></div>
-                    <div className="font-bold w-16">สรุป</div>
+                {/* 4. Summary Section & Payment */}
+                <div className="mt-6 flex justify-between gap-6">
+                    {/* Left side: Notes & Text Amount */}
                     <div className="flex-1">
-                        <div className="flex justify-between items-center mb-0.5">
-                            <span className="font-bold text-slate-700">มูลค่าก่อนส่วนลด (Gross Amount)</span>
-                            <span className="pr-4">{totalPreTax.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
-                        </div>
-                        <div className="flex justify-between items-center mb-0.5 text-slate-500 italic text-[11px]">
-                            <span>ส่วนลด (Discount)</span>
-                            <span className="pr-4">{(note.Discount_Amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
-                        </div>
-                        <div className="flex justify-between items-center mb-0.5">
-                            <span className="font-bold text-slate-700">มูลค่าหลังหักส่วนลด (Net Amount)</span>
-                            <span className="pr-4">{(totalPreTax - (note.Discount_Amount || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
-                        </div>
-                        <div className="flex justify-between items-center mb-2 text-slate-500 italic text-[11px]">
-                            <span>ภาษีมูลค่าเพิ่ม (VAT {note.VAT_Rate || 0}%)</span>
-                            <span className="pr-4">{(note.VAT_Amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
-                        </div>
-
-                        <div className="flex justify-between items-center mb-4">
-                            <div className="font-bold">จำนวนเงินทั้งสิ้น</div>
-                            <div className="text-slate-600 flex-1 text-center italic text-[11px] px-2">{ArabicNumberToText(note.Total_Amount || totalPreTax)}</div>
-                            <div className="bg-[#eef2ff] px-3 py-2 rounded w-72 flex justify-between items-center border border-blue-100">
-                                <span className="font-bold">จำนวนเงินทั้งสิ้น</span>
-                                <span className="text-lg font-bold text-blue-600 tracking-tight">{(note.Total_Amount || totalPreTax).toLocaleString(undefined, { minimumFractionDigits: 2 })} <span className="text-[10px] text-slate-800 font-normal">บาท</span></span>
+                        <div className="mb-4">
+                            <div className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5 mb-1.5">
+                                <FileText size={14} className="text-blue-600" />
+                                หมายเหตุ (Notes)
+                            </div>
+                            <div className="text-[11px] text-slate-600 italic whitespace-pre-wrap leading-relaxed border border-slate-200 p-3 rounded-lg bg-slate-50/30 min-h-[80px]">
+                                {note.Remarks || company?.invoice_notes || '-'}
                             </div>
                         </div>
 
-                        <div className="flex flex-col items-end gap-0.5">
-                            <div className="w-72 flex justify-between pr-4 border-b border-dashed border-slate-200 pb-0.5 text-[11px]">
-                                <span className="font-bold text-slate-700">หัก ณ ที่จ่าย (WHT {note.WHT_Rate || 1}%)</span>
-                                <span>{wht.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
+                        <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                             <div className="w-10 h-10 flex items-center justify-center overflow-hidden bg-white p-1 rounded border border-slate-100 shrink-0">
+                                <img 
+                                    src="/images/scb logo.jpg" 
+                                    alt="SCB Logo" 
+                                    className="w-full h-full object-contain"
+                                />
                             </div>
-                            <div className="w-72 flex justify-between pr-4 pt-0.5">
-                                <span className="font-bold text-base text-blue-800">ยอดชำระสุทธิ</span>
-                                <span className="font-bold text-base text-blue-800">{netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
+                            <div>
+                                <div className="font-bold text-slate-800 text-[11px] leading-tight">{bankName}</div>
+                                <div className="font-bold text-blue-700 text-[11px] mt-0.5 leading-tight">ออมทรัพย์ {bankAccNo || '-'}</div>
+                                <div className="text-slate-600 text-[10px] mt-0.5 leading-tight">{bankAccName || '-'}</div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* 5. Payment Section */}
-                <div className="border-t border-slate-200 pt-3 mt-4 flex gap-4 text-[12px] page-break-avoid">
-                    <div className="w-6 flex justify-center mt-0.5"><CreditCard size={16} className="text-slate-800" /></div>
-                    <div className="font-bold w-16">ชำระเงิน</div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 flex items-center justify-center overflow-hidden bg-white p-1 rounded border border-slate-100">
-                            <img 
-                                src="/images/scb logo.jpg" 
-                                alt="SCB Logo" 
-                                className="w-full h-full object-contain"
-                            />
+                    {/* Right side: Calculations Table */}
+                    <div className="w-[320px] shrink-0">
+                        <div className="border-2 border-slate-800 rounded-sm overflow-hidden">
+                            <div className="grid grid-cols-[1fr_110px] border-b border-slate-800">
+                                <div className="p-2 font-bold border-r border-slate-800 bg-slate-50">มูลค่ารวม (Total)</div>
+                                <div className="p-2 text-right font-bold">{totalPreTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                            </div>
+                            
+                            {(note.Discount_Amount || 0) > 0 && (
+                                <div className="grid grid-cols-[1fr_110px] border-b border-slate-800">
+                                    <div className="p-2 font-bold border-r border-slate-800 text-[11px] leading-tight flex items-center">
+                                        ส่วนลด {note.Discount_Percent || 0}% {note.Discount_Percent >= 3 ? 'เมื่อใช้บริการครบ...' : ''}
+                                    </div>
+                                    <div className="p-2 text-right font-bold text-red-600">-{note.Discount_Amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                </div>
+                            )}
+
+                            {(note.VAT_Amount || 0) > 0 && (
+                                <div className="grid grid-cols-[1fr_110px] border-b border-slate-800">
+                                    <div className="p-2 font-bold border-r border-slate-800 text-[11px]">ภาษีมูลค่าเพิ่ม {note.VAT_Rate}%</div>
+                                    <div className="p-2 text-right">{note.VAT_Amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-[1fr_110px] bg-slate-900 text-white">
+                                <div className="p-2.5 font-bold border-r border-slate-700 text-[13px]">จำนวนเงินทั้งสิ้น</div>
+                                <div className="p-2.5 text-right font-bold text-[15px]">{(note.Total_Amount || (totalPreTax - (note.Discount_Amount || 0) + (note.VAT_Amount || 0))).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                            </div>
                         </div>
-                        <div>
-                            <div className="font-bold text-slate-800 leading-none">{bankName}</div>
-                            <div className="font-bold text-slate-800 mt-1 leading-none text-[11px]">ออมทรัพย์ {bankAccNo || '-'}</div>
-                            <div className="text-slate-600 mt-0.5 leading-none text-[10px]">{bankAccName || '-'}</div>
+                        
+                        <div className="mt-2 text-center text-[10px] font-bold text-slate-700 italic px-2 leading-tight">
+                            ({ArabicNumberToText(note.Total_Amount || (totalPreTax - (note.Discount_Amount || 0) + (note.VAT_Amount || 0)))})
                         </div>
+
+                        {/* Net Total after WHT if applicable */}
+                        {(wht > 0) && (
+                            <div className="mt-3 space-y-1">
+                                <div className="flex justify-between text-[11px] px-2 text-slate-500 italic">
+                                    <span>หัก ณ ที่จ่าย ({note.WHT_Rate}%)</span>
+                                    <span>-{wht.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                </div>
+                                <div className="flex justify-between text-[12px] px-2 font-bold text-blue-900 border-t border-blue-100 pt-1">
+                                    <span>ยอดชำระสุทธิ</span>
+                                    <span>{netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
