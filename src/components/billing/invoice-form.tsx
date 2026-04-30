@@ -434,6 +434,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                                 <span>ภาษีมูลค่าเพิ่ม ({vatRate}%)</span>
                                 <span>฿{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
+                        )}
                         {whtRate > 0 && (
                             <div className="flex justify-between text-[10px] font-black text-rose-500 uppercase tracking-widest">
                                 <span>หัก ณ ที่จ่าย ({whtRate}%)</span>
