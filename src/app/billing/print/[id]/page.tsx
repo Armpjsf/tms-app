@@ -66,18 +66,7 @@ export default async function BillingPrintPage(props: Props) {
     // Use shared aggregation logic
     const baseItems = aggregateBillingJobs(jobs, lang === 'en' ? 'en' : 'th', note.Customer_Name || undefined)
     
-    const displayItems = baseItems.map(item => {
-        const actualQty = item.qty
-        return {
-            ...item,
-            // Add quantity count to description if more than 1
-            description: actualQty > 1 
-                ? `${item.description} (${actualQty.toLocaleString()} ${item.isExtra ? 'ครั้ง' : 'เที่ยว'})` 
-                : item.description,
-            qty: 1,
-            unitPrice: item.totalBeforeTax
-        }
-    })
+    const displayItems = baseItems;
     
     const totalPreTax = baseItems.reduce((acc, curr) => acc + curr.totalBeforeTax, 0)
     

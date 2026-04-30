@@ -97,18 +97,6 @@ export function aggregateBillingJobs(jobs: any[], lang: 'th' | 'en' = 'th', cust
     };
 
     jobs.forEach((job) => {
-        let unitPrice = Number(job.Price_Per_Unit || 0);
-        
-        // Special adjustment for dates 21-23 April as requested (Fuel rate increase)
-        if (job.Plan_Date && customerName?.includes('สยามรุ่งเรือง')) {
-            const d = new Date(job.Plan_Date);
-            const day = d.getDate();
-            const month = d.getMonth();
-            if (month === 3 && day >= 21 && day <= 23) {
-                unitPrice = 17;
-            }
-        }
-
         // Track dates
         if (job.Plan_Date) {
             const jobDate = new Date(job.Plan_Date);
@@ -117,24 +105,29 @@ export function aggregateBillingJobs(jobs: any[], lang: 'th' | 'en' = 'th', cust
         }
 
         // 1. Freight Cost
+        const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 1);
         let basePrice = Number(job.Price_Cust_Total || 0);
-        
-        // Fallback calculation if basePrice is missing or if we overridden unitPrice
-        if ((basePrice <= 0 || unitPrice === 17) && unitPrice > 0) {
-            const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 1);
+        let unitPrice = Number(job.Price_Per_Unit || 0);
+
+        // Dynamic Unit Price Calculation: Total / Qty (as requested by user)
+        if (basePrice > 0 && qty > 0) {
+            unitPrice = basePrice / qty;
+        } else if (basePrice <= 0 && unitPrice > 0) {
+            // Fallback to calculation if total is missing
             basePrice = qty * unitPrice;
         }
 
-        const freightKey = 'FREIGHT';
+        // Group by freight and unit price to separate different rates (e.g. 16 vs 17 baht)
+        const freightKey = `FREIGHT-${unitPrice.toFixed(2)}`;
         const existingFreight = aggregatedItems.get(freightKey);
         if (existingFreight) {
-            existingFreight.qty += 1;
+            existingFreight.qty += qty; // Accumulate actual quantity (pieces)
             existingFreight.totalBeforeTax += basePrice;
         } else {
             aggregatedItems.set(freightKey, {
                 description: lang === 'th' ? `ค่าขนส่งสินค้า (${job.Customer_ID || 'P00001'})` : `Freight Cost (${job.Customer_ID || 'P00001'})`,
-                qty: 1,
-                unitPrice: 0,
+                qty: qty,
+                unitPrice: unitPrice,
                 totalBeforeTax: basePrice,
                 isExtra: false
             });
