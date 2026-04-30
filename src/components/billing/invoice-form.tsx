@@ -59,7 +59,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
   const [dueDate, setDueDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() + 30)))
   const [vatRate, setVatRate] = useState(0)
   const [discountRate, setDiscountRate] = useState<number>(0)
-  const [whtRate, setWhtRate] = useState(0)
+  const [whtRate, setWhtRate] = useState(1)
   const [notes, setNotes] = useState("")
 
   const [fetchingJobs, setFetchingJobs] = useState(false)
@@ -76,8 +76,12 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                 const storedTotal = Number(j.Price_Cust_Total || 0)
                 
                 // EXTRA FAIL-SAFE: Force 17 for 21-23 April 2026
+                const dateStr = String(j.Plan_Date || "")
                 const jobDate = j.Plan_Date ? new Date(j.Plan_Date) : null
-                if (jobDate && jobDate.getFullYear() === 2026 && jobDate.getMonth() === 3 && [21, 22, 23].includes(jobDate.getDate())) {
+                const isApril21_23 = (jobDate && jobDate.getFullYear() === 2026 && jobDate.getMonth() === 3 && [21, 22, 23].includes(jobDate.getDate())) ||
+                                     dateStr.includes("-04-21") || dateStr.includes("-04-22") || dateStr.includes("-04-23")
+
+                if (isApril21_23) {
                     unitPrice = 17
                 }
 
@@ -358,7 +362,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-4">
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                         <Label className="text-muted-foreground font-black uppercase tracking-widest text-[10px] font-bold ml-1">ภาษี (%)</Label>
                         <Select
@@ -383,6 +387,22 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                             className="bg-card/50 border-border/10 rounded-xl h-11 text-xs font-bold text-muted-foreground focus:ring-purple-500/20" 
                             placeholder="0%"
                         />
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-muted-foreground font-black uppercase tracking-widest text-[10px] font-bold ml-1">หัก ณ ที่จ่าย (%)</Label>
+                        <Select
+                            value={String(whtRate)}
+                            onValueChange={(v: string) => setWhtRate(Number(v))}
+                        >
+                            <SelectTrigger className="bg-card/50 border-border/10 rounded-xl h-11 text-xs font-bold text-muted-foreground focus:ring-purple-500/20">
+                                <SelectValue placeholder="WHT %" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-card border-border/10">
+                                <SelectItem value="0" className="text-xs font-bold">0%</SelectItem>
+                                <SelectItem value="1" className="text-xs font-bold">1%</SelectItem>
+                                <SelectItem value="3" className="text-xs font-bold">3%</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                  </div>
 
@@ -413,6 +433,11 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                             <div className="flex justify-between text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                                 <span>ภาษีมูลค่าเพิ่ม ({vatRate}%)</span>
                                 <span>฿{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        {whtRate > 0 && (
+                            <div className="flex justify-between text-[10px] font-black text-rose-500 uppercase tracking-widest">
+                                <span>หัก ณ ที่จ่าย ({whtRate}%)</span>
+                                <span>-฿{whtAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
                         )}
                     </div>

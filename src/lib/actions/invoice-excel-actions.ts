@@ -25,6 +25,15 @@ const EXPENSE_MAP: Record<string, string> = {
     'Price_Cust_Other': 'อื่นๆ'
 }
 
+const normalizeVehicleType = (v: string) => {
+    if (!v || v === '-' || v.trim() === '') return '-'
+    const normalized = v.toLowerCase().trim()
+    if (normalized.includes('4w') || normalized.includes('4wheel') || normalized.includes('4 wheel')) return '4-Wheel'
+    if (normalized.includes('6w') || normalized.includes('6wheel') || normalized.includes('6 wheel')) return '6-Wheel'
+    if (normalized.includes('10w') || normalized.includes('10wheel')) return '10-Wheel'
+    return v
+}
+
 export async function exportInvoiceExcel(invoiceId: string) {
     try {
         const supabase = createAdminClient()
@@ -43,6 +52,13 @@ export async function exportInvoiceExcel(invoiceId: string) {
             jobs = dbJobs || []
         }
         if (!jobs || jobs.length === 0) throw new Error("ไม่พบรายการงาน")
+
+        // 1.2 Sort Jobs by Date (Oldest to Newest)
+        jobs.sort((a, b) => {
+            const dateA = a.Plan_Date ? new Date(a.Plan_Date).getTime() : 0
+            const dateB = b.Plan_Date ? new Date(b.Plan_Date).getTime() : 0
+            return dateA - dateB
+        })
 
         const customerId = finalDoc.Customer_ID || jobs[0].Customer_ID
         const { data: customer } = await supabase.from('Master_Customers').select('Price_Per_Unit').eq('Customer_ID', customerId).maybeSingle()
@@ -150,7 +166,7 @@ export async function exportInvoiceExcel(invoiceId: string) {
 
             row.getCell(1).value = index + 1
             row.getCell(2).value = job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-'
-            row.getCell(3).value = job.Vehicle_Type || '-'
+            row.getCell(3).value = normalizeVehicleType(job.Vehicle_Type)
             row.getCell(4).value = Number(job.Total_Drop || 1)
             
             // Origin / Destination
