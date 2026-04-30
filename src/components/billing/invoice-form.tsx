@@ -58,7 +58,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
   const [issueDate, setIssueDate] = useState<Date>(new Date())
   const [dueDate, setDueDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() + 30)))
   const [vatRate, setVatRate] = useState(0)
-  const [discountAmount, setDiscountAmount] = useState<number | "">("")
+  const [discountRate, setDiscountRate] = useState<number | "">("")
   const [whtRate, setWhtRate] = useState(0)
   const [notes, setNotes] = useState("")
 
@@ -95,6 +95,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
       return sum + calculatedPrice
   }, 0)
   
+  const discountAmount = subtotal * (Number(discountRate || 0) / 100)
   const totalAfterDiscount = subtotal - discountAmount
   const vatAmount = totalAfterDiscount * (vatRate / 100)
   const grandTotal = totalAfterDiscount + vatAmount
@@ -112,6 +113,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
             Due_Date: dueDate.toISOString(),
             Subtotal: subtotal,
             Discount_Amount: discountAmount,
+            Discount_Rate: discountRate,
             VAT_Rate: vatRate,
             VAT_Amount: vatAmount,
             Grand_Total: grandTotal,
@@ -331,13 +333,13 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-muted-foreground font-black uppercase tracking-widest text-[10px] font-bold ml-1">ส่วนลด (Discount THB)</Label>
+                        <Label className="text-muted-foreground font-black uppercase tracking-widest text-[10px] font-bold ml-1">ส่วนลด (Discount %)</Label>
                         <Input 
                             type="number"
-                            value={discountAmount} 
-                            onChange={(e) => setDiscountAmount(e.target.value === "" ? "" : Number(e.target.value))} 
+                            value={discountRate} 
+                            onChange={(e) => setDiscountRate(e.target.value === "" ? "" : Number(e.target.value))} 
                             className="bg-card/50 border-border/10 rounded-xl h-11 text-xs font-bold text-muted-foreground focus:ring-purple-500/20" 
-                            placeholder="0.00"
+                            placeholder="0%"
                         />
                     </div>
                  </div>
@@ -359,10 +361,10 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                             <span>ราคารับจ้างขนส่ง</span>
                             <span>฿{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
-                        {Number(discountAmount) > 0 && (
+                        {Number(discountRate) > 0 && (
                             <div className="flex justify-between text-[10px] font-black text-amber-500 uppercase tracking-widest">
-                                <span>ส่วนลด</span>
-                                <span>-฿{Number(discountAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                <span>ส่วนลด ({discountRate}%)</span>
+                                <span>-฿{discountAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
                         )}
                         {vatRate > 0 && (

@@ -210,9 +210,10 @@ export async function createInvoice(invoice: Partial<Invoice>) {
 
     // 3. Schema Safety: Discount_Amount is known to be missing in the current DB schema
     // Move it to Notes or just exclude to prevent crash.
-    const { Discount_Amount, ...sanitizedInvoice } = invoice
+    const { Discount_Amount, Discount_Rate, ...sanitizedInvoice } = invoice as any
     if (Discount_Amount && Number(Discount_Amount) > 0) {
-        const discountNote = `[SYSTEM: Discount Managed - ${Number(Discount_Amount).toLocaleString()} THB]`
+        const rateText = Discount_Rate ? ` (${Discount_Rate}%)` : ""
+        const discountNote = `[SYSTEM: Discount Managed${rateText} - ${Number(Discount_Amount).toLocaleString()} THB]`
         sanitizedInvoice.Notes = sanitizedInvoice.Notes 
             ? `${sanitizedInvoice.Notes}\n${discountNote}`
             : discountNote
