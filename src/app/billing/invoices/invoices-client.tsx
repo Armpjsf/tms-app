@@ -81,7 +81,7 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
     setIsSyncing(true)
     try {
         const custId = selectedCustomerId === 'all' ? undefined : selectedCustomerId
-        const updatedJobs = await getBillableJobsAction(dateFrom || undefined, dateTo || undefined, custId)
+        const updatedJobs = await getBillableJobsAction(custId, dateFrom || undefined, dateTo || undefined)
         setDisplayJobs(updatedJobs)
         toast.success(t('invoices.sync_active'))
     } catch {

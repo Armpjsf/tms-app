@@ -9,6 +9,6 @@ export async function createInvoiceAction(invoice: Record<string, unknown>) {
   return await createInvoiceLib(invoice)
 }
 
-export async function getBillableJobsAction(startDate?: string, endDate?: string, customerId?: string) {
-  return await getBillableJobsLib(startDate, endDate, customerId)
+export async function getBillableJobsAction(customerId?: string, startDate?: string, endDate?: string) {
+  return await getBillableJobsLib(customerId, startDate, endDate)
 }
