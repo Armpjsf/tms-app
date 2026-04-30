@@ -911,26 +911,31 @@ export async function getJobsForBilling(
             return []
         }
 
-        // Safer approach: Fetch Unit Prices separately to avoid join errors breaking the page
-        try {
-            const customerIds = [...new Set(data.filter(j => j.Customer_ID).map(j => j.Customer_ID))]
-            const { data: customerPrices } = await supabase
-                .from('Master_Customers')
-                .select('Customer_ID, Price_Per_Unit')
-                .in('Customer_ID', customerIds)
-
-            if (customerPrices) {
-                const priceMap = new Map(customerPrices.map(c => [c.Customer_ID, c.Price_Per_Unit]))
-                return data.map(job => ({
-                    ...job,
-                    Price_Per_Unit: priceMap.get(job.Customer_ID) || 0
-                })) as Job[]
+        // Process each job to find the best matching price for its specific date
+        const enhancedJobs = await Promise.all(data.map(async (job) => {
+            let finalPrice = job.Price_Per_Unit || priceMap.get(job.Customer_ID) || 0
+            
+            // If the job has a route and customer, try to find a date-specific rate from fuel matrix
+            if (job.Customer_ID && job.Route_Name && job.Plan_Date) {
+                const suggestedRate = await getSuggestedRate(
+                    job.Customer_ID, 
+                    job.Route_Name, 
+                    undefined, 
+                    job.Vehicle_Type || '4-Wheel',
+                    job.Plan_Date
+                )
+                if (suggestedRate) {
+                    finalPrice = suggestedRate
+                }
             }
-        } catch (e) {
-            console.error("Mapping unit prices failed:", e)
-        }
+
+            return {
+                ...job,
+                Price_Per_Unit: finalPrice
+            }
+        }))
         
-        return data as Job[]
+        return enhancedJobs as Job[]
     } catch {
         return []
     }
@@ -1035,6 +1040,8 @@ export async function getDriverDashboardStats(driverId: string) {
   }
 }
 
+import { getSuggestedRate } from "@/lib/actions/fuel-actions"
+
 // Get billable jobs (Complete/Delivered and NOT yet invoiced)
 export async function getBillableJobs(customerId?: string, startDate?: string, endDate?: string) {
   try {
@@ -1077,7 +1084,7 @@ export async function getBillableJobs(customerId?: string, startDate?: string, e
       return []
     }
 
-    // Map unit prices from Master_Customers
+    // Map unit prices from Master_Customers + Dynamic Fuel Matrix
     try {
         const uniqueCustomerIds = Array.from(new Set(data.filter(j => j.Customer_ID).map(j => j.Customer_ID)))
         
@@ -1086,18 +1093,37 @@ export async function getBillableJobs(customerId?: string, startDate?: string, e
             .select('Customer_ID, Price_Per_Unit')
             .in('Customer_ID', uniqueCustomerIds)
 
-        if (customerPrices) {
-            const priceMap = new Map(customerPrices.map(c => [c.Customer_ID, c.Price_Per_Unit]))
-            return data.map(job => ({
+        const priceMap = new Map(customerPrices?.map(c => [c.Customer_ID, c.Price_Per_Unit]) || [])
+
+        // Process each job to find the best matching price for its specific date
+        const enhancedJobs = await Promise.all(data.map(async (job) => {
+            let finalPrice = job.Price_Per_Unit || priceMap.get(job.Customer_ID) || 0
+            
+            // If the job has a route and customer, try to find a date-specific rate from fuel matrix
+            if (job.Customer_ID && job.Route_Name && job.Plan_Date) {
+                const suggestedRate = await getSuggestedRate(
+                    job.Customer_ID, 
+                    job.Route_Name, 
+                    undefined, 
+                    job.Vehicle_Type || '4-Wheel',
+                    job.Plan_Date
+                )
+                if (suggestedRate) {
+                    finalPrice = suggestedRate
+                }
+            }
+
+            return {
                 ...job,
-                Price_Per_Unit: priceMap.get(job.Customer_ID) || 0
-            })) as Job[]
-        }
+                Price_Per_Unit: finalPrice
+            }
+        }))
+
+        return enhancedJobs as Job[]
     } catch (e) {
-        console.error("Mapping unit prices failed for billable jobs:", e)
+        console.error("Enriching unit prices failed in getBillableJobs:", e)
+        return data as Job[]
     }
-    
-    return data as Job[]
   } catch {
     return []
   }

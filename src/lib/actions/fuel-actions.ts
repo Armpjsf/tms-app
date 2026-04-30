@@ -274,9 +274,26 @@ export async function getFuelPriceNumber(date?: string): Promise<number | null> 
 
 /**
  * Match a fuel price against a route's matrix to get suggested rate
+ * Now supports optional date to lookup historical fuel price automatically
  */
-export async function getSuggestedRate(customerId: string, routeName: string, fuelPrice: number, vehicleType: string = '4-Wheel') {
-    if (!customerId || !routeName || !fuelPrice) return null
+export async function getSuggestedRate(
+    customerId: string, 
+    routeName: string, 
+    fuelPrice?: number, 
+    vehicleType: string = '4-Wheel',
+    date?: string
+) {
+    if (!customerId || !routeName) return null
+
+    let targetFuelPrice = fuelPrice
+    
+    // If no explicit price provided, but date is given, lookup historical price
+    if (!targetFuelPrice && date) {
+        const historical = await getFuelPrice(date)
+        targetFuelPrice = historical.price || 0
+    }
+
+    if (!targetFuelPrice) return null
 
     const supabase = createAdminClient()
     const { data, error } = await supabase
@@ -284,7 +301,7 @@ export async function getSuggestedRate(customerId: string, routeName: string, fu
         .select('Fuel_Rate_Matrix')
         .eq('Customer_ID', customerId)
         .eq('Route_Name', routeName)
-        .ilike('Vehicle_Type', vehicleType) // Use ilike for case-insensitivity
+        .ilike('Vehicle_Type', vehicleType) 
         .maybeSingle()
 
     if (error) {
@@ -296,25 +313,18 @@ export async function getSuggestedRate(customerId: string, routeName: string, fu
     const matrix = data.Fuel_Rate_Matrix as Array<{ min: number, max: number, price: number }>
     if (!matrix || matrix.length === 0) return null
 
-    // Sort to ensure we can identify min/max bounds
     const sortedMatrix = [...matrix].sort((a, b) => a.min - b.min)
     
-    // 1. Check for exact match
-    const match = sortedMatrix.find(range => fuelPrice >= range.min && fuelPrice <= range.max)
+    const match = sortedMatrix.find(range => targetFuelPrice! >= range.min && targetFuelPrice! <= range.max)
     if (match) return match.price
 
-    // 2. Clamping Logic:
-    // If price is higher than the highest range's max, use the highest range's price
     const highest = sortedMatrix[sortedMatrix.length - 1]
-    if (fuelPrice > highest.max) {
-        console.log(`[FUEL_ACTION] Price ${fuelPrice} exceeds max range ${highest.max}. Clamping to: ${highest.price}`)
+    if (targetFuelPrice > highest.max) {
         return highest.price
     }
 
-    // If price is lower than the lowest range's min, use the lowest range's price
     const lowest = sortedMatrix[0]
-    if (fuelPrice < lowest.min) {
-        console.log(`[FUEL_ACTION] Price ${fuelPrice} is below min range ${lowest.min}. Clamping to: ${lowest.price}`)
+    if (targetFuelPrice < lowest.min) {
         return lowest.price
     }
     
