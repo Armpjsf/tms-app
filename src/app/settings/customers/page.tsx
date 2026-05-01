@@ -45,6 +45,13 @@ import { Tabs, TabsContent, List as TabsList, TabsTrigger } from "@/components/u
 import { CustomerFuelMatrix } from "@/components/settings/customer-fuel-matrix"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useBranch } from "@/components/providers/branch-provider"
 import { isAdmin } from "@/lib/permissions"
 

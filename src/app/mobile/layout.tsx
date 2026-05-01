@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { BottomNav } from "@/components/mobile/bottom-nav"
 import { LocationTracker } from "@/components/mobile/location-tracker"
 import { PermissionRequester } from "@/components/mobile/permission-requester"
