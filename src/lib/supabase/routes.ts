@@ -60,9 +60,15 @@ export async function getAllRoutes(page?: number, limit?: number, query?: string
         } else {
             return { data: [], count: 0 }
         }
-    } else if (branchId && branchId !== 'All') {
-        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+    } else {
+        // Only Super Admins can use the provided branch filter
+        const targetBranch = branchId || userBranchId
+        if (targetBranch && targetBranch !== 'All') {
+            queryBuilder = queryBuilder.eq('Branch_ID', targetBranch)
+        }
     }
+
+
     
     const { data, error, count } = await queryBuilder.order('Route_Name', { ascending: true })
     
@@ -94,6 +100,8 @@ export async function getBranches() {
             return []
         }
     }
+
+
 
     const { data, error } = await query.order('Branch_Name')
     
@@ -131,7 +139,11 @@ export async function createRoute(routeData: Partial<Route>) {
         Dest_Lon: routeData.Dest_Lon,
         Map_Link_Destination: routeData.Map_Link_Destination,
         Distance_KM: routeData.Distance_KM,
-        Branch_ID: routeData.Branch_ID
+        Branch_ID: (isSuper && routeData.Branch_ID && routeData.Branch_ID !== 'All') 
+                    ? routeData.Branch_ID 
+                    : (userBranchId !== 'All' ? userBranchId : 'HQ')
+
+
       })
       .select()
       .single()
@@ -257,7 +269,7 @@ export async function createBulkRoutes(routes: Record<string, unknown>[]) {
         // Prepare data with Branch ID resolved
         const preparedRoutes: Route[] = cleanData.map(r => {
              // Resolve Branch ID
-             let branchId = currentUserBranch || 'HQ'
+             let branchId = (currentUserBranch && currentUserBranch !== 'All') ? currentUserBranch : 'HQ'
              if (r.Branch_ID) {
                  const key = String(r.Branch_ID).trim()
                  if (branchMap.has(key)) {

@@ -58,7 +58,7 @@ export async function middleware(request: NextRequest) {
     if (!sessionCookie) {
       // Mobile detection for redirection
       const userAgent = request.headers.get('user-agent') || ''
-      const isDeviceMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+      const isDeviceMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
       
       // If we are on a desktop route but it's a mobile device, redirect to mobile app
       if (isDeviceMobile) {

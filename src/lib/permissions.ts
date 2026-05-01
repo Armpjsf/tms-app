@@ -12,30 +12,27 @@ export async function getUserBranchId() {
     try {
         const session = await getSession()
         if (session) {
-            const isSuper = Number(session.roleId) === 1
+            const roleId = Number(session.roleId)
+            const isSuper = roleId === 1
+            const isAdminUser = roleId === 2
 
-            // 1. Super Admin ALWAYS wins — let them switch via cookie dropdown.
             if (isSuper) {
                 const cookieStore = await cookies()
                 const selected = cookieStore.get('selectedBranch')?.value
-                if (!selected || selected === 'All' || selected === 'ทุกสาขา' || selected.includes('ทุกสาขา')) return 'All'
-                return selected
+                
+                // If they have a specifically selected branch in their cookie, use it
+                if (selected && selected !== 'All' && selected !== 'ทุกสาขา' && !selected.includes('ทุกสาขา')) {
+                    return selected
+                }
+                
+                return 'All'
             }
 
-            // 2. Restricted Users: If they have a specific branch assigned in DB, FORCE it.
-            if (session.branchId && session.branchId !== 'All') {
-                return session.branchId
-            }
+            // For Admin (Role 2) and other roles (Staff, Driver, Customer), 
+            // strictly use their assigned branch from session.
+            // DO NOT allow them to use the branch selection cookie.
+            return session.branchId || 'HQ'
 
-            // 3. Regular Admins (Role 2) with no specific branch assigned:
-            // Fallback to cookie BUT prevent 'All' access.
-            const cookieStore = await cookies()
-            const selected = cookieStore.get('selectedBranch')?.value
-            const isAll = !selected || selected === 'All' || selected === 'ทุกสาขา' || selected.includes('ทุกสาขา')
-            
-            if (!isAll && selected) return selected
-            
-            return 'HQ' // Fail-safe default for admins with no assigned branch
         }
 
         // Fallback to driver session if no staff session exists
@@ -55,6 +52,7 @@ export async function getUserBranchId() {
         return 'All'
     }
 }
+
 
 export async function getFixedUserBranchId() {
     try {

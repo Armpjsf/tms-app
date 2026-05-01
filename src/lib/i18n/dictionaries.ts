@@ -1514,7 +1514,8 @@ export const dictionaries = {
                 phone: 'เบอร์โทรศัพท์ติดต่อ',
                 address: 'ที่อยู่ตั้งพิกัด',
                 email: 'อีเมลติดต่อ',
-                branch: 'รหัสสาขาภายใน',
+                customer_id: 'รหัสลูกค้า (Customer ID)',
+                branch: 'สาขา',
                 line_id: 'LINE ID',
                 execute: 'บันทึกข้อมูล',
                 abort: 'ยกเลิก'
@@ -3342,7 +3343,8 @@ export const dictionaries = {
                 phone: 'Phone',
                 address: 'Address',
                 email: 'Email',
-                branch: 'Internal ID',
+                customer_id: 'Customer ID',
+                branch: 'Branch',
                 line_id: 'LINE ID',
                 execute: 'Save',
                 abort: 'Cancel'

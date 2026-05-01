@@ -63,7 +63,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         ]) as [Branch[], number]
         
         setBranches(fetchedBranches || [])
-        setIsAdmin(roleId === 1)
+        setIsAdmin(roleId === 1) // Only Super Admin (Role 1) can switch branches
 
         // Only sync from cookie if not already set by URL param
         const savedBranch = Cookies.get("selectedBranch")

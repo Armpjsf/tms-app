@@ -22,12 +22,17 @@ export async function getAllBranches() {
     const userBranchId = await getUserBranchId()
     
     let query = supabase
+
       .from('Master_Branches')
       .select('Branch_ID, Branch_Name, Email, Sender_Name, Address, Phone')
     
-    if (userBranchId && userBranchId !== 'All') {
+    // STRICT ISOLATION: Non-SuperAdmin users (Admin, Staff, etc.) 
+    // are restricted to their assigned branch.
+    if (!isSuper && userBranchId && userBranchId !== 'All') {
         query = query.eq('Branch_ID', userBranchId)
     }
+
+
 
     const { data, error } = await query.order('Branch_Name')
 

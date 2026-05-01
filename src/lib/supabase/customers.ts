@@ -45,10 +45,16 @@ export async function getAllCustomers(page?: number, limit?: number, query?: str
             } else {
                 return { data: [], count: 0 }
             }
-        } else if (providedBranchId && providedBranchId !== 'All') {
-            queryBuilder = queryBuilder.eq('Branch_ID', providedBranchId)
+        } else {
+            // Only Super Admins can use the provided branch filter
+            const targetBranch = providedBranchId || userBranchId
+            if (targetBranch && targetBranch !== 'All') {
+                queryBuilder = queryBuilder.eq('Branch_ID', targetBranch)
+            }
         }
+
     }
+
     
     if (query) {
       queryBuilder = queryBuilder.or(`Customer_Name.ilike.%${query}%,Customer_ID.ilike.%${query}%`)
@@ -100,7 +106,10 @@ export async function createCustomer(customerData: Partial<Customer>) {
         // Email: customerData.Email,
         Address: customerData.Address,
         Tax_ID: customerData.Tax_ID,
-        Branch_ID: customerData.Branch_ID || branchId || 'HQ', // Default to HQ if not found
+        Branch_ID: (isSuper && customerData.Branch_ID && customerData.Branch_ID !== 'All') 
+                    ? customerData.Branch_ID 
+                    : (branchId !== 'All' ? branchId : 'HQ'), 
+
         Credit_Term: customerData.Credit_Term || 30, // Default to 30 days if not set
         Price_Per_Unit: customerData.Price_Per_Unit || 0
         // Is_Active: true

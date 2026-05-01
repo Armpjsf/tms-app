@@ -21,9 +21,10 @@ export type DriverFormData = {
 export async function createDriver(data: DriverFormData) {
   const supabase = createAdminClient()
   const userBranchId = await getUserBranchId()
-  const isAdmin = await isSuperAdmin()
+  const isSuper = await isSuperAdmin()
+  const finalBranchId = (isSuper && data.Branch_ID && data.Branch_ID !== 'All') ? data.Branch_ID : userBranchId
 
-  const finalBranchId = (isAdmin && data.Branch_ID) ? data.Branch_ID : userBranchId
+
 
   const { error } = await supabase
     .from('Master_Drivers')
@@ -101,10 +102,13 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
     const data = normalizeData(d)
     
     // Smart Branch ID: 
-    // 1. If Branch_ID provided in row, use it.
+    // 1. If Super Admin and Branch_ID provided in row, use it.
     // 2. Otherwise, use user's current branch (if not 'All').
-    // 3. Fallback to null.
-    const finalBranchId = data.Branch_ID || (currentBranchId !== 'All' ? currentBranchId : null)
+    // 3. Fallback to HQ.
+    const finalBranchId = (isSuper && data.Branch_ID && data.Branch_ID !== 'All') 
+                            ? data.Branch_ID 
+                            : (currentBranchId !== 'All' ? currentBranchId : 'HQ')
+
 
     return {
       Driver_ID: data.Driver_ID || `DRV-${Math.floor(Math.random()*100000)}`,
@@ -162,6 +166,8 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
     updateData.Branch_ID = data.Branch_ID
   }
 
+
+
   // Allow updating the Driver_ID (Primary Key)
   // This will work if ON UPDATE CASCADE is set on foreign keys in Supabase
   if (data.Driver_ID && data.Driver_ID !== driverId) {
@@ -182,6 +188,8 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
     if (branchId && !isAdmin) {
         query = query.eq('Branch_ID', branchId)
     }
+
+
 
     const { error } = await query
 
@@ -209,6 +217,8 @@ export async function deleteDriver(driverId: string) {
   if (branchId && !isAdmin) {
       query = query.eq('Branch_ID', branchId)
   }
+
+
 
   const { error } = await query
 

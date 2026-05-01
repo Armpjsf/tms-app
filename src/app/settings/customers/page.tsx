@@ -78,7 +78,8 @@ export default function CustomersSettingsPage() {
   })
   const [saving, setSaving] = useState(false)
 
-  const { selectedBranch } = useBranch()
+  const { selectedBranch, branches } = useBranch()
+
   const router = useRouter()
 
   const loadCustomers = useCallback(async () => {
@@ -108,7 +109,7 @@ export default function CustomersSettingsPage() {
         Customer_ID: "",
         Customer_Name: "",
         Tax_ID: "",
-        Branch_ID: "",
+        Branch_ID: (selectedBranch && selectedBranch !== "All") ? selectedBranch : "",
         Phone: "",
         Address: "",
         Email: "",
@@ -355,27 +356,47 @@ export default function CustomersSettingsPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-10">
-                    <div className="space-y-4">
-                      <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.branch')}</Label>
-                      <Input
-                        value={formData.Customer_ID || ""}
-                        onChange={(e) => updateForm("Customer_ID", e.target.value)}
-                        placeholder="SYSTEM GENERATED"
-                        className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
-                        disabled={!!editingCustomer}
-                      />
+                    <div className="grid grid-cols-2 gap-10">
+                      <div className="space-y-4">
+                        <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.customer_id') || 'Customer ID'}</Label>
+                        <Input
+                          value={formData.Customer_ID || ""}
+                          onChange={(e) => updateForm("Customer_ID", e.target.value)}
+                          placeholder="SYSTEM GENERATED"
+                          className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
+                          disabled={!!editingCustomer}
+                        />
+                      </div>
+                       <div className="space-y-4">
+                         <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.branch')}</Label>
+                         <Select 
+                            value={formData.Branch_ID || ""} 
+                            onValueChange={(val) => updateForm("Branch_ID", val)}
+                         >
+                            <SelectTrigger className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl">
+                                <SelectValue placeholder="SELECT BRANCH..." />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border border-border/10 shadow-2xl rounded-2xl">
+                                {branches.map(b => (
+                                    <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="rounded-xl h-12 uppercase font-black">
+                                        {b.Branch_Name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                         </Select>
+                      </div>
                     </div>
-                     <div className="space-y-4">
-                       <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.tax_id')}</Label>
-                      <Input
-                        value={formData.Tax_ID || ""}
-                        onChange={(e) => updateForm("Tax_ID", e.target.value)}
-                        placeholder="13-DIGIT VERIFIER"
-                        className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
-                      />
+                    <div className="grid grid-cols-1 gap-10">
+                      <div className="space-y-4">
+                        <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.tax_id')}</Label>
+                        <Input
+                          value={formData.Tax_ID || ""}
+                          onChange={(e) => updateForm("Tax_ID", e.target.value)}
+                          placeholder="13-DIGIT VERIFIER"
+                          className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
+                        />
+                      </div>
                     </div>
-                  </div>
 
                   <div className="space-y-4">
                     <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-primary ml-2 flex items-center gap-3">
