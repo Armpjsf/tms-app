@@ -86,16 +86,30 @@ export async function hasPermission(permission: string) {
     if (session.roleId === 1) return true
 
     try {
-        // Fetch permissions from DB since they are no longer in the session cookie
+        const { createAdminClient } = await import("@/utils/supabase/server")
+        const supabase = createAdminClient()
+        
+        // Fetch profile with Permissions field
+        const { data: profile } = await supabase
+            .from('Master_Users')
+            .select('Role, Permissions')
+            .eq('Username', session.userId)
+            .maybeSingle()
+
+        if (!profile) return false
+
+        // 1. INDIVIDUAL OVERRIDE: If user has specific permissions set, use them
+        // In this implementation, if Permissions is an array and not empty, it's an override.
+        if (Array.isArray(profile.Permissions) && profile.Permissions.length > 0) {
+            return profile.Permissions.includes(permission)
+        }
+
+        // 2. ROLE FALLBACK: Otherwise, use the standard role permissions
         const { getPermissionsByRole } = await import("@/lib/actions/permission-actions")
-        const { getUserProfile } = await import("@/lib/supabase/users")
-        const profile = await getUserProfile()
-
-        if (!profile?.Role) return false
-
         const allowedMenus = await getPermissionsByRole(profile.Role)
         return !!allowedMenus?.includes(permission)
-    } catch {
+    } catch (error) {
+        console.error("[PERMISSIONS] Error checking permission:", error)
         return false
     }
 }

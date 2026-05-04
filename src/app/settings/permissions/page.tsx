@@ -4,35 +4,11 @@ import { useState, useEffect } from "react"
 import { 
     ShieldCheck, 
     ChevronRight, 
-    LayoutDashboard,
-    Truck,
-    FileText,
-    AlertTriangle,
-    MessageSquare,
-    Wrench,
-    Fuel,
-    BarChart3,
-    Activity,
-    Navigation,
-    Users,
-    Building,
-    CalendarDays,
-    Receipt,
-    Wallet,
-    History,
-    CheckCircle2,
-    Zap,
-    Bot,
-    Settings,
-    Save,
-    Loader2,
-    RefreshCw,
-    User,
-    Database,
-    Shield,
-    ArrowLeft
+    Save, 
+    Loader2, 
+    RefreshCw, 
+    ArrowLeft 
 } from "lucide-react"
-import { PremiumCard } from "@/components/ui/premium-card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
@@ -40,75 +16,7 @@ import { cn } from "@/lib/utils"
 import { getAllRolePermissions, saveRolePermissions } from "@/lib/actions/permission-actions"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import Link from "next/link"
-
-const MODULE_GROUPS = [
-  {
-    title: "Ops Command",
-    items: [
-      { key: "navigation.dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
-    ]
-  },
-  {
-    title: "Operations",
-    items: [
-      { key: "navigation.planning", label: "วางแผนงาน", icon: CalendarDays },
-      { key: "navigation.calendar", label: "ปฏิทินงาน", icon: CalendarDays },
-      { key: "navigation.history", label: "ประวัติงาน", icon: History },
-      { key: "navigation.monitoring", label: "ติดตามรถ", icon: Activity },
-      { key: "navigation.pod", label: "หลักฐานการส่งสินค้า (POD)", icon: FileText },
-      { key: "navigation.notifications", label: "แจ้งเตือน & SOS", icon: AlertTriangle },
-      { key: "navigation.chat", label: "แชท", icon: MessageSquare },
-    ]
-  },
-  {
-    title: "Asset Control",
-    items: [
-      { key: "navigation.routes", label: "จัดการเส้นทาง", icon: Navigation },
-      { key: "navigation.drivers", label: "พนักงานขับรถ", icon: Users },
-      { key: "navigation.driver_leaves", label: "จัดการการลา", icon: CalendarDays },
-      { key: "navigation.customers", label: "ข้อมูลลูกค้า", icon: Building },
-      { key: "navigation.fleet", label: "ยานพาหนะ", icon: Truck },
-      { key: "navigation.checks", label: "ตรวจสภาพรถ", icon: CheckCircle2 },
-      { key: "navigation.maintenance", label: "บันทึกซ่อมบำรุง", icon: Wrench },
-      { key: "navigation.fuel", label: "บันทึกน้ำมัน", icon: Fuel },
-    ]
-  },
-  {
-    title: "Intelligence",
-    items: [
-      { key: "navigation.analytics", label: "วิเคราะห์ข้อมูล", icon: BarChart3 },
-      { key: "navigation.ai", label: "ผู้ช่วย AI", icon: Bot },
-      { key: "navigation.reports", label: "รายงานสรุป", icon: BarChart3 },
-    ]
-  },
-  {
-    title: "Financial",
-    items: [
-      { key: "navigation.billing_customer", label: "วางบิลลูกค้า", icon: Receipt },
-      { key: "navigation.billing_automation", label: "ระบบวางบิลอัตโนมัติ", icon: Zap },
-      { key: "navigation.invoices", label: "ใบแจ้งหนี้", icon: FileText },
-      { key: "navigation.payouts", label: "ค่าเที่ยวคนขับ", icon: Wallet },
-    ]
-  },
-  {
-    title: "System Settings",
-    items: [
-      { key: "navigation.settings", label: "ตั้งค่าระบบ", icon: Settings },
-      { key: "settings.items.identity", label: "ตั้งค่าโปรไฟล์ส่วนตัว", icon: User },
-      { key: "settings.items.company", label: "ข้อมูลบริษัท (Operation)", icon: Building },
-      { key: "settings.items.accounting_profile", label: "ข้อมูลฝ่ายบัญชี (Invoice)", icon: Receipt },
-      { key: "settings.items.permissions", label: "สิทธิ์การใช้งาน", icon: ShieldCheck },
-      { key: "settings.items.operators", label: "จัดการผู้ใช้งานระบบ", icon: Users },
-      { key: "settings.items.branches", label: "จัดการสาขา/โหนด", icon: Navigation },
-      { key: "settings.items.partners", label: "จัดการรถร่วม (Vendor)", icon: Truck },
-      { key: "settings.items.vehicles", label: "ประเภทรถและข้อกำหนด", icon: Truck },
-      { key: "settings.items.accounting", label: "เชื่อมต่อระบบบัญชี", icon: Database },
-      { key: "settings.items.expense_types", label: "จัดการประเภทค่าใช้จ่าย", icon: Receipt },
-      { key: "settings.items.vault", label: "ระบบสำรองข้อมูล & Security", icon: Shield },
-      { key: "settings.items.change_password", label: "เปลี่ยนรหัสผ่าน", icon: Shield },
-    ]
-  }
-]
+import { MODULE_GROUPS } from "@/constants/permissions"
 
 const ROLES = ["Admin", "Manager", "Operation", "Finance", "Customer", "Driver"]
 

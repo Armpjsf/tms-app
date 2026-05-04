@@ -17,7 +17,7 @@ export interface UserData {
     Role: StandardRole; 
     Active_Status: string;
     Customer_ID?: string | null;
-    Permissions?: Record<string, boolean>;
+    Permissions?: string[];
 }
 
 import { getUserBranchId, isSuperAdmin, isAdmin as checkIsAdmin } from "@/lib/permissions"

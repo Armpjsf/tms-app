@@ -13,6 +13,8 @@ import { createUser, updateUser, deleteUser, UserData, getCurrentUserRole, creat
 import { Customer } from "@/lib/supabase/customers"
 import { fetchCustomerList } from "@/lib/actions/customer-fetcher"
 import { ExcelImport } from "@/components/ui/excel-import"
+import { Checkbox } from "@/components/ui/checkbox"
+import { MODULE_GROUPS } from "@/constants/permissions"
 import { useBranch } from "@/components/providers/branch-provider"
 import { STANDARD_ROLES, StandardRole } from "@/types/role"
 import { getRolePermissions } from "@/lib/actions/permission-actions"
@@ -45,8 +47,9 @@ export default function UserSettingsPage() {
         Role: "Staff", 
         Active_Status: "Active",
         Customer_ID: null,
-        Permissions: {}
+        Permissions: []
     })
+    const [useIndividualPermissions, setUseIndividualPermissions] = useState(false)
 
     const loadData = useCallback(async () => {
         setLoading(true)
@@ -90,8 +93,9 @@ export default function UserSettingsPage() {
                 Role: (user.Role as StandardRole) || "Staff",
                 Active_Status: user.Active_Status,
                 Customer_ID: user.Customer_ID,
-                Permissions: user.Permissions || {}
+                Permissions: Array.isArray(user.Permissions) ? user.Permissions : []
             })
+            setUseIndividualPermissions(Array.isArray(user.Permissions) && user.Permissions.length > 0)
         } else {
             setEditingUser(null)
             const defaultRole = "Staff"
@@ -103,8 +107,9 @@ export default function UserSettingsPage() {
                 Role: defaultRole, 
                 Active_Status: "Active",
                 Customer_ID: null,
-                Permissions: allRolePermissions[defaultRole] || {}
+                Permissions: []
             })
+            setUseIndividualPermissions(false)
         }
         setIsDialogOpen(true)
     }
@@ -116,8 +121,18 @@ export default function UserSettingsPage() {
             Role: standardRole,
             Branch_ID: standardRole === 'Super Admin' ? 'All' : (prev.Branch_ID === 'All' ? '' : prev.Branch_ID),
             Customer_ID: standardRole === 'Customer' ? prev.Customer_ID : null, // Reset if not customer
-            Permissions: allRolePermissions[role] || prev.Permissions || {}
+            Permissions: useIndividualPermissions ? prev.Permissions : []
         }))
+    }
+
+    const handleToggleIndividualPermission = (key: string) => {
+        setFormData(prev => {
+            const current = Array.isArray(prev.Permissions) ? prev.Permissions : []
+            const next = current.includes(key)
+                ? current.filter(k => k !== key)
+                : [...current, key]
+            return { ...prev, Permissions: next }
+        })
     }
 
 
@@ -471,7 +486,77 @@ export default function UserSettingsPage() {
                             </Select>
                         </div>
 
-                        <div className="space-y-3 pb-4">
+                         <div className="space-y-6 pt-6 border-t border-border/5">
+                            <div className="flex items-center justify-between px-4">
+                                <div className="space-y-1">
+                                    <Label className="text-base font-black text-foreground uppercase italic tracking-normal">กำหนดสิทธิ์รายบุคคล (Individual Permissions)</Label>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest italic">หากเปิดใช้งาน สิทธิ์นี้จะแทนที่สิทธิ์ตามกลุ่ม (Role)</p>
+                                </div>
+                                <Checkbox 
+                                    checked={useIndividualPermissions}
+                                    onCheckedChange={(checked) => {
+                                        setUseIndividualPermissions(!!checked)
+                                        if (!checked) setFormData(prev => ({ ...prev, Permissions: [] }))
+                                    }}
+                                    className="w-8 h-8 rounded-xl data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                />
+                            </div>
+
+                            {useIndividualPermissions && (
+                                <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                                    {MODULE_GROUPS.map((group) => (
+                                        <div key={group.title} className="space-y-4">
+                                            <div className="flex items-center gap-3 px-4">
+                                                <div className="w-1 h-4 bg-primary rounded-full" />
+                                                <h3 className="text-sm font-black text-primary uppercase italic tracking-tighter">{group.title}</h3>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                {group.items.map((item) => {
+                                                    const isAllowed = Array.isArray(formData.Permissions) && formData.Permissions.includes(item.key)
+                                                    return (
+                                                        <div 
+                                                            key={item.key}
+                                                            onClick={() => handleToggleIndividualPermission(item.key)}
+                                                            className={cn(
+                                                                "p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between group/perm",
+                                                                isAllowed 
+                                                                ? "bg-primary/5 border-primary shadow-sm" 
+                                                                : "bg-muted/30 border-transparent hover:border-border/10"
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={cn(
+                                                                    "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                                                                    isAllowed ? "bg-primary text-foreground" : "bg-muted text-muted-foreground group-hover/perm:bg-muted/80"
+                                                                )}>
+                                                                    <item.icon size={18} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className={cn(
+                                                                        "font-black text-xs leading-none transition-colors italic uppercase",
+                                                                        isAllowed ? "text-foreground" : "text-muted-foreground"
+                                                                    )}>
+                                                                        {item.label}
+                                                                    </p>
+                                                                    <p className="text-[8px] font-bold text-muted-foreground/60 mt-1 uppercase tracking-widest">{item.key.split('.')[1]}</p>
+                                                                </div>
+                                                            </div>
+                                                            <Checkbox 
+                                                                checked={isAllowed}
+                                                                onCheckedChange={() => handleToggleIndividualPermission(item.key)}
+                                                                className="w-5 h-5 rounded-md data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                                            />
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-3 pb-4 border-t border-border/5 pt-6">
                              <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-4">{t('common.tactical.deploy_status')}</Label>
                              <Select 
                                 value={formData.Active_Status} 
