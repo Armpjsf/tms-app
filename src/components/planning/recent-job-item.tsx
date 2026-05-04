@@ -20,11 +20,13 @@ type Props = {
   customers: Customer[]
   routes: Route[]
   subcontractors: Subcontractor[]
-  canViewPrice?: boolean
+  canViewIncome?: boolean
+  canViewExpense?: boolean
+  canAssign?: boolean
   canDelete?: boolean
 }
 
-export function RecentJobItem({ job, drivers, vehicles, customers, routes, subcontractors, canViewPrice = true, canDelete = true }: Props) {
+export function RecentJobItem({ job, drivers, vehicles, customers, routes, subcontractors, canViewIncome = true, canViewExpense = true, canAssign = true, canDelete = true }: Props) {
   const [open, setOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const { t } = useLanguage()
@@ -140,7 +142,9 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
         customers={customers}
         routes={routes}
         subcontractors={subcontractors}
-        canViewPrice={canViewPrice}
+        canViewIncome={canViewIncome}
+        canViewExpense={canViewExpense}
+        canAssign={canAssign}
         canDelete={canDelete}
       />
     </>

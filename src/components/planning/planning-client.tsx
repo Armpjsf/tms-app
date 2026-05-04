@@ -48,9 +48,11 @@ interface PlanningClientProps {
         routes: Route[]
         subcontractors: Subcontractor[]
     }
-    canViewPrice: boolean
+    canViewIncome: boolean
+    canViewExpense: boolean
     canDelete: boolean
     canCreate: boolean
+    canAssign: boolean
     createBulkJobs: (data: Partial<JobFormData>[]) => Promise<{ success: boolean; message: string }>
     branchId: string
     selectedDate: string
@@ -76,9 +78,11 @@ export function PlanningClient({
     todayJobs,
     requestedJobs,
     jobCreationData,
-    canViewPrice,
+    canViewIncome,
+    canViewExpense,
     canDelete,
     canCreate,
+    canAssign,
     createBulkJobs,
     branchId,
     selectedDate
@@ -233,6 +237,10 @@ export function PlanningClient({
                                 customers={customers}
                                 routes={routes}
                                 subcontractors={subcontractors}
+                                canViewIncome={canViewIncome}
+                                canViewExpense={canViewExpense}
+                                canAssign={canAssign}
+                                canDelete={canDelete}
                                 trigger={
                                     <button className="flex items-center gap-2 bg-primary text-foreground px-6 py-2.5 h-11 rounded-xl font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95 group whitespace-nowrap">
                                         <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" strokeWidth={3} />
@@ -294,7 +302,9 @@ export function PlanningClient({
                         customers={customers}
                         routes={routes}
                         subcontractors={subcontractors}
-                        canViewPrice={canViewPrice}
+                        canViewIncome={canViewIncome}
+                        canViewExpense={canViewExpense}
+                        canAssign={canAssign}
                         canDelete={canDelete}
                     />
                 )}

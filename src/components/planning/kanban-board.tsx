@@ -50,7 +50,9 @@ interface KanbanBoardProps {
   customers: Customer[]
   routes: Route[]
   subcontractors: Subcontractor[]
-  canViewPrice: boolean
+  canViewIncome: boolean
+  canViewExpense: boolean
+  canAssign: boolean
   canDelete: boolean
 }
 
@@ -78,7 +80,9 @@ export function KanbanBoard({
   customers,
   routes,
   subcontractors,
-  canViewPrice,
+  canViewIncome,
+  canViewExpense,
+  canAssign,
   canDelete
 }: KanbanBoardProps) {
   const [jobs, setJobs] = useState<Job[]>(initialJobs)
@@ -175,7 +179,9 @@ export function KanbanBoard({
             customers={customers}
             routes={routes}
             subcontractors={subcontractors}
-            canViewPrice={canViewPrice}
+            canViewIncome={canViewIncome}
+            canViewExpense={canViewExpense}
+            canAssign={canAssign}
             canDelete={canDelete}
           />
         ))}
@@ -208,7 +214,9 @@ interface KanbanColumnProps {
   customers: Customer[]
   routes: Route[]
   subcontractors: Subcontractor[]
-  canViewPrice: boolean
+  canViewIncome: boolean
+  canViewExpense: boolean
+  canAssign: boolean
   canDelete: boolean
 }
 
@@ -220,7 +228,9 @@ function KanbanColumn({
     customers,
     routes,
     subcontractors,
-    canViewPrice,
+    canViewIncome,
+    canViewExpense,
+    canAssign,
     canDelete
 }: KanbanColumnProps) {
   const { setNodeRef } = useSortable({
@@ -273,7 +283,9 @@ function KanbanColumn({
                 customers={customers}
                 routes={routes}
                 subcontractors={subcontractors}
-                canViewPrice={canViewPrice}
+                canViewIncome={canViewIncome}
+                canViewExpense={canViewExpense}
+                canAssign={canAssign}
                 canDelete={canDelete}
             />
           ))}
@@ -298,7 +310,9 @@ interface KanbanCardProps {
   customers: Customer[]
   routes: Route[]
   subcontractors: Subcontractor[]
-  canViewPrice: boolean
+  canViewIncome: boolean
+  canViewExpense: boolean
+  canAssign: boolean
   canDelete: boolean
 }
 
@@ -310,7 +324,9 @@ function KanbanCard({
     customers,
     routes,
     subcontractors,
-    canViewPrice,
+    canViewIncome,
+    canViewExpense,
+    canAssign,
     canDelete
 }: KanbanCardProps) {
   const {
@@ -360,7 +376,9 @@ function KanbanCard({
             customers={customers}
             routes={routes}
             subcontractors={subcontractors}
-            canViewPrice={canViewPrice}
+            canViewIncome={canViewIncome}
+            canViewExpense={canViewExpense}
+            canAssign={canAssign}
             canDelete={canDelete}
             trigger={
                 <div>
@@ -435,4 +453,3 @@ function JobCard({ job, isOverlay }: { job: Job; isOverlay?: boolean }) {
         </PremiumCard>
     )
 }
-

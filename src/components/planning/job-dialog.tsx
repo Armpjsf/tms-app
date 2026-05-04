@@ -62,7 +62,9 @@ type JobDialogProps = {
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
-  canViewPrice?: boolean
+  canViewIncome?: boolean
+  canViewExpense?: boolean
+  canAssign?: boolean
   canDelete?: boolean
   defaultDate?: string
 }
@@ -98,7 +100,9 @@ export function JobDialog({
   trigger,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
-  canViewPrice = true,
+  canViewIncome = true,
+  canViewExpense = true,
+  canAssign = true,
   canDelete = false,
   defaultDate
 }: JobDialogProps) {
@@ -992,8 +996,8 @@ export function JobDialog({
   const tabs = [
     { id: 'info', label: t('jobs.dialog.tabs.info'), icon: <FileText className="w-4 h-4" /> },
     { id: 'location', label: t('jobs.dialog.tabs.locations'), icon: <MapPin className="w-4 h-4" /> },
-    { id: 'assign', label: t('jobs.dialog.tabs.assignment'), icon: <Truck className="w-4 h-4" /> },
-    ...(canViewPrice ? [{ id: 'price', label: t('jobs.dialog.tabs.price'), icon: <Banknote className="w-4 h-4" /> }] as const : []),
+    ...(canAssign ? [{ id: 'assign', label: t('jobs.dialog.tabs.assignment'), icon: <Truck className="w-4 h-4" /> }] as const : []),
+    ...(canViewIncome || canViewExpense ? [{ id: 'price', label: t('jobs.dialog.tabs.price'), icon: <Banknote className="w-4 h-4" /> }] as const : []),
     ...(internalMode === 'edit' ? [{ id: 'history', label: t('jobs.dialog.tabs.history') || 'History', icon: <History className="w-4 h-4" /> }] as const : []),
   ] as const
 
@@ -1721,7 +1725,7 @@ export function JobDialog({
 
 
 
-                    {canViewPrice && (
+                    {canViewExpense && (
                     <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
                         <div className="flex items-center gap-2">
                             {assignment.Show_Price_To_Driver ? (
@@ -1838,15 +1842,16 @@ export function JobDialog({
                 </div>
               ))}
 
-              {/* Add Vehicle Button */}
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={addAssignment}
-                className="w-full border-dashed border-border hover:bg-muted text-muted-foreground hover:text-emerald-600"
-              >
-                <Plus className="w-4 h-4 mr-2" /> {t('jobs.dialog.add_vehicle')}
-              </Button>
+              {canAssign && (
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={addAssignment}
+                    className="w-full border-dashed border-border hover:bg-muted text-muted-foreground hover:text-emerald-600"
+                >
+                    <Plus className="w-4 h-4 mr-2" /> {t('jobs.dialog.add_vehicle')}
+                </Button>
+              )}
 
             </div>
           )}
@@ -1971,24 +1976,28 @@ export function JobDialog({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.price_cust')} (THB)</Label>
-                  <Input
-                    type="number"
-                    value={formData.Price_Cust_Total || ""}
-                    onChange={(e) => updateAssignment(0, 'Price_Cust_Total', e.target.value === "" ? "" : Number(e.target.value))}
-                    className="bg-background border-input text-xl h-14"
-                  />
-                </div>
-                <div className="space-y-2">
-                   <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.cost_driver')} (THB)</Label>
-                   <Input
-                    type="number"
-                    value={formData.Cost_Driver_Total || ""}
-                    onChange={(e) => updateAssignment(0, 'Cost_Driver_Total', e.target.value === "" ? "" : Number(e.target.value))}
-                    className="bg-background border-input text-xl h-14"
-                  />
-                </div>
+                {canViewIncome && (
+                    <div className="space-y-2">
+                    <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.price_cust')} (THB)</Label>
+                    <Input
+                        type="number"
+                        value={formData.Price_Cust_Total || ""}
+                        onChange={(e) => updateAssignment(0, 'Price_Cust_Total', e.target.value === "" ? "" : Number(e.target.value))}
+                        className="bg-background border-input text-xl h-14"
+                    />
+                    </div>
+                )}
+                {canViewExpense && (
+                    <div className="space-y-2">
+                    <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.cost_driver')} (THB)</Label>
+                    <Input
+                        type="number"
+                        value={formData.Cost_Driver_Total || ""}
+                        onChange={(e) => updateAssignment(0, 'Cost_Driver_Total', e.target.value === "" ? "" : Number(e.target.value))}
+                        className="bg-background border-input text-xl h-14"
+                    />
+                    </div>
+                )}
               </div>
 
               <div className="space-y-3">
@@ -2016,24 +2025,28 @@ export function JobDialog({
                             ))}
                         </select>
                     </div>
-                    <div className="col-span-3 space-y-1">
-                        <Label className="text-lg font-bold text-muted-foreground">{t('jobs.dialog.pay_driver')}</Label>
-                        <Input
-                            type="number"
-                            value={cost.cost_driver}
-                            onChange={(e) => updateExtraCost(index, 'cost_driver', e.target.value)}
-                            className="bg-background border-input h-9"
-                        />
-                    </div>
-                     <div className="col-span-3 space-y-1">
-                        <Label className="text-lg font-bold text-muted-foreground">{t('jobs.dialog.charge_cust')}</Label>
-                        <Input
-                            type="number"
-                            value={cost.charge_cust}
-                            onChange={(e) => updateExtraCost(index, 'charge_cust', e.target.value)}
-                            className="bg-background border-input h-9"
-                        />
-                    </div>
+                    {canViewExpense && (
+                        <div className="col-span-3 space-y-1">
+                            <Label className="text-lg font-bold text-muted-foreground">{t('jobs.dialog.pay_driver')}</Label>
+                            <Input
+                                type="number"
+                                value={cost.cost_driver}
+                                onChange={(e) => updateExtraCost(index, 'cost_driver', e.target.value)}
+                                className="bg-background border-input h-9"
+                            />
+                        </div>
+                    )}
+                    {canViewIncome && (
+                        <div className="col-span-3 space-y-1">
+                            <Label className="text-lg font-bold text-muted-foreground">{t('jobs.dialog.charge_cust')}</Label>
+                            <Input
+                                type="number"
+                                value={cost.charge_cust}
+                                onChange={(e) => updateExtraCost(index, 'charge_cust', e.target.value)}
+                                className="bg-background border-input h-9"
+                            />
+                        </div>
+                    )}
                     <div className="col-span-2 flex justify-end">
                          <Button 
                             type="button" 

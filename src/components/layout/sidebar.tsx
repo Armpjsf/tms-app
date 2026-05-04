@@ -135,7 +135,6 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         if (cachedContent) {
             try {
                 let parsed = JSON.parse(cachedContent)
-                // If the cached list is empty, treat as null (Show All) to avoid total lockout
                 if (parsed && parsed.length === 0) parsed = null
                 setSidebarState({ allowedMenus: parsed, isLoaded: true })
             } catch (e) {}
@@ -143,33 +142,18 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
         // 2. Background Fetch & Sync
         try {
-            const { getUserProfile } = await import("@/lib/supabase/users")
-            const profile = await getUserProfile()
+            const { getEffectivePermissions } = await import("@/lib/actions/permission-actions")
+            let perms = await getEffectivePermissions()
 
-            if (profile?.Role) {
-                let perms = await getPermissionsByRole(profile.Role)
-                
-                // --- ROBUST PERMISSION HANDLING FOR ADMINS ---
-                if (profile.Role === 'Super Admin' || profile.Role === 'Admin') {
-                    // If no permissions are set or the list is empty, default to "Show All" (null)
-                    if (!perms || perms.length === 0) {
-                        perms = null
-                    } else {
-                        // Ensure critical admin menus are present
-                        if (!perms.includes('navigation.danger_zones')) perms.push('navigation.danger_zones')
-                        if (!perms.includes('navigation.customers')) perms.push('navigation.customers')
-                    }
-                }
+            // Optional: Re-fetch profile for Role-specific hardcoded overrides if needed
+            // But getEffectivePermissions should handle the core logic.
+            // If it's a Super Admin, it returns null, which the sidebar interprets as "Show All".
 
-                localStorage.setItem("sidebar_permissions", JSON.stringify(perms))
-                setSidebarState({
-                    allowedMenus: perms,
-                    isLoaded: true
-                })
-            } else {
-                localStorage.setItem("sidebar_permissions", JSON.stringify([]))
-                setSidebarState({ allowedMenus: [], isLoaded: true })
-            }
+            localStorage.setItem("sidebar_permissions", JSON.stringify(perms))
+            setSidebarState({
+                allowedMenus: perms,
+                isLoaded: true
+            })
         } catch (error) {
             console.error("Sidebar permission error:", error)
             if (!cachedContent) {

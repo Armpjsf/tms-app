@@ -35,7 +35,9 @@ export const MODULE_GROUPS = [
   {
     title: "Operations",
     items: [
-      { key: "navigation.planning", label: "วางแผนงาน", icon: CalendarDays },
+      { key: "navigation.planning", label: "วางแผนงาน (หน้าหลัก)", icon: CalendarDays },
+      { key: "ops.create_job", label: "→ สร้าง/แก้ไขงาน", icon: FileText },
+      { key: "ops.assign_driver", label: "→ จ่ายงาน/เลือกคนขับ", icon: Truck },
       { key: "navigation.calendar", label: "ปฏิทินงาน", icon: CalendarDays },
       { key: "navigation.history", label: "ประวัติงาน", icon: History },
       { key: "navigation.monitoring", label: "ติดตามรถ", icon: Activity },
@@ -68,10 +70,11 @@ export const MODULE_GROUPS = [
   {
     title: "Financial",
     items: [
-      { key: "navigation.billing_customer", label: "วางบิลลูกค้า", icon: Receipt },
+      { key: "navigation.billing_customer", label: "วางบิลลูกค้า (รายรับ)", icon: Receipt },
       { key: "navigation.billing_automation", label: "ระบบวางบิลอัตโนมัติ", icon: Zap },
       { key: "navigation.invoices", label: "ใบแจ้งหนี้", icon: FileText },
-      { key: "navigation.payouts", label: "ค่าเที่ยวคนขับ", icon: Wallet },
+      { key: "navigation.payouts", label: "ค่าเที่ยวคนขับ (รายจ่าย)", icon: Wallet },
+      { key: "financial.view_profit", label: "ดูสรุปกำไร/ขาดทุน", icon: BarChart3 },
     ]
   },
   {

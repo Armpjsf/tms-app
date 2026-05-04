@@ -133,3 +133,41 @@ export async function getPermissionsByRole(roleName: string) {
     if (error || !data) return null
     return data.allowed_menus as string[]
 }
+
+/**
+ * Get current user's effective permissions (Combined Role + Individual Overrides)
+ */
+export async function getEffectivePermissions() {
+    try {
+        const { getSession } = await import("@/lib/session")
+        const session = await getSession()
+        if (!session) return []
+
+        // Super Admin Bypass
+        if (session.roleId === 1) return null
+
+        const supabase = createAdminClient()
+        const { data: profile } = await supabase
+            .from('Master_Users')
+            .select('Role, Permissions')
+            .eq('Username', session.userId)
+            .maybeSingle()
+
+        if (!profile) return []
+
+        // 1. Individual Overrides
+        if (profile.Permissions && Array.isArray(profile.Permissions) && profile.Permissions.length > 0) {
+            return profile.Permissions as string[]
+        }
+
+        // 2. Role Fallback
+        if (profile.Role) {
+            return await getPermissionsByRole(profile.Role) || []
+        }
+
+        return []
+    } catch (error) {
+        console.error("Error fetching effective permissions:", error)
+        return []
+    }
+}

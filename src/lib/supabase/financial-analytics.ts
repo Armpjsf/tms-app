@@ -37,6 +37,10 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     const finalCustomerId = customerId || null
     const isRestricted = isCust && !customerId
 
+    // CHECK PERMISSION: Financial Visibility
+    const { hasPermission } = await import("@/lib/permissions")
+    const canViewProfit = await hasPermission('financial.view_profit')
+
     // Use the new Super RPC for Current Month (Only if no specific customer names are filtered)
     let currentData, rpcError;
     if (!customerNames || customerNames.length === 0) {
@@ -169,6 +173,25 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         const predictedFuelCost = (curr.distance / 10) * 38 // 10km/L, 38 THB/L
         const predictedMaintCost = curr.distance * 1.5 // 1.5 THB/KM
 
+        // IF NO PERMISSION: Mask financial values
+        if (!canViewProfit) {
+            return {
+                financial: { revenue: 0, revenuePipeline: 0, cost: { total: 0, driver: 0, extra: 0, fuel: 0, maintenance: 0, predictedFuel: 0, predictedMaintenance: 0 }, netProfit: 0, profitMargin: 0, totalQty: curr.totalQty },
+                trend: finalTrend.map(t => ({ ...t, revenue: 0, cost: 0 })),
+                statusDist: Object.entries(statusMap).map(([name, value]) => ({ name, value })),
+                kpi: { 
+                    revenue: { current: 0, previous: 0, growth: 0, target: 250000, attainment: 0 }, 
+                    profit: { current: 0, previous: 0, growth: 0 }, 
+                    margin: { current: 0, growth: 0, target: 15 }, 
+                    jobs: { current: curr.count },
+                    totalQty: { current: curr.totalQty, growth: calculateGrowth(curr.totalQty, prev.totalQty) }
+                },
+                esg: { fuelSaved: Math.round(fuelSaved), co2Saved: Math.round(co2Saved), treesSaved: Number(treesSaved.toFixed(1)) },
+                vehicles: [],
+                debug: { jobCount: currJobs.length, statusMatched: curr.count, masked: true }
+            }
+        }
+
         return {
             financial: { 
                 revenue: curr.revenue, 
@@ -296,6 +319,30 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
 
     const predictedFuelCost = (effectiveDistance / 10) * 38
     const predictedMaintCost = effectiveDistance * 1.5
+
+    // IF NO PERMISSION: Mask financial values
+    if (!canViewProfit) {
+        return {
+            financial: { revenue: 0, revenuePipeline: 0, cost: { total: 0, driver: 0, extra: 0, fuel: 0, maintenance: 0, predictedFuel: 0, predictedMaintenance: 0 }, netProfit: 0, profitMargin: 0 },
+            trend: (currentData?.trend || []).map((t: any) => ({
+                date: t.date,
+                total: Number(t.job_count) || 0,
+                completed: Number(t.completed_count) || 0,
+                revenue: 0,
+                cost: 0
+            })),
+            statusDist: Object.entries(currentData?.status_dist || {}).map(([name, value]) => ({ name, value: Number(value) })),
+            kpi: {
+                revenue: { current: 0, previous: 0, growth: 0, target: 250000, attainment: 0 },
+                profit: { current: 0, previous: 0, growth: 0 },
+                margin: { current: 0, growth: 0, target: 15 },
+                jobs: { current: Number(fin.job_count) || 0 }
+            },
+            esg: { fuelSaved: Math.round(fuelSaved), co2Saved: Math.round(co2Saved), treesSaved: Number(treesSaved.toFixed(1)) },
+            vehicles: [],
+            debug: { masked: true }
+        }
+    }
 
     return {
         financial: {
@@ -778,13 +825,16 @@ export async function getProfitHeatmapData(startDate?: string, endDate?: string,
     if (sDate) query = query.gte('Plan_Date', sDate)
     if (eDate) query = query.lte('Plan_Date', eDate)
 
+    const { hasPermission } = await import("@/lib/permissions")
+    const canViewProfit = await hasPermission('financial.view_profit')
+
     const { data } = await query
     
     // Process and normalize profit including extras
     return (data || []).map(j => ({
         ...j,
-        Price_Cust_Total: (Number(j.Price_Cust_Total) || 0) + (Number(j.Price_Cust_Extra) || 0),
-        Cost_Driver_Total: (Number(j.Cost_Driver_Total) || 0) + (Number(j.Cost_Driver_Extra) || 0)
+        Price_Cust_Total: canViewProfit ? (Number(j.Price_Cust_Total) || 0) + (Number(j.Price_Cust_Extra) || 0) : 0,
+        Cost_Driver_Total: canViewProfit ? (Number(j.Cost_Driver_Total) || 0) + (Number(j.Cost_Driver_Extra) || 0) : 0
     }))
 }
 

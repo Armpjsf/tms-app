@@ -20,20 +20,24 @@ async function PlanningContent({ branch, date }: { branch: string, date?: string
   const isAdminUser = await isAdmin()
 
   // Get stats, jobs and all requests for the target date
-  const [stats, todayJobs, requestedJobs, jobCreationData, hasPriceView, hasDelete, hasCreate] = await Promise.all([
-    getTodayJobStats(currentBranchId, date, date), // Reuse date for both start/end to get single day stats
+  const [stats, todayJobs, requestedJobs, jobCreationData, hasIncomeView, hasExpenseView, hasDelete, hasCreate, hasAssign] = await Promise.all([
+    getTodayJobStats(currentBranchId, date, date), 
     getTodayJobs(date, currentBranchId),
     getRequestedJobs(currentBranchId),
     getJobCreationData(),
-    hasPermission('job_price_view'),
+    hasPermission('navigation.billing_customer'), // Income
+    hasPermission('navigation.payouts'),         // Expense/Payout
     hasPermission('job_delete'),
-    hasPermission('job_create')
+    hasPermission('ops.create_job'),
+    hasPermission('ops.assign_driver')
   ])
 
   // Grant access if either have explicit permission OR is an admin
-  const canViewPrice = isAdminUser || hasPriceView
+  const canViewIncome = isAdminUser || hasIncomeView
+  const canViewExpense = isAdminUser || hasExpenseView
   const canDelete = isAdminUser || hasDelete
   const canCreate = isAdminUser || hasCreate
+  const canAssign = isAdminUser || hasAssign
 
   return (
     <PlanningClient 
@@ -41,9 +45,11 @@ async function PlanningContent({ branch, date }: { branch: string, date?: string
       todayJobs={todayJobs}
       requestedJobs={requestedJobs}
       jobCreationData={jobCreationData}
-      canViewPrice={canViewPrice}
+      canViewIncome={canViewIncome}
+      canViewExpense={canViewExpense}
       canDelete={canDelete}
       canCreate={canCreate}
+      canAssign={canAssign}
       createBulkJobs={createBulkJobs}
       branchId={branch}
       selectedDate={date}

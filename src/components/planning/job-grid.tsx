@@ -22,8 +22,10 @@ interface JobGridProps {
     customers: Customer[]
     routes: Route[]
     subcontractors: Subcontractor[]
-    canViewPrice: boolean
+    canViewIncome: boolean
+    canViewExpense: boolean
     canDelete: boolean
+    canAssign: boolean
     view?: 'list' | 'requests'
     canCreate?: boolean
 }
@@ -35,8 +37,10 @@ export function JobGrid({
     customers,
     routes,
     subcontractors,
-    canViewPrice,
+    canViewIncome,
+    canViewExpense,
     canDelete,
+    canAssign,
     view = 'list',
     canCreate = true
 }: JobGridProps) {
@@ -77,6 +81,10 @@ export function JobGrid({
                                     customers={customers}
                                     routes={routes}
                                     subcontractors={subcontractors}
+                                    canViewIncome={canViewIncome}
+                                    canViewExpense={canViewExpense}
+                                    canAssign={canAssign}
+                                    canDelete={canDelete}
                                     trigger={
                                         canCreate ? (
                                             <PremiumButton className="h-11 px-8 rounded-xl text-xs font-black uppercase tracking-widest">
@@ -105,7 +113,9 @@ export function JobGrid({
                                     customers={customers}
                                     routes={routes}
                                     subcontractors={subcontractors}
-                                    canViewPrice={canViewPrice}
+                                    canViewIncome={canViewIncome}
+                                    canViewExpense={canViewExpense}
+                                    canAssign={canAssign}
                                     canDelete={canDelete}
                                 />
                             </motion.div>
