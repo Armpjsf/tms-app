@@ -11,6 +11,7 @@ import { notifyDriverNewJob, notifyMarketplaceNewJob } from '@/lib/actions/push-
 import { getCustomerId, getUserId, isCustomer, isSuperAdmin, isAdmin } from '@/lib/permissions'
 import { sanitizeJobData } from '@/lib/supabase/utils'
 import { getFuelPriceNumber, getSuggestedRate } from '@/lib/actions/fuel-actions'
+import { optimizeRoute, RoutePoint } from '@/lib/ai/route-optimizer'
 
 export type JobFormData = {
   Job_ID: string
@@ -45,6 +46,7 @@ export type JobFormData = {
   Delivery_Lat?: number | null
   Delivery_Lon?: number | null
   Ref_No?: string | null
+  Round?: string | number | null
 }
 
 const parseIfString = (val: string | undefined | null) => {
@@ -206,7 +208,11 @@ async function autoSaveOriginDestinations(branchId: string | null, originsJson?:
     return
 }
 
-export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBranchId: string | null = null) {
+export async function createBulkJobs(
+    jobs: Partial<JobFormData>[], 
+    effectiveBranchId: string | null = null,
+    options: { shouldGroup?: boolean } = {}
+) {
   const isAdminUser = await isAdmin()
   const supabase = isAdminUser ? await createAdminClient() : await createClient()
 
@@ -274,6 +280,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
     normalized.Delivery_Lat = getValue(['delivery_lat', 'dest_lat', 'lat_end', 'ละติจูดปลายทาง', 'lat_ปลายทาง'])
     normalized.Delivery_Lon = getValue(['delivery_lon', 'dest_lon', 'lon_end', 'ลองติจูดปลายทาง', 'lon_ปลายทาง'])
     normalized.Show_Price_To_Driver = getValue(['Show_Price_To_Driver', 'show_price', 'การแสดงรายได้'])
+    normalized.Round = getValue(['Round', 'trip', 'รอบ', 'เที่ยว', 'รอบวิ่ง', 'ลำดับรอบ'])
     
     return normalized
   }
@@ -363,7 +370,8 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
       Origin_Location: (data.Origin_Location as string) || route?.Origin || null,
       Dest_Location: (data.Dest_Location as string) || route?.Destination || null,
       Est_Distance_KM: Number(data.Est_Distance_KM) || route?.Distance_KM || 0,
-      Show_Price_To_Driver: data.Show_Price_To_Driver !== undefined ? (data.Show_Price_To_Driver === true || data.Show_Price_To_Driver === 'true') : (j.Show_Price_To_Driver ?? true)
+      Show_Price_To_Driver: data.Show_Price_To_Driver !== undefined ? (data.Show_Price_To_Driver === true || data.Show_Price_To_Driver === 'true') : (j.Show_Price_To_Driver ?? true),
+      Round: data.Round || null
     })
     
     if (typeof sanitized.Price_Cust_Total === 'string') sanitized.Price_Cust_Total = parseFloat(sanitized.Price_Cust_Total) || 0
@@ -389,9 +397,104 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[], effectiveBran
      return { success: false, message: 'ไม่พบข้อมูลที่ถูกต้อง (ต้องระบุชื่อลูกค้า)' }
   }
 
+  // --- AUTO GROUPING LOGIC ---
+  let dataToInsert = finalizedData
+  if (options.shouldGroup) {
+      const groups = new Map<string, any[]>()
+      
+      finalizedData.forEach(job => {
+          // Group by Date + Driver + Vehicle + Round
+          // We only group if a driver/vehicle is assigned
+          if (job.Driver_ID || job.Vehicle_Plate) {
+              const roundSuffix = job.Round ? `_R${job.Round}` : ''
+              const key = `${job.Plan_Date}_${job.Driver_ID || 'NO_DRIVER'}_${job.Vehicle_Plate || 'NO_PLATE'}${roundSuffix}`
+              if (!groups.has(key)) groups.set(key, [])
+              groups.get(key)!.push(job)
+          } else {
+              // Unassigned jobs stay individual or we could group by something else
+              // For now, keep them separate
+              groups.set(`INDIV_${job.Job_ID}`, [job])
+          }
+      })
+
+      const mergedJobs: any[] = []
+      
+      for (const [key, group] of groups.entries()) {
+          if (group.length === 1) {
+              mergedJobs.push(group[0])
+              continue
+          }
+
+          // Merge Logic
+          const first = group[0]
+          const soNumbers = group.map(j => j.Ref_No).filter(Boolean)
+          const uniqueSo = Array.from(new Set(soNumbers))
+          
+          const totalIncome = group.reduce((sum, j) => sum + (j.Price_Cust_Total || 0), 0)
+          const totalCost = group.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0)
+          const totalWeight = group.reduce((sum, j) => sum + (j.Weight_Kg || 0), 0)
+          const totalVolume = group.reduce((sum, j) => sum + (j.Volume_Cbm || 0), 0)
+          const totalQty = group.reduce((sum, j) => sum + (j.Loaded_Qty || 0), 0)
+          
+          // Collect all destinations for optimization
+          const destinations: RoutePoint[] = group.map(j => ({
+              name: j.Dest_Location || 'Unknown',
+              lat: j.Delivery_Lat,
+              lng: j.Delivery_Lon,
+              address: j.Dest_Location
+          })).filter(d => d.lat && d.lng)
+
+          let sortedDestinations = group.map(j => ({
+              name: j.Dest_Location,
+              lat: j.Delivery_Lat,
+              lng: j.Delivery_Lon,
+              Ref_No: j.Ref_No // Keep Ref_No for individual tracking
+          }))
+
+          // Optimize Route if multiple destinations have coordinates
+          if (destinations.length > 1) {
+              const origin: RoutePoint = {
+                  name: first.Origin_Location || 'Start',
+                  lat: first.Pickup_Lat,
+                  lng: first.Pickup_Lon
+              }
+              
+              const optimization = await optimizeRoute(origin, destinations)
+              if (optimization.success && optimization.optimizedOrder) {
+                  // Reorder our destinations based on AI suggestion
+                  const newOrder: any[] = []
+                  optimization.optimizedOrder.forEach(idx => {
+                      newOrder.push(sortedDestinations[idx])
+                  })
+                  sortedDestinations = newOrder
+              }
+          }
+
+          const mergedJob = {
+              ...first,
+              Job_ID: first.Round && first.Round != '1' ? `${first.Job_ID}-R${first.Round}` : first.Job_ID,
+              Price_Cust_Total: totalIncome,
+              Cost_Driver_Total: totalCost,
+              Weight_Kg: totalWeight,
+              Volume_Cbm: totalVolume,
+              Loaded_Qty: totalQty,
+              Total_Drop: sortedDestinations.length,
+              Dest_Location: `${sortedDestinations.length} ปลายทาง (${sortedDestinations.map(d => d.name).slice(0, 2).join(', ')}${sortedDestinations.length > 2 ? '...' : ''})`,
+              Notes: `Grouped SO: ${uniqueSo.join(', ')}\n${group.map(j => j.Notes).filter(Boolean).join(' | ')}`,
+              original_destinations_json: sortedDestinations,
+              // Tracking data: We store the SO list so customers can still find it
+              Ref_No: uniqueSo.join(', ')
+          }
+
+          mergedJobs.push(mergedJob)
+      }
+      
+      dataToInsert = mergedJobs
+  }
+
   const { error } = await supabase
     .from('Jobs_Main')
-    .upsert(finalizedData, { onConflict: 'Job_ID' })
+    .upsert(dataToInsert, { onConflict: 'Job_ID' })
 
   if (error) {
     return { success: false, message: `Failed to import: ${error.message}` }

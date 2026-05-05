@@ -245,9 +245,8 @@ export async function getAllJobs(
     dbQuery = dbQuery
       .order('Plan_Date', { ascending: false })
       .order('Created_At', { ascending: false })
-
     if (query) {
-      dbQuery = dbQuery.or(`Job_ID.ilike.%${query}%,Customer_Name.ilike.%${query}%,Route_Name.ilike.%${query}%`)
+      dbQuery = dbQuery.or(`Job_ID.ilike.%${query}%,Customer_Name.ilike.%${query}%,Route_Name.ilike.%${query}%,Ref_No.ilike.%${query}%`)
     }
 
     if (status) {

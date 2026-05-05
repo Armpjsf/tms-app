@@ -14,6 +14,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 
 import { Upload, FileSpreadsheet, Loader2, Download, AlertCircle, CheckCircle2 } from "lucide-react"
 import { read, utils, writeFile } from "xlsx"
@@ -24,9 +26,10 @@ interface ExcelImportProps {
   trigger: React.ReactNode
   title: string
   description?: string
-  onImport: (data: Record<string, unknown>[]) => Promise<{ success: boolean; message: string; error?: string }>;
+  onImport: (data: Record<string, unknown>[], options?: { shouldGroup?: boolean }) => Promise<{ success: boolean; message: string; error?: string }>;
   templateData?: Record<string, unknown>[]
   templateFilename?: string
+  groupingLabel?: string
 }
 
 export function ExcelImport({
@@ -36,6 +39,7 @@ export function ExcelImport({
   onImport,
   templateData,
   templateFilename = "template.xlsx",
+  groupingLabel,
 }: ExcelImportProps) {
   const { t } = useLanguage()
   const router = useRouter()
@@ -44,6 +48,7 @@ export function ExcelImport({
   const [file, setFile] = useState<File | null>(null)
   const [previewData, setPreviewData] = useState<Record<string, unknown>[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [shouldGroup, setShouldGroup] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const effectiveDescription = description || t('common.import.description')
@@ -98,7 +103,7 @@ export function ExcelImport({
     setError(null)
 
     try {
-      const result = await onImport(previewData)
+      const result = await onImport(previewData, { shouldGroup })
       if (result.success) {
         setOpen(false)
         setFile(null)
@@ -228,6 +233,25 @@ export function ExcelImport({
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {groupingLabel && (
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                <Checkbox 
+                  id="group-so" 
+                  checked={shouldGroup} 
+                  onCheckedChange={(checked) => setShouldGroup(!!checked)}
+                  className="w-5 h-5 rounded-lg border-primary/20 data-[state=checked]:bg-primary"
+                />
+                <div className="grid gap-1">
+                  <Label htmlFor="group-so" className="text-sm font-black uppercase tracking-wider text-primary cursor-pointer">
+                    {groupingLabel}
+                  </Label>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70">
+                    Auto-merges SOs for the same driver & optimizes route
+                  </p>
+                </div>
+              </div>
+            )}
 
             {previewData.length > 0 && !error && (
                <div className="bg-muted/50 rounded-2xl border border-border/5 overflow-hidden">

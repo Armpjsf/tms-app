@@ -53,7 +53,7 @@ interface PlanningClientProps {
     canDelete: boolean
     canCreate: boolean
     canAssign: boolean
-    createBulkJobs: (data: Partial<JobFormData>[]) => Promise<{ success: boolean; message: string }>
+    createBulkJobs: (data: Partial<JobFormData>[], effectiveBranchId?: string | null, options?: { shouldGroup?: boolean }) => Promise<{ success: boolean; message: string }>
     branchId: string
     selectedDate: string
 }
@@ -213,7 +213,8 @@ export function PlanningClient({
                                     </PremiumButton>
                                 }
                                 title={t('planning.import_title') || 'Import Jobs'}
-                                onImport={(data) => createBulkJobs(data, branchId === 'All' ? null : branchId)}
+                                onImport={(data, options) => createBulkJobs(data, branchId === 'All' ? null : branchId, options)}
+                                groupingLabel="จัดกลุ่มใบสั่งซื้อ (Group SO by Car/Driver)"
                                 templateData={[{
                                     "รหัสงาน": "JOB-001",
                                     "วันที่แผน": selectedDate || "",
@@ -226,6 +227,7 @@ export function PlanningClient({
                                     "ราคาขาย": 5500,
                                     "จ่ายคนขับ": 3500,
                                     "เลขที่อ้างอิง": "SO-12345",
+                                    "รอบ": 1,
                                     "หมายเหตุ": "ด่วนพิเศษ",
                                     "สาขา": branchId !== 'All' ? branchId : "HQ"
                                 }]}

@@ -76,11 +76,14 @@ export async function getPublicJobDetails(
   const supabase = createAdminClient();
 
   // Query Jobs_Main with all relevant columns
+  // Query Jobs_Main: Search by Job_ID OR if Ref_No contains the jobId (SO number)
   const { data: job, error } = await supabase
     .from("Jobs_Main")
     .select("*")
-    .eq("Job_ID", jobId)
-    .single();
+    .or(`Job_ID.eq."${jobId}",Ref_No.ilike."%${jobId}%"`)
+    .order('Created_At', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   if (error || !job) {
     return null;
@@ -145,7 +148,7 @@ export async function getPublicJobDetails(
     vehicleType: job.Vehicle_Type || null,
     pickupLat: job.Pickup_Lat,
     pickupLon: job.Pickup_Lon,
-    dropoffLat: job.Dropoff_Lat,
-    dropoffLon: job.Dropoff_Lon,
+    dropoffLat: job.Delivery_Lat || job.Dropoff_Lat, // Use Delivery_Lat for compatibility
+    dropoffLon: job.Delivery_Lon || job.Dropoff_Lon,
   };
 }
