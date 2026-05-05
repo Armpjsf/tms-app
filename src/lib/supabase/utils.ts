@@ -13,7 +13,7 @@ export const sanitizeJobData = (data: Record<string, unknown>) => {
         'Expire_Date', 'Failed_Reason', 'Failed_Time', 'Rating', 
         'Payment_Date', 'Billing_Date',
         'Verification_Status', 'Verified_By', 'Verified_At',
-        'Loaded_Qty', 'Est_Distance_KM', 'Round'
+        'Loaded_Qty', 'Est_Distance_KM'
     ]
     
     const numericKeys = [

@@ -480,10 +480,8 @@ export async function createBulkJobs(
               Loaded_Qty: totalQty,
               Total_Drop: sortedDestinations.length,
               Dest_Location: `${sortedDestinations.length} ปลายทาง (${sortedDestinations.map(d => d.name).slice(0, 2).join(', ')}${sortedDestinations.length > 2 ? '...' : ''})`,
-              Notes: `Grouped SO: ${uniqueSo.join(', ')}\n${group.map(j => j.Notes).filter(Boolean).join(' | ')}`,
-              original_destinations_json: sortedDestinations,
-              // Tracking data: We store the SO list so customers can still find it
-              Ref_No: uniqueSo.join(', ')
+              Notes: `[รอบ: ${first.Round || 1}] Grouped SO: ${uniqueSo.join(', ')}\n${group.map(j => j.Notes).filter(Boolean).join(' | ')}`,
+              original_destinations_json: sortedDestinations
           }
 
           mergedJobs.push(mergedJob)

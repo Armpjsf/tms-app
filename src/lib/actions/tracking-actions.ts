@@ -80,7 +80,7 @@ export async function getPublicJobDetails(
   const { data: job, error } = await supabase
     .from("Jobs_Main")
     .select("*")
-    .or(`Job_ID.eq."${jobId}",Ref_No.ilike."%${jobId}%"`)
+    .or(`Job_ID.eq."${jobId}",Notes.ilike."%${jobId}%"`)
     .order('Created_At', { ascending: false })
     .limit(1)
     .maybeSingle();
