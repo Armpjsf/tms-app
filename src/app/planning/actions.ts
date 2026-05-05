@@ -390,109 +390,21 @@ export async function createBulkJobs(
             total = Number((qty * unitPrice).toFixed(2))
         }
     }
-    return { ...j, Price_Cust_Total: total }
+    const roundInfo = j.Round ? `[รอบ: ${j.Round}] ` : ''
+    return { 
+      ...j, 
+      Price_Cust_Total: total,
+      Notes: j.Notes ? (j.Notes.startsWith('[รอบ:') ? j.Notes : `${roundInfo}${j.Notes}`) : (j.Round ? `[รอบ: ${j.Round}]` : j.Notes)
+    }
   }))
 
   if (finalizedData.length === 0) {
      return { success: false, message: 'ไม่พบข้อมูลที่ถูกต้อง (ต้องระบุชื่อลูกค้า)' }
   }
 
-  // --- AUTO GROUPING LOGIC ---
-  let dataToInsert = finalizedData
-  if (options.shouldGroup) {
-      const groups = new Map<string, any[]>()
-      
-      finalizedData.forEach(job => {
-          // Group by Date + Driver + Vehicle + Round
-          // We only group if a driver/vehicle is assigned
-          if (job.Driver_ID || job.Vehicle_Plate) {
-              const roundSuffix = job.Round ? `_R${job.Round}` : ''
-              const key = `${job.Plan_Date}_${job.Driver_ID || 'NO_DRIVER'}_${job.Vehicle_Plate || 'NO_PLATE'}${roundSuffix}`
-              if (!groups.has(key)) groups.set(key, [])
-              groups.get(key)!.push(job)
-          } else {
-              // Unassigned jobs stay individual or we could group by something else
-              // For now, keep them separate
-              groups.set(`INDIV_${job.Job_ID}`, [job])
-          }
-      })
-
-      const mergedJobs: any[] = []
-      
-      for (const [key, group] of groups.entries()) {
-          if (group.length === 1) {
-              mergedJobs.push(group[0])
-              continue
-          }
-
-          // Merge Logic
-          const first = group[0]
-          const soNumbers = group.map(j => j.Ref_No).filter(Boolean)
-          const uniqueSo = Array.from(new Set(soNumbers))
-          
-          const totalIncome = group.reduce((sum, j) => sum + (j.Price_Cust_Total || 0), 0)
-          const totalCost = group.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0)
-          const totalWeight = group.reduce((sum, j) => sum + (j.Weight_Kg || 0), 0)
-          const totalVolume = group.reduce((sum, j) => sum + (j.Volume_Cbm || 0), 0)
-          const totalQty = group.reduce((sum, j) => sum + (j.Loaded_Qty || 0), 0)
-          
-          // Collect all destinations for optimization
-          const destinations: RoutePoint[] = group.map(j => ({
-              name: j.Dest_Location || 'Unknown',
-              lat: j.Delivery_Lat,
-              lng: j.Delivery_Lon,
-              address: j.Dest_Location
-          })).filter(d => d.lat && d.lng)
-
-          let sortedDestinations = group.map(j => ({
-              name: j.Dest_Location,
-              lat: j.Delivery_Lat,
-              lng: j.Delivery_Lon,
-              Ref_No: j.Ref_No // Keep Ref_No for individual tracking
-          }))
-
-          // Optimize Route if multiple destinations have coordinates
-          if (destinations.length > 1) {
-              const origin: RoutePoint = {
-                  name: first.Origin_Location || 'Start',
-                  lat: first.Pickup_Lat,
-                  lng: first.Pickup_Lon
-              }
-              
-              const optimization = await optimizeRoute(origin, destinations)
-              if (optimization.success && optimization.optimizedOrder) {
-                  // Reorder our destinations based on AI suggestion
-                  const newOrder: any[] = []
-                  optimization.optimizedOrder.forEach(idx => {
-                      newOrder.push(sortedDestinations[idx])
-                  })
-                  sortedDestinations = newOrder
-              }
-          }
-
-          const mergedJob = {
-              ...first,
-              Job_ID: first.Round && first.Round != '1' ? `${first.Job_ID}-R${first.Round}` : first.Job_ID,
-              Price_Cust_Total: totalIncome,
-              Cost_Driver_Total: totalCost,
-              Weight_Kg: totalWeight,
-              Volume_Cbm: totalVolume,
-              Loaded_Qty: totalQty,
-              Total_Drop: sortedDestinations.length,
-              Dest_Location: `${sortedDestinations.length} ปลายทาง (${sortedDestinations.map(d => d.name).slice(0, 2).join(', ')}${sortedDestinations.length > 2 ? '...' : ''})`,
-              Notes: `[รอบ: ${first.Round || 1}] Grouped SO: ${uniqueSo.join(', ')}\n${group.map(j => j.Notes).filter(Boolean).join(' | ')}`,
-              original_destinations_json: sortedDestinations
-          }
-
-          mergedJobs.push(mergedJob)
-      }
-      
-      dataToInsert = mergedJobs
-  }
-
   const { error } = await supabase
     .from('Jobs_Main')
-    .upsert(dataToInsert, { onConflict: 'Job_ID' })
+    .upsert(finalizedData, { onConflict: 'Job_ID' })
 
   if (error) {
     return { success: false, message: `Failed to import: ${error.message}` }

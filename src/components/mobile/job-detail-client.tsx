@@ -20,9 +20,10 @@ import { parseISO, isAfter, startOfDay } from "date-fns"
 interface JobDetailClientProps {
     job: Job
     success?: string
+    groupJobIds?: string[]
 }
 
-export function JobDetailClient({ job, success }: JobDetailClientProps) {
+export function JobDetailClient({ job, success, groupJobIds = [] }: JobDetailClientProps) {
     const [activeTab, setActiveTab] = useState<'mission' | 'info'>('mission')
     const [mounted, setMounted] = useState(false)
 
@@ -266,10 +267,13 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
             {/* FLOATING ACTION CENTER - RELIABLE POSITIONING */}
             <div className="fixed bottom-[110px] left-6 right-6 z-[140] animate-in slide-in-from-bottom-10 duration-700">
                 <div className="shadow-[0_-20px_60px_rgba(0,0,0,0.4)] rounded-[2.5rem] bg-background/30 backdrop-blur-xl border border-white/5 overflow-hidden">
-                    <JobActionButton job={{
-                        ...job,
-                        original_destinations_json: destinations
-                    } as Parameters<typeof JobActionButton>[0]['job']} />
+                    <JobActionButton 
+                        job={{
+                            ...job,
+                            original_destinations_json: destinations
+                        } as Parameters<typeof JobActionButton>[0]['job']} 
+                        groupJobIds={groupJobIds}
+                    />
                 </div>
             </div>
         </div>

@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button"
 import { CameraInput } from "@/components/mobile/camera-input"
 import { SignaturePad } from "@/components/mobile/signature-pad"
 import { toast } from "sonner"
-import { submitJobPOD } from "@/lib/actions/pod-actions"
+import { submitJobPOD, submitBatchJobPOD } from "@/lib/actions/pod-actions"
 import { getJobDetails } from "@/app/mobile/jobs/actions"
+import { useSearchParams } from "next/navigation"
 import { Loader2, CheckCircle, BrainCircuit, AlertTriangle, ScanLine, Box } from "lucide-react"
 import { PodReport } from "@/components/mobile/pod-report"
 import { Job } from "@/lib/supabase/jobs"
@@ -20,6 +21,9 @@ import { QuantityStepper } from "@/components/mobile/quantity-stepper"
 export default function JobCompletePage() {
   const router = useRouter()
   const params = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const groupIds = searchParams.get('group_ids')?.split(',') || []
+  const isGroup = groupIds.length > 1
   const [photos, setPhotos] = useState<File[]>([])
   const [signature, setSignature] = useState<Blob | null>(null)
   const [loadedQty, setLoadedQty] = useState<string>("")
@@ -138,7 +142,9 @@ export default function JobCompletePage() {
             formData.append("signature", signature, "signature.png")
             if (loadedQty) formData.append("loaded_qty", loadedQty)
             
-            const result = await submitJobPOD(params.id, formData)
+            const result = isGroup
+                ? await submitBatchJobPOD(groupIds, formData)
+                : await submitJobPOD(params.id, formData)
             
             if (result.success) {
                 toast.success("อัปโหลดข้อมูลสำเร็จ")
@@ -186,13 +192,13 @@ export default function JobCompletePage() {
               <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500 animate-in zoom-in duration-300">
                   <CheckCircle size={48} />
               </div>
-              <h1 className="text-2xl font-bold text-foreground">ส่งงานสำเร็จ!</h1>
+              <h1 className="text-2xl font-bold text-foreground">{isGroup ? 'ส่งงานแบบกลุ่มสำเร็จ!' : 'ส่งงานสำเร็จ!'}</h1>
               <p className="text-muted-foreground">ขอบคุณสำหรับการทำงาน</p>
               <Button 
-                onClick={() => router.push(`/mobile/jobs/${params.id}`)}
-                className="w-full bg-emerald-600 hover:bg-emerald-700"
+                onClick={() => router.push(`/mobile/dashboard`)}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 rounded-xl font-bold"
               >
-                  กลับหน้ารายละเอียดงาน
+                  กลับหน้าแดชบอร์ด
               </Button>
           </div>
       )
