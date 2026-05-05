@@ -20,10 +20,9 @@ import { parseISO, isAfter, startOfDay } from "date-fns"
 interface JobDetailClientProps {
     job: Job
     success?: string
-    groupJobIds?: string[]
 }
 
-export function JobDetailClient({ job, success, groupJobIds = [] }: JobDetailClientProps) {
+export function JobDetailClient({ job, success }: JobDetailClientProps) {
     const [activeTab, setActiveTab] = useState<'mission' | 'info'>('mission')
     const [mounted, setMounted] = useState(false)
 
@@ -272,7 +271,6 @@ export function JobDetailClient({ job, success, groupJobIds = [] }: JobDetailCli
                             ...job,
                             original_destinations_json: destinations
                         } as Parameters<typeof JobActionButton>[0]['job']} 
-                        groupJobIds={groupJobIds}
                     />
                 </div>
             </div>

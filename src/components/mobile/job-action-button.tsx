@@ -9,7 +9,7 @@ import {
   ArrowRight,
   MapPin
 } from "lucide-react"
-import { updateJobStatus, updateBatchJobStatus } from "@/app/mobile/jobs/actions"
+import { updateJobStatus } from "@/app/mobile/jobs/actions"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -34,15 +34,12 @@ interface Job {
 
 interface JobActionButtonProps {
   job: Job
-  groupJobIds?: string[]
 }
 
-export function JobActionButton({ job, groupJobIds = [] }: JobActionButtonProps) {
+export function JobActionButton({ job }: JobActionButtonProps) {
   const [loading, setLoading] = useState(false)
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null)
   const router = useRouter()
-  
-  const isGroup = groupJobIds.length > 1
 
   const currentStatus = optimisticStatus || job.Job_Status
 
@@ -74,9 +71,7 @@ export function JobActionButton({ job, groupJobIds = [] }: JobActionButtonProps)
     setLoading(true)
     setOptimisticStatus(newStatus)
     try {
-        const result = isGroup 
-            ? await updateBatchJobStatus(groupJobIds, newStatus)
-            : await updateJobStatus(job.Job_ID, newStatus)
+        const result = await updateJobStatus(job.Job_ID, newStatus)
             
         if (!result.success) {
             toast.error(result.message)
@@ -106,8 +101,7 @@ export function JobActionButton({ job, groupJobIds = [] }: JobActionButtonProps)
             return
         }
     }
-    const groupParam = isGroup ? `?group_ids=${groupJobIds.join(',')}` : ''
-    router.push(`/mobile/jobs/${job.Job_ID}/complete${groupParam}`)
+    router.push(`/mobile/jobs/${job.Job_ID}/complete`)
   }
 
 
@@ -164,8 +158,7 @@ export function JobActionButton({ job, groupJobIds = [] }: JobActionButtonProps)
                     colorClass = "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"
                     nextAction = "กรุณาถ่ายรูปสินค้าและเซ็นชื่อ เพื่อยืนยันการรับของ"
                     onClick = () => {
-                        const groupParam = isGroup ? `?group_ids=${groupJobIds.join(',')}` : ''
-                        router.push(`/mobile/jobs/${job.Job_ID}/pickup${groupParam}`)
+                        router.push(`/mobile/jobs/${job.Job_ID}/pickup`)
                     }
                     break
 

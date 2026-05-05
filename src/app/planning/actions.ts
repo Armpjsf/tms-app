@@ -282,6 +282,75 @@ export async function createBulkJobs(
     normalized.Show_Price_To_Driver = getValue(['Show_Price_To_Driver', 'show_price', 'การแสดงรายได้'])
     normalized.Round = getValue(['Round', 'trip', 'รอบ', 'เที่ยว', 'รอบวิ่ง', 'ลำดับรอบ'])
     
+    // Multi-Origin & Destination Detection
+    const origins: { name: string, lat: number | null, lng: number | null }[] = []
+    const destinations: { name: string, lat: number | null, lng: number | null }[] = []
+    const rowKeys = Object.keys(row)
+    
+    // 1. Origins Mapping
+    const primaryOrigin = normalized.Origin_Location as string
+    if (primaryOrigin) {
+        origins.push({ 
+            name: primaryOrigin, 
+            lat: normalized.Pickup_Lat ? Number(normalized.Pickup_Lat) : null,
+            lng: normalized.Pickup_Lon ? Number(normalized.Pickup_Lon) : null
+        })
+    }
+
+    const additionalOriginKeys = rowKeys.filter(k => {
+        const nk = k.toLowerCase().replace(/\s+/g, '')
+        return (nk.startsWith('ต้นทาง') || nk.startsWith('origin')) && 
+               /\d+/.test(nk) && 
+               !nk.includes('lat') && !nk.includes('lon')
+    }).sort((a, b) => {
+        const numA = parseInt(a.match(/\d+/)?.[0] || '0')
+        const numB = parseInt(b.match(/\d+/)?.[0] || '0')
+        return numA - numB
+    })
+
+    additionalOriginKeys.forEach(key => {
+        const val = (row as any)[key]
+        if (val && String(val).trim()) {
+            origins.push({ name: String(val).trim(), lat: null, lng: null })
+        }
+    })
+
+    if (origins.length > 0) {
+        normalized.original_origins_json = origins
+    }
+
+    // 2. Destinations Mapping
+    const primaryDest = normalized.Dest_Location as string
+    if (primaryDest) {
+        destinations.push({ 
+            name: primaryDest, 
+            lat: normalized.Delivery_Lat ? Number(normalized.Delivery_Lat) : null,
+            lng: normalized.Delivery_Lon ? Number(normalized.Delivery_Lon) : null
+        })
+    }
+
+    const additionalDestKeys = rowKeys.filter(k => {
+        const nk = k.toLowerCase().replace(/\s+/g, '')
+        return (nk.startsWith('ปลายทาง') || nk.startsWith('destination') || nk.startsWith('dest')) && 
+               /\d+/.test(nk) && 
+               !nk.includes('lat') && !nk.includes('lon')
+    }).sort((a, b) => {
+        const numA = parseInt(a.match(/\d+/)?.[0] || '0')
+        const numB = parseInt(b.match(/\d+/)?.[0] || '0')
+        return numA - numB
+    })
+
+    additionalDestKeys.forEach(key => {
+        const val = (row as any)[key]
+        if (val && String(val).trim()) {
+            destinations.push({ name: String(val).trim(), lat: null, lng: null })
+        }
+    })
+
+    if (destinations.length > 0) {
+        normalized.original_destinations_json = destinations
+    }
+
     return normalized
   }
 
@@ -368,7 +437,9 @@ export async function createBulkJobs(
       Delivery_Lat: data.Delivery_Lat ? Number(data.Delivery_Lat) : (route?.Dest_Lat || null),
       Delivery_Lon: data.Delivery_Lon ? Number(data.Delivery_Lon) : (route?.Dest_Lon || null),
       Origin_Location: (data.Origin_Location as string) || route?.Origin || null,
+      original_origins_json: data.original_origins_json || (route?.Origin ? [{ name: route.Origin, lat: route.Origin_Lat || null, lng: route.Origin_Lon || null }] : []),
       Dest_Location: (data.Dest_Location as string) || route?.Destination || null,
+      original_destinations_json: data.original_destinations_json || (route?.Destination ? [{ name: route.Destination, lat: route.Dest_Lat || null, lng: route.Dest_Lon || null }] : []),
       Est_Distance_KM: Number(data.Est_Distance_KM) || route?.Distance_KM || 0,
       Show_Price_To_Driver: data.Show_Price_To_Driver !== undefined ? (data.Show_Price_To_Driver === true || data.Show_Price_To_Driver === 'true') : (j.Show_Price_To_Driver ?? true),
       Round: data.Round || null

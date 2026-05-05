@@ -74,50 +74,6 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
         return "สวัสดีตอนเย็น"
     }, [])
 
-    const getRoundFromNotes = (notes: string | null) => {
-        if (!notes) return "1"
-        const match = notes.match(/\[รอบ:\s*(\d+)\]/)
-        return match ? match[1] : "1"
-    }
-
-    // Dynamic Grouping Logic
-    const missions = useMemo(() => {
-        const groups = new Map<string, Job[]>()
-        
-        activeJobs.forEach(job => {
-            const round = getRoundFromNotes(job.Notes)
-            const key = `${job.Plan_Date}_${job.Vehicle_Plate}_${round}`
-            if (!groups.has(key)) groups.set(key, [])
-            groups.get(key)!.push(job)
-        })
-
-        return Array.from(groups.values()).map(group => {
-            const first = group[0]
-            const totalWeight = group.reduce((sum, j) => sum + (j.Weight_Kg || 0), 0)
-            const totalVolume = group.reduce((sum, j) => sum + (j.Volume_Cbm || 0), 0)
-            const round = getRoundFromNotes(first.Notes)
-            
-            return {
-                id: first.Job_ID, // Use first ID as representative
-                groupKey: `${first.Plan_Date}_${first.Vehicle_Plate}_${round}`,
-                jobs: group,
-                mainJob: first,
-                customerNames: Array.from(new Set(group.map(j => j.Customer_Name))).join(', '),
-                totalWeight,
-                totalVolume,
-                round,
-                status: group.every(j => j.Job_Status === 'Completed') ? 'Completed' : 
-                        group.some(j => ['In Transit', 'Arrived'].includes(j.Job_Status || '')) ? 'In Progress' : 
-                        'Pending'
-            }
-        })
-    }, [activeJobs])
-
-    const currentMission = useMemo(() => {
-        if (!currentJob) return null
-        return missions.find(m => m.jobs.some(j => j.Job_ID === currentJob.Job_ID)) || null
-    }, [currentJob, missions])
-
     const getJobDateInfo = (dateStr: string | null) => {
         if (!dateStr) return { label: "", type: 'other' }
         try {
@@ -237,26 +193,21 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                         <div className="w-1.5 h-6 bg-accent rounded-full" />
                         งานปัจจุบัน
                     </h2>
-                    {missions.length > 0 && (
+                    {activeJobs.length > 0 && (
                         <Link href="/mobile/jobs" className="text-accent text-xs font-black uppercase tracking-widest flex items-center gap-1.5 bg-accent/5 px-3 py-1.5 rounded-full border border-accent/10">
-                            ดูทั้งหมด ({missions.length} ภารกิจ) <ChevronRight size={14} />
+                            ดูทั้งหมด <ChevronRight size={14} />
                         </Link>
                     )}
                 </div>
 
                 <AnimatePresence mode="wait">
-                {currentMission ? (
+                {currentJob ? (
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.98 }}
-                        className="glass-panel rounded-[2.5rem] p-7 space-y-6 relative overflow-hidden shadow-xl border-primary/20 bg-background/40 backdrop-blur-md"
+                        className="glass-panel rounded-[2.5rem] p-7 space-y-8 relative overflow-hidden shadow-xl border-primary/20 bg-background/40 backdrop-blur-md"
                     >
-                        <div className="absolute top-0 right-0 p-4">
-                             <div className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-lg text-accent text-[10px] font-black uppercase tracking-widest">
-                                รอบที่ {currentMission.round}
-                             </div>
-                        </div>
                         {/* Job ID & Status */}
                         <div className="flex items-center justify-between relative z-10">
                             <div className="flex items-center gap-4">
@@ -264,22 +215,20 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                     <Star size={26} className="text-white fill-white" />
                                 </div>
                                 <div>
-                                    <h4 className="text-3xl font-black text-foreground tracking-tighter leading-none mb-1.5">
-                                        MISSION: {currentMission.jobs.length} รายการ
-                                    </h4>
-                                    <p className="text-muted-foreground text-sm font-bold truncate max-w-[220px]">
-                                        {currentMission.customerNames}
+                                    <h4 className="text-3xl font-black text-foreground tracking-tighter leading-none mb-1.5">#{(currentJob?.Job_ID || '').slice(-12).toUpperCase()}</h4>
+                                    <p className="text-muted-foreground text-sm font-bold truncate max-w-[180px]">
+                                        {currentJob.Customer_Name}
                                     </p>
                                 </div>
                             </div>
                             <div className="flex flex-col items-end gap-2">
                                 <div className={cn(
                                     "px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest border shadow-sm",
-                                    currentMission.status === 'In Progress'
+                                    ['In Progress', 'In Transit', 'Arrived Pickup', 'Arrived Dropoff'].includes(currentJob.Job_Status)
                                     ? "bg-accent text-white border-accent/20"
                                     : "bg-muted text-muted-foreground border-border/50"
                                 )}>
-                                    {currentMission.status === 'Pending' ? 'รอเริ่มงาน' : 'ดำเนินการอยู่'}
+                                    {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : 'ดำเนินการอยู่'}
                                 </div>
                                 {mounted && (() => {
                                     const dateInfo = getJobDateInfo((currentJob as any).Plan_Date)
@@ -313,31 +262,20 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
 
                             return (
                                 <div className="space-y-4 bg-muted/20 rounded-[2rem] p-6 border border-border/40 relative">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">น้ำหนักรวม</p>
-                                            <p className="text-sm font-black text-foreground italic">{currentMission.totalWeight.toLocaleString()} KG</p>
-                                        </div>
-                                        <div className="space-y-1 text-right">
-                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">ปลายทาง</p>
-                                            <p className="text-sm font-black text-foreground italic">{currentMission.jobs.length} จุดส่ง</p>
-                                        </div>
-                                    </div>
-                                    <div className="h-px bg-border/20 w-full my-2" />
                                     <div className="flex justify-between items-start gap-4">
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[10px] font-black text-emerald-500/70 uppercase tracking-widest mb-1">ต้นทาง</p>
                                             <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                                <span className="text-foreground font-bold text-sm truncate">{currentMission.mainJob.Origin_Location || 'คลังสินค้า'}</span>
+                                                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                                <span className="text-foreground font-bold text-sm truncate">{displayOrigin}</span>
                                             </div>
                                         </div>
 
                                         <div className="flex-1 min-w-0 text-right">
-                                            <p className="text-[10px] font-black text-accent/70 uppercase tracking-widest mb-1">ปลายทางหลัก</p>
+                                            <p className="text-[10px] font-black text-accent/70 uppercase tracking-widest mb-1">ปลายทาง</p>
                                             <div className="flex items-center gap-2 justify-end">
-                                                <span className="text-foreground font-bold text-sm truncate">{currentMission.mainJob.Dest_Location}</span>
-                                                <div className="w-2 h-2 rounded-full bg-accent" />
+                                                <span className="text-foreground font-bold text-sm truncate">{displayDest}</span>
+                                                <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(255,30,133,0.5)]" />
                                             </div>
                                         </div>
                                     </div>
@@ -347,9 +285,9 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
 
                         {/* Action Button */}
                         <div className="relative z-10 pt-2">
-                            <Link href={`/mobile/jobs/${currentMission.id}?group_ids=${currentMission.jobs.map(j => j.Job_ID).join(',')}`} className="block w-full">
+                            <Link href={`/mobile/jobs/${currentJob.Job_ID}`} className="block w-full">
                                 <Button className="w-full h-16 rounded-[1.5rem] bg-foreground hover:bg-foreground/90 text-white font-black text-lg uppercase tracking-widest shadow-2xl active:scale-95 transition-all gap-3 border-b-4 border-black/20">
-                                    จัดการภารกิจ ({currentMission.jobs.length})
+                                    จัดการงานนี้
                                     <ArrowUpRight className="w-5 h-5" />
                                 </Button>
                             </Link>
@@ -380,24 +318,17 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                         คิวงานถัดไป ({secondaryJobs.length})
                     </h2>
                     <div className="space-y-4">
-                        {missions.filter(m => m.id !== currentMission?.id).map((mission) => (
-                            <Link key={mission.id} href={`/mobile/jobs/${mission.id}?group_ids=${mission.jobs.map(j => j.Job_ID).join(',')}`}>
+                        {secondaryJobs.map((job) => (
+                            <Link key={job.Job_ID} href={`/mobile/jobs/${job.Job_ID}`}>
                                 <div className="bg-card/60 border border-border/60 rounded-[2rem] p-5 flex items-center justify-between active:scale-[0.98] transition-all shadow-sm">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-muted/50 rounded-2xl flex items-center justify-center text-muted-foreground border border-border/20 relative">
+                                        <div className="w-12 h-12 bg-muted/50 rounded-2xl flex items-center justify-center text-muted-foreground border border-border/20">
                                             <Clock size={24} />
-                                            {mission.jobs.length > 1 && (
-                                                <span className="absolute -top-1 -right-1 bg-accent text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow-sm">
-                                                    {mission.jobs.length}
-                                                </span>
-                                            )}
                                         </div>
                                         <div>
-                                            <h4 className="text-lg font-black text-foreground leading-none mb-1.5">
-                                                {mission.jobs.length > 1 ? `MISSION: ${mission.jobs.length} รายการ` : `#${mission.id.slice(-6).toUpperCase()}`}
-                                            </h4>
+                                            <h4 className="text-lg font-black text-foreground leading-none mb-1.5">#{(job.Job_ID || '').slice(-6).toUpperCase()}</h4>
                                             <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest truncate max-w-[150px] opacity-70">
-                                                {mission.customerNames}
+                                                {job.Customer_Name}
                                             </p>
                                         </div>
                                     </div>
@@ -406,7 +337,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                             <ChevronRight size={20} className="text-muted-foreground" />
                                         </div>
                                         {mounted && (() => {
-                                            const dateInfo = getJobDateInfo(mission.mainJob.Plan_Date)
+                                            const dateInfo = getJobDateInfo(job.Plan_Date)
                                             if (!dateInfo.label) return null
                                             return (
                                                 <span className={cn(

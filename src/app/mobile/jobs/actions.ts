@@ -90,37 +90,6 @@ export async function updateJobStatus(jobId: string, status: string, driverId?: 
   }
 }
 
-export async function updateBatchJobStatus(jobIds: string[], status: string, driverId?: string) {
-    try {
-        const supabase = createAdminClient()
-        
-        // 1. Update all jobs in the list
-        const { error } = await supabase
-            .from('Jobs_Main')
-            .update({ Job_Status: status })
-            .in('Job_ID', jobIds)
-        
-        if (error) throw error
-
-        // 2. Notify admin once for the batch
-        if (driverId && jobIds.length > 0) {
-            const { data: driver } = await supabase.from('Master_Drivers').select('Driver_Name').eq('Driver_ID', driverId).single()
-            notifyAdminJobStatus(
-                driverId,
-                driver?.Driver_Name || 'คนขับ',
-                `${jobIds[0]} (+${jobIds.length - 1} รายการ)`,
-                status
-            ).catch(() => {})
-        }
-
-        revalidatePath('/mobile/jobs')
-        revalidatePath('/monitoring')
-        return { success: true }
-    } catch (err) {
-        return { success: false, message: err instanceof Error ? err.message : "Batch update failed" }
-    }
-}
-
 import { getJobById } from "@/lib/supabase/jobs"
 
 export async function getJobDetails(jobId: string) {

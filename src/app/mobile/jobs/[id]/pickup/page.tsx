@@ -8,9 +8,8 @@ import { CameraInput } from "@/components/mobile/camera-input"
 import { SignaturePad } from "@/components/mobile/signature-pad"
 import { PickupReport } from "@/components/mobile/pickup-report"
 import { toast } from "sonner"
-import { submitJobPickup, submitBatchJobPickup } from "@/lib/actions/pod-actions"
+import { submitJobPickup } from "@/lib/actions/pod-actions"
 import { getJobDetails } from "@/app/mobile/jobs/actions"
-import { useSearchParams } from "next/navigation"
 import { Job } from "@/lib/supabase/jobs"
 import { Loader2, Box, Info } from "lucide-react"
 import html2canvas from "html2canvas"
@@ -20,9 +19,6 @@ import { Label } from "@/components/ui/label"
 export default function JobPickupPage() {
   const router = useRouter()
   const params = useParams<{ id: string }>()
-  const searchParams = useSearchParams()
-  const groupIds = searchParams.get('group_ids')?.split(',') || []
-  const isGroup = groupIds.length > 1
   const [photos, setPhotos] = useState<File[]>([])
   const [signature, setSignature] = useState<Blob | null>(null)
   const [loadedQty, setLoadedQty] = useState<string>("")
@@ -101,9 +97,7 @@ export default function JobPickupPage() {
             formData.append("signature", signature, "signature.png")
             if (loadedQty) formData.append("loaded_qty", loadedQty)
             
-            const result = isGroup
-                ? await submitBatchJobPickup(groupIds, formData)
-                : await submitJobPickup(params.id, formData)
+            const result = await submitJobPickup(params.id, formData)
             
             if (result.success) {
                 toast.success("อัปโหลดข้อมูลสำเร็จ")
@@ -144,13 +138,13 @@ export default function JobPickupPage() {
               <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-500 animate-in zoom-in duration-300">
                   <Box size={48} />
               </div>
-              <h1 className="text-2xl font-bold text-foreground">{isGroup ? 'รับของแบบกลุ่มสำเร็จ!' : 'รับของสำเร็จ!'}</h1>
+              <h1 className="text-2xl font-bold text-foreground">รับของสำเร็จ!</h1>
               <p className="text-muted-foreground italic">ข้อมูลกำลังถูกส่งไปยังระบบเบื้องหลัง...</p>
               <Button 
-                onClick={() => router.push(`/mobile/dashboard`)}
+                onClick={() => router.push(`/mobile/jobs/${params.id}`)}
                 className="w-full bg-amber-600 hover:bg-amber-700 font-bold h-12 rounded-xl"
               >
-                  กลับหน้าแดชบอร์ด
+                  กลับหน้ารายละเอียดงาน
               </Button>
           </div>
       )

@@ -27,9 +27,7 @@ export default async function JobDetailPage(props: Props) {
     )
   }
 
-  const groupIds = searchParams.group_ids ? String(searchParams.group_ids).split(',') : []
-  
   return (
-    <JobDetailClient job={job} success={success} groupJobIds={groupIds} />
+    <JobDetailClient job={job} success={success} />
   )
 }

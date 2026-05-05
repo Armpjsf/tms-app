@@ -212,46 +212,6 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
   }
 }
 
-export async function submitBatchJobPOD(jobIds: string[], formData: FormData) {
-    const results = []
-    const firstJobId = jobIds[0]
-    
-    // 1. Submit for the first job normally to get the URLs
-    const firstResult = await submitJobPOD(firstJobId, formData)
-    if (firstResult.error) return firstResult
-    
-    // 2. Get the URLs from the first job
-    const supabase = createAdminClient()
-    const { data: mainJob } = await supabase
-        .from("Jobs_Main")
-        .select("Photo_Proof_Url, Signature_Url, Actual_Delivery_Time, Delivery_Date, Notes")
-        .eq("Job_ID", firstJobId)
-        .single()
-    
-    if (!mainJob) return { error: "Failed to replicate POD data" }
-
-    // 3. Replicate to others (excluding the first one)
-    const otherIds = jobIds.slice(1)
-    if (otherIds.length > 0) {
-        const { error } = await supabase
-            .from("Jobs_Main")
-            .update({
-                Job_Status: "Completed",
-                Photo_Proof_Url: mainJob.Photo_Proof_Url,
-                Signature_Url: mainJob.Signature_Url,
-                Actual_Delivery_Time: mainJob.Actual_Delivery_Time,
-                Delivery_Date: mainJob.Delivery_Date,
-                // We keep original notes but could append the POD info if needed
-            })
-            .in("Job_ID", otherIds)
-        
-        if (error) console.error("Batch POD replication failed:", error)
-    }
-
-    revalidatePath("/mobile/jobs")
-    return { success: true }
-}
-
 export async function submitJobPickup(jobId: string, formData: FormData) {
   const supabase = createAdminClient()
 
@@ -371,43 +331,6 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
 
     return { error: `บันทึกไม่สำเร็จ (Pickup): ${errorMessage}` }
   }
-}
-
-export async function submitBatchJobPickup(jobIds: string[], formData: FormData) {
-    const firstJobId = jobIds[0]
-    
-    // 1. Submit for the first job normally
-    const firstResult = await submitJobPickup(firstJobId, formData)
-    if (firstResult.error) return firstResult
-    
-    // 2. Get URLs
-    const supabase = createAdminClient()
-    const { data: mainJob } = await supabase
-        .from("Jobs_Main")
-        .select("Pickup_Photo_Url, Pickup_Signature_Url, Actual_Pickup_Time")
-        .eq("Job_ID", firstJobId)
-        .single()
-    
-    if (!mainJob) return { error: "Failed to replicate Pickup data" }
-
-    // 3. Replicate
-    const otherIds = jobIds.slice(1)
-    if (otherIds.length > 0) {
-        const { error } = await supabase
-            .from("Jobs_Main")
-            .update({
-                Job_Status: "In Transit",
-                Pickup_Photo_Url: mainJob.Pickup_Photo_Url,
-                Pickup_Signature_Url: mainJob.Pickup_Signature_Url,
-                Actual_Pickup_Time: mainJob.Actual_Pickup_Time
-            })
-            .in("Job_ID", otherIds)
-        
-        if (error) console.error("Batch Pickup replication failed:", error)
-    }
-
-    revalidatePath("/mobile/jobs")
-    return { success: true }
 }
 
 export async function bulkSyncJobPrices(jobIds: string[]) {
