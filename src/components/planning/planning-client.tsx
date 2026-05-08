@@ -293,7 +293,9 @@ export function PlanningClient({
                         customers={customers}
                         routes={routes}
                         subcontractors={subcontractors}
-                        canViewPrice={canViewPrice}
+                        canViewIncome={canViewIncome}
+                        canViewExpense={canViewExpense}
+                        canAssign={canAssign}
                         canDelete={canDelete}
                     />
                 ) : (
