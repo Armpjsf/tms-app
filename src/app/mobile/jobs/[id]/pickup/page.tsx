@@ -40,7 +40,7 @@ export default function JobPickupPage() {
     (job?.Price_Cust_Total && Number(job.Price_Cust_Total) > 0) // Fixed price ignores quantity requirement
   )
 
-  const handleSubmit = async () => {
+    const handleSubmit = async () => {
     // Enhanced Validation with feedback
     if (photos.length === 0) {
         toast.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
@@ -59,28 +59,33 @@ export default function JobPickupPage() {
         return
     }
 
-    // --- OPTIMISTIC UI ---
+    // --- ULTRA OPTIMISTIC UI ---
     // Show success screen immediately, process in background
     setCompleted(true)
-    toast.success("บันทึกข้อมูลเรียบร้อยแล้ว กำลังอัปโหลดเบื้องหลัง...")
+    toast.success("บันทึกข้อมูลเรียบร้อยแล้ว", {
+        description: "กำลังอัปโหลดข้อมูลเบื้องหลัง..."
+    })
     
-    // Continue processing in "background" (don't await the whole thing for the UI)
+    // Background submission - Deferred
     const runBackgroundSubmission = async () => {
         try {
+            // Short delay for smooth UI transition
+            await new Promise(resolve => setTimeout(resolve, 800))
+
             const formData = new FormData()
             
             // 1. Capture Report
             if (reportRef.current && job) {
                 try {
                     const canvas = await html2canvas(reportRef.current, {
-                        scale: 2,
+                        scale: 1.5,
                         useCORS: true,
                         logging: false,
-                        windowWidth: 1200
+                        windowWidth: 800
                     })
                     
                     const reportBlob = await new Promise<Blob | null>(resolve => 
-                        canvas.toBlob(resolve, 'image/jpeg', 0.8)
+                        canvas.toBlob(resolve, 'image/jpeg', 0.7)
                     )
                     
                     if (reportBlob) {
@@ -100,13 +105,12 @@ export default function JobPickupPage() {
             const result = await submitJobPickup(params.id, formData)
             
             if (result.success) {
-                toast.success("อัปโหลดข้อมูลสำเร็จ")
+                console.log("Pickup Background upload success")
             } else {
                 throw new Error(typeof result.error === 'string' ? result.error : "Upload failed")
             }
         } catch (error) {
-            console.error("Background submission failed, attempting offline save:", error)
-            // Fallback to offline storage if background upload fails
+            console.error("Background submission failed, saving to IndexedDB:", error)
             try {
                 const { blobToB64, saveJobOffline } = await import("@/lib/utils/offline-storage")
                 const photoB64s = await Promise.all(photos.map(p => blobToB64(p)))
@@ -116,15 +120,15 @@ export default function JobPickupPage() {
                     photos: photoB64s,
                     signature: sigB64,
                     photo_count: photos.length,
-                    actualCompletionTime: new Date().toISOString(),
-                    type: 'Pickup'
+                    actualCompletionTime: new Date().toISOString()
                 }
 
-                saveJobOffline(params.id, offlineData, 'Pickup')
-                toast.info("ข้อมูลถูกบันทึกไว้ในเครื่องแล้ว จะอัปโหลดใหม่อัตโนมัติเมื่อพร้อม")
+                await saveJobOffline(params.id, offlineData, 'PICKUP')
+                toast.info("บันทึกข้อมูลแบบ Offline สำเร็จ", {
+                    description: "ระบบจะอัปโหลดใหม่อัตโนมัติเมื่อเน็ตเสถียร"
+                })
             } catch (offlineErr) {
-                toast.error("ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง")
-                setCompleted(false) // Only revert if absolutely failed
+                console.error("Critical: Failed to save pickup even to IndexedDB")
             }
         }
     }

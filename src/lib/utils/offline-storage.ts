@@ -10,7 +10,27 @@ interface OfflineJob {
     type: 'POD' | 'PICKUP'
 }
 
-const STORAGE_KEY = 'tms_offline_jobs'
+const DB_NAME = 'tms_offline_db'
+const STORE_NAME = 'offline_jobs'
+const DB_VERSION = 1
+
+function openDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+        if (typeof indexedDB === 'undefined') {
+            reject(new Error('IndexedDB not supported'))
+            return
+        }
+        const request = indexedDB.open(DB_NAME, DB_VERSION)
+        request.onupgradeneeded = () => {
+            const db = request.result
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: 'id' })
+            }
+        }
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = () => reject(request.error)
+    })
+}
 
 const notifyQueueChange = () => {
     if (typeof window !== 'undefined') {
@@ -18,56 +38,87 @@ const notifyQueueChange = () => {
     }
 }
 
-export const saveJobOffline = (jobId: string, data: Record<string, unknown>, type: 'POD' | 'PICKUP' = 'POD') => {
+export const saveJobOffline = async (jobId: string, data: Record<string, unknown>, type: 'POD' | 'PICKUP' = 'POD') => {
     if (typeof window === 'undefined') return
     
-    // Add current time as the actual completion time
     const enrichedData = {
         ...data,
         actualCompletionTime: new Date().toISOString()
     }
 
-    const offlineJobs: OfflineJob[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-    offlineJobs.push({
-        id: crypto.randomUUID(),
-        jobId,
-        data: enrichedData,
-        timestamp: Date.now(),
-        type
-    })
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(offlineJobs))
-    notifyQueueChange()
+    try {
+        const db = await openDB()
+        const tx = db.transaction(STORE_NAME, 'readwrite')
+        const store = tx.objectStore(STORE_NAME)
+        
+        await new Promise((resolve, reject) => {
+            const request = store.add({
+                id: crypto.randomUUID(),
+                jobId,
+                data: enrichedData,
+                timestamp: Date.now(),
+                type
+            })
+            request.onsuccess = resolve
+            request.onerror = reject
+        })
+        
+        notifyQueueChange()
+    } catch (err) {
+        console.error('Failed to save to IndexedDB, falling back to localStorage', err)
+        // Fallback to localStorage for very basic data if IndexedDB fails
+        try {
+            const legacy = JSON.parse(localStorage.getItem('tms_offline_jobs') || '[]')
+            legacy.push({ jobId, timestamp: Date.now(), type, note: 'fallback' })
+            localStorage.setItem('tms_offline_jobs', JSON.stringify(legacy))
+            notifyQueueChange()
+        } catch (e) { /* give up */ }
+    }
 }
 
-export const getOfflineJobs = (): OfflineJob[] => {
+export const getOfflineJobs = async (): Promise<OfflineJob[]> => {
     if (typeof window === 'undefined') return []
     try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+        const db = await openDB()
+        const tx = db.transaction(STORE_NAME, 'readonly')
+        const store = tx.objectStore(STORE_NAME)
+        
+        return new Promise((resolve, reject) => {
+            const request = store.getAll()
+            request.onsuccess = () => resolve(request.result)
+            request.onerror = () => reject(request.error)
+        })
     } catch {
         return []
     }
 }
 
-export const removeOfflineJob = (id: string) => {
+export const removeOfflineJob = async (id: string) => {
     if (typeof window === 'undefined') return
-    const offlineJobs: OfflineJob[] = getOfflineJobs()
-    const filtered = offlineJobs.filter(j => j.id !== id)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered))
-    notifyQueueChange()
+    try {
+        const db = await openDB()
+        const tx = db.transaction(STORE_NAME, 'readwrite')
+        const store = tx.objectStore(STORE_NAME)
+        
+        await new Promise((resolve, reject) => {
+            const request = store.delete(id)
+            request.onsuccess = resolve
+            request.onerror = reject
+        })
+        notifyQueueChange()
+    } catch (err) {
+        console.error('Failed to remove from IndexedDB', err)
+    }
 }
 
-/**
- * Attempts to sync all offline jobs to the server
- */
 export const syncOfflineJobs = async () => {
     if (typeof window === 'undefined' || !navigator.onLine) return
     
-    const jobs = getOfflineJobs()
+    const jobs = await getOfflineJobs()
     if (jobs.length === 0) return
 
     for (const job of jobs) {
         try {
-            // Reconstruct FormData from stored data
             const formData = new FormData()
             Object.entries(job.data).forEach(([key, value]) => {
                 if (key === 'photos' && Array.isArray(value)) {
@@ -92,7 +143,7 @@ export const syncOfflineJobs = async () => {
                 : await submitJobPOD(job.jobId, formData)
 
             if (result.success) {
-                removeOfflineJob(job.id)
+                await removeOfflineJob(job.id)
             }
         } catch (_error) {
             // Failed to sync
@@ -100,7 +151,6 @@ export const syncOfflineJobs = async () => {
     }
 }
 
-// Helpers
 export function blobToB64(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader()
@@ -111,9 +161,10 @@ export function blobToB64(blob: Blob): Promise<string> {
 }
 
 function b64ToBlob(b64Data: string, contentType = 'image/jpeg') {
-    if (!b64Data.includes(',')) return new Blob([], { type: contentType })
+    if (!b64Data || !b64Data.includes(',')) return new Blob([], { type: contentType })
     
-    const byteCharacters = atob(b64Data.split(',')[1])
+    const parts = b64Data.split(',')
+    const byteCharacters = atob(parts[1])
     const byteArrays = []
     
     for (let offset = 0; offset < byteCharacters.length; offset += 512) {

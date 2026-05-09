@@ -11,19 +11,22 @@ export function SyncManager() {
     const [isSyncing, setIsSyncing] = useState(false)
     const [showSuccess, setShowSuccess] = useState(false)
 
-    const updateCount = useCallback(() => {
-        setPendingCount(getOfflineJobs().length)
+    const updateCount = useCallback(async () => {
+        const jobs = await getOfflineJobs()
+        setPendingCount(jobs.length)
     }, [])
 
     const handleSync = useCallback(async () => {
-        if (getOfflineJobs().length === 0) return
+        const jobs = await getOfflineJobs()
+        if (jobs.length === 0) return
         if (isSyncing || !navigator.onLine) return
 
         setIsSyncing(true)
         try {
             await syncOfflineJobs()
-            updateCount()
-            if (getOfflineJobs().length === 0) {
+            await updateCount()
+            const remaining = await getOfflineJobs()
+            if (remaining.length === 0) {
                 setShowSuccess(true)
                 setTimeout(() => setShowSuccess(false), 3000)
             }

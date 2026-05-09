@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { 
@@ -23,12 +24,30 @@ interface JobDetailClientProps {
 }
 
 export function JobDetailClient({ job, success }: JobDetailClientProps) {
-    const [activeTab, setActiveTab] = useState<'mission' | 'info'>('mission')
+    const searchParams = useSearchParams()
+    const router = useRouter()
+    const pathname = usePathname()
+    
+    // Sync tab with URL to prevent "bounce" on refresh
+    const initialTab = (searchParams.get('tab') as 'mission' | 'info') || 'mission'
+    const [activeTab, setActiveTab] = useState<'mission' | 'info'>(initialTab)
     const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
         setMounted(true)
-    }, [])
+        // Sync state if URL changes externally
+        const tab = searchParams.get('tab') as 'mission' | 'info'
+        if (tab && tab !== activeTab) {
+            setActiveTab(tab)
+        }
+    }, [searchParams, activeTab])
+
+    const handleTabChange = (tab: 'mission' | 'info') => {
+        setActiveTab(tab)
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('tab', tab)
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    }
 
     const destinations = typeof job?.original_destinations_json === 'string' 
         ? JSON.parse(job.original_destinations_json) 
@@ -47,7 +66,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                 <div className="mb-8">
                     <div className="bg-card/80 backdrop-blur-xl p-1.5 rounded-2xl border border-border/10 flex shadow-md ring-1 ring-white/5">
                         <button 
-                            onClick={() => setActiveTab('mission')}
+                            onClick={() => handleTabChange('mission')}
                             className={cn(
                                 "flex-1 flex items-center justify-center gap-3 h-12 rounded-xl font-black uppercase tracking-widest transition-all text-xs italic",
                                 activeTab === 'mission' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
@@ -56,7 +75,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                             <Activity size={18} /> ดำเนินงาน
                         </button>
                         <button 
-                            onClick={() => setActiveTab('info')}
+                            onClick={() => handleTabChange('info')}
                             className={cn(
                                 "flex-1 flex items-center justify-center gap-3 h-12 rounded-xl font-black uppercase tracking-widest transition-all text-xs italic",
                                 activeTab === 'info' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"

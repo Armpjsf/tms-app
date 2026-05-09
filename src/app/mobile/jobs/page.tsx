@@ -212,7 +212,6 @@ export default async function DriverJobsPage(props: Props) {
       <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
       
       <MobileHeader title="Management" rightElement={<MobileJobFilter />} />
-      <RealtimeJobsTrigger driverId={session.driverId} />
       
       <Suspense fallback={<JobsLoading />}>
           <JobsContent driverId={session.driverId} searchParams={searchParams} />
