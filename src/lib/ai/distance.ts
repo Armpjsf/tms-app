@@ -39,3 +39,47 @@ export async function getDrivingDistance(
     return null;
   }
 }
+
+/**
+ * Route Optimization — TMS 2026
+ * Uses OSRM Trip service to solve Traveling Salesman Problem (TSP).
+ * Returns the optimized sequence of indices.
+ */
+export async function optimizeRouteSequence(
+  points: { lat: number; lng: number }[]
+): Promise<number[] | null> {
+  // Need at least 3 points to have something to optimize (1 start + 2 destinations)
+  if (points.length < 3) return points.map((_, i) => i);
+
+  try {
+    const coordsStr = points.map(p => `${p.lng},${p.lat}`).join(';');
+    // source=first: fix the start point
+    // roundtrip=false: don't return to start
+    const url = `https://router.project-osrm.org/trip/v1/driving/${coordsStr}?source=first&destination=any&roundtrip=false&overview=false`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'TMS-Logistics-Platform-v2 (contact@logispro-epod.app)'
+      }
+    });
+
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    
+    if (data.code === 'Ok' && data.waypoints) {
+      // waypoints[i].trips_index is the visit order for the i-th input point
+      // We want to return a list of input indices in the order they should be visited
+      const optimizedIndices = data.waypoints
+        .sort((a: any, b: any) => a.trips_index - b.trips_index)
+        .map((w: any) => w.waypoint_index);
+      
+      return optimizedIndices;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Route optimization failed:', error);
+    return null;
+  }
+}

@@ -22,7 +22,7 @@ import { Customer } from "@/lib/supabase/customers"
 import { AiSuggestionCard } from "@/components/planning/ai-suggestion-card"
 import { geocodeAddress } from "@/lib/ai/geocoding"
 import { extractCoordsFromUrl } from "@/lib/utils"
-import { getDrivingDistance } from "@/lib/ai/distance"
+import { getDrivingDistance, optimizeRouteSequence } from "@/lib/ai/distance"
 import { 
   Activity, AlertTriangle, Banknote, Building2, Calendar, Check, Eye, EyeOff, 
   FileText, Fuel, History, Info, Link as LinkIcon, Loader2, MapPin, Package, 
@@ -390,6 +390,52 @@ export function JobDialog({
     }
     if (show) calculateDistance()
   }, [origins, destinations, show])
+
+  const handleOptimizeRoute = async () => {
+    // Collect all valid points
+    const validOrigins = origins.filter(o => o.lat && o.lng)
+    const validDests = destinations.filter(d => d.lat && d.lng)
+    
+    if (validOrigins.length === 0 || validDests.length === 0) {
+        toast.warning(language === 'th' ? 'กรุณาระบุพิกัดให้ครบถ้วนก่อนจัดเส้นทาง' : 'Please provide coordinates before optimizing')
+        return
+    }
+
+    setLoading(true)
+    try {
+        // We optimize starting from the first origin
+        const points = [
+            ...origins.map(o => ({ lat: Number(o.lat), lng: Number(o.lng) })),
+            ...destinations.map(d => ({ lat: Number(d.lat), lng: Number(d.lng) }))
+        ]
+
+        const optimizedIndices = await optimizeRouteSequence(points)
+        
+        if (optimizedIndices && optimizedIndices.length === points.length) {
+            // optimizedIndices is something like [0, 2, 3, 1]
+            // index 0 is always an origin (since source=first)
+            // We want to reconstruct the destinations list based on these indices
+            // Skip the indices that belong to origins (0 to origins.length - 1)
+            
+            const newDestinations = []
+            for (const idx of optimizedIndices) {
+                if (idx >= origins.length) {
+                    newDestinations.push(destinations[idx - origins.length])
+                }
+            }
+            
+            setDestinations(newDestinations)
+            toast.success(language === 'th' ? 'จัดลำดับเส้นทางใหม่เรียบร้อยแล้ว' : 'Route optimized successfully')
+        } else {
+            toast.error(language === 'th' ? 'ไม่สามารถจัดเส้นทางได้ในขณะนี้' : 'Could not optimize route at this time')
+        }
+    } catch (error) {
+        console.error('Optimization error:', error)
+        toast.error(t('jobs.dialog.error'))
+    } finally {
+        setLoading(false)
+    }
+  }
 
   // Comprehensive State Sync when dialog opens in Edit Mode
   // Centralized State Sync: Handles Create/Edit transitions and Data Population
@@ -1348,9 +1394,21 @@ export function JobDialog({
                         <Label className="text-xl font-black text-indigo-400 uppercase tracking-normal flex items-center gap-2">
                             <MapPin className="w-5 h-5" /> {t('jobs.dialog.destination')} <span className="text-muted-foreground text-lg font-bold">({destinations.length})</span>
                         </Label>
-                        <Button type="button" size="sm" variant="outline" onClick={addDestination} className="border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10">
-                            <Plus className="w-4 h-4 mr-1" /> {t('jobs.dialog.add_destination')}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button 
+                                type="button" 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={handleOptimizeRoute}
+                                disabled={loading || destinations.length < 2}
+                                className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+                            >
+                                <Zap className="w-4 h-4 mr-1" /> {t('jobs.dialog.optimize_route')}
+                            </Button>
+                            <Button type="button" size="sm" variant="outline" onClick={addDestination} className="border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10">
+                                <Plus className="w-4 h-4 mr-1" /> {t('jobs.dialog.add_destination')}
+                            </Button>
+                        </div>
                         </div>
                         {destinations.map((dest, index) => (
                         <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-muted/30 rounded-lg">
