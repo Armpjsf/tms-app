@@ -359,6 +359,7 @@ export default function RoutesPage() {
                             className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-normal h-12"
                         />
                     </div>
+                    <div className="space-y-3">
                         <Label className="text-base font-bold font-black text-primary uppercase tracking-tight ml-2">{t('routes.dialog.lat_matrix')}</Label>
                         <Input
                             type="number"
