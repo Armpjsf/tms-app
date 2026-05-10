@@ -119,180 +119,184 @@ export function JobActionButton({ job }: JobActionButtonProps) {
     router.push(`/mobile/jobs/${job.Job_ID}/complete`)
   }
 
+  // Determine button properties based on status
+  let label = ""
+  let variant = "secondary"
+  let action = () => {}
+  let renderStatus = null
+
+  switch(currentStatus) {
+      case 'Assigned': 
+      case 'New':
+          label = "เริ่มงาน"
+          variant = "secondary"
+          action = () => handleStatusUpdate('Accepted')
+          break
+      
+      case 'Accepted':
+          label = "ถึงจุดรับสินค้า"
+          variant = "secondary"
+          action = () => handleStatusUpdate('Arrived Pickup')
+          break
+
+      case 'Arrived Pickup':
+          label = "รับสินค้าเข้า"
+          variant = "primary"
+          action = () => {
+              router.push(`/mobile/jobs/${job.Job_ID}/pickup`)
+          }
+          break
+      
+      case 'Picked Up':
+      case 'In Transit':
+          label = isMultiDrop ? `ถึงจุดส่งที่ ${currentDropIndex}` : "ถึงจุดส่งสินค้า"
+          variant = "secondary"
+          action = () => handleStatusUpdate('Arrived Dropoff')
+          break
+
+      case 'Arrived Dropoff':
+          label = isMultiDrop ? `บันทึกส่งงาน (จุดที่ ${currentDropIndex})` : "บันทึกส่งงาน"
+          variant = "primary"
+          action = handlePOD
+          break
+
+      case 'Completed':
+          renderStatus = (
+              <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-center">
+                  <p className="text-emerald-600 font-bold flex items-center justify-center gap-2">
+                      <CheckCircle size={20} /> ภารกิจเสร็จสิ้นแล้ว
+                  </p>
+              </div>
+          )
+          break
+
+      default:
+          renderStatus = (
+              <div className="p-4 bg-slate-100 rounded-2xl text-center">
+                  <p className="text-slate-500 text-xs italic">ไม่ทราบสถานะ ({currentStatus})</p>
+              </div>
+          )
+          break
+  }
+
+  if (renderStatus) {
+    return (
+        <div className="space-y-3">
+            {renderStatus}
+        </div>
+    )
+  }
+
+  // Resolve Phone Info
+  const phone_completedDrops = job?.Signature_Url ? job.Signature_Url.split(',').filter(Boolean).length : 0
+  const phone_totalDrop = Array.isArray(job.original_destinations_json) ? job.original_destinations_json.length : 1
+  const phone_currentDropIndex = Math.min(phone_completedDrops, phone_totalDrop - 1)
+  const phone_currentDest = Array.isArray(job.original_destinations_json) ? job.original_destinations_json[phone_currentDropIndex] : null
+  const phone = phone_currentDest?.phone || (job as any).Customer_Phone
+
   return (
     <div className="space-y-3">
-        {/* Dynamic Buttons */}
-        {(() => {
-            let label = ""
-            let variant = "secondary"
-            let action = () => {}
-
-            switch(currentStatus) {
-                case 'Assigned': 
-                case 'New':
-                    label = "เริ่มงาน"
-                    variant = "secondary"
-                    action = () => handleStatusUpdate('Accepted')
-                    break
-                
-                case 'Accepted':
-                    label = "ถึงจุดรับสินค้า"
-                    variant = "secondary"
-                    action = () => handleStatusUpdate('Arrived Pickup')
-                    break
-
-                case 'Arrived Pickup':
-                    label = "รับสินค้าเข้า"
-                    variant = "primary"
-                    action = () => {
-                        router.push(`/mobile/jobs/${job.Job_ID}/pickup`)
-                    }
-                    break
-                
-                case 'Picked Up':
-                case 'In Transit':
-                    label = isMultiDrop ? `ถึงจุดส่งที่ ${currentDropIndex}` : "ถึงจุดส่งสินค้า"
-                    variant = "secondary"
-                    action = () => handleStatusUpdate('Arrived Dropoff')
-                    break
-
-                case 'Arrived Dropoff':
-                    label = isMultiDrop ? `บันทึกส่งงาน (จุดที่ ${currentDropIndex})` : "บันทึกส่งงาน"
-                    variant = "primary"
-                    action = handlePOD
-                    break
-
-                case 'Completed':
-                    return (
-                        <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-center">
-                            <p className="text-emerald-600 font-bold flex items-center justify-center gap-2">
-                                <CheckCircle size={20} /> ภารกิจเสร็จสิ้นแล้ว
-                            </p>
-                        </div>
-                    )
-
-                default:
-                    return (
-                        <div className="p-4 bg-slate-100 rounded-2xl text-center">
-                            <p className="text-slate-500 text-xs italic">ไม่ทราบสถานะ ({currentStatus})</p>
-                        </div>
-                    )
-            }
-
-            return (
-                <div className="flex flex-col">
-                    {/* Step Guidance Header */}
-                    <div className="p-5 border-b border-white/5 bg-primary/5 rounded-t-2xl">
-                        <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                <Info className="text-primary" size={20} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">สิ่งที่คุณต้องทำตอนนี้</p>
-                                    
-                                    {/* Integrated Call Button */}
-                                    {(() => {
-                                        const completedDrops = job?.Signature_Url ? job.Signature_Url.split(',').filter(Boolean).length : 0
-                                        const totalDrop = Array.isArray(job.original_destinations_json) ? job.original_destinations_json.length : 1
-                                        const currentDropIndex = Math.min(completedDrops, totalDrop - 1)
-                                        const currentDest = Array.isArray(job.original_destinations_json) ? job.original_destinations_json[currentDropIndex] : null
-                                        const phone = currentDest?.phone || (job as any).Customer_Phone
-                                        
-                                        return (
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (phone) {
-                                                        window.location.href = `tel:${phone}`;
-                                                    } else {
-                                                        toast.error("ไม่พบเบอร์โทรศัพท์ในระบบ");
-                                                    }
-                                                }}
-                                                className={cn(
-                                                    "px-3 py-1 rounded-full flex items-center gap-1.5 active:scale-90 transition-all border",
-                                                    phone 
-                                                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
-                                                        : "bg-muted text-muted-foreground border-border/50 opacity-60"
-                                                )}
-                                            >
-                                                <Phone size={10} strokeWidth={3} />
-                                                <span className="text-[10px] font-black uppercase tracking-wider">{phone ? "โทร" : "ไม่มีเบอร์"}</span>
-                                            </button>
-                                        )
-                                    })()}
-                                </div>
-                                <h4 className="text-sm font-bold text-foreground leading-tight mt-1">
-                                    {currentStatus === 'Assigned' || currentStatus === 'New' ? 'กรุณากด "เริ่มงาน" เพื่อเริ่มต้นภารกิจ' : 
-                                     currentStatus === 'Accepted' ? 'เดินทางไปยังจุดรับสินค้า' :
-                                     currentStatus === 'Arrived Pickup' ? 'ถึงจุดรับแล้ว กรุณาถ่ายรูปรับสินค้า' :
-                                     currentStatus === 'Picked Up' || currentStatus === 'In Transit' ? (isMultiDrop ? `กำลังเดินทางไปจุดที่ ${currentDropIndex}` : 'กำลังเดินทางไปยังจุดหมาย') :
-                                     currentStatus === 'Arrived Dropoff' ? (isMultiDrop ? `ถึงจุดส่งที่ ${currentDropIndex} แล้ว บันทึกส่งงาน` : 'ถึงที่หมายแล้ว บันทึกส่งงาน') :
-                                     'อยู่ระหว่างดำเนินการ'}
-                                </h4>
-                                
-                                {/* Multi-drop Specific Detail */}
-                                {isMultiDrop && (currentStatus === 'In Transit' || currentStatus === 'Arrived Dropoff' || currentStatus === 'Picked Up') && (
-                                    <div className="mt-2 flex items-center gap-2">
-                                         <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                                            <div 
-                                                className="h-full bg-primary transition-all duration-500" 
-                                                style={{ width: `${(completedDrops / totalDrop) * 100}%` }}
-                                            />
-                                         </div>
-                                         <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">
-                                            จุดส่ง {completedDrops}/{totalDrop}
-                                         </span>
-                                    </div>
-                                )}
-                                
-                                {/* Destination Name for current stop */}
-                                {(currentStatus === 'In Transit' || currentStatus === 'Arrived Dropoff' || currentStatus === 'Picked Up') && (
-                                    <p className="mt-2 text-xs font-medium text-muted-foreground line-clamp-1 italic">
-                                        จุดหมาย: {
-                                            isMultiDrop 
-                                                ? (Array.isArray(job.original_destinations_json) ? job.original_destinations_json[currentDropIndex - 1]?.name : 'ไม่ระบุ')
-                                                : (job.Dest_Location || 'ไม่ระบุ')
-                                        }
-                                    </p>
-                                )}
-                            </div>
-                        </div>
+        <div className="flex flex-col">
+            {/* Step Guidance Header */}
+            <div className="p-5 border-b border-white/5 bg-primary/5 rounded-t-2xl">
+                <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <Info className="text-primary" size={20} />
                     </div>
-
-                    {/* Action Button */}
-                    <div className="p-3 bg-background/50 rounded-b-2xl">
-                        <Button 
-                            onClick={() => {
-                                if (action) action()
-                            }}
-                            disabled={loading || currentStatus === 'Completed'}
-                            size="lg"
-                            className={cn(
-                                "w-full h-14 rounded-2xl text-base font-black uppercase tracking-widest gap-2 shadow-2xl transition-all active:scale-95",
-                                variant === 'primary' ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-primary hover:bg-primary/90 text-white"
-                            )}
-                        >
-                            {loading ? (
-                                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                                <>
-                                    {label === "เริ่มงาน" && <Activity size={24} />}
-                                    {label === "ถึงจุดรับสินค้า" && <MapPin size={24} />}
-                                    {label === "รับสินค้าเข้า" && <Target size={24} />}
-                                    {label.includes("ถึงจุดส่ง") && <Navigation size={24} />}
-                                    {label.includes("บันทึกส่งงาน") && <CheckCircle size={24} />}
-                                    {label}
-                                    <div className="ml-auto w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                                        <ArrowRight size={14} />
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">สิ่งที่คุณต้องทำตอนนี้</p>
+                            
+                            {/* Integrated Call Button */}
+                            <button 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (phone) {
+                                        window.location.href = `tel:${phone}`;
+                                    } else {
+                                        toast.error("ไม่พบเบอร์โทรศัพท์ในระบบ");
+                                    }
+                                }}
+                                className={cn(
+                                    "px-3 py-1 rounded-full flex items-center gap-1.5 active:scale-90 transition-all border",
+                                    phone 
+                                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                                        : "bg-muted text-muted-foreground border-border/50 opacity-60"
+                                )}
+                            >
+                                <Phone size={10} strokeWidth={3} />
+                                <span className="text-[10px] font-black uppercase tracking-wider">{phone ? "โทร" : "ไม่มีเบอร์"}</span>
+                            </button>
+                        </div>
+                        <h4 className="text-sm font-bold text-foreground leading-tight mt-1">
+                            {currentStatus === 'Assigned' || currentStatus === 'New' ? 'กรุณากด "เริ่มงาน" เพื่อเริ่มต้นภารกิจ' : 
+                                currentStatus === 'Accepted' ? 'เดินทางไปยังจุดรับสินค้า' :
+                                currentStatus === 'Arrived Pickup' ? 'ถึงจุดรับแล้ว กรุณาถ่ายรูปรับสินค้า' :
+                                currentStatus === 'Picked Up' || currentStatus === 'In Transit' ? (isMultiDrop ? `กำลังเดินทางไปจุดที่ ${currentDropIndex}` : 'กำลังเดินทางไปยังจุดหมาย') :
+                                currentStatus === 'Arrived Dropoff' ? (isMultiDrop ? `ถึงจุดส่งที่ ${currentDropIndex} แล้ว บันทึกส่งงาน` : 'ถึงที่หมายแล้ว บันทึกส่งงาน') :
+                                'อยู่ระหว่างดำเนินการ'}
+                        </h4>
+                        
+                        {/* Multi-drop Specific Detail */}
+                        {isMultiDrop && (currentStatus === 'In Transit' || currentStatus === 'Arrived Dropoff' || currentStatus === 'Picked Up') && (
+                            <div className="mt-2 flex items-center gap-2">
+                                    <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-primary transition-all duration-500" 
+                                        style={{ width: `${(completedDrops / totalDrop) * 100}%` }}
+                                    />
                                     </div>
-                                </>
-                            )}
-                        </Button>
+                                    <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">
+                                    จุดส่ง {completedDrops}/{totalDrop}
+                                    </span>
+                            </div>
+                        )}
+                        
+                        {/* Destination Name for current stop */}
+                        {(currentStatus === 'In Transit' || currentStatus === 'Arrived Dropoff' || currentStatus === 'Picked Up') && (
+                            <p className="mt-2 text-xs font-medium text-muted-foreground line-clamp-1 italic">
+                                จุดหมาย: {
+                                    isMultiDrop 
+                                        ? (Array.isArray(job.original_destinations_json) ? job.original_destinations_json[currentDropIndex - 1]?.name : 'ไม่ระบุ')
+                                        : (job.Dest_Location || 'ไม่ระบุ')
+                                }
+                            </p>
+                        )}
                     </div>
                 </div>
-            )
-        })()}
+            </div>
+
+            {/* Action Button */}
+            <div className="p-3 bg-background/50 rounded-b-2xl">
+                <Button 
+                    onClick={() => {
+                        if (action) action()
+                    }}
+                    disabled={loading || currentStatus === 'Completed'}
+                    size="lg"
+                    className={cn(
+                        "w-full h-14 rounded-2xl text-base font-black uppercase tracking-widest gap-2 shadow-2xl transition-all active:scale-95",
+                        variant === 'primary' ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-primary hover:bg-primary/90 text-white"
+                    )}
+                >
+                    {loading ? (
+                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                        <>
+                            {label === "เริ่มงาน" && <Activity size={24} />}
+                            {label === "ถึงจุดรับสินค้า" && <MapPin size={24} />}
+                            {label === "รับสินค้าเข้า" && <Target size={24} />}
+                            {label.includes("ถึงจุดส่ง") && <Navigation size={24} />}
+                            {label.includes("บันทึกส่งงาน") && <CheckCircle size={24} />}
+                            {label}
+                            <div className="ml-auto w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                                <ArrowRight size={14} />
+                            </div>
+                        </>
+                    )}
+                </Button>
+            </div>
+        </div>
     </div>
   )
 }

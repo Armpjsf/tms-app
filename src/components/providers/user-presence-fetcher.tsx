@@ -25,8 +25,6 @@ export function UserPresenceFetcher({ children }: { children: React.ReactNode })
         loadUser()
     }, [])
 
-    if (loading) return <>{children}</>
-
     return (
         <PresenceProvider user={user}>
             {children}
