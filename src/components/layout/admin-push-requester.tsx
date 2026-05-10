@@ -65,6 +65,15 @@ export function AdminPushRequester({ userId }: Props) {
       const timer = setTimeout(() => setShown(true), 3000)
       return () => clearTimeout(timer)
     }
+
+    // In development, unregister any leftover service workers
+    if (process.env.NODE_ENV === 'development' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister()
+        }
+      })
+    }
   }, [userId, registerAdminPush])
 
   const handleAllow = async () => {
@@ -77,8 +86,10 @@ export function AdminPushRequester({ userId }: Props) {
       return
     }
 
-    // Ensure SW is registered
-    await navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {})
+    // Ensure SW is registered (only in production)
+    if (process.env.NODE_ENV !== 'development') {
+      await navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {})
+    }
 
     const ok = await registerAdminPush(userId)
     if (ok) {

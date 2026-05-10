@@ -205,93 +205,45 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.98 }}
-                        className="glass-panel rounded-[2.5rem] p-7 space-y-8 relative overflow-hidden shadow-xl border-primary/20 bg-background/40 backdrop-blur-md"
+                        className="bg-card rounded-[2rem] p-6 border border-border shadow-md space-y-6 relative overflow-hidden"
                     >
-                        {/* Job ID & Status */}
-                        <div className="flex items-center justify-between relative z-10">
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                                    <Star size={26} className="text-white fill-white" />
+                        {/* Job Status Header */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                                    <Truck size={20} />
                                 </div>
-                                <div>
-                                    <h4 className="text-3xl font-black text-foreground tracking-tighter leading-none mb-1.5">#{(currentJob?.Job_ID || '').slice(-12).toUpperCase()}</h4>
-                                    <p className="text-muted-foreground text-sm font-bold truncate max-w-[180px]">
-                                        {currentJob.Customer_Name}
-                                    </p>
-                                </div>
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">งานปัจจุบัน</span>
                             </div>
-                            <div className="flex flex-col items-end gap-2">
-                                <div className={cn(
-                                    "px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest border shadow-sm",
-                                    ['In Progress', 'In Transit', 'Arrived Pickup', 'Arrived Dropoff'].includes(currentJob.Job_Status)
-                                    ? "bg-accent text-white border-accent/20"
-                                    : "bg-muted text-muted-foreground border-border/50"
-                                )}>
-                                    {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : 'ดำเนินการอยู่'}
-                                </div>
-                                {mounted && (() => {
-                                    const dateInfo = getJobDateInfo((currentJob as any).Plan_Date)
-                                    if (!dateInfo.label) return null
-                                    return (
-                                        <span className={cn(
-                                            "text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border shadow-sm",
-                                            dateInfo.type === 'today' ? "bg-emerald-500 text-white border-emerald-400" :
-                                            dateInfo.type === 'tomorrow' ? "bg-yellow-400 text-black border-yellow-300" :
-                                            "bg-primary/5 text-primary/70 border-primary/10"
-                                        )}>
-                                            {dateInfo.label}
-                                        </span>
-                                    )
-                                })()}
+                            <div className={cn(
+                                "px-3 py-1 rounded-lg text-[10px] font-bold uppercase",
+                                ['In Progress', 'In Transit', 'Arrived Pickup', 'Arrived Dropoff'].includes(currentJob.Job_Status)
+                                ? "bg-accent/10 text-accent border border-accent/20"
+                                : "bg-muted text-muted-foreground"
+                            )}>
+                                {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : 'กำลังดำเนินการ'}
                             </div>
                         </div>
 
-                        {/* Location Details - Vertical Stack for better mobile fit */}
-                        {(() => {
-                            const routeStr = currentJob.Route_Name || currentJob.Dest_Location || "";
-                            const points = routeStr.split(/[→\->]/).map(p => p.trim()).filter(Boolean);
-                            
-                            let displayOrigin = currentJob.Origin_Location || "ไม่ระบุต้นทาง";
-                            let displayDest = currentJob.Dest_Location || "ไม่ระบุปลายทาง";
-
-                            if (points.length >= 2) {
-                                displayOrigin = points[0];
-                                displayDest = points[points.length - 1];
-                            }
-
-                            return (
-                                <div className="space-y-4 bg-muted/20 rounded-[2rem] p-6 border border-border/40 relative">
-                                    <div className="flex justify-between items-start gap-4">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-black text-emerald-500/70 uppercase tracking-widest mb-1">ต้นทาง</p>
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                                <span className="text-foreground font-bold text-sm truncate">{displayOrigin}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex-1 min-w-0 text-right">
-                                            <p className="text-[10px] font-black text-accent/70 uppercase tracking-widest mb-1">ปลายทาง</p>
-                                            <div className="flex items-center gap-2 justify-end">
-                                                <span className="text-foreground font-bold text-sm truncate">{displayDest}</span>
-                                                <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(255,30,133,0.5)]" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })()}
-
-                        {/* Action Button */}
-                        <div className="relative z-10 pt-2">
-                            <Link href={`/mobile/jobs/${currentJob.Job_ID}`} className="block w-full">
-                                <Button className="w-full h-16 rounded-[1.5rem] bg-foreground hover:bg-foreground/90 text-white font-black text-lg uppercase tracking-widest shadow-2xl active:scale-95 transition-all gap-3 border-b-4 border-black/20">
-                                    จัดการงานนี้
-                                    <ArrowUpRight className="w-5 h-5" />
-                                </Button>
-                            </Link>
+                        {/* Customer & Route */}
+                        <div className="space-y-1">
+                            <h4 className="text-2xl font-bold text-foreground leading-tight">{currentJob.Customer_Name}</h4>
+                            <p className="text-sm font-medium text-primary">#{String(currentJob.Job_ID).slice(-8).toUpperCase()}</p>
                         </div>
+
+                        <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-2xl border border-border/50">
+                            <MapPin size={18} className="text-accent shrink-0" />
+                            <p className="text-sm font-medium text-foreground truncate flex-1">
+                                {currentJob.Dest_Location || currentJob.Route_Name}
+                            </p>
+                        </div>
+
+                        {/* Action */}
+                        <Link href={`/mobile/jobs/${currentJob.Job_ID}`} className="block">
+                            <Button className="w-full h-14 rounded-xl bg-foreground text-white font-bold text-base shadow-lg active:scale-95 transition-all gap-2">
+                                จัดการงานนี้ <ArrowUpRight className="w-4 h-4" />
+                            </Button>
+                        </Link>
                     </motion.div>
                 ) : (
                     <motion.div 

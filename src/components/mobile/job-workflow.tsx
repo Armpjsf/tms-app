@@ -1,12 +1,14 @@
 "use client"
 
-import { CheckCircle2, Clock, MapPin, Package, Truck, Zap, ShieldCheck } from "lucide-react"
+import { CheckCircle2, Clock, MapPin, Package, Truck, Zap, ShieldCheck, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export type JobStep = 'New' | 'Accepted' | 'Arrived Pickup' | 'In Transit' | 'Arrived Dropoff' | 'Completed'
 
 interface JobWorkflowProps {
   currentStatus: string
+  totalDrop?: number
+  completedDrops?: number
   className?: string
 }
 
@@ -18,7 +20,7 @@ const STEPS: { status: JobStep; label: string; icon: React.ElementType; descript
   { status: 'Completed', label: 'สำเร็จ', icon: Package, description: 'ส่งมอบเรียบร้อย' }
 ]
 
-export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
+export function JobWorkflow({ currentStatus, totalDrop = 1, completedDrops = 0, className }: JobWorkflowProps) {
   // Normalize status
   const normalizedStatus = (currentStatus === 'New' || currentStatus === 'Assigned') ? 'Pending' : currentStatus as JobStep
   
@@ -28,65 +30,85 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
   }
 
   const currentIndex = getStepIndex(normalizedStatus)
+  const isMultiDrop = totalDrop > 1
+  const currentDropIndex = Math.min(completedDrops + 1, totalDrop)
 
   return (
-    <div className={cn("py-6", className)}>
-      <div className="relative flex justify-between px-2">
-        {/* Background Tactical Line */}
-        <div className="absolute top-6 left-0 w-full h-1 bg-muted/50 rounded-full" />
-        
-        {/* Active Progress Line */}
-        <div 
-          className="absolute top-6 left-0 h-1 bg-gradient-to-r from-primary to-accent transition-all duration-700 shadow-[0_0_15px_rgba(255,30,133,0.4)]" 
-          style={{ width: `${Math.max(0, (currentIndex / (STEPS.length - 1)) * 100)}%` }}
-        />
+    <div className={cn("py-4", className)}>
+      <div className="space-y-0 relative">
+        {/* Continuous Vertical Line */}
+        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border/40" />
 
         {STEPS.map((step, index) => {
           const isCompleted = index < currentIndex || normalizedStatus === 'Completed'
           const isActive = index === currentIndex && normalizedStatus !== 'Completed'
           const StepIcon = step.icon
 
+          let stepDescription = step.description
+          if (isMultiDrop) {
+              if (step.status === 'Arrived Dropoff') {
+                  stepDescription = `จุดส่ง (${completedDrops}/${totalDrop})`
+              } else if (step.status === 'In Transit' && isActive) {
+                  stepDescription = `กำลังเดินทางไปจุดที่ ${currentDropIndex}`
+              }
+          }
+
           return (
-            <div key={step.status} className="flex flex-col items-center relative z-10 w-1/5 px-1">
+            <div key={step.status} className="relative flex items-start gap-6 pb-8 last:pb-0">
+              {/* Step Circle/Icon */}
               <div 
                 className={cn(
-                  "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 shadow-2xl",
-                  isCompleted ? "bg-primary border-primary text-white" : 
-                  isActive ? "bg-card border-primary/50 text-primary ring-8 ring-primary/5 animate-pulse" : 
-                  "bg-card border-border/5 text-muted-foreground"
+                  "relative z-10 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shrink-0",
+                  isCompleted ? "bg-emerald-500 text-white" : 
+                  isActive ? "bg-primary text-white shadow-[0_0_15px_rgba(var(--primary),0.3)] ring-4 ring-primary/10" : 
+                  "bg-muted text-muted-foreground border border-border"
                 )}
               >
-                <StepIcon size={20} className={isActive ? "animate-bounce" : ""} />
+                {isCompleted ? <CheckCircle2 size={24} /> : <StepIcon size={20} />}
               </div>
-              <p className={cn(
-                "mt-3 text-[11px] font-black text-center uppercase tracking-wider transition-colors duration-500 break-words leading-tight",
-                isCompleted || isActive ? "text-primary" : "text-muted-foreground"
-              )}>
-                {step.label}
-              </p>
+
+              {/* Step Content */}
+              <div className="flex-1 pt-1">
+                <div className="flex items-center justify-between mb-1">
+                   <h4 className={cn(
+                     "text-sm font-bold uppercase tracking-wide",
+                     isActive ? "text-primary" : isCompleted ? "text-emerald-600" : "text-muted-foreground"
+                   )}>
+                     {step.label} {isMultiDrop && step.status === 'Arrived Dropoff' && isActive && `(จุดที่ ${currentDropIndex})`}
+                   </h4>
+                   {isActive && (
+                      <span className="bg-primary/10 text-primary text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse">
+                        กำลังทำ
+                      </span>
+                   )}
+                </div>
+                <p className={cn(
+                  "text-xs leading-relaxed",
+                  isActive ? "text-foreground font-medium" : "text-muted-foreground/70"
+                )}>
+                  {stepDescription}
+                </p>
+              </div>
             </div>
           )
         })}
       </div>
       
-      {/* Guidance Overlay - LARGER & CLEARER */}
+      {/* Current Guidance Card - Simplified */}
       {currentIndex < STEPS.length - 1 && normalizedStatus !== 'Completed' && (
-        <div className="mt-10 p-7 bg-card border-2 border-primary/20 rounded-[2.5rem] flex items-start gap-6 shadow-2xl relative overflow-hidden ring-1 ring-white/5">
-          <div className="absolute top-0 right-0 p-4 opacity-5">
-             <Clock size={100} />
-          </div>
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary border border-primary/10 shadow-inner">
-             <Clock className="animate-spin-slow" size={26} strokeWidth={2.5} />
-          </div>
-          <div className="space-y-2 relative z-10">
-            <p className="text-xs font-black text-primary uppercase tracking-[0.4em] opacity-70">Mission Protocol</p>
-            <p className="text-lg font-bold text-foreground leading-relaxed italic">
-               {currentIndex === -1 ? 'ตรวจพบงานใหม่ กรุณากด "รับงาน" เพื่อเริ่มภารกิจ' : 
-                currentIndex === 0 ? 'ยืนยันรับงานแล้ว เดินทางไปยังจุดรับสินค้าและแจ้งระบบเมื่อถึง' :
-                currentIndex === 1 ? 'ถึงจุดรับแล้ว ตรวจสอบสินค้า ถ่ายรูป และกดออกเดินทาง' :
-                currentIndex === 2 ? 'อยู่ระหว่างการจัดส่ง นำทางไปยังจุดหมายและแจ้งเมื่อถึง' :
-                'ถึงจุดหมายแล้ว ส่งมอบสินค้า ถ่ายรูป และให้ลูกค้าเซ็นชื่อเพื่อปิดงาน'}
-            </p>
+        <div className="mt-8 p-5 bg-primary/5 border border-primary/10 rounded-2xl">
+          <div className="flex gap-3">
+             <Info className="text-primary shrink-0" size={18} />
+             <div className="space-y-1">
+                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">สิ่งที่คุณต้องทำตอนนี้</p>
+                <p className="text-sm font-medium text-foreground leading-snug">
+                   {currentIndex === -1 ? 'กรุณากด "รับงาน" เพื่อเริ่มงานนี้' : 
+                    currentIndex === 0 ? 'กำลังเดินทางไปยังจุดรับสินค้า' :
+                    currentIndex === 1 ? 'ถึงจุดรับแล้ว กรุณาถ่ายรูปสินค้าเพื่อรับงาน' :
+                    currentIndex === 2 ? (isMultiDrop ? `กำลังนำสินค้าไปส่งยังจุดที่ ${currentDropIndex}` : 'กำลังนำสินค้าไปส่งยังจุดหมาย') :
+                    (isMultiDrop ? `ถึงจุดที่ ${currentDropIndex} แล้ว กรุณาถ่ายรูปและเซ็นชื่อ` : 'ถึงจุดหมายแล้ว กรุณาถ่ายรูปและให้ลูกค้าเซ็นชื่อ')}
+                </p>
+             </div>
           </div>
         </div>
       )}

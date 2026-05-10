@@ -8,10 +8,12 @@ export type Route = {
   Origin: string | null
   Origin_Lat: number | null
   Origin_Lon: number | null
+  Origin_Phone: string | null
   Map_Link_Origin: string | null
   Destination: string | null
   Dest_Lat: number | null
   Dest_Lon: number | null
+  Dest_Phone: string | null
   Map_Link_Destination: string | null
   Distance_KM: number | null
   Branch_ID: string | null
@@ -133,10 +135,12 @@ export async function createRoute(routeData: Partial<Route>) {
         Origin: routeData.Origin,
         Origin_Lat: routeData.Origin_Lat,
         Origin_Lon: routeData.Origin_Lon,
+        Origin_Phone: routeData.Origin_Phone,
         Map_Link_Origin: routeData.Map_Link_Origin,
         Destination: routeData.Destination,
         Dest_Lat: routeData.Dest_Lat,
         Dest_Lon: routeData.Dest_Lon,
+        Dest_Phone: routeData.Dest_Phone,
         Map_Link_Destination: routeData.Map_Link_Destination,
         Distance_KM: routeData.Distance_KM,
         Branch_ID: (isSuper && routeData.Branch_ID && routeData.Branch_ID !== 'All') 
@@ -170,10 +174,12 @@ export async function updateRoute(originalRouteName: string, routeData: Partial<
         Origin: routeData.Origin,
         Origin_Lat: routeData.Origin_Lat,
         Origin_Lon: routeData.Origin_Lon,
+        Origin_Phone: routeData.Origin_Phone,
         Map_Link_Origin: routeData.Map_Link_Origin,
         Destination: routeData.Destination,
         Dest_Lat: routeData.Dest_Lat,
         Dest_Lon: routeData.Dest_Lon,
+        Dest_Phone: routeData.Dest_Phone,
         Map_Link_Destination: routeData.Map_Link_Destination,
         Distance_KM: routeData.Distance_KM,
         Branch_ID: routeData.Branch_ID
@@ -248,9 +254,11 @@ export async function createBulkRoutes(routes: Record<string, unknown>[]) {
             normalized.Origin = getValue(['origin', 'source', 'start', 'ต้นทาง', 'จุดเริ่มต้น']) as string
             normalized.Origin_Lat = getValue(['origin_lat', 'start_lat', 'lat_start', 'ละติจูดต้นทาง', 'lat_ต้นทาง']) as number
             normalized.Origin_Lon = getValue(['origin_lon', 'start_lon', 'lon_start', 'ลองติจูดต้นทาง', 'lon_ต้นทาง']) as number
+            normalized.Origin_Phone = getValue(['origin_phone', 'start_phone', 'phone_start', 'เบอร์ต้นทาง', 'เบอร์โทรต้นทาง']) as string
             normalized.Destination = getValue(['destination', 'dest', 'end', 'ปลายทาง', 'จุดสิ้นสุด']) as string
             normalized.Dest_Lat = getValue(['dest_lat', 'end_lat', 'lat_end', 'ละติจูดปลายทาง', 'lat_ปลายทาง']) as number
             normalized.Dest_Lon = getValue(['dest_lon', 'end_lon', 'lon_end', 'ลองติจูดปลายทาง', 'lon_ปลายทาง']) as number
+            normalized.Dest_Phone = getValue(['dest_phone', 'end_phone', 'phone_end', 'เบอร์ปลายทาง', 'เบอร์โทรปลายทาง']) as string
             normalized.Map_Link_Origin = getValue(['map_link_origin', 'origin_link', 'link_start', 'ลิ้งค์ต้นทาง']) as string
             normalized.Map_Link_Destination = getValue(['map_link_destination', 'destination_link', 'link_end', 'ลิ้งค์ปลายทาง']) as string
             normalized.Distance_KM = getValue(['distance', 'km', 'distance_km', 'ระยะทาง']) as number
@@ -337,10 +345,12 @@ export async function createBulkRoutes(routes: Record<string, unknown>[]) {
                         Origin: r.Origin,
                         Origin_Lat: r.Origin_Lat,
                         Origin_Lon: r.Origin_Lon,
+                        Origin_Phone: r.Origin_Phone,
                         Map_Link_Origin: r.Map_Link_Origin,
                         Destination: r.Destination,
                         Dest_Lat: r.Dest_Lat,
                         Dest_Lon: r.Dest_Lon,
+                        Dest_Phone: r.Dest_Phone,
                         Map_Link_Destination: r.Map_Link_Destination,
                         Distance_KM: r.Distance_KM,
                         Branch_ID: r.Branch_ID
@@ -410,5 +420,55 @@ export async function getUniqueLocations() {
     return Array.from(locationSet).sort()
   } catch {
     return []
+  }
+}
+
+// Get all unique locations with their metadata (Lat, Lon, Phone)
+export async function getLocationDirectory() {
+  try {
+    const isAdminUser = await isAdmin()
+    const supabase = isAdminUser ? await createAdminClient() : await createClient()
+    
+    const branchId = await getUserBranchId()
+    const isSuper = await isSuperAdmin()
+    
+    let query = supabase.from('Master_Routes').select('Origin, Origin_Lat, Origin_Lon, Origin_Phone, Destination, Dest_Lat, Dest_Lon, Dest_Phone')
+
+    if (branchId && branchId !== 'All' && !isSuper) {
+        query = query.eq('Branch_ID', branchId)
+    }
+
+    const { data, error } = await query
+
+    if (error) return {}
+
+    const directory: Record<string, { lat: number | null, lon: number | null, phone: string | null }> = {}
+
+    data.forEach(r => {
+        if (r.Origin) {
+            const name = r.Origin.trim()
+            if (!directory[name] || (!directory[name].phone && r.Origin_Phone)) {
+                directory[name] = {
+                    lat: r.Origin_Lat,
+                    lon: r.Origin_Lon,
+                    phone: r.Origin_Phone
+                }
+            }
+        }
+        if (r.Destination) {
+            const name = r.Destination.trim()
+            if (!directory[name] || (!directory[name].phone && r.Dest_Phone)) {
+                directory[name] = {
+                    lat: r.Dest_Lat,
+                    lon: r.Dest_Lon,
+                    phone: r.Dest_Phone
+                }
+            }
+        }
+    })
+
+    return directory
+  } catch {
+    return {}
   }
 }

@@ -69,128 +69,51 @@ async function JobsContent({ driverId, searchParams }: { driverId: string, searc
         </div>
 
         {/* Job Grid / List */}
-        <div className="space-y-6">
+        <div className="space-y-4">
             {displayJobs.length === 0 ? (
-                <div className="text-center py-24 glass-panel rounded-[3rem] border-dashed border-border/20 bg-card/20">
-                    <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Truck className="text-muted-foreground/40" size={40} />
-                    </div>
-                    <p className="text-muted-foreground font-black uppercase tracking-widest text-sm">ไม่พบรายการงานในขณะนี้</p>
+                <div className="text-center py-20 bg-muted/20 rounded-3xl border-2 border-dashed border-border/50">
+                    <Truck className="text-muted-foreground/30 mx-auto mb-4" size={48} />
+                    <p className="text-muted-foreground font-bold">ไม่พบรายการงานในขณะนี้</p>
                 </div>
             ) : displayJobs.map((job) => (
-            <Link href={`/mobile/jobs/${job.Job_ID}`} key={job.Job_ID} className="block group">
-                <div className="glass-panel p-7 rounded-[2.5rem] active:scale-[0.98] transition-all hover:border-primary/40 relative overflow-hidden shadow-lg shadow-black/5 bg-gradient-to-br from-card to-transparent">
-                    {/* Background Icon Watermark */}
-                    <div className="absolute top-0 right-0 p-8 text-primary/5 pointer-events-none group-hover:scale-110 transition-transform duration-700">
-                        <Truck size={80} strokeWidth={1} />
-                    </div>
-                    
-                    {/* Top Row: Job ID & Status */}
-                    <div className="flex justify-between items-start mb-6 relative z-10">
-                        <div className="space-y-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-xl border border-border/10">
-                                    <span className="text-primary font-black text-sm italic">#{job.Job_ID.slice(-8)}</span>
-                                </div>
-                                
-                                {/* Pickup Badge */}
-                                {(job.Pickup_Date === today || (!job.Pickup_Date && job.Plan_Date === today)) && (
-                                    <div className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-emerald-500 font-black text-[10px] uppercase tracking-widest">
-                                        รับวันนี้
-                                    </div>
-                                )}
-                                {(job.Pickup_Date === tomorrowStr || (!job.Pickup_Date && job.Plan_Date === tomorrowStr)) && (
-                                    <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-500 font-black text-[10px] uppercase tracking-widest">
-                                        รับพรุ่งนี้
-                                    </div>
-                                )}
-
-                                {/* Delivery Badge (if different from pickup) */}
-                                {job.Delivery_Date === today && job.Pickup_Date !== today && (
-                                    <div className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-500 font-black text-[10px] uppercase tracking-widest">
-                                        ส่งวันนี้
-                                    </div>
-                                )}
-                                {job.Delivery_Date === tomorrowStr && job.Pickup_Date !== tomorrowStr && (
-                                    <div className="px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 rounded-xl text-indigo-500 font-black text-[10px] uppercase tracking-widest">
-                                        ส่งพรุ่งนี้
-                                    </div>
-                                )}
-                            </div>
-                            <h3 className="text-foreground font-black text-xl tracking-tight line-clamp-1 leading-none uppercase italic">
-                                {job.Customer_Name}
-                            </h3>
+            <Link href={`/mobile/jobs/${job.Job_ID}`} key={job.Job_ID} className="block active:scale-[0.98] transition-all">
+                <div className="bg-card p-6 rounded-3xl border border-border shadow-sm space-y-4">
+                    {/* Status & Date */}
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                             <Calendar size={14} className="text-primary" />
+                             <span className="text-xs font-bold text-foreground">
+                                {job.Pickup_Date ? new Date(job.Pickup_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "ไม่ระบุวันที่"}
+                             </span>
                         </div>
                         <div className={cn(
-                            "px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border shadow-sm",
-                            job.Job_Status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
-                            ['In Progress', 'In Transit', 'Arrived'].includes(job.Job_Status) ? 'bg-primary/10 text-primary border-primary/20 animate-pulse' :
-                            'bg-muted/50 text-muted-foreground border-border/10'
+                            "px-3 py-1 rounded-lg text-[10px] font-bold uppercase",
+                            job.Job_Status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 
+                            ['In Progress', 'In Transit', 'Arrived'].includes(job.Job_Status) ? 'bg-primary/10 text-primary' :
+                            'bg-muted text-muted-foreground'
                         )}>
-                            {job.Job_Status === 'Completed' ? 'ส่งสำเร็จ' : 
-                             ['In Progress', 'In Transit', 'Arrived'].includes(job.Job_Status) ? 'กำลังไปส่ง' : 
+                            {job.Job_Status === 'Completed' ? 'สำเร็จ' : 
+                             ['In Progress', 'In Transit', 'Arrived'].includes(job.Job_Status) ? 'กำลังดำเนินการ' : 
                              'รอเริ่มงาน'}
                         </div>
                     </div>
 
-                    {/* Route Details */}
-                    {(() => {
-                        const routeStr = job.Route_Name || job.Dest_Location || "";
-                        const points = routeStr.split(/[→\->]/).map(p => p.trim()).filter(Boolean);
-                        
-                        let displayOrigin = job.Origin_Location || "ไม่ระบุต้นทาง";
-                        let displayDest = job.Dest_Location || "ไม่ระบุปลายทาง";
+                    {/* Customer */}
+                    <div className="space-y-1">
+                        <h3 className="text-xl font-bold text-foreground leading-tight">{job.Customer_Name}</h3>
+                        <p className="text-xs font-medium text-muted-foreground">#{job.Job_ID.slice(-8).toUpperCase()}</p>
+                    </div>
 
-                        if (points.length >= 2) {
-                            displayOrigin = points[0];
-                            displayDest = points[points.length - 1];
-                        }
-
-                        return (
-                            <div className="grid grid-cols-1 gap-5 mb-6 relative z-10">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-2xl bg-muted/50 flex flex-col items-center justify-center text-muted-foreground shrink-0 border border-border/10">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mb-1" />
-                                        <div className="w-0.5 h-3 bg-muted-foreground/20" />
-                                        <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">เส้นทางขนส่ง</p>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-foreground font-bold text-sm truncate">{displayOrigin}</span>
-                                            <ArrowRight size={12} className="text-muted-foreground shrink-0" />
-                                            <span className="text-foreground font-black text-sm truncate italic">{displayDest}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })()}
-
-                    {/* Footer: Date & Action */}
-                    <div className="flex items-center justify-between pt-6 border-t border-border/5 relative z-10">
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1.5">
-                                <Calendar size={14} className="text-primary" />
-                                <span className="text-foreground font-black text-xs uppercase italic">
-                                    {job.Pickup_Date && job.Delivery_Date && job.Pickup_Date !== job.Delivery_Date ? (
-                                        `${new Date(job.Pickup_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' })} → ${new Date(job.Delivery_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' })}`
-                                    ) : (
-                                        (job.Pickup_Date || job.Plan_Date) ? new Date(job.Pickup_Date || job.Plan_Date || "").toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "-"
-                                    )}
-                                </span>
-                            </div>
-                            <div className="w-px h-3 bg-border/20" />
-                            <div className="flex items-center gap-1.5">
-                                <Clock size={14} className="text-accent" />
-                                <span className="text-foreground font-black text-xs uppercase italic">
-                                    {job.Plan_Time || "08:00"}
-                                </span>
-                            </div>
+                    {/* Route */}
+                    <div className="flex items-start gap-3 pt-2 border-t border-border/50">
+                        <MapPin size={16} className="text-accent mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">จุดส่งสินค้า</p>
+                            <p className="text-sm font-medium text-foreground truncate">
+                                {job.Dest_Location || job.Route_Name}
+                            </p>
                         </div>
-                        <div className="flex items-center gap-2 text-primary group-hover:gap-3 transition-all font-black text-xs uppercase tracking-widest">
-                            จัดการงาน <ChevronRight size={16} />
-                        </div>
+                        <ChevronRight size={20} className="text-muted-foreground/30 self-center" />
                     </div>
                 </div>
             </Link>

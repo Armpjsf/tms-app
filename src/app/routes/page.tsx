@@ -244,6 +244,7 @@ export default function RoutesPage() {
                         Destination: "เชียงใหม่",
                         Dest_Lat: 18.7883,
                         Dest_Lon: 98.9853,
+                        Dest_Phone: "081-234-5678",
                         Map_Link_Destination: "https://maps.google.com/?q=18.7883,98.9853",
                         Distance_KM: 685.5
                     }]}
@@ -348,8 +349,16 @@ export default function RoutesPage() {
                         />
                     </div>
                 </div>
-                <div className="grid grid-cols-2 gap-10 p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-10 p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10">
                     <div className="space-y-3">
+                        <Label className="text-base font-bold font-black text-primary uppercase tracking-tight ml-2">Phone</Label>
+                        <Input
+                            value={formData.Origin_Phone || ""}
+                            onChange={(e) => updateForm("Origin_Phone", e.target.value)}
+                            placeholder="081-XXXX-XXXX"
+                            className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-normal h-12"
+                        />
+                    </div>
                         <Label className="text-base font-bold font-black text-primary uppercase tracking-tight ml-2">{t('routes.dialog.lat_matrix')}</Label>
                         <Input
                             type="number"
@@ -401,8 +410,16 @@ export default function RoutesPage() {
                         />
                     </div>
                 </div>
-                <div className="grid grid-cols-2 gap-10 p-8 bg-accent/5 rounded-[2.5rem] border border-accent/10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-10 p-8 bg-accent/5 rounded-[2.5rem] border border-accent/10">
                     <div className="space-y-3">
+                        <Label className="text-base font-bold font-black text-accent uppercase tracking-tight ml-2">Phone</Label>
+                        <Input
+                            value={formData.Dest_Phone || ""}
+                            onChange={(e) => updateForm("Dest_Phone", e.target.value)}
+                            placeholder="081-XXXX-XXXX"
+                            className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-normal h-12"
+                        />
+                    </div>
                         <Label className="text-base font-bold font-black text-accent uppercase tracking-tight ml-2">{t('routes.dialog.lat_matrix')}</Label>
                         <Input
                             type="number"

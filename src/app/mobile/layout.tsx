@@ -17,16 +17,18 @@ export default async function MobileLayout({
   const session = await getDriverSession()
   
   return (
-    <div className="flex flex-col h-[100dvh] w-screen overflow-hidden bg-transparent text-foreground relative">
+    <div className="flex flex-col h-[100dvh] w-screen overflow-hidden bg-background text-foreground relative">
       <SyncManager />
       <SessionStabilizer session={session} />
       {session && <LocationTracker driverId={session.driverId} branchId={session.branchId} />}
       {session && <PermissionRequester driverId={session.driverId} />}
       {session?.driverId && <PresenceManager driverId={session.driverId} />}
       {session?.driverId && <RealtimeJobsTrigger driverId={session.driverId} />}
-      <main className="flex-1 overflow-y-auto custom-scrollbar relative z-0 pb-24">
+      
+      <main className="flex-1 overflow-y-auto custom-scrollbar relative z-0">
         {children}
       </main>
+
       {session && <BottomNav />}
     </div>
   )

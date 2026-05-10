@@ -431,7 +431,7 @@ export async function getDriverJobs(
     
     let query = supabase
       .from('Jobs_Main')
-      .select('Job_ID, Customer_Name, Job_Status, Pickup_Date, Delivery_Date, Plan_Date, Plan_Time, Origin_Location, Dest_Location, Route_Name, Show_Price_To_Driver, Cost_Driver_Total')
+      .select('Job_ID, Customer_Name, Job_Status, Pickup_Date, Delivery_Date, Plan_Date, Plan_Time, Origin_Location, Dest_Location, Route_Name, Show_Price_To_Driver, Cost_Driver_Total, Total_Drop, Signature_Url, Photo_Proof_Url')
       .eq('Driver_ID', driverId)
 
     // Only apply branch filter if it's NOT a driver (Admin/Staff must see their branch)
@@ -976,7 +976,7 @@ export async function getDriverDashboardStats(driverId: string) {
       // 1. Jobs query (Active or Today)
       supabase
         .from('Jobs_Main')
-        .select('Job_ID, Customer_Name, Job_Status, Origin_Location, Dest_Location, Route_Name, Plan_Date, Cost_Driver_Total, Show_Price_To_Driver')
+        .select('Job_ID, Customer_Name, Job_Status, Origin_Location, Dest_Location, Route_Name, Plan_Date, Cost_Driver_Total, Show_Price_To_Driver, Total_Drop, Signature_Url, Photo_Proof_Url')
         .eq('Driver_ID', driverId)
         .neq('Job_Status', 'Cancelled')
         .or(`Job_Status.not.in.(Completed,Delivered),Plan_Date.eq.${today}`)

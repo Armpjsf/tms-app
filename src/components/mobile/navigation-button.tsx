@@ -14,12 +14,15 @@ export function NavigationButton({ job }: NavigationButtonProps) {
             ? JSON.parse(job.original_destinations_json) 
             : job.original_destinations_json;
 
+        const completedDrops = job.Signature_Url ? job.Signature_Url.split(',').filter(Boolean).length : 0
+        const currentDropIndex = Math.min(completedDrops, (Array.isArray(destinations) ? destinations.length : 1) - 1)
+
         let destinationQuery = "";
 
-        // Calculate destination query
+        // Calculate destination query for immediate stop
         if (Array.isArray(destinations) && destinations.length > 0) {
-            const last = destinations[destinations.length - 1];
-            destinationQuery = last.lat && last.lng ? `${last.lat},${last.lng}` : encodeURIComponent(last.name);
+            const currentDest = destinations[currentDropIndex];
+            destinationQuery = currentDest.lat && currentDest.lng ? `${currentDest.lat},${currentDest.lng}` : encodeURIComponent(currentDest.name);
         } else if (job.Delivery_Lat && job.Delivery_Lon) {
             destinationQuery = `${job.Delivery_Lat},${job.Delivery_Lon}`;
         } else {
@@ -29,34 +32,54 @@ export function NavigationButton({ job }: NavigationButtonProps) {
         const isAndroid = /Android/i.test(navigator.userAgent);
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-        // Standard Universal URL
-        const universalUrl = `https://www.google.com/maps/search/?api=1&query=${destinationQuery}`;
+        // Smart Waypoint Routing Logic
+        let waypointUrl = `https://www.google.com/maps/search/?api=1&query=${destinationQuery}`;
+        let hasWaypoints = false;
 
+        if (Array.isArray(destinations) && destinations.length > 1) {
+            const finalStop = destinations[destinations.length - 1];
+            const finalQuery = finalStop.lat && finalStop.lng ? `${finalStop.lat},${finalStop.lng}` : encodeURIComponent(finalStop.name);
+            
+            // Waypoints: current stop up to second-to-last
+            const waypointStops = destinations.slice(currentDropIndex, -1);
+            if (waypointStops.length > 0) {
+                hasWaypoints = true;
+                const waypoints = waypointStops.map(s => 
+                    s.lat && s.lng ? `${s.lat},${s.lng}` : encodeURIComponent(s.name)
+                ).join('|');
+                
+                waypointUrl = `https://www.google.com/maps/dir/?api=1&destination=${finalQuery}&waypoints=${waypoints}&travelmode=driving`;
+            } else {
+                // At the final stop
+                waypointUrl = `https://www.google.com/maps/dir/?api=1&destination=${finalQuery}&travelmode=driving`;
+            }
+        }
+
+        // 1. If has waypoints, use Universal URL (Supported by Google Maps App)
+        if (hasWaypoints) {
+            window.open(waypointUrl, '_blank');
+            return;
+        }
+
+        // 2. Single destination logic (Existing platform-specific intents)
         if (isAndroid) {
-            // Android Direct Intent for Navigation (Avoids browser double-opening)
             const intentUrl = `google.navigation:q=${destinationQuery}`;
             window.location.href = intentUrl;
-            
-            // Optional fallback after a delay if the app didn't open
             setTimeout(() => {
                 if (document.visibilityState === 'visible') {
-                    // Only open web map if we are still in the app (intent failed)
-                    window.location.href = universalUrl;
+                    window.location.href = waypointUrl;
                 }
             }, 1500);
         } else if (isIOS) {
-            // iOS: Try Google Maps app first, then fallback to Apple Maps or Web
             const googleMapsAppUrl = `comgooglemaps://?daddr=${destinationQuery}&directionsmode=driving`;
             window.location.href = googleMapsAppUrl;
-            
             setTimeout(() => {
                 if (document.visibilityState === 'visible') {
                     window.location.href = `https://maps.apple.com/?daddr=${destinationQuery}`;
                 }
             }, 1000);
         } else {
-            // Desktop/Other
-            window.open(universalUrl, '_blank');
+            window.open(waypointUrl, '_blank');
         }
     }
 

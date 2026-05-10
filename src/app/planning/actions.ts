@@ -194,6 +194,9 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
       Delivery_Lat: data.Delivery_Lat || null,
       Delivery_Lon: data.Delivery_Lon || null,
       Branch_ID: data.Branch_ID || null,
+      Total_Drop: Array.isArray(parseIfString(data.original_destinations_json)) 
+        ? (parseIfString(data.original_destinations_json) as any[]).length 
+        : (data.original_destinations_json ? 1 : 1),
       Loaded_Qty: Number(data.Loaded_Qty) || 0,
       Created_At: new Date().toISOString(),
   }
@@ -290,11 +293,22 @@ export async function createBulkJobs(
     // 1. Origins Mapping
     const primaryOrigin = normalized.Origin_Location as string
     if (primaryOrigin) {
-        origins.push({ 
-            name: primaryOrigin, 
-            lat: normalized.Pickup_Lat ? Number(normalized.Pickup_Lat) : null,
-            lng: normalized.Pickup_Lon ? Number(normalized.Pickup_Lon) : null
-        })
+        if (primaryOrigin.includes(' → ')) {
+            const names = primaryOrigin.split(' → ').map(n => n.trim()).filter(Boolean)
+            names.forEach((name, i) => {
+                origins.push({
+                    name,
+                    lat: i === 0 ? (normalized.Pickup_Lat ? Number(normalized.Pickup_Lat) : null) : null,
+                    lng: i === 0 ? (normalized.Pickup_Lon ? Number(normalized.Pickup_Lon) : null) : null
+                })
+            })
+        } else {
+            origins.push({ 
+                name: primaryOrigin, 
+                lat: normalized.Pickup_Lat ? Number(normalized.Pickup_Lat) : null,
+                lng: normalized.Pickup_Lon ? Number(normalized.Pickup_Lon) : null
+            })
+        }
     }
 
     const additionalOriginKeys = rowKeys.filter(k => {
@@ -322,11 +336,22 @@ export async function createBulkJobs(
     // 2. Destinations Mapping
     const primaryDest = normalized.Dest_Location as string
     if (primaryDest) {
-        destinations.push({ 
-            name: primaryDest, 
-            lat: normalized.Delivery_Lat ? Number(normalized.Delivery_Lat) : null,
-            lng: normalized.Delivery_Lon ? Number(normalized.Delivery_Lon) : null
-        })
+        if (primaryDest.includes(' → ')) {
+            const names = primaryDest.split(' → ').map(n => n.trim()).filter(Boolean)
+            names.forEach((name, i) => {
+                destinations.push({
+                    name,
+                    lat: i === names.length - 1 ? (normalized.Delivery_Lat ? Number(normalized.Delivery_Lat) : null) : null,
+                    lng: i === names.length - 1 ? (normalized.Delivery_Lon ? Number(normalized.Delivery_Lon) : null) : null
+                })
+            })
+        } else {
+            destinations.push({ 
+                name: primaryDest, 
+                lat: normalized.Delivery_Lat ? Number(normalized.Delivery_Lat) : null,
+                lng: normalized.Delivery_Lon ? Number(normalized.Delivery_Lon) : null
+            })
+        }
     }
 
     const additionalDestKeys = rowKeys.filter(k => {
@@ -440,6 +465,9 @@ export async function createBulkJobs(
       original_origins_json: data.original_origins_json || (route?.Origin ? [{ name: route.Origin, lat: route.Origin_Lat || null, lng: route.Origin_Lon || null }] : []),
       Dest_Location: (data.Dest_Location as string) || route?.Destination || null,
       original_destinations_json: data.original_destinations_json || (route?.Destination ? [{ name: route.Destination, lat: route.Dest_Lat || null, lng: route.Dest_Lon || null }] : []),
+      Total_Drop: Array.isArray(data.original_destinations_json) 
+        ? data.original_destinations_json.length 
+        : (route?.Destination ? 1 : 1),
       Est_Distance_KM: Number(data.Est_Distance_KM) || route?.Distance_KM || 0,
       Show_Price_To_Driver: data.Show_Price_To_Driver !== undefined ? (data.Show_Price_To_Driver === true || data.Show_Price_To_Driver === 'true') : (j.Show_Price_To_Driver ?? true),
       Round: data.Round || null
@@ -618,7 +646,13 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   // Ensure JSON fields are parsed if they are strings
   if (data.extra_costs_json) updateData.extra_costs_json = parseIfString(data.extra_costs_json)
   if (data.original_origins_json) updateData.original_origins_json = parseIfString(data.original_origins_json)
-  if (data.original_destinations_json) updateData.original_destinations_json = parseIfString(data.original_destinations_json)
+  if (data.original_destinations_json) {
+    const dests = parseIfString(data.original_destinations_json)
+    updateData.original_destinations_json = dests
+    if (Array.isArray(dests)) {
+      updateData.Total_Drop = dests.length
+    }
+  }
 
   
   // Update Driver Name and Sub_ID if Driver_ID specifically changes

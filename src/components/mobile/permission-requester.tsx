@@ -102,13 +102,22 @@ export function PermissionRequester({ driverId }: Props) {
     // 2. Web Push
     else {
       if ('serviceWorker' in navigator) {
-        // Register the MAIN sw.js which now contains our push logic
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-          .then((reg) => {
-              // Check if we need to update
-              reg.update();
+        if (process.env.NODE_ENV === 'development') {
+          // In development, we don't use PWA/SW, so unregister any leftover workers
+          navigator.serviceWorker.getRegistrations().then((registrations) => {
+            for (const registration of registrations) {
+              registration.unregister()
+            }
           })
-          .catch((err) => console.error("SW Register Error:", err))
+        } else {
+          // Register the MAIN sw.js which now contains our push logic
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then((reg) => {
+                // Check if we need to update
+                reg.update();
+            })
+            .catch((err) => console.error("SW Register Error:", err))
+        }
       }
       
       if ("Notification" in window) {

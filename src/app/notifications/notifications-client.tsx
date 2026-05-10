@@ -54,6 +54,15 @@ export function NotificationsClient({ alerts = [] }: { alerts: any[] }) {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       setPushStatus(Notification.permission)
     }
+
+    // In development, unregister any leftover service workers to prevent 'Unknown' update errors
+    if (process.env.NODE_ENV === 'development' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister()
+        }
+      })
+    }
   }, [])
 
   const handleEnablePush = async () => {
@@ -64,12 +73,14 @@ export function NotificationsClient({ alerts = [] }: { alerts: any[] }) {
       const permission = await Notification.requestPermission()
       setPushStatus(permission)
       
-      if (permission === 'granted') {
+      if (permission === 'granted' && process.env.NODE_ENV !== 'development') {
         await navigator.serviceWorker.register('/sw.js', { scope: '/' })
         await navigator.serviceWorker.ready
         
         // Reload to trigger subscription flow if needed
         window.location.reload()
+      } else if (permission === 'granted' && process.env.NODE_ENV === 'development') {
+         toast.info("Push notifications are disabled in development mode.")
       }
     } finally {
       setIsRegistering(false)

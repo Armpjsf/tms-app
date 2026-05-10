@@ -5,8 +5,9 @@ import { createAdminClient } from '@/utils/supabase/server'
 import argon2 from 'argon2'
 import { createSession, deleteSession, getSession } from '@/lib/session'
 import { logActivity } from '@/lib/supabase/logs'
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 import { notifyAdminIPPending } from '@/lib/actions/push-actions'
+import { verifyDeviceToken, setTrustedDeviceCookie } from '@/lib/device-trust'
 
 export type LoginFormState = {
   error?: string
@@ -99,15 +100,30 @@ export async function login(prevState: LoginFormState | undefined, formData: For
     
     // 4. IP-Based Security Check - Mandatory for Admin/Staff (Role <= 5)
     const headerList = await headers()
-    const ip = headerList.get('x-forwarded-for')?.split(',')[0] || headerList.get('x-real-ip') || '127.0.0.1'
+    let ip = headerList.get('x-forwarded-for')?.split(',')[0] || headerList.get('x-real-ip') || '127.0.0.1'
+    
+    // Normalize IP: Trim and handle IPv4-mapped IPv6 (::ffff:1.2.3.4)
+    ip = ip.trim()
+    if (ip.startsWith('::ffff:')) {
+        ip = ip.substring(7)
+    }
+
+    // CHECK FOR TRUSTED DEVICE (BYPASS IP CHECK)
+    const cookieStore = await cookies()
+    const trustedToken = cookieStore.get('tms_trusted_device')?.value
+    const trustedPayload = await verifyDeviceToken(trustedToken)
+    const isTrustedDevice = trustedPayload && trustedPayload.username.toLowerCase() === users.Username.toLowerCase()
     
     // EMERGENCY BYPASS: Super Admin (roleId === 1)
     const isSuperAdmin = roleId === 1
     // EXEMPT: Drivers (6) and Customers (7) - Skip IP Logic
     const isMobileUser = roleId === 6 || roleId === 7
     
-    // Skip IP logic entirely for Mobile Users
-    if (isMobileUser) {
+    // Skip IP logic entirely for Mobile Users or Trusted Devices
+    if (isMobileUser || isTrustedDevice) {
+        if (isTrustedDevice) {
+            console.log(`[AUTH] Bypassing IP check for trusted device: ${users.Username}`)
+        }
         // Proceed to session creation
     } else {
         const { data: ipRecord, error: ipError } = await supabase
@@ -160,6 +176,9 @@ export async function login(prevState: LoginFormState | undefined, formData: For
             .update({ last_used_at: new Date().toISOString() })
             .eq('id', ipRecord.id)
         }
+
+        // Successfully passed IP check: Mark this device as trusted for 30 days
+        await setTrustedDeviceCookie(users.Username)
     }
 
     // 5. Create Session (Custom)

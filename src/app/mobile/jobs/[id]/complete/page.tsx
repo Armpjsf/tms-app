@@ -271,8 +271,8 @@ export default function JobCompletePage() {
             </div>
         </section>
 
-                {/* Quantity Input Section (Only if needed for pricing) */}
-                {job && job.Price_Per_Unit && Number(job.Price_Per_Unit) > 0 && (!job.Price_Cust_Total || Number(job.Price_Cust_Total) === 0) && (
+                {/* Always allow quantity input if piece-rate is configured, even if a total price exists */}
+                {job && job.Price_Per_Unit && Number(job.Price_Per_Unit) > 0 && (
                 <section>
                     <h2 className="text-muted-foreground font-bold mb-2">2. ยืนยันจำนวนที่ส่งจริง</h2>
                     <QuantityStepper 

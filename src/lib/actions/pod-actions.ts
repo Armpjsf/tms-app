@@ -138,9 +138,10 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     
     // Get existing notes and quantity for auto-update
     // Optimized fetch: Get job data and customer unit price in parallel or robustly
+    // Get existing data for multi-drop support
     const { data: jobData } = await supabase
         .from("Jobs_Main")
-        .select("Notes, Price_Cust_Total, Customer_ID, Plan_Date, Vehicle_Type")
+        .select("Notes, Price_Cust_Total, Customer_ID, Plan_Date, Vehicle_Type, Total_Drop, Photo_Proof_Url, Signature_Url, original_destinations_json")
         .eq("Job_ID", jobId)
         .single()
 
@@ -148,6 +149,30 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     const adminPrice = Number(jobData?.Price_Cust_Total || 0)
     const loadedQty = Number(formData.get("loaded_qty") || 0)
     
+    // Multi-drop Logic: Calculate progress
+    const destinations = jobData?.original_destinations_json ? (
+        typeof jobData.original_destinations_json === 'string' 
+            ? JSON.parse(jobData.original_destinations_json) 
+            : jobData.original_destinations_json
+    ) : []
+    
+    const totalDrop = Array.isArray(destinations) && destinations.length > 0 
+        ? destinations.length 
+        : Number(jobData?.Total_Drop || 1)
+
+    const existingSignatures = jobData?.Signature_Url ? jobData.Signature_Url.split(',').filter(Boolean) : []
+    const completedDrops = existingSignatures.length
+    const isLastDrop = (completedDrops + 1) >= totalDrop
+
+    // Append URLs instead of overwriting
+    const newPhotoUrlString = jobData?.Photo_Proof_Url 
+        ? `${jobData.Photo_Proof_Url},${photoUrlString}` 
+        : photoUrlString
+    
+    const newSignatureUrlString = jobData?.Signature_Url
+        ? `${jobData.Signature_Url},${signatureUrl}`
+        : signatureUrl
+
     // Smart Price Lookup
     let unitPrice = 0
     if (jobData?.Customer_ID) {
@@ -155,9 +180,9 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     }
 
     const updatePayload: any = {
-        Job_Status: "Completed", 
-        Photo_Proof_Url: photoUrlString,
-        Signature_Url: signatureUrl,
+        Job_Status: isLastDrop ? "Completed" : "In Transit", 
+        Photo_Proof_Url: newPhotoUrlString,
+        Signature_Url: newSignatureUrlString,
         Actual_Delivery_Time: timeString,
         Delivery_Date: nowIso.split('T')[0]
     }
@@ -166,7 +191,9 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
         updatePayload.Loaded_Qty = loadedQty
         updatePayload.Notes = updateNotesWithQty(currentNotes, loadedQty)
         
-        // Auto-calculate price if not set by admin
+        // Auto-calculate price ONLY if not already set (is 0). 
+        // This allows admins to manually override the price to a 'Lump Sum' (ราคาเหมา) 
+        // in the Planning dashboard, which will be preserved even if quantity is updated.
         if (adminPrice === 0 && unitPrice > 0) {
             updatePayload.Price_Cust_Total = Number((loadedQty * unitPrice).toFixed(2))
         }
