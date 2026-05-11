@@ -16,14 +16,16 @@ export function calculateSafetyScore(driver: DriverWithGPS): SafetyMetrics {
     let score = 100;
     const violations: string[] = [];
     const speed = driver.Speed || 0;
-
     // 1. ตรวจสอบความเร็วเกินกำหนด (Speeding)
-    if (speed > 90) {
+    // Convert m/s to km/h
+    const speedKmH = speed * 3.6;
+
+    if (speedKmH > 90) {
         score -= 30;
-        violations.push("Critical Speeding (>90 km/h)");
-    } else if (speed > 80) {
+        violations.push(`Critical Speeding (${speedKmH.toFixed(1)} km/h)`);
+    } else if (speedKmH > 80) {
         score -= 15;
-        violations.push("Minor Speeding (>80 km/h)");
+        violations.push(`Minor Speeding (${speedKmH.toFixed(1)} km/h)`);
     }
 
     // 2. ตรวจสอบการขับขี่ต่อเนื่อง (Fatigue Risk - สมมติจากข้อมูล GPS)

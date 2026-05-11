@@ -406,6 +406,8 @@ function MovingMarker({ driver, onShowRoute }: { driver: DriverLocation, onShowR
     return () => cancelAnimationFrame(animationFrame)
   }, [driver.lat, driver.lng])
 
+  const isSpeeding = (driver.speed || 0) * 3.6 > 90;
+
   return (
     <Marker 
         position={currentPos} 
@@ -413,23 +415,27 @@ function MovingMarker({ driver, onShowRoute }: { driver: DriverLocation, onShowR
             className: 'custom-div-icon',
             html: `
                 <div class="relative flex items-center justify-center" style="width: 60px; height: 60px;">
+                    <!-- Speeding / SOS Alert Background -->
+                    ${isSpeeding || driver.status === 'SOS' ? `
+                        <div class="absolute inset-0 bg-red-500/20 rounded-full animate-ping"></div>
+                        <div class="absolute inset-0 border-4 border-red-500/50 rounded-full animate-pulse"></div>
+                    ` : ''}
+
                     <!-- Floating License Plate -->
                     <div class="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-card/90 text-foreground text-base font-bold font-black px-2 py-0.5 rounded-lg border border-border/20 shadow-2xl z-30 pointer-events-none">
-                        ${driver.vehiclePlate || 'N/A'}
+                        ${driver.vehiclePlate || 'N/A'} ${isSpeeding ? `<span class="text-red-500 ml-1">⚡ ${((driver.speed || 0) * 3.6).toFixed(0)}</span>` : ''}
                     </div>
 
                     <!-- Direction indicator -->
                     <div class="absolute" style="transform: rotate(${heading}deg) translateY(-28px);">
-                        <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[10px] border-b-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
+                        <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[10px] ${isSpeeding ? 'border-b-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]' : 'border-b-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]'}"></div>
                     </div>
 
                     <!-- Marker Body -->
                     <div class="relative flex items-center justify-center p-2.5 bg-background rounded-2xl shadow-2xl border border-border/20"
-                         style="transform: rotate(${heading}deg); border-bottom: 4px solid #10b981;">
+                         style="transform: rotate(${heading}deg); border-bottom: 4px solid ${isSpeeding || driver.status === 'SOS' ? '#ef4444' : '#10b981'};">
                         
-                        ${driver.status === 'SOS' ? '<div class="absolute inset-[-4px] border-2 border-red-500 rounded-2xl animate-ping"></div>' : ''}
-                        
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="${driver.status === 'SOS' ? 'text-red-500' : 'text-emerald-400'}">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="${isSpeeding || driver.status === 'SOS' ? 'text-red-500' : 'text-emerald-400'}">
                             <path d="M1 14H17M1 14L2 7H14L17 14M1 14V18H3M17 14V18H15M17 14H23V18H21M17 11H21L23 14M7 18C7 19.1046 6.10457 20 5 20C3.89543 20 3 19.1046 3 18C3 16.8954 3.89543 16 5 18ZM7 18C7 16.8954 7.89543 16 9 16C10.1046 16 11 16.8954 11 18M11 18C11 19.1046 10.1046 20 9 20C7.89543 20 7 19.1046 7 18ZM19 18C19 19.1046 18.1046 20 17 20C15.8954 20 15 19.1046 15 18C15 16.8954 15.8954 16 17 16C18.1046 16 19 16.8954 19 18ZM21 18C21 19.1046 20.1046 20 19 20C17.8954 20 17 19.1046 17 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
