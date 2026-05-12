@@ -5,6 +5,11 @@ import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/per
 import { getDangerZones } from "./danger-zones";
 import { isPointInPolygon } from "@/lib/utils";
 import { sendDangerZoneAlert } from "../actions/email-actions";
+import { type DangerZone } from "./danger-zones";
+
+// Simple in-memory cache to save CPU/DB calls on Vercel
+let globalZoneCache: Record<string, { zones: DangerZone[], timestamp: number }> = {};
+const ZONE_CACHE_TTL = 300000; // 5 minutes cache
 
 // Type matching actual Supabase schema (ProperCase columns!)
 export type GPSLog = {
@@ -60,29 +65,43 @@ export async function saveGPSLog(data: {
 
     // --- DANGER ZONE CHECK ---
     try {
-        const zones = await getDangerZones(); // Get zones for branch
-        const activeZones = zones.filter(z => z.Is_Active);
+        const branchId = await getUserBranchId() || 'All';
+        const now = Date.now();
         
-        for (const zone of activeZones) {
-            if (isPointInPolygon([data.lat, data.lng], zone.Coordinates)) {
-                // Potential Incursion Detected!
-                console.warn(`[DANGER] Driver ${data.driverId} entered zone ${zone.Zone_Name}`);
-                
-                // Fetch driver details for email
-                const { data: driver } = await supabase
-                    .from('Master_Drivers')
-                    .select('Driver_Name, Vehicle_Plate')
-                    .eq('Driver_ID', data.driverId)
-                    .single();
-                
-                if (zone.Email_Recipient) {
-                    await sendDangerZoneAlert({
-                        plate: driver?.Vehicle_Plate || data.vehiclePlate || 'Unknown',
-                        driverName: driver?.Driver_Name || 'Unknown',
-                        zoneName: zone.Zone_Name,
-                        timestamp: new Date().toLocaleString('th-TH'),
-                        recipient: zone.Email_Recipient
-                    });
+        let activeZones: DangerZone[] = [];
+        
+        // Use cache if available and not expired
+        if (globalZoneCache[branchId] && (now - globalZoneCache[branchId].timestamp < ZONE_CACHE_TTL)) {
+            activeZones = globalZoneCache[branchId].zones;
+        } else {
+            const zones = await getDangerZones(branchId);
+            activeZones = zones.filter(z => z.Is_Active);
+            globalZoneCache[branchId] = { zones: activeZones, timestamp: now };
+            console.log(`[GPS] Cache updated for branch: ${branchId} (${activeZones.length} zones)`);
+        }
+        
+        if (activeZones.length > 0) {
+            for (const zone of activeZones) {
+                if (isPointInPolygon([data.lat, data.lng], zone.Coordinates)) {
+                    // Potential Incursion Detected!
+                    console.warn(`[DANGER] Driver ${data.driverId} entered zone ${zone.Zone_Name}`);
+                    
+                    // Fetch driver details for email
+                    const { data: driver } = await supabase
+                        .from('Master_Drivers')
+                        .select('Driver_Name, Vehicle_Plate')
+                        .eq('Driver_ID', data.driverId)
+                        .single();
+                    
+                    if (zone.Email_Recipient) {
+                        await sendDangerZoneAlert({
+                            plate: driver?.Vehicle_Plate || data.vehiclePlate || 'Unknown',
+                            driverName: driver?.Driver_Name || 'Unknown',
+                            zoneName: zone.Zone_Name,
+                            timestamp: new Date().toLocaleString('th-TH'),
+                            recipient: zone.Email_Recipient
+                        });
+                    }
                 }
             }
         }

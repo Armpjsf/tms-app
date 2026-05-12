@@ -2,12 +2,11 @@
 
 import { useEffect, useRef, useState } from "react"
 import { saveGPSLog } from "@/lib/supabase/gps"
-import { updateDriverLocation } from "@/lib/actions/location-actions"
 import { Geolocation } from '@capacitor/geolocation'
 import { Capacitor } from '@capacitor/core'
 import { toast } from "sonner"
 
-const UPDATE_INTERVAL = 60000 // Update every 1 minute
+const UPDATE_INTERVAL = 300000 // Update every 5 minutes
 const MIN_DISTANCE = 0.0002 // Approx 20-30 meters
 
 export function LocationTracker({ driverId }: { driverId?: string, branchId?: string }) {
@@ -131,14 +130,13 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
             lastPosRef.current = { lat, lng }
 
             try {
-                await saveGPSLog({
+                const res = await saveGPSLog({
                     driverId: driverId!,
                     lat: lat,
                     lng: lng,
                     speed: speed,
                 })
 
-                const res = await updateDriverLocation(driverId!, lat, lng)
                 if (res.success) setStatus("tracking")
                 else setStatus("error")
             } catch {
