@@ -111,11 +111,13 @@ export async function createJob(data: JobFormData) {
   const { error: error1 } = await supabase.from('Jobs_Main').insert(buildInsertPayload(data, driverName, subId, unitPrice))
   
   if (!error1) {
-      // Send notifications
-      if (data.Driver_ID) {
-          try { await notifyDriverNewJob(data.Driver_ID, data.Job_ID, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
-      } else {
-          try { await notifyMarketplaceNewJob(data.Job_ID, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
+      // Send notifications - ONLY if NOT a draft
+      if (data.Job_Status !== 'Draft') {
+          if (data.Driver_ID) {
+              try { await notifyDriverNewJob(data.Driver_ID, data.Job_ID, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
+          } else {
+              try { await notifyMarketplaceNewJob(data.Job_ID, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
+          }
       }
 
       revalidatePath('/planning')
@@ -133,11 +135,12 @@ export async function createJob(data: JobFormData) {
       const { error: error2 } = await supabase.from('Jobs_Main').insert(buildInsertPayload({ ...data, Job_ID: newId }, driverName, subId, unitPrice))
       
       if (!error2) {
-          // Send notifications for regenerated ID
-          if (data.Driver_ID) {
-              try { await notifyDriverNewJob(data.Driver_ID, newId, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
-          } else {
-              try { await notifyMarketplaceNewJob(newId, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
+          if (data.Job_Status !== 'Draft') {
+              if (data.Driver_ID) {
+                  try { await notifyDriverNewJob(data.Driver_ID, newId, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
+              } else {
+                  try { await notifyMarketplaceNewJob(newId, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
+              }
           }
 
           revalidatePath('/planning')
@@ -174,7 +177,7 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
       Driver_Name: driverName,
       Vehicle_Plate: data.Vehicle_Plate,
       Vehicle_Type: data.Vehicle_Type,
-      Job_Status: 'New',
+      Job_Status: data.Job_Status || 'New',
       Cargo_Type: data.Cargo_Type,
       Notes: data.Notes,
       Price_Cust_Total: custTotal,
@@ -214,7 +217,7 @@ async function autoSaveOriginDestinations(branchId: string | null, originsJson?:
 export async function createBulkJobs(
     jobs: Partial<JobFormData>[], 
     effectiveBranchId: string | null = null,
-    options: { shouldGroup?: boolean } = {}
+    options: { shouldGroup?: boolean, isDraft?: boolean } = {}
 ) {
   const isAdminUser = await isAdmin()
   const supabase = isAdminUser ? await createAdminClient() : await createClient()
@@ -448,7 +451,7 @@ export async function createBulkJobs(
       Driver_ID: driverId || null,
       Driver_Name: driver?.Driver_Name || null,
       Vehicle_Plate: vehiclePlate || null,
-      Job_Status: 'New',
+      Job_Status: (data.Job_Status as string) || 'New',
       Notes: data.Notes as string || null,
       Price_Cust_Total: Number(data.Price_Cust_Total) || 0,
       Cost_Driver_Total: Number(data.Cost_Driver_Total) || 0,
@@ -479,8 +482,13 @@ export async function createBulkJobs(
     return sanitized
   }).filter(j => j.Customer_Name)
 
+  // Apply Draft status if requested via options
+  const finalCleanData = options.isDraft 
+    ? cleanData.map(j => ({ ...j, Job_Status: 'Draft' }))
+    : cleanData
+
   // Apply Auto-calculation asynchronously to support fuel lookups
-  const finalizedData = await Promise.all(cleanData.map(async (j) => {
+  const finalizedData = await Promise.all(finalCleanData.map(async (j) => {
     let total = Number(j.Price_Cust_Total) || 0
     if (total === 0 && j.Customer_ID) {
         const unitPrice = await getSmartUnitPrice(supabase, j.Customer_ID, j.Plan_Date, j.Vehicle_Type || '4-Wheel')
@@ -569,7 +577,9 @@ export async function createBulkJobs(
           if (j.Driver_ID) {
               assignedDrivers.add(j.Driver_ID)
               // Only notify about the first job for this driver in this batch to avoid spam
-              notiPromises.push(notifyDriverNewJob(j.Driver_ID, j.Job_ID, j.Customer_Name || 'ไม่ระบุ'))
+              if (j.Job_Status !== 'Draft') {
+                  notiPromises.push(notifyDriverNewJob(j.Driver_ID, j.Job_ID, j.Customer_Name || 'ไม่ระบุ'))
+              }
           } else {
               hasMarketplaceJob = true
               sampleJobId = j.Job_ID
@@ -577,7 +587,7 @@ export async function createBulkJobs(
           }
       })
 
-      if (hasMarketplaceJob) {
+      if (hasMarketplaceJob && finalizedData.some(j => j.Job_Status !== 'Draft')) {
           // Broadcast once for the whole batch
           const batchCount = finalizedData.filter(j => !j.Driver_ID).length
           const broadcastMsg = batchCount > 1 
@@ -964,4 +974,27 @@ export async function fixMissingBranches(targetBranchId: string) {
     revalidatePath('/dashboard')
     
     return { success: true, message: `Successfully updated ${data?.length || 0} jobs to branch ${targetBranchId}` }
+}
+import { publishDraftJobs } from '@/lib/supabase/jobs'
+
+export async function publishAllDrafts(date: string, branchId?: string) {
+    const result = await publishDraftJobs(date, branchId)
+    
+    if (result.success && result.jobs) {
+        // Notify all drivers of the published jobs
+        const notiPromises = result.jobs.map(job => {
+            if (job.Driver_ID) {
+                return notifyDriverNewJob(job.Driver_ID, job.Job_ID, job.Customer_Name || 'ไม่ระบุ')
+            } else {
+                return notifyMarketplaceNewJob(job.Job_ID, job.Customer_Name || 'ไม่ระบุ')
+            }
+        })
+        await Promise.allSettled(notiPromises)
+        
+        revalidatePath('/planning')
+        revalidatePath('/dashboard')
+        revalidatePath('/mobile/jobs')
+    }
+    
+    return result
 }

@@ -255,25 +255,27 @@ export default async function CostPerTripPage(props: PageProps) {
               </h3>
             </div>
             <div className="p-4 space-y-3">
-              {Array.from(trips.reduce((acc, trip) => {
-                const name = trip.Customer_Name || 'Unknown'
-                if (!acc.has(name)) acc.set(name, { name, profit: 0, revenue: 0 })
-                const entry = acc.get(name)
-                entry.profit += trip.profit
-                entry.revenue += trip.Cost_Customer_Total
-                return acc
-              }, new Map()).values())
-              .sort((a: any, b: any) => b.profit - a.profit)
-              .slice(0, 5)
-              .map((cust: any) => (
-                <div key={cust.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
-                  <p className="font-black text-gray-900 text-sm">{cust.name}</p>
-                  <div className="text-right">
-                    <p className="font-black text-emerald-600">฿{formatMoney(cust.profit)}</p>
-                    <p className="text-[10px] font-bold text-gray-400">{Math.round((cust.profit / cust.revenue) * 100)}% Average Margin</p>
-                  </div>
-                </div>
-              ))}
+              {(() => {
+                const customerStats: Record<string, any> = {}
+                trips.forEach(trip => {
+                  const name = trip.Customer_Name || 'Unknown'
+                  if (!customerStats[name]) customerStats[name] = { name, profit: 0, revenue: 0 }
+                  customerStats[name].profit += trip.profit
+                  customerStats[name].revenue += trip.Cost_Customer_Total
+                })
+                return Object.values(customerStats)
+                  .sort((a: any, b: any) => b.profit - a.profit)
+                  .slice(0, 5)
+                  .map((cust: any) => (
+                    <div key={cust.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
+                      <p className="font-black text-gray-900 text-sm">{cust.name}</p>
+                      <div className="text-right">
+                        <p className="font-black text-emerald-600">฿{formatMoney(cust.profit)}</p>
+                        <p className="text-[10px] font-bold text-gray-400">{cust.revenue > 0 ? Math.round((cust.profit / cust.revenue) * 100) : 0}% Average Margin</p>
+                      </div>
+                    </div>
+                  ))
+              })()}
             </div>
           </div>
         </div>

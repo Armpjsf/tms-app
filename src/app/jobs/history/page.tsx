@@ -51,6 +51,7 @@ export default async function JobHistoryPage(props: Props) {
         dateFrom={dateFrom}
         dateTo={dateTo}
         status={status}
+        query={query}
         limit={limit}
       />
       

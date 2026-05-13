@@ -1,5 +1,5 @@
 import { getTodayJobStats, getTodayJobs, getRequestedJobs } from "@/lib/supabase/jobs"
-import { getJobCreationData, createBulkJobs } from "@/app/planning/actions"
+import { getJobCreationData, createBulkJobs, publishAllDrafts } from "@/app/planning/actions"
 import { hasPermission, isAdmin, getUserBranchId } from "@/lib/permissions"
 import { PlanningClient } from "@/components/planning/planning-client"
 import { cookies } from "next/headers"
@@ -51,6 +51,7 @@ async function PlanningContent({ branch, date }: { branch: string, date?: string
       canCreate={canCreate}
       canAssign={canAssign}
       createBulkJobs={createBulkJobs}
+      publishAllDrafts={publishAllDrafts}
       branchId={branch}
       selectedDate={date}
     />

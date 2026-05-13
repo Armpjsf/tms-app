@@ -27,7 +27,9 @@ export function ExportCSVButton({ data }: ExportCSVButtonProps) {
                 "ต้นทาง",
                 "ปลายทาง",
                 "เส้นทางรวม",
+                "จำนวนชิ้น",
                 "ระยะทาง (KM)",
+                "ราคา/ชิ้น",
                 "รายได้ (THB)",
                 "ค่าคนขับ (THB)",
                 "ค่าน้ำมันจริง (THB)",
@@ -61,7 +63,11 @@ export function ExportCSVButton({ data }: ExportCSVButtonProps) {
                     origin || "-",
                     dest || "-",
                     t.Route_Name || "-",
+                    t.loaded_qty || 0,
                     t.distance_km || 0,
+                    (t.loaded_qty > 0 && (t.Cost_Customer_Total % t.loaded_qty === 0)) 
+                        ? (t.Cost_Customer_Total / t.loaded_qty).toString() 
+                        : "-",
                     t.Cost_Customer_Total || 0,
                     (t.Cost_Driver_Total || 0) + (t.extra_cost || 0),
                     t.fuel_real || 0,

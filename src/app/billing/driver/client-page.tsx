@@ -90,7 +90,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
   const router = useRouter()
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
-  const [paymentModel, setPaymentModel] = useState<'individual' | 'subcontractor'>('individual')
+  const [paymentModel, setPaymentModel] = useState<'individual' | 'subcontractor' | 'all'>('individual')
   const [selectedEntityId, setSelectedEntityId] = useState("")
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
@@ -100,21 +100,33 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
   const filteredData = initialJobs.filter(item => {
     const driver = drivers.find(d => d.Driver_Name === item.Driver_Name)
     
-    if (paymentModel === 'individual') {
-        // If a specific driver is selected, show only that driver
-        if (selectedEntityId) {
-            if (item.Driver_Name !== selectedEntityId) return false
+    if (paymentModel !== 'all') {
+        if (paymentModel === 'individual') {
+            // If a specific driver is selected, show only that driver
+            if (selectedEntityId) {
+                if (item.Driver_Name !== selectedEntityId) return false
+            } else {
+                // "All" mode: Show only drivers who don't belong to any subcontractor group
+                if (driver?.Sub_ID) return false
+            }
         } else {
-            // "All" mode: Show only drivers who don't belong to any subcontractor group
-            if (driver?.Sub_ID) return false
+            // If a specific subcontractor is selected, show only drivers in that group
+            if (selectedEntityId) {
+                if (driver?.Sub_ID !== selectedEntityId) return false
+            } else {
+                // "All" mode: Show only drivers who belong to a subcontractor group
+                if (!driver?.Sub_ID) return false
+            }
         }
     } else {
-        // If a specific subcontractor is selected, show only drivers in that group
+        // 'All' mode: If a specific entity was selected while in other modes, filter it, otherwise show all
         if (selectedEntityId) {
-            if (driver?.Sub_ID !== selectedEntityId) return false
-        } else {
-            // "All" mode: Show only drivers who belong to a subcontractor group
-            if (!driver?.Sub_ID) return false
+            const isSub = subcontractors.some(s => s.Sub_ID === selectedEntityId)
+            if (isSub) {
+                if (driver?.Sub_ID !== selectedEntityId) return false
+            } else {
+                if (item.Driver_Name !== selectedEntityId) return false
+            }
         }
     }
 
@@ -387,7 +399,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
               <Select
                 value={paymentModel}
                 onValueChange={(value) => {
-                    setPaymentModel(value as 'individual' | 'subcontractor')
+                    setPaymentModel(value as 'individual' | 'subcontractor' | 'all')
                     setSelectedEntityId("")
                 }}
               >
@@ -397,6 +409,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 <SelectContent className="bg-card border-border/10 text-foreground font-black">
                   <SelectItem value="individual" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">{t('billing_driver.individual_nodes')}</SelectItem>
                   <SelectItem value="subcontractor" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">{t('billing_driver.partner_cluster')}</SelectItem>
+                  <SelectItem value="all" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">แสดงทั้งหมด (ALL)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -411,7 +424,17 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border/10 text-foreground font-black">
                   <SelectItem value="all" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">{t('billing_driver.all_sectors')}</SelectItem>
-                  {paymentModel === 'individual' ? (
+                  {paymentModel === 'all' ? (
+                      <>
+                        <SelectItem value="all" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">แสดงทั้งหมด (ALL)</SelectItem>
+                        {drivers.map(d => (
+                           <SelectItem key={`d-${d.Driver_ID}`} value={d.Driver_Name || ""} className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">คนขับ: {d.Driver_Name}</SelectItem>
+                        ))}
+                        {subcontractors.map(s => (
+                           <SelectItem key={`s-${s.Sub_ID}`} value={s.Sub_ID} className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">บริษัท: {s.Sub_Name}</SelectItem>
+                        ))}
+                      </>
+                  ) : paymentModel === 'individual' ? (
                       drivers.filter(d => !d.Sub_ID).map(d => (
                           <SelectItem key={d.Driver_Name || ""} value={d.Driver_Name || ""} className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">{d.Driver_Name}</SelectItem>
                       ))

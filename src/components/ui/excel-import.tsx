@@ -30,6 +30,7 @@ interface ExcelImportProps {
   templateData?: Record<string, unknown>[]
   templateFilename?: string
   groupingLabel?: string
+  showDraftOption?: boolean
 }
 
 export function ExcelImport({
@@ -40,6 +41,7 @@ export function ExcelImport({
   templateData,
   templateFilename = "template.xlsx",
   groupingLabel,
+  showDraftOption = false,
 }: ExcelImportProps) {
   const { t } = useLanguage()
   const router = useRouter()
@@ -49,6 +51,7 @@ export function ExcelImport({
   const [previewData, setPreviewData] = useState<Record<string, unknown>[]>([])
   const [error, setError] = useState<string | null>(null)
   const [shouldGroup, setShouldGroup] = useState(true)
+  const [isDraft, setIsDraft] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const effectiveDescription = description || t('common.import.description')
@@ -103,7 +106,7 @@ export function ExcelImport({
     setError(null)
 
     try {
-      const result = await onImport(previewData, { shouldGroup })
+      const result = await onImport(previewData, { shouldGroup, isDraft })
       if (result.success) {
         setOpen(false)
         setFile(null)
@@ -248,6 +251,25 @@ export function ExcelImport({
                   </Label>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70">
                     Auto-merges SOs for the same driver & optimizes route
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {showDraftOption && (
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10">
+                <Checkbox 
+                  id="import-draft" 
+                  checked={isDraft} 
+                  onCheckedChange={(checked) => setIsDraft(!!checked)}
+                  className="w-5 h-5 rounded-lg border-amber-500/20 data-[state=checked]:bg-amber-500"
+                />
+                <div className="grid gap-1">
+                  <Label htmlFor="import-draft" className="text-sm font-black uppercase tracking-wider text-amber-600 cursor-pointer">
+                    นำเข้าเป็น "ร่าง (Draft)"
+                  </Label>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70">
+                    งานจะถูกสร้างไว้แต่ยังไม่ส่งให้คนขับจนกว่าแอดมินจะกดอนุมัติ
                   </p>
                 </div>
               </div>

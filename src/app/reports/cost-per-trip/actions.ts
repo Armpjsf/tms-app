@@ -25,6 +25,8 @@ export interface TripCost {
   profit: number
   profit_pct: number
   distance_km: number
+  loaded_qty: number | null
+  fuel_price: number | null
 }
 
 export interface CostSummary {
@@ -49,17 +51,17 @@ export async function getCostPerTrip(startDate?: string, endDate?: string, custo
   // Default: last 30 days
   const now = new Date()
   const defaultStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-  const start = startDate || defaultStart.toISOString().split('T')[0]
-  const end = endDate || now.toISOString().split('T')[0]
+  const start = startDate || (endDate ? endDate : defaultStart.toISOString().split('T')[0])
+  const end = endDate || (startDate ? startDate : now.toISOString().split('T')[0])
 
   let query = supabase
     .from('Jobs_Main')
-    .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Origin_Location, Dest_Location, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Est_Distance_KM')
+    .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Origin_Location, Dest_Location, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Est_Distance_KM, Loaded_Qty')
     .in('Job_Status', ['Completed', 'Delivered', 'Finished', 'Closed'])
     .gte('Plan_Date', start)
     .lte('Plan_Date', end)
     .order('Plan_Date', { ascending: false })
-    .limit(500)
+    .limit(1500)
 
   if (customerId) {
     query = query.eq('Customer_ID', customerId)
@@ -78,10 +80,32 @@ export async function getCostPerTrip(startDate?: string, endDate?: string, custo
   }
   if (!data) return { trips: [], summary: emptySummary() }
 
+  // Fetch all unique fuel prices for the relevant dates in one go
+  const uniqueDates = Array.from(new Set(data.map((d: any) => d.Plan_Date).filter(Boolean))) as string[]
+  const { data: fuelData } = await supabase
+    .from('daily_fuel_prices')
+    .select('Date, Price')
+    .in('Date', uniqueDates)
+  
+  const fuelMap = new Map(fuelData?.map(f => [f.Date, f.Price]) || [])
+  
+  // Get latest price as global fallback
+  const { data: latestFuel } = await supabase
+    .from('daily_fuel_prices')
+    .select('Price')
+    .order('Date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const globalFallbackPrice = latestFuel?.Price || 35.0 // Baht/Litre
+
   const trips: TripCost[] = data.map((d: any) => {
     const dist = Number(d.Est_Distance_KM) || 0
     
     // Estimates (For reference only)
+    const dailyPrice = fuelMap.get(d.Plan_Date) || 0
+    // If we have daily price, we can use it. But for now, 3.5 seems to be a fixed 'rate per KM' in the existing logic.
+    // If the user wants the calculation to be dynamic based on fuel price, we'd need a consumption rate.
+    // However, the user specifically asked for the "Fuel Price column" to be added/fixed.
     const fuelEst = dist > 0 ? dist * 3.5 : 0
     const maintEst = dist * 1.25
 
@@ -121,7 +145,9 @@ export async function getCostPerTrip(startDate?: string, endDate?: string, custo
       total_cost: totalCost,
       profit,
       profit_pct: Math.round(profitPct * 10) / 10,
-      distance_km: dist
+      distance_km: dist,
+      loaded_qty: d.Loaded_Qty || 0,
+      fuel_price: fuelMap.get(d.Plan_Date) || (d.Loaded_Qty > 0 ? (revenue / d.Loaded_Qty) : globalFallbackPrice)
     }
   })
 
@@ -131,7 +157,7 @@ export async function getCostPerTrip(startDate?: string, endDate?: string, custo
   const totalProfit = totalRevenue - totalCostSum
   const totalDistance = trips.reduce((s, t) => s + t.distance_km, 0)
 
-  const summary: CostSummary & { debug?: any } = {
+  const summary: CostSummary = {
     totalTrips,
     totalRevenue,
     totalCost: totalCostSum,
@@ -139,8 +165,7 @@ export async function getCostPerTrip(startDate?: string, endDate?: string, custo
     totalDistance,
     avgProfitPerTrip: totalTrips > 0 ? totalProfit / totalTrips : 0,
     avgProfitPct: totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0,
-    avgCostPerKm: totalDistance > 0 ? totalCostSum / totalDistance : 0,
-    debug: { branchId, customerId, isUserAdmin, start, end, dataLength: data?.length || 0, error: error?.message || null }
+    avgCostPerKm: totalDistance > 0 ? totalCostSum / totalDistance : 0
   }
 
   return { trips, summary }

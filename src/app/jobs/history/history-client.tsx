@@ -31,6 +31,9 @@ import NextImage from "next/image"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/components/providers/language-provider"
+import { getAllJobs } from "@/lib/supabase/jobs"
+import * as XLSX from "xlsx"
+import { useState } from "react"
 
 interface HistoryClientProps {
   jobs: any[]
@@ -44,9 +47,9 @@ interface HistoryClientProps {
   canViewPrice: boolean
   canDelete: boolean
   canExport: boolean
-  dateFrom: string
   dateTo: string
   status: string
+  query: string
   limit: number
 }
 
@@ -65,12 +68,68 @@ export function HistoryClient({
   dateFrom,
   dateTo,
   status,
+  query,
   limit
 }: HistoryClientProps) {
   const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
+  const [isExporting, setIsExporting] = useState(false)
+
+  const handleExportAll = async () => {
+    setIsExporting(true)
+    try {
+        // Fetch all jobs matching the filters (limit 10,000)
+        const result = await getAllJobs(1, 10000, query, status, dateFrom, dateTo)
+        const allJobs = result.data
+
+        if (!allJobs || allJobs.length === 0) {
+            alert("No data to export")
+            return
+        }
+
+        // Prepare data for Excel
+        const exportData = allJobs.map(job => {
+            let origin = (job.Origin_Location || '').trim()
+            let dest = (job.Dest_Location || '').trim()
+            
+            // Fallback for Route Name
+            if ((!origin || !dest) && job.Route_Name) {
+                const parts = job.Route_Name.split(/[-→/]/)
+                if (parts.length >= 2) {
+                    if (!origin) origin = parts[0].trim()
+                    if (!dest) dest = parts.slice(1).join(' - ').trim()
+                }
+            }
+
+            return {
+                'Job ID': job.Job_ID,
+                'Status': job.Job_Status,
+                'Plan Date': job.Plan_Date,
+                'Customer': job.Customer_Name,
+                'Route': job.Route_Name,
+                'Origin': origin,
+                'Destination': dest,
+                'Vehicle': job.Vehicle_Plate,
+                'Driver': job.Driver_Name,
+                'Total Qty': job.Loaded_Qty || 0,
+                'Distance (KM)': job.Est_Distance_KM || 0,
+                'Verification': job.Verification_Status || 'Pending'
+            }
+        })
+
+        const wb = XLSX.utils.book_new()
+        const ws = XLSX.utils.json_to_sheet(exportData)
+        XLSX.utils.book_append_sheet(wb, ws, "Mission History")
+        XLSX.writeFile(wb, `mission_history_${new Date().toISOString().split('T')[0]}.xlsx`)
+    } catch (error) {
+        console.error("Export failed:", error)
+        alert("Failed to export data")
+    } finally {
+        setIsExporting(false)
+    }
+  }
 
   const handleDateChange = (name: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -124,16 +183,18 @@ export function HistoryClient({
             </PremiumButton>
           </Link>
           {canExport && (
-            <ExcelExport 
-               data={jobs} 
-               filename={`mission_history_${new Date().toISOString().split('T')[0]}`}
-               title={t('navigation.reports')}
-               trigger={
-                 <PremiumButton variant="secondary" className="h-11 px-6 rounded-xl bg-primary text-foreground shadow-lg text-xs font-black uppercase tracking-widest">
-                     <Download className="w-4 h-4 mr-2" /> {t('common.download_report')}
-                 </PremiumButton>
-               }
-            />
+            <PremiumButton 
+                variant="secondary" 
+                className="h-11 px-6 rounded-xl bg-primary text-foreground shadow-lg text-xs font-black uppercase tracking-widest disabled:opacity-50"
+                onClick={handleExportAll}
+                disabled={isExporting}
+            >
+                {isExporting ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t('common.loading')}...</>
+                ) : (
+                    <><Download className="w-4 h-4 mr-2" /> {t('common.download_report')}</>
+                )}
+            </PremiumButton>
           )}
         </div>
       </div>

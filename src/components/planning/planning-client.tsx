@@ -54,6 +54,7 @@ interface PlanningClientProps {
     canCreate: boolean
     canAssign: boolean
     createBulkJobs: (data: Partial<JobFormData>[], effectiveBranchId?: string | null, options?: { shouldGroup?: boolean }) => Promise<{ success: boolean; message: string }>
+    publishAllDrafts: (date: string, branchId?: string) => Promise<{ success: boolean, error: any }>
     branchId: string
     selectedDate: string
 }
@@ -84,12 +85,14 @@ export function PlanningClient({
     canCreate,
     canAssign,
     createBulkJobs,
+    publishAllDrafts,
     branchId,
     selectedDate
 }: PlanningClientProps) {
     const { drivers, vehicles, customers, routes, subcontractors } = jobCreationData
     const [view, setView] = useState<'list' | 'kanban' | 'requests'>('list')
     const router = useRouter()
+    const [publishing, setPublishing] = useState(false)
     const { t } = useLanguage()
 
     // Real-time: Jobs_Main
@@ -101,6 +104,21 @@ export function PlanningClient({
         const params = new URLSearchParams(window.location.search)
         params.set('date', newDate)
         router.push(`/planning?${params.toString()}`)
+    }
+
+    const handlePublishAll = async () => {
+        if (!confirm("ต้องการส่งงาน Draft ทั้งหมดของวันนี้ให้คนขับใช่หรือไม่?")) return
+        setPublishing(true)
+        try {
+            const res = await publishAllDrafts(selectedDate, branchId)
+            if (res.success) {
+                router.refresh()
+            } else {
+                alert("Failed to publish: " + (res.error?.message || "Unknown error"))
+            }
+        } finally {
+            setPublishing(false)
+        }
     }
 
     const setYesterday = () => {
@@ -206,6 +224,16 @@ export function PlanningClient({
 
                     {canCreate && (
                         <div className="flex items-center gap-2 ml-2">
+                            {todayJobs.some(j => j.Job_Status === 'Draft') && (
+                                <PremiumButton 
+                                    onClick={handlePublishAll}
+                                    disabled={publishing}
+                                    className="h-11 px-6 rounded-xl bg-amber-500 text-white shadow-lg text-xs font-black uppercase tracking-widest gap-2 hover:bg-amber-600 transition-all active:scale-95"
+                                >
+                                    {publishing ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} className="text-white fill-white" />}
+                                    ส่งงาน Draft ทั้งหมด
+                                </PremiumButton>
+                            )}
                             <ExcelImport 
                                 trigger={
                                     <PremiumButton variant="outline" className="h-11 px-5 rounded-xl border-border/10 hover:border-primary/50 text-muted-foreground gap-2 text-xs font-black uppercase tracking-widest">
@@ -215,6 +243,7 @@ export function PlanningClient({
                                 title={t('planning.import_title') || 'Import Jobs'}
                                 onImport={(data, options) => createBulkJobs(data, branchId === 'All' ? null : branchId, options)}
                                 groupingLabel="จัดกลุ่มใบสั่งซื้อ (Group SO by Car/Driver)"
+                                showDraftOption={true}
                                 templateData={[{
                                     "รหัสงาน": "JOB-001",
                                     "วันที่แผน": selectedDate || "",

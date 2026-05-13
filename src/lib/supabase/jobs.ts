@@ -699,6 +699,7 @@ function getStatusColor(status: string) {
         case 'Assigned': return '#8b5cf6' // violet-500
         case 'Failed': return '#ef4444' // red-500
         case 'Cancelled': return '#94a3b8' // slate-400
+        case 'Draft': return '#f59e0b' // amber-500
         default: return '#cbd5e1'
     }
 }
@@ -979,6 +980,7 @@ export async function getDriverDashboardStats(driverId: string) {
         .select('Job_ID, Customer_Name, Job_Status, Origin_Location, Dest_Location, Route_Name, Plan_Date, Cost_Driver_Total, Show_Price_To_Driver, Total_Drop, Signature_Url, Photo_Proof_Url')
         .eq('Driver_ID', driverId)
         .neq('Job_Status', 'Cancelled')
+        .neq('Job_Status', 'Draft')
         .or(`Job_Status.not.in.(Completed,Delivered),Plan_Date.eq.${today}`)
         .order('Plan_Date', { ascending: true }) 
         .order('Created_At', { ascending: true }),
@@ -1028,7 +1030,7 @@ export async function getDriverDashboardStats(driverId: string) {
         j.Show_Price_To_Driver !== false
     ).reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0) || 0) : 0
 
-    const activeJobs = jobs?.filter(j => !['Completed', 'Delivered', 'Cancelled'].includes(j.Job_Status || '')) || []
+    const activeJobs = jobs?.filter(j => !['Completed', 'Delivered', 'Cancelled', 'Draft'].includes(j.Job_Status || '')) || []
     const currentJob = activeJobs.length > 0 ? activeJobs[0] : null
     const totalRemaining = activeJobs.length
 
@@ -1266,5 +1268,41 @@ export async function getAllVehiclePlates() {
         return Array.from(new Set((data || []).map(v => v.Vehicle_Plate)));
     } catch {
         return [];
+    }
+}
+
+/**
+ * ปรับปรุงสถานะงานจาก Draft เป็น New (เพื่อส่งงานให้คนขับ)
+ */
+export async function publishDraftJobs(date: string, branchId?: string) {
+    try {
+        const supabase = await createAdminClient()
+        let query = supabase
+            .from('Jobs_Main')
+            .update({ Job_Status: 'New' })
+            .eq('Job_Status', 'Draft')
+            .eq('Plan_Date', date)
+        
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        }
+        
+        // Fetch jobs first to know who to notify
+        let selectQuery = supabase
+            .from('Jobs_Main')
+            .select('Job_ID, Driver_ID, Customer_Name')
+            .eq('Job_Status', 'Draft')
+            .eq('Plan_Date', date)
+        
+        if (branchId && branchId !== 'All') {
+            selectQuery = selectQuery.eq('Branch_ID', branchId)
+        }
+        
+        const { data: draftJobs } = await selectQuery
+        const { error } = await query
+        
+        return { success: !error, error, jobs: draftJobs || [] }
+    } catch (e) {
+        return { success: false, error: e }
     }
 }

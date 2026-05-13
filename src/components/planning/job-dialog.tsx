@@ -913,7 +913,7 @@ export function JobDialog({
     }
   }
 
-  const handleSubmit = async (e?: React.FormEvent, stayOpen = false) => {
+  const handleSubmit = async (e?: React.FormEvent, stayOpen = false, forcedStatus?: string) => {
     if (e) e.preventDefault()
     
     // Validation
@@ -932,6 +932,7 @@ export function JobDialog({
       // Base data common to all jobs
       const baseData = {
         ...formData,
+        Job_Status: forcedStatus || formData.Job_Status || 'New',
         Job_ID: effectiveJobId,
         Plan_Date: formData.Plan_Date, // Ensure Plan_Date is used
         Origin_Location: origins.map(o => o.name).join(' → '),
@@ -963,6 +964,7 @@ export function JobDialog({
             Vehicle_Plate: assignment.Vehicle_Plate || null,
             Driver_ID: assignment.Driver_ID || null,
             Sub_ID: assignment.Sub_ID || null,
+            Job_Status: forcedStatus || baseData.Job_Status,
             Show_Price_To_Driver: assignment.Show_Price_To_Driver,
             // Use individual costs if they differ from shared baseData
             Price_Cust_Total: assignment.Price_Cust_Total ?? baseData.Price_Cust_Total,
@@ -987,6 +989,7 @@ export function JobDialog({
             Vehicle_Plate: assignment.Vehicle_Plate || null,
             Driver_ID: assignment.Driver_ID || null,
             Sub_ID: assignment.Sub_ID || null,
+            Job_Status: forcedStatus || baseData.Job_Status,
             Show_Price_To_Driver: assignment.Show_Price_To_Driver,
             Price_Cust_Total: assignment.Price_Cust_Total !== undefined ? assignment.Price_Cust_Total : baseData.Price_Cust_Total,
             Cost_Driver_Total: assignment.Cost_Driver_Total !== undefined ? assignment.Cost_Driver_Total : baseData.Cost_Driver_Total,
@@ -1154,6 +1157,7 @@ export function JobDialog({
                           <SelectItem value="New">{t('jobs.status_pending')} (New)</SelectItem>
                           <SelectItem value="Requested">{t('jobs.status_requested')} (Requested)</SelectItem>
                           <SelectItem value="Assigned">{t('jobs.status_pending')} (Assigned)</SelectItem>
+                          <SelectItem value="Draft">Draft (ร่างแผน)</SelectItem>
                           <SelectItem value="In Transit">{t('jobs.status_in_transit')} (In Transit)</SelectItem>
                           <SelectItem value="Delivered">{t('jobs.status_delivered')} (Delivered)</SelectItem>
                           <SelectItem value="Completed">{t('jobs.status_completed')} (Completed)</SelectItem>
@@ -2269,6 +2273,18 @@ export function JobDialog({
                   >
                     {loading && <Loader2 className="w-5 h-5 mr-3 animate-spin" />}
                     {t('jobs.dialog.save_and_continue')}
+                  </Button>
+                )}
+                {internalMode === 'create' && (
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    disabled={loading}
+                    onClick={() => handleSubmit(undefined, false, 'Draft')}
+                    className="border-amber-500/30 text-amber-600 hover:bg-amber-500/10 bg-amber-500/5 text-xl h-14 px-8 font-bold"
+                  >
+                    {loading && <Loader2 className="w-5 h-5 mr-3 animate-spin" />}
+                    บันทึกเป็นร่าง (Draft)
                   </Button>
                 )}
                 <Button 
