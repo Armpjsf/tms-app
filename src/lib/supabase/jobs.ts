@@ -1282,27 +1282,21 @@ export async function publishDraftJobs(date: string, branchId?: string) {
             .update({ Job_Status: 'New' })
             .eq('Job_Status', 'Draft')
             .eq('Plan_Date', date)
+            .select('Job_ID, Driver_ID, Customer_Name')
         
         if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
         }
         
-        // Fetch jobs first to know who to notify
-        let selectQuery = supabase
-            .from('Jobs_Main')
-            .select('Job_ID, Driver_ID, Customer_Name')
-            .eq('Job_Status', 'Draft')
-            .eq('Plan_Date', date)
+        const { data: updatedJobs, error } = await query
         
-        if (branchId && branchId !== 'All') {
-            selectQuery = selectQuery.eq('Branch_ID', branchId)
+        return { 
+            success: !error, 
+            error: error ? { message: error.message, details: error.details } : null, 
+            jobs: updatedJobs || [] 
         }
-        
-        const { data: draftJobs } = await selectQuery
-        const { error } = await query
-        
-        return { success: !error, error, jobs: draftJobs || [] }
     } catch (e) {
-        return { success: false, error: e }
+        console.error('[Jobs] publishDraftJobs error:', e)
+        return { success: false, error: { message: e instanceof Error ? e.message : 'Unknown exception' } }
     }
 }

@@ -299,172 +299,179 @@ export function HistoryClient({
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto custom-scrollbar max-h-[70vh] overflow-y-auto relative">
-              <table className="w-full border-separate border-spacing-0">
-                <thead className="sticky top-0 z-20">
-                  <tr className="bg-muted/90 backdrop-blur-xl">
-                    <th className="text-left py-5 px-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('common.action')} ID</th>
-                    <th className="text-left py-5 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('navigation.reports')}</th>
-                    <th className="text-left py-5 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('navigation.vehicles')}</th>
-                    <th className="text-center py-5 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('common.integrity')}</th>
-                    <th className="text-center py-5 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('navigation.pod')}</th>
-                    {canViewPrice && <th className="text-right py-5 px-4 text-[10px] font-black text-primary uppercase tracking-[0.3em] border-b border-border/10">Matrix</th>}
-                    <th className="text-left py-5 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('common.status')}</th>
-                    <th className="text-right py-5 px-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] border-b border-border/10">{t('common.action')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {(jobs || []).map((job: any) => (
-                    <tr 
-                      key={job.Job_ID} 
-                      className="group/row transition-all duration-500 hover:bg-primary/[0.03]"
+            <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+              {/* Header Row (Hidden on small screens) */}
+              <div className="hidden lg:grid lg:grid-cols-[1.5fr_1.5fr_1.2fr_1fr_0.8fr_1fr_1fr_0.8fr] gap-4 px-6 py-3 bg-muted/40 rounded-xl mb-4 border border-white/5">
+                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.action')} ID</div>
+                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.reports')}</div>
+                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.vehicles')}</div>
+                <div className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.integrity')}</div>
+                <div className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.pod')}</div>
+                {canViewPrice && <div className="text-right text-[10px] font-black text-primary uppercase tracking-[0.3em]">Matrix</div>}
+                <div className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.status')}</div>
+                <div className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.action')}</div>
+              </div>
+
+              {/* Cards List */}
+              <div className="flex flex-col gap-3">
+                {(jobs || []).map((job: any) => (
+                    <div 
+                        key={job.Job_ID} 
+                        className="group/row transition-all duration-500 bg-background/40 hover:bg-primary/[0.03] border border-white/5 hover:border-primary/20 rounded-2xl p-4 lg:p-0 relative overflow-hidden shadow-sm"
                     >
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-muted/50 border border-border/5 flex items-center justify-center group-hover/row:bg-primary group-hover/row:text-foreground transition-all duration-500 shadow-lg group-hover/row:-rotate-3">
-                                <Package size={16} strokeWidth={2.5} />
-                            </div>
-                            <div>
-                                <p className="text-foreground font-black text-sm tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{job.Job_ID}</p>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                    <Clock size={10} className="text-muted-foreground" />
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{job.Plan_Date || t('common.pending')}</p>
+                        {/* Hover Highlight Accent */}
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary opacity-0 group-hover/row:opacity-100 transition-opacity shadow-[0_0_15px_rgba(255,30,133,0.5)]" />
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1.5fr_1.2fr_1fr_0.8fr_1fr_1fr_0.8fr] gap-4 lg:items-center px-2 lg:px-6 py-2 lg:py-4">
+                            {/* Section 1: ID & Date */}
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-muted/50 border border-border/5 flex items-center justify-center group-hover/row:bg-primary group-hover/row:text-foreground transition-all duration-500 shadow-lg group-hover/row:-rotate-3 shrink-0">
+                                    <Package size={16} strokeWidth={2.5} />
                                 </div>
+                                <div className="min-w-0">
+                                    <p className="text-foreground font-black text-sm tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase truncate">{job.Job_ID}</p>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <Clock size={10} className="text-muted-foreground" />
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{job.Plan_Date || t('common.pending')}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 2: Customer & Route */}
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                                <p className="text-foreground font-black text-sm tracking-tight uppercase group-hover/row:text-primary transition-colors leading-tight truncate">{job.Customer_Name || "-"}</p>
+                                <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                    <MapPin size={10} className="text-primary/60 shrink-0" />
+                                    <span className="truncate">{job.Route_Name || "DIRECT VECTOR"}</span>
+                                </div>
+                            </div>
+
+                            {/* Section 3: Vehicle & Driver */}
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1 bg-muted/50 rounded-md text-muted-foreground group-hover/row:text-primary transition-colors shrink-0">
+                                        <Truck size={10} strokeWidth={2.5} />
+                                    </div>
+                                    <p className="text-foreground font-black text-sm tracking-tight uppercase leading-tight truncate">{job.Vehicle_Plate || "-"}</p>
+                                </div>
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1 truncate">
+                                    {job.Driver_Name || (job.Driver_ID ? (drivers.find(d => d.Driver_ID === job.Driver_ID)?.Driver_Name || t('common.pending')) : t('common.pending'))}
+                                </p>
+                            </div>
+
+                            {/* Section 4: Integrity Status */}
+                            <div className="flex lg:flex-col items-center justify-center gap-1 min-w-[100px]">
+                                {job.Verification_Status ? (
+                                    <Badge className={cn(
+                                        "rounded-lg px-2 py-0.5 font-black text-[9px] border-none shadow-md tracking-widest uppercase shrink-0",
+                                        job.Verification_Status === 'Verified' ? "bg-primary text-foreground shadow-primary/20" :
+                                        job.Verification_Status === 'Rejected' ? "bg-rose-500 text-foreground shadow-rose-500/20" : "bg-accent text-foreground shadow-accent/20"
+                                    )}>
+                                        {job.Verification_Status === 'Verified' ? t('common.success') : job.Verification_Status === 'Rejected' ? t('common.error') : job.Verification_Status}
+                                    </Badge>
+                                ) : (
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-1 h-1 rounded-full bg-slate-700 animate-ping" />
+                                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest italic shrink-0">{`${t('common.pending')} ${t('common.integrity')}`}</span>
+                                    </div>
+                                )}
+                                {job.Verified_At && (
+                                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest truncate w-full text-center hidden lg:block">
+                                        {t('history.agent')} {job.Verified_By?.split('@')[0]}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Section 5: POD Photos */}
+                            <div className="flex items-center justify-center gap-2 shrink-0">
+                                {job.Photo_Proof_Url ? (
+                                    <div className="relative w-8 h-8 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-muted/50 group/img ring-2 ring-primary/0 hover:ring-primary/40 transition-all duration-500">
+                                        <NextImage 
+                                            src={job.Photo_Proof_Url.split(',')[0]} 
+                                            alt="POD Photo" 
+                                            fill 
+                                            className="object-cover group-hover/img:scale-125 transition-transform duration-1000" 
+                                        />
+                                        <a href={job.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-primary/40 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                            <Eye size={12} className="text-foreground" />
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <div className="w-8 h-8 rounded-lg border border-dashed border-border/5 flex items-center justify-center text-muted-foreground transition-colors group-hover/row:border-primary/20">
+                                        <ImageIcon size={12} strokeWidth={1.5} />
+                                    </div>
+                                )}
+                                {job.Signature_Url ? (
+                                    <div className="relative w-10 h-8 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-muted/80 p-1.5 group/sig ring-2 ring-accent/0 hover:ring-accent/40 transition-all duration-500">
+                                        <NextImage 
+                                            src={job.Signature_Url} 
+                                            alt="Signature" 
+                                            fill 
+                                            className="object-contain p-1 group-hover/sig:scale-110 transition-transform duration-700 invert group-hover/sig:invert-0" 
+                                        />
+                                        <a href={job.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-accent/40 opacity-0 group-hover/sig:opacity-100 transition-opacity" />
+                                    </div>
+                                ) : (
+                                    <div className="w-10 h-8 rounded-lg border border-dashed border-border/5 transition-colors group-hover/row:border-accent/20" />
+                                )}
+                            </div>
+
+                            {/* Section 6: Pricing Matrix */}
+                            {canViewPrice && (
+                                <div className="flex flex-col items-end shrink-0">
+                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 rounded-md border border-primary/20">
+                                        <span className="text-foreground font-black text-xs tracking-tighter">
+                                            {typeof job.Price_Cust_Total === 'number' 
+                                                ? job.Price_Cust_Total.toLocaleString() 
+                                                : (Number(job.Price_Cust_Total) || 0).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="pr-1 flex items-center gap-1.5">
+                                        <span className="text-[8px] font-black text-muted-foreground tracking-tighter">
+                                            {typeof job.Cost_Driver_Total === 'number' 
+                                                ? job.Cost_Driver_Total.toLocaleString() 
+                                                : (Number(job.Cost_Driver_Total) || 0).toLocaleString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section 7: Job Status Badge */}
+                            <div className="flex justify-center shrink-0">
+                                <span className={cn(
+                                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-lg transition-all duration-500 group-hover/row:scale-105",
+                                    statusConfig[job.Job_Status]?.color || 'bg-muted/50 text-muted-foreground border-border/10'
+                                )}>
+                                    <span className="w-1 h-1 rounded-full bg-current animate-pulse" />
+                                    {statusConfig[job.Job_Status]?.label || job.Job_Status}
+                                </span>
+                            </div>
+
+                            {/* Section 8: Actions */}
+                            <div className="flex justify-end lg:justify-end gap-2 shrink-0">
+                                {!customerMode && (
+                                    <div className="transition-all duration-500 scale-90 origin-right">
+                                        <JobHistoryActions 
+                                            job={job}
+                                            drivers={drivers}
+                                            vehicles={vehicles}
+                                            customers={customers}
+                                            routes={routes}
+                                            canViewPrice={canViewPrice}
+                                            canDelete={canDelete}
+                                        />
+                                    </div>
+                                )}
+                                {customerMode && (
+                                    <div className="scale-90 origin-right">
+                                        <CustomerCancelButton jobId={job.Job_ID} jobStatus={job.Job_Status || ''} />
+                                    </div>
+                                )}
                             </div>
                         </div>
-                      </td>
-                      <td className="py-4 px-4">
-                         <div className="flex flex-col gap-0.5">
-                            <p className="text-foreground font-black text-sm tracking-tight uppercase group-hover/row:text-primary transition-colors leading-tight">{job.Customer_Name || "-"}</p>
-                            <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                                <MapPin size={10} className="text-primary/60" />
-                                <span className="line-clamp-1">{job.Route_Name || "DIRECT VECTOR"}</span>
-                            </div>
-                         </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex flex-col gap-0.5">
-                            <div className="flex items-center gap-2">
-                                <div className="p-1 bg-muted/50 rounded-md text-muted-foreground group-hover/row:text-primary transition-colors">
-                                    <Truck size={10} strokeWidth={2.5} />
-                                </div>
-                                <p className="text-foreground font-black text-sm tracking-tight uppercase leading-tight">{job.Vehicle_Plate || "-"}</p>
-                            </div>
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">
-                                {job.Driver_Name || (job.Driver_ID ? (drivers.find(d => d.Driver_ID === job.Driver_ID)?.Driver_Name || t('common.pending')) : t('common.pending'))}
-                            </p>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <div className="flex flex-col items-center gap-1 min-w-[100px]">
-                           {job.Verification_Status ? (
-                               <Badge className={cn(
-                                   "rounded-lg px-2 py-0.5 font-black text-[9px] border-none shadow-md tracking-widest uppercase",
-                                   job.Verification_Status === 'Verified' ? "bg-primary text-foreground shadow-primary/20" :
-                                   job.Verification_Status === 'Rejected' ? "bg-rose-500 text-foreground shadow-rose-500/20" : "bg-accent text-foreground shadow-accent/20"
-                               )}>
-                                   {job.Verification_Status === 'Verified' ? t('common.success') : job.Verification_Status === 'Rejected' ? t('common.error') : job.Verification_Status}
-                               </Badge>
-                           ) : (
-                               <div className="flex items-center gap-1.5">
-                                <span className="w-1 h-1 rounded-full bg-slate-700 animate-ping" />
-                                 <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest italic">{`${t('common.pending')} ${t('common.integrity')}`}</span>
-                               </div>
-                           )}
-                           {job.Verified_At && (
-                               <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest truncate w-24 text-center">
-                                   {t('history.agent')} {job.Verified_By?.split('@')[0]}
-                               </p>
-                           )}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center justify-center gap-2">
-                             {job.Photo_Proof_Url ? (
-                                <div className="relative w-8 h-8 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-muted/50 group/img ring-2 ring-primary/0 hover:ring-primary/40 transition-all duration-500">
-                                    <NextImage 
-                                        src={job.Photo_Proof_Url.split(',')[0]} 
-                                        alt="POD Photo" 
-                                        fill 
-                                        className="object-cover group-hover/img:scale-125 transition-transform duration-1000" 
-                                    />
-                                    <a href={job.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-primary/40 opacity-0 group-hover/img:opacity-100 transition-opacity">
-                                        <Eye size={12} className="text-foreground" />
-                                    </a>
-                                </div>
-                             ) : (
-                                <div className="w-8 h-8 rounded-lg border border-dashed border-border/5 flex items-center justify-center text-muted-foreground transition-colors group-hover/row:border-primary/20">
-                                    <ImageIcon size={12} strokeWidth={1.5} />
-                                </div>
-                             )}
-                             {job.Signature_Url ? (
-                                <div className="relative w-10 h-8 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-muted/80 p-1.5 group/sig ring-2 ring-accent/0 hover:ring-accent/40 transition-all duration-500">
-                                    <NextImage 
-                                        src={job.Signature_Url} 
-                                        alt="Signature" 
-                                        fill 
-                                        className="object-contain p-1 group-hover/sig:scale-110 transition-transform duration-700 invert group-hover/sig:invert-0" 
-                                    />
-                                    <a href={job.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-accent/40 opacity-0 group-hover/sig:opacity-100 transition-opacity" />
-                                </div>
-                             ) : (
-                                <div className="w-10 h-8 rounded-lg border border-dashed border-border/5 transition-colors group-hover/row:border-accent/20" />
-                             )}
-                        </div>
-                      </td>
-                      {canViewPrice && (
-                        <td className="py-4 px-4 text-right">
-                            <div className="flex flex-col items-end">
-                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 rounded-md border border-primary/20">
-                                    <span className="text-foreground font-black text-xs tracking-tighter">
-                                        {typeof job.Price_Cust_Total === 'number' 
-                                            ? job.Price_Cust_Total.toLocaleString() 
-                                            : (Number(job.Price_Cust_Total) || 0).toLocaleString()}
-                                    </span>
-                                </div>
-                                <div className="pr-1 flex items-center gap-1.5">
-                                    <span className="text-[8px] font-black text-muted-foreground tracking-tighter">
-                                        {typeof job.Cost_Driver_Total === 'number' 
-                                            ? job.Cost_Driver_Total.toLocaleString() 
-                                            : (Number(job.Cost_Driver_Total) || 0).toLocaleString()}
-                                    </span>
-                                </div>
-                            </div>
-                        </td>
-                      )}
-                      <td className="py-4 px-4">
-                        <span className={cn(
-                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-lg transition-all duration-500 group-hover/row:scale-105",
-                            statusConfig[job.Job_Status]?.color || 'bg-muted/50 text-muted-foreground border-border/10'
-                        )}>
-                          <span className="w-1 h-1 rounded-full bg-current animate-pulse" />
-                          {statusConfig[job.Job_Status]?.label || job.Job_Status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                          {!customerMode && (
-                              <div className="flex justify-end transition-all duration-500 scale-90 origin-right">
-                                <JobHistoryActions 
-                                    job={job}
-                                    drivers={drivers}
-                                    vehicles={vehicles}
-                                    customers={customers}
-                                    routes={routes}
-                                    canViewPrice={canViewPrice}
-                                    canDelete={canDelete}
-                                />
-                              </div>
-                          )}
-                          {customerMode && (
-                              <div className="scale-90 origin-right flex justify-end">
-                                <CustomerCancelButton jobId={job.Job_ID} jobStatus={job.Job_Status || ''} />
-                              </div>
-                          )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    </div>
+                ))}
+              </div>
             </div>
           )}
           </div>

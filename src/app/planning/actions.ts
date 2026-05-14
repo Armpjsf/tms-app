@@ -7,7 +7,7 @@ import { getAllDriversFromTable } from '@/lib/supabase/drivers'
 import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
 import { logActivity } from '@/lib/supabase/logs'
 import { getUserBranchId, getFixedUserBranchId } from '@/lib/permissions'
-import { notifyDriverNewJob, notifyMarketplaceNewJob } from '@/lib/actions/push-actions'
+import { notifyDriverNewJob, notifyMarketplaceNewJob, notifyDriverNewBatch } from '@/lib/actions/push-actions'
 import { getCustomerId, getUserId, isCustomer, isSuperAdmin, isAdmin } from '@/lib/permissions'
 import { sanitizeJobData } from '@/lib/supabase/utils'
 import { getFuelPriceNumber, getSuggestedRate } from '@/lib/actions/fuel-actions'
@@ -975,26 +975,54 @@ export async function fixMissingBranches(targetBranchId: string) {
     
     return { success: true, message: `Successfully updated ${data?.length || 0} jobs to branch ${targetBranchId}` }
 }
+
 import { publishDraftJobs } from '@/lib/supabase/jobs'
 
 export async function publishAllDrafts(date: string, branchId?: string) {
-    const result = await publishDraftJobs(date, branchId)
-    
-    if (result.success && result.jobs) {
-        // Notify all drivers of the published jobs
-        const notiPromises = result.jobs.map(job => {
-            if (job.Driver_ID) {
-                return notifyDriverNewJob(job.Driver_ID, job.Job_ID, job.Customer_Name || 'ไม่ระบุ')
-            } else {
-                return notifyMarketplaceNewJob(job.Job_ID, job.Customer_Name || 'ไม่ระบุ')
-            }
-        })
-        await Promise.allSettled(notiPromises)
+    try {
+        const { success, jobs, error } = await publishDraftJobs(date, branchId)
         
-        revalidatePath('/planning')
-        revalidatePath('/dashboard')
-        revalidatePath('/mobile/jobs')
+        if (!success) {
+            return { success: false, error: error || { message: "Failed to update jobs in database" } }
+        }
+
+        if (jobs.length > 0) {
+            // Group jobs by driver to consolidate notifications
+            const driverJobs = new Map<string, number>()
+            
+            jobs.forEach(job => {
+                if (job.Driver_ID) {
+                    driverJobs.set(job.Driver_ID, (driverJobs.get(job.Driver_ID) || 0) + 1)
+                }
+            })
+
+            // Fire notifications in parallel (one per driver)
+            const notificationPromises = Array.from(driverJobs.entries()).map(([driverId, count]) => {
+                if (count === 1) {
+                    const job = jobs.find(j => j.Driver_ID === driverId)
+                    return notifyDriverNewJob(driverId, job!.Job_ID, job!.Customer_Name || 'N/A')
+                } else {
+                    return notifyDriverNewBatch(driverId, count)
+                }
+            })
+
+            // Marketplace jobs (those without assigned drivers)
+            const marketplaceJobs = jobs.filter(j => !j.Driver_ID)
+            const marketplacePromises = marketplaceJobs.map(job => 
+                notifyMarketplaceNewJob(job.Job_ID, job.Customer_Name || 'N/A')
+            )
+
+            // Wait for all notifications
+            await Promise.allSettled([...notificationPromises, ...marketplacePromises])
+            
+            revalidatePath('/planning')
+            revalidatePath('/dashboard')
+            revalidatePath('/mobile/jobs')
+        }
+
+        return { success: true, jobsCount: jobs.length }
+    } catch (e) {
+        console.error('[Actions] publishAllDrafts error:', e)
+        return { success: false, error: { message: e instanceof Error ? e.message : "Internal Server Error" } }
     }
-    
-    return result
 }

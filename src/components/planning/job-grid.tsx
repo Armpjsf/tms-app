@@ -98,13 +98,13 @@ export function JobGrid({
                         </div>
                     </div>
                 ) : (
-                    <div className="divide-y divide-white/5 bg-transparent">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-5 bg-transparent">
                         {jobs.map((job) => (
                             <motion.div 
                                 key={job.Job_ID}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="transition-colors"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="h-full"
                             >
                                 <RecentJobItem 
                                     job={job}

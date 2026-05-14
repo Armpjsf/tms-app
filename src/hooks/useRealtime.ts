@@ -4,9 +4,8 @@ import { useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
 export function useRealtime(table: string, callback: (payload: any) => void) {
-  const supabase = createClient();
-
   useEffect(() => {
+    const supabase = createClient();
     const channel = supabase
       .channel(`realtime:${table}`)
       .on(
@@ -26,5 +25,5 @@ export function useRealtime(table: string, callback: (payload: any) => void) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [table, callback, supabase]);
+  }, [table, callback]);
 }

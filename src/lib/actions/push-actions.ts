@@ -336,6 +336,27 @@ export async function notifyDriverNewJob(driverId: string, jobId: string, custom
     })
 }
 
+/**
+ * Notify driver about a batch of new jobs
+ */
+export async function notifyDriverNewBatch(driverId: string, jobCount: number) {
+    await createNotification({
+        Driver_ID: driverId,
+        Title: '📦 งานใหม่หลายรายการ!',
+        Message: `คุณมีงานใหม่ ${jobCount} รายการ ตรวจสอบแผนงานของวันนี้`,
+        Type: 'info',
+        Link: `/mobile/jobs`
+    })
+
+    await sendPushToDriver(driverId, {
+        title: '📦 งานใหม่หลายรายการ!',
+        body: `คุณมีงานใหม่ ${jobCount} รายการ ตรวจสอบแผนงานของวันนี้`,
+        url: `/mobile/jobs`,
+        type: 'new_job',
+        tag: `new_batch_${Date.now()}`,
+    })
+}
+
 // ─────────────────────────────────────────────
 // Notify: Broadcast Marketplace Job to All Drivers
 // ─────────────────────────────────────────────

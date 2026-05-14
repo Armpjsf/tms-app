@@ -13,7 +13,8 @@ import {
     Clock,
     Truck,
     CheckCircle2,
-    FileSpreadsheet
+    FileSpreadsheet,
+    Loader2
 } from "lucide-react"
 import { Job } from "@/lib/supabase/jobs"
 import { Driver } from "@/lib/supabase/drivers"
@@ -22,6 +23,7 @@ import { Customer } from "@/lib/supabase/customers"
 import { Route } from "@/lib/supabase/routes"
 import { Subcontractor } from "@/types/subcontractor"
 import { JobFormData } from "@/app/planning/actions"
+import { toast } from "sonner"
 import { JobDialog } from "@/components/planning/job-dialog"
 import { JobGrid } from "@/components/planning/job-grid"
 import { KanbanBoard } from "@/components/planning/kanban-board"
@@ -54,7 +56,7 @@ interface PlanningClientProps {
     canCreate: boolean
     canAssign: boolean
     createBulkJobs: (data: Partial<JobFormData>[], effectiveBranchId?: string | null, options?: { shouldGroup?: boolean }) => Promise<{ success: boolean; message: string }>
-    publishAllDrafts: (date: string, branchId?: string) => Promise<{ success: boolean, error: any }>
+    publishAllDrafts: (date: string, branchId?: string) => Promise<{ success: boolean, error: any, jobsCount?: number }>
     branchId: string
     selectedDate: string
 }
@@ -107,15 +109,22 @@ export function PlanningClient({
     }
 
     const handlePublishAll = async () => {
-        if (!confirm("ต้องการส่งงาน Draft ทั้งหมดของวันนี้ให้คนขับใช่หรือไม่?")) return
+        if (!confirm(t('planning.confirm_publish_all') || "คุณแน่ใจหรือไม่ที่จะส่งงาน Draft ทั้งหมดของวันนี้?")) return
+
         setPublishing(true)
+        const toastId = toast.loading("กำลังส่งงานทั้งหมด...")
+        
         try {
             const res = await publishAllDrafts(selectedDate, branchId)
             if (res.success) {
+                toast.success(`ส่งงานสำเร็จ ${res.jobsCount || ''} รายการ`, { id: toastId })
                 router.refresh()
             } else {
-                alert("Failed to publish: " + (res.error?.message || "Unknown error"))
+                toast.error(res.error?.message || "เกิดข้อผิดพลาดในการส่งงาน", { id: toastId })
             }
+        } catch (err) {
+            console.error("Publishing error:", err)
+            toast.error("ระบบขัดข้อง: " + (err instanceof Error ? err.message : "Internal Server Error"), { id: toastId })
         } finally {
             setPublishing(false)
         }
