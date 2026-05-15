@@ -3,8 +3,14 @@
 import { useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
+import { useIdle } from '@/components/providers/idle-provider';
+
 export function useRealtime(table: string, callback: (payload: any) => void) {
+  const { isIdle } = useIdle();
+
   useEffect(() => {
+    if (isIdle) return; // Stop listening if idle
+
     const supabase = createClient();
     const channel = supabase
       .channel(`realtime:${table}`)
@@ -25,5 +31,5 @@ export function useRealtime(table: string, callback: (payload: any) => void) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [table, callback]);
+  }, [table, callback, isIdle]);
 }

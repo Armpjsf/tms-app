@@ -25,12 +25,17 @@ interface AdminGlobalNotifierProps {
  * Central hub for real-time admin alerts.
  * Subscribes to multiple operational tables and shows high-priority toasts.
  */
+import { useIdle } from "@/components/providers/idle-provider"
+
 export function AdminGlobalNotifier({ branchId, isAdmin }: AdminGlobalNotifierProps) {
+  const { isIdle } = useIdle()
   const router = useRouter()
   // Track notified IDs to avoid double-toasting for the same event updates
   const notifiedIds = useRef<Set<string>>(new Set())
 
   useEffect(() => {
+    if (isIdle) return // Stop listening if idle
+
     const supabase = createClient()
 
     // Helper to play sound

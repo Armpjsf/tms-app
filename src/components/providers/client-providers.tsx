@@ -8,6 +8,8 @@ import { BranchProvider } from "@/components/providers/branch-provider"
 import { GlobalClientComponents } from "@/components/providers/global-client-components"
 import { UserPresenceFetcher } from "@/components/providers/user-presence-fetcher"
 
+import { IdleProvider } from "@/components/providers/idle-provider"
+
 interface ClientProvidersProps {
   children: React.ReactNode
 }
@@ -21,14 +23,16 @@ export function ClientProviders({ children }: ClientProvidersProps) {
       disableTransitionOnChange
     >
       <ErrorBoundary>
-        <LanguageProvider>
-          <BranchProvider>
-            <UserPresenceFetcher>
-              {children}
-            </UserPresenceFetcher>
-          </BranchProvider>
-          <GlobalClientComponents />
-        </LanguageProvider>
+        <IdleProvider>
+          <LanguageProvider>
+            <BranchProvider>
+              <UserPresenceFetcher>
+                {children}
+              </UserPresenceFetcher>
+            </BranchProvider>
+            <GlobalClientComponents />
+          </LanguageProvider>
+        </IdleProvider>
       </ErrorBoundary>
     </ThemeProvider>
   )
