@@ -268,9 +268,13 @@ export const aiToolExecutors: Record<string, Function> = {
     routeName?: string, 
     price?: number, 
     notes?: string, 
-    vehicleType?: string 
+    vehicleType?: string,
+    status?: 'Draft' | 'New' | 'Assigned'
   }) => {
     const supabase = createAdminClient()
+    // Default to 'New' if not specified, which sends it to the app (if driver assigned, usually dashboard uses 'Assigned')
+    const finalStatus = args.status || 'New'
+    
     const { data, error } = await supabase.from('Jobs_Main').insert({
         Customer_Name: args.customerName,
         Plan_Date: args.planDate || new Date().toISOString().split('T')[0],
@@ -278,9 +282,52 @@ export const aiToolExecutors: Record<string, Function> = {
         Price_Cust_Total: args.price,
         Notes: args.notes,
         Vehicle_Type: args.vehicleType,
-        Job_Status: 'New'
+        Job_Status: finalStatus
     }).select().single()
     return error ? { success: false, error: error.message } : { success: true, data }
+  },
+
+  notify_jobs_by_date: async (args: { day: number, month?: number, year?: number }) => {
+    const supabase = createAdminClient()
+    const now = new Date()
+    const targetMonth = args.month || (now.getMonth() + 1)
+    const targetYear = args.year || now.getFullYear()
+    const targetDate = `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(args.day).padStart(2, '0')}`
+    
+    // 1. Find all "Draft" jobs for this date
+    const { data: draftJobs, error: jobError } = await supabase
+        .from('Jobs_Main')
+        .select('Job_ID, Driver_ID')
+        .eq('Plan_Date', targetDate)
+        .eq('Job_Status', 'Draft')
+
+    if (jobError) return { success: false, error: jobError.message }
+    if (!draftJobs?.length) return { success: false, error: `ไม่พบงานที่เป็นสถานะ "Draft" ในวันที่ ${targetDate} ครับ` }
+
+    // 2. Update Draft -> Assigned (if driver exists) or New (if no driver)
+    // This makes the jobs appear in the driver's mobile app immediately.
+    
+    // Batch update for those with drivers -> Assigned
+    await supabase
+        .from('Jobs_Main')
+        .update({ Job_Status: 'Assigned' })
+        .eq('Plan_Date', targetDate)
+        .eq('Job_Status', 'Draft')
+        .not('Driver_ID', 'is', null)
+
+    // Batch update for those without drivers -> New
+    await supabase
+        .from('Jobs_Main')
+        .update({ Job_Status: 'New' })
+        .eq('Plan_Date', targetDate)
+        .eq('Job_Status', 'Draft')
+        .is('Driver_ID', null)
+
+    return { 
+        success: true, 
+        message: `ปล่อยงาน (Draft -> Live) สำเร็จ ${draftJobs.length} รายการสำหรับวันที่ ${targetDate} เรียบร้อยครับ`,
+        targetDate 
+    }
   },
 
   create_fuel_log: async (args: {
@@ -318,3 +365,102 @@ export const aiToolExecutors: Record<string, Function> = {
     return error ? { success: false, error: error.message } : { success: true, data }
   },
 }
+
+/**
+ * Gemini Tool Definitions (Function Declarations)
+ * These allow Gemini to understand what each function does and what parameters it needs.
+ */
+export const geminiToolDefinitions = [
+    {
+        name: "get_today_summary",
+        description: "ดึงข้อมูลสรุปงานประจำวัน เช่น จำนวนงานที่กำลังวิ่ง, งานที่เสร็จแล้ว, งานรอดำเนินการ",
+        parameters: {
+            type: "object",
+            properties: {
+                branchId: { type: "string", description: "รหัสสาขา หรือชื่อสาขา (เช่น SKN, BKK)" },
+                customerId: { type: "string", description: "รหัสลูกค้า" }
+            }
+        }
+    },
+    {
+        name: "search_jobs",
+        description: "ค้นหารายการงานในระบบตามคำค้นหาหรือสถานะ",
+        parameters: {
+            type: "object",
+            properties: {
+                query: { type: "string", description: "คำค้นหา เช่น ชื่อลูกค้า หรือเลขงาน" },
+                status: { type: "string", description: "สถานะงานที่ต้องการค้นหา" }
+            }
+        }
+    },
+    {
+        name: "get_job_details",
+        description: "ดึงรายละเอียดเชิงลึกของงานหนึ่งรายการด้วยรหัสงาน (Job ID)",
+        parameters: {
+            type: "object",
+            properties: {
+                jobId: { type: "string", description: "รหัสงาน เช่น JOB-20240101-001" }
+            },
+            required: ["jobId"]
+        }
+    },
+    {
+        name: "create_job",
+        description: "สร้างใบงานใหม่เข้าระบบ (ใช้เมื่อลูกค้าสั่งงาน หรือดึงข้อมูลจากไฟล์สั่งซื้อ)",
+        parameters: {
+            type: "object",
+            properties: {
+                customerName: { type: "string", description: "ชื่อลูกค้า" },
+                planDate: { type: "string", description: "วันที่วางแผนงาน (YYYY-MM-DD)" },
+                routeName: { type: "string", description: "ชื่อเส้นทางหรือจุดส่งของ" },
+                price: { type: "number", description: "ราคาค่าขนส่ง" },
+                notes: { type: "string", description: "หมายเหตุเพิ่มเติม" },
+                vehicleType: { type: "string", description: "ประเภทรถที่ต้องการ (เช่น 4W, 6W, 10W)" }
+            },
+            required: ["customerName"]
+        }
+    },
+    {
+        name: "notify_jobs_by_date",
+        description: "แจ้งเตือนงานให้คนขับทุกคนในวันที่ระบุ ผ่านทาง LINE (ใช้เมื่อต้องการส่งงานที่ Draft ไว้ให้คนขับ)",
+        parameters: {
+            type: "object",
+            properties: {
+                day: { type: "number", description: "วันที่ต้องการแจ้งงาน (ตัวเลข 1-31)" },
+                month: { type: "number", description: "เดือน (ถ้าไม่ระบุจะใช้เดือนปัจจุบัน)" },
+                year: { type: "number", description: "ปี (ถ้าไม่ระบุจะใช้ปีปัจจุบัน)" }
+            },
+            required: ["day"]
+        }
+    },
+    {
+        name: "get_financial_summary",
+        description: "สรุปรายได้ กำไร และต้นทุน (ใช้ได้เฉพาะแอดมิน)",
+        parameters: {
+            type: "object",
+            properties: {
+                branchId: { type: "string", description: "รหัสสาขา" }
+            }
+        }
+    },
+    {
+        name: "get_all_drivers",
+        description: "ดึงรายชื่อคนขับทั้งหมดและสถานะปัจจุบัน",
+        parameters: { type: "object", properties: {} }
+    },
+    {
+        name: "get_all_vehicles",
+        description: "ดึงข้อมูลรถทั้งหมดในระบบและประเภทรถ",
+        parameters: { type: "object", properties: {} }
+    },
+    {
+        name: "get_pending_repairs",
+        description: "รายการรถที่รอซ่อมหรือแจ้งซ่อมค้างอยู่",
+        parameters: { type: "object", properties: {} }
+    },
+    {
+        name: "get_fuel_analytics",
+        description: "วิเคราะห์การใช้น้ำมันและค่าใช้จ่ายน้ำมันรวม",
+        parameters: { type: "object", properties: {} }
+    }
+]

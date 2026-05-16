@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/server'
 import { replyToUser, verifyLineSignature, getMessageContent, pushToUser } from '@/lib/integrations/line'
-import { aiToolExecutors } from '@/lib/ai/tools'
+import { aiToolExecutors, geminiToolDefinitions } from '@/lib/ai/tools'
 
 // ─────────────────────────────────────────────────────────────────
 // Models (same as /api/chat) - Direct REST, no SDK
@@ -32,47 +32,93 @@ function splitLineMessage(text: string, maxLen = 1900): string[] {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Direct REST call to Gemini (text)
+// Direct REST call to Gemini (Supports Function Calling)
 // ─────────────────────────────────────────────────────────────────
-async function callGeminiText(systemPrompt: string, userMessage: string): Promise<{ text: string | null, error: string }> {
+async function callGemini(
+    systemPrompt: string, 
+    userMessage: string, 
+    history: any[] = []
+): Promise<{ text: string | null, error: string }> {
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
     if (!apiKey) return { text: null, error: 'NO_API_KEY' }
 
-    const errors: string[] = []
-    for (const modelName of GEMINI_MODELS) {
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`
-            const res = await fetch(url, {
+    // Start with user message
+    let contents = [...history, { role: 'user', parts: [{ text: `${systemPrompt}\n\nคำสั่ง: ${userMessage}` }] }]
+    
+    // Tools definition
+    const tools = [{ function_declarations: geminiToolDefinitions }]
+
+    try {
+        // --- ROUND 1: Initial Call ---
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`
+        let res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents, tools }),
+            signal: AbortSignal.timeout(20000)
+        })
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`)
+        let data = await res.json()
+        let message = data?.candidates?.[0]?.content
+        
+        // --- LOOP: Handle Tool Calls (up to 3 rounds) ---
+        let rounds = 0
+        while (message?.parts?.some((p: any) => p.functionCall) && rounds < 3) {
+            rounds++
+            const toolResults: any[] = []
+            
+            // Add model's call to history
+            contents.push(message)
+
+            for (const part of message.parts) {
+                if (part.functionCall) {
+                    const { name, args } = part.functionCall
+                    console.log(`[AI Tool] Executing: ${name}`, args)
+                    
+                    const executor = aiToolExecutors[name]
+                    let result
+                    if (executor) {
+                        try {
+                            result = await executor(args)
+                        } catch (err: any) {
+                            result = { error: err.message }
+                        }
+                    } else {
+                        result = { error: "Function not found" }
+                    }
+
+                    toolResults.push({
+                        functionResponse: {
+                            name,
+                            response: { content: result }
+                        }
+                    })
+                }
+            }
+
+            // Send tool results back to Gemini
+            contents.push({ role: 'function', parts: toolResults })
+
+            const resNext = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `${systemPrompt}\n\nคำถาม/คำสั่ง: ${userMessage}` }] }],
-                    generationConfig: { temperature: 0.7, maxOutputTokens: 1200 }
-                }),
-                signal: AbortSignal.timeout(15000)
+                body: JSON.stringify({ contents, tools }),
+                signal: AbortSignal.timeout(20000)
             })
-            if (!res.ok) {
-                const errBody = await res.text().catch(() => '')
-                const msg = `${modelName}:HTTP${res.status}:${errBody.slice(0, 120)}`
-                errors.push(msg)
-                console.warn(`[Line AI] ${msg}`)
-                continue
-            }
-            const data = await res.json()
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-            if (text) {
-                console.log(`[Line AI] Success with: ${modelName}`)
-                return { text, error: '' }
-            }
-            errors.push(`${modelName}:EMPTY_RESPONSE`)
-        } catch (err: any) {
-            const msg = `${modelName}:${err.message}`
-            errors.push(msg)
-            console.warn(`[Line AI] ${msg}`)
-            continue
+            
+            if (!resNext.ok) throw new Error(`HTTP ${resNext.status} on round ${rounds}`)
+            data = await resNext.json()
+            message = data?.candidates?.[0]?.content
         }
+
+        const finalText = message?.parts?.[0]?.text
+        return { text: finalText || null, error: '' }
+
+    } catch (err: any) {
+        console.error('[Gemini Tool Call Error]', err.message)
+        return { text: null, error: err.message }
     }
-    return { text: null, error: errors.join(' | ') }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -87,89 +133,88 @@ async function callGeminiMultimodal(
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
     if (!apiKey) return null
 
-    // Only multimodal-capable models
-    const MULTI_MODELS = ["gemini-2.5-flash-preview-04-17", "gemini-2.5-flash", "gemini-2.0-flash"]
+    const modelName = "gemini-1.5-flash-latest"
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`
+    const tools = [{ function_declarations: geminiToolDefinitions }]
+    
+    let contents: any[] = [{
+        role: 'user',
+        parts: [
+            { text: systemPrompt },
+            { inlineData: { mimeType, data: data.toString('base64') } },
+            { text: prompt }
+        ]
+    }]
 
-    for (const modelName of MULTI_MODELS) {
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`
-            const res = await fetch(url, {
+    try {
+        let res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents, tools }),
+            signal: AbortSignal.timeout(25000)
+        })
+
+        if (!res.ok) return null
+        let json = await res.json()
+        let message = json?.candidates?.[0]?.content
+
+        // Handle one round of tool calls for multimodal (usually enough for extraction -> create)
+        if (message?.parts?.some((p: any) => p.functionCall)) {
+            const toolResults: any[] = []
+            contents.push(message)
+
+            for (const part of message.parts) {
+                if (part.functionCall) {
+                    const { name, args } = part.functionCall
+                    const result = await aiToolExecutors[name]?.(args)
+                    toolResults.push({
+                        functionResponse: { name, response: { content: result } }
+                    })
+                }
+            }
+            contents.push({ role: 'function', parts: toolResults })
+
+            const resNext = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: systemPrompt },
-                            { inlineData: { mimeType, data: data.toString('base64') } },
-                            { text: prompt }
-                        ]
-                    }],
-                    generationConfig: { temperature: 0.5, maxOutputTokens: 800 }
-                }),
-                signal: AbortSignal.timeout(20000)
+                body: JSON.stringify({ contents, tools })
             })
-            if (!res.ok) {
-                console.warn(`[Line Multimodal] ${modelName} HTTP ${res.status}`)
-                continue
+            if (resNext.ok) {
+                const jsonNext = await resNext.json()
+                message = jsonNext?.candidates?.[0]?.content
             }
-            const json = await res.json()
-            const text = json?.candidates?.[0]?.content?.parts?.[0]?.text
-            if (text) return text
-        } catch (err: any) {
-            console.warn(`[Line Multimodal] ${modelName} failed: ${err.message}`)
-            continue
         }
+
+        return message?.parts?.[0]?.text || null
+    } catch (err) {
+        console.error('[Line Multimodal Error]', err)
+        return null
     }
-    return null
 }
 
 // ─────────────────────────────────────────────────────────────────
 // Build AI System Prompt with operational data
 // ─────────────────────────────────────────────────────────────────
-async function buildAIContext(branchId?: string, userName: string = 'ผู้ใช้'): Promise<string> {
-    const results = await Promise.allSettled([
-        aiToolExecutors.get_today_summary({ branchId }),
-        aiToolExecutors.get_financial_summary({ branchId }),
-        aiToolExecutors.get_all_drivers(),
-        aiToolExecutors.get_all_vehicles(),
-        aiToolExecutors.get_maintenance_stats(),
-        aiToolExecutors.get_pending_repairs(),
-        aiToolExecutors.get_fuel_analytics(),
-        aiToolExecutors.get_damage_reports(),
-        aiToolExecutors.get_driver_leaves({}),
-    ])
-
-    const safe = (r: PromiseSettledResult<any>) => r.status === 'fulfilled' ? r.value : null
-    const [todaySummary, financial, allDrivers, allVehicles, maintStats, pendingRepairs, fuel, damage, leaves] = results
-
-    const today = safe(todaySummary)
-    const fin = safe(financial)
-    const drivers = safe(allDrivers) as any[] | null
-    const vehicles = safe(allVehicles) as any[] | null
-    const repairs = safe(pendingRepairs) as any[] | null
-    const fuelData = safe(fuel)
-    const damageData = safe(damage) as any[] | null
-    const leavesData = safe(leaves) as any[] | null
-
+async function buildAIContext(branchId?: string, userName: string = 'ผู้ใช้', role: string = 'User'): Promise<string> {
     const now = new Date().toLocaleDateString('th-TH', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
         hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok'
     })
 
     return `
-คุณคือ "LogisPro AI" ผู้ช่วยระบบ TMS ส่งคำตอบผ่าน LINE
-เวลา: ${now} | ผู้ใช้: ${userName} | สาขา: ${branchId || 'ทุกสาขา'}
+คุณคือ "LogisPro AI" ผู้ช่วยอัจฉริยะของระบบบริหารการขนส่ง (TMS)
+เวลาปัจจุบัน: ${now}
+ผู้ใช้: ${userName} | บทบาท: ${role} | สาขาที่ดูแล: ${branchId || 'ทุกสาขา'}
 
-❗ กฎ: ตอบภาษาไทย กระชับแต่ครบถ้วน ใช้ Emoji ประกอบ เสร็จประโยคทุกครั้ง ห้ามตัดประโยคกลางคำ
+บทบาทของคุณ:
+1. ตอบคำถามเกี่ยวกับงานขนส่ง, คนขับ, รถ, และการเงิน
+2. [Admin Only] ช่วยเหลือในการ "สร้างใบงานใหม่" (Draft/New) และ "ปล่อยงานเข้าแอป" (notify_jobs_by_date)
+3. สรุปข้อมูลที่สำคัญให้กระชับและเป็นมืออาชีพ
 
-📦 งานวันนี้: ${today?.todayJobCount ?? 0} รายการ | วิ่ง: ${today?.stats?.active ?? 0} | เสร็จ: ${today?.stats?.completed ?? 0} | รอ: ${today?.stats?.pending ?? 0}
-💰 รายได้: ฿${fin?.revenue?.toLocaleString() ?? 0} | กำไร: ฿${fin?.netProfit?.toLocaleString() ?? 0} (${fin?.margin?.toFixed(1) ?? 0}%)
-👨‍✈️ คนขับ: ${drivers?.length ?? 0} คน (Active: ${drivers?.filter((d: any) => d.status === 'Active').length ?? 0})
-🚛 รถ: ${vehicles?.length ?? 0} คัน (Active: ${vehicles?.filter((v: any) => v.status === 'Active').length ?? 0})
-🔧 รอซ่อม: ${repairs?.length ?? 0} รายการ
-⛽ น้ำมัน: ฿${fuelData?.totalFuelCost?.toLocaleString() ?? 0} (${fuelData?.totalLiters?.toFixed(0) ?? 0} ลิตร)
-💥 เสียหาย: ${damageData?.length ?? 0} รายการ
-📅 การลา: ${leavesData?.length ?? 0} รายการ (รออนุมัติ: ${leavesData?.filter((l: any) => l.status === 'Pending').length ?? 0})
+กฎความปลอดภัย:
+- เฉพาะผู้ที่มีบทบาท "Admin" หรือ "Super Admin" เท่านั้นที่สามารถสร้างงาน, แก้ไขงาน, หรือปล่อยงานได้
+- หากคนขับ (Driver) หรือลูกค้า (Customer) สั่งให้สร้างงานหรือปล่อยงาน ให้ปฏิเสธอย่างสุภาพและบอกว่าไม่มีสิทธิ์ใช้งานส่วนนี้
+- ห้ามเปิดเผยข้อมูลการเงินให้คนขับหรือลูกค้าทราบ
 `.trim()
 }
 
@@ -567,8 +612,9 @@ export async function POST(req: NextRequest) {
 
                 // 5. AI fallback (bound users only)
                 if (boundAdmin || boundDriver || boundCustomer) {
-                    const systemPrompt = await buildAIContext(branchId, userName)
-                    const { text: aiResponse, error: aiError } = await callGeminiText(systemPrompt, rawText)
+                    const userRole = boundAdmin ? 'Admin' : (boundDriver ? 'Driver' : 'Customer')
+                    const systemPrompt = await buildAIContext(branchId, userName, userRole)
+                    const { text: aiResponse, error: aiError } = await callGemini(systemPrompt, rawText)
                     if (aiResponse) {
                         // LINE replyToken is single-use — use push for overflow parts
                         const parts = splitLineMessage(aiResponse)
@@ -612,21 +658,34 @@ export async function POST(req: NextRequest) {
             }
 
             // ─────────────────────────────────────────────────────────────
-            // IMAGE MESSAGE (Receipt / Damage Photo Analysis)
+            // IMAGE / FILE MESSAGE (Order Extraction & Analysis)
             // ─────────────────────────────────────────────────────────────
-            if (event.type === 'message' && event.message?.type === 'image') {
-                if (!boundAdmin && !boundDriver) continue
+            if (event.type === 'message' && (event.message?.type === 'image' || event.message?.type === 'file')) {
+                if (!boundAdmin && !boundDriver && !boundCustomer) continue
 
                 try {
-                    const imageBuffer = await getMessageContent(event.message.id)
-                    const systemContext = await buildAIContext(branchId, userName)
-                    const prompt = `${systemContext}\n\nวิเคราะห์รูปภาพที่ได้รับ:\n- ถ้าเป็นใบเสร็จน้ำมัน: แจ้งชื่อปั๊ม, จำนวนลิตร, ราคา, ทะเบียนรถ\n- ถ้าเป็นรูปสินค้าเสียหาย: อธิบายความเสียหายที่เห็น\n- ถ้าเป็นอื่นๆ: สรุปสิ่งที่เห็น\nตอบเป็นภาษาไทย กระชับ`
+                    const messageId = event.message.id
+                    const fileName = (event.message as any).fileName || 'image.jpg'
+                    const mimeType = event.message.type === 'image' ? 'image/jpeg' : 'application/pdf' // Default to PDF for files
+                    
+                    const buffer = await getMessageContent(messageId)
+                    const userRole = boundAdmin ? 'Admin' : (boundDriver ? 'Driver' : 'Customer')
+                    const systemContext = await buildAIContext(branchId, userName, userRole)
+                    
+                    const prompt = `
+                    วิเคราะห์ไฟล์ที่แนบมาชื่อ "${fileName}":
+                    - หากเป็นใบสั่งซื้อ (Purchase Order) หรือใบงาน: ให้ดึงข้อมูล ชื่อลูกค้า, วันที่, สถานที่ส่ง, และรายการ เพื่อใช้สร้างงาน
+                    - หากข้อมูลครบถ้วน: ให้สรุปและถามยืนยันการ "สร้างงาน" เข้าระบบ
+                    - หากเป็นรูปภาพอื่นๆ: ให้อธิบายสิ่งที่เห็น
+                    
+                    ใช้ฟังก์ชัน create_job หากผู้ใช้ยืนยันหรือข้อมูลชัดเจนว่าเป็นออเดอร์
+                    `.trim()
 
-                    const aiResponse = await callGeminiMultimodal(prompt, 'วิเคราะห์รูปนี้', 'image/jpeg', imageBuffer)
-                    await replyToUser(replyToken, aiResponse || '⚠️ AI ไม่สามารถวิเคราะห์รูปภาพได้ครับ')
+                    const aiResponse = await callGeminiMultimodal(systemContext, prompt, mimeType, buffer)
+                    await replyToUser(replyToken, aiResponse || '⚠️ AI ไม่สามารถประมวลผลไฟล์นี้ได้ครับ')
                 } catch (err) {
-                    console.error('[Line Image] Error:', err)
-                    await replyToUser(replyToken, '❌ เกิดข้อผิดพลาดในการวิเคราะห์รูปภาพ')
+                    console.error('[Line File] Error:', err)
+                    await replyToUser(replyToken, '❌ เกิดข้อผิดพลาดในการวิเคราะห์ไฟล์/รูปภาพ')
                 }
                 continue
             }
