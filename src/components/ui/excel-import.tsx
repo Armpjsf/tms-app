@@ -31,6 +31,7 @@ interface ExcelImportProps {
   templateFilename?: string
   groupingLabel?: string
   showDraftOption?: boolean
+  customTemplateButton?: React.ReactNode
 }
 
 export function ExcelImport({
@@ -42,6 +43,7 @@ export function ExcelImport({
   templateFilename = "template.xlsx",
   groupingLabel,
   showDraftOption = false,
+  customTemplateButton,
 }: ExcelImportProps) {
   const { t } = useLanguage()
   const router = useRouter()
@@ -150,7 +152,11 @@ export function ExcelImport({
           </DialogHeader>
 
           <div className="grid gap-6">
-            {templateData && (
+            {customTemplateButton ? (
+              <div className="flex justify-end">
+                {customTemplateButton}
+              </div>
+            ) : templateData && (
               <div className="flex justify-end">
                 <Button
                   variant="outline"

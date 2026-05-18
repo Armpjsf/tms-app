@@ -46,7 +46,7 @@ export async function createVehicle(data: VehicleFormData) {
       Tax_Expiry: emptyToNull(data.Tax_Expiry),
       Insurance_Expiry: emptyToNull(data.Insurance_Expiry),
       Act_Expiry: emptyToNull(data.Act_Expiry),
-      Sub_ID: data.Sub_ID,
+      Sub_ID: data.Sub_ID || null,
       Max_Weight_kg: numOrNull(data.Max_Weight_kg),
       Max_Volume_cbm: numOrNull(data.Max_Volume_cbm),
       Branch_ID: finalBranchId
@@ -170,7 +170,7 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
         Tax_Expiry: data.Tax_Expiry || null,
         Insurance_Expiry: data.Insurance_Expiry || null,
         Act_Expiry: data.Act_Expiry || null,
-        Sub_ID: data.Sub_ID,
+        Sub_ID: data.Sub_ID || null,
         Max_Weight_kg: data.Max_Weight_kg,
         Max_Volume_cbm: data.Max_Volume_cbm
     }

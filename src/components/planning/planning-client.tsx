@@ -14,8 +14,10 @@ import {
     Truck,
     CheckCircle2,
     FileSpreadsheet,
-    Loader2
+    Loader2,
+    Download
 } from "lucide-react"
+import { utils, writeFile } from "xlsx"
 import { Job } from "@/lib/supabase/jobs"
 import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
@@ -95,6 +97,7 @@ export function PlanningClient({
     const [view, setView] = useState<'list' | 'kanban' | 'requests'>('list')
     const router = useRouter()
     const [publishing, setPublishing] = useState(false)
+    const [templateCustomerId, setTemplateCustomerId] = useState<string>("")
     const { t } = useLanguage()
 
     // Real-time: Jobs_Main
@@ -128,6 +131,68 @@ export function PlanningClient({
         } finally {
             setPublishing(false)
         }
+    }
+
+    const downloadCustomTemplate = () => {
+        if (!templateCustomerId) {
+            toast.error("กรุณาเลือกลูกค้าก่อนดาวน์โหลดแทมเพลท (Please select a customer first)")
+            return
+        }
+
+        const templateData = [{
+            "รหัสงาน": "JOB-001",
+            "วันที่แผน": selectedDate || "",
+            "ลูกค้า": templateCustomerId || "CUST-001",
+            "เส้นทาง": "R-001",
+            "รหัสคนขับ": "DRV-001",
+            "ทะเบียนรถ": "80-1234 กทม.",
+            "น้ำหนักสินค้า": 1500,
+            "ปริมาตร": 10,
+            "ราคาขาย": 5500,
+            "จ่ายคนขับ": 3500,
+            "เลขที่อ้างอิง": "SO-12345",
+            "รอบ": 1,
+            "หมายเหตุ": "ด่วนพิเศษ",
+            "สาขา": branchId !== 'All' ? branchId : "HQ"
+        }]
+
+        const ws1 = utils.json_to_sheet(templateData)
+        
+        // Prepare DATA sheet content
+        // Routes are not tied to Customer_ID in DB, so we show all branch routes.
+        const maxRows = Math.max(routes.length, drivers.length, vehicles.length)
+        const dataSheetContent = []
+
+        for (let i = 0; i < maxRows; i++) {
+            const r = routes[i]
+            const d = drivers[i]
+            const v = vehicles[i]
+            
+            dataSheetContent.push({
+                "ชื่อเส้นทาง (Route Name)": r?.Route_Name || "",
+                " ": "", // Spacer
+                "รหัสคนขับ (Driver ID)": d?.Driver_ID || "",
+                "ชื่อคนขับ (Driver Name)": d?.Driver_Name || "",
+                "  ": "", // Spacer
+                "ทะเบียนรถ (Plate)": v?.Vehicle_Plate || "",
+                "ประเภทรถ (Type)": v?.Vehicle_Type || ""
+            })
+        }
+
+        const ws2 = utils.json_to_sheet(dataSheetContent)
+        
+        // Auto-size columns for DATA sheet to make it readable
+        const wscols = [
+            {wch: 20}, {wch: 40}, {wch: 5},
+            {wch: 20}, {wch: 30}, {wch: 5},
+            {wch: 20}, {wch: 15}
+        ];
+        ws2['!cols'] = wscols;
+
+        const wb = utils.book_new()
+        utils.book_append_sheet(wb, ws1, "Template")
+        utils.book_append_sheet(wb, ws2, "DATA")
+        writeFile(wb, "logispro_jobs_template_with_data.xlsx")
     }
 
     const setYesterday = () => {
@@ -253,23 +318,27 @@ export function PlanningClient({
                                 onImport={(data, options) => createBulkJobs(data, branchId === 'All' ? null : branchId, options)}
                                 groupingLabel="จัดกลุ่มใบสั่งซื้อ (Group SO by Car/Driver)"
                                 showDraftOption={true}
-                                templateData={[{
-                                    "รหัสงาน": "JOB-001",
-                                    "วันที่แผน": selectedDate || "",
-                                    "ลูกค้า": "บริษัท ตัวอย่าง จำกัด",
-                                    "เส้นทาง": "BKK-CNX",
-                                    "รหัสคนขับ": "D001",
-                                    "ทะเบียนรถ": "80-1234 กทม.",
-                                    "น้ำหนักสินค้า": 1500,
-                                    "ปริมาตร": 10,
-                                    "ราคาขาย": 5500,
-                                    "จ่ายคนขับ": 3500,
-                                    "เลขที่อ้างอิง": "SO-12345",
-                                    "รอบ": 1,
-                                    "หมายเหตุ": "ด่วนพิเศษ",
-                                    "สาขา": branchId !== 'All' ? branchId : "HQ"
-                                }]}
-                                templateFilename="logispro_jobs_template.xlsx"
+                                customTemplateButton={
+                                    <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-2xl border border-border/10">
+                                        <select 
+                                            className="h-10 px-4 rounded-xl border border-border/10 bg-background text-sm font-bold text-foreground focus:ring-2 focus:ring-primary outline-none"
+                                            value={templateCustomerId}
+                                            onChange={(e) => setTemplateCustomerId(e.target.value)}
+                                        >
+                                            <option value="">-- เลือกลูกค้าอ้างอิง --</option>
+                                            {customers.map(c => (
+                                                <option key={c.Customer_ID} value={c.Customer_ID}>{c.Customer_Name}</option>
+                                            ))}
+                                        </select>
+                                        <PremiumButton 
+                                            variant="outline"
+                                            onClick={downloadCustomTemplate}
+                                            className="h-10 px-4 rounded-xl gap-2 border-primary/20 bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-95 text-xs font-black uppercase tracking-widest"
+                                        >
+                                            <Download size={14} /> โหลดแทมเพลท (พร้อม DATA)
+                                        </PremiumButton>
+                                    </div>
+                                }
                             />
                             <JobDialog 
                                 drivers={drivers} 

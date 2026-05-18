@@ -166,7 +166,8 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
   try {
     const isSuper = await isSuperAdmin()
     const isAdminUser = await isAdmin()
-    const branchId = providedBranchId || await getUserBranchId()
+    const actualBranchId = await getUserBranchId()
+    const branchId = isSuper ? (providedBranchId || actualBranchId) : actualBranchId
     
     // Choose client based on role
     const supabase = (isSuper || isAdminUser) ? createAdminClient() : await createClient()

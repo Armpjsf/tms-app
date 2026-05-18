@@ -145,7 +145,7 @@ export async function createRoute(routeData: Partial<Route>) {
         Distance_KM: routeData.Distance_KM,
         Branch_ID: (isSuper && routeData.Branch_ID && routeData.Branch_ID !== 'All') 
                     ? routeData.Branch_ID 
-                    : (userBranchId !== 'All' ? userBranchId : 'HQ')
+                    : ((await getUserBranchId()) !== 'All' ? await getUserBranchId() : 'HQ')
 
 
       })

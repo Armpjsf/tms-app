@@ -200,7 +200,8 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
   try {
     const isSuper = await isSuperAdmin()
     const isAdminUser = await isAdmin()
-    const branchId = providedBranchId || await getUserBranchId()
+    const actualBranchId = await getUserBranchId()
+    const branchId = isSuper ? (providedBranchId || actualBranchId) : actualBranchId
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
     let queryBuilder = supabase.from('Master_Drivers').select('*', { count: 'exact' })
