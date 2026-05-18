@@ -139,6 +139,9 @@ export function PlanningClient({
             return
         }
 
+        const selectedCustomer = customers.find(c => c.Customer_ID === templateCustomerId)
+        const customerBranchId = selectedCustomer?.Branch_ID
+
         const templateData = [{
             "รหัสงาน": "JOB-001",
             "วันที่แผน": selectedDate || "",
@@ -153,20 +156,69 @@ export function PlanningClient({
             "เลขที่อ้างอิง": "SO-12345",
             "รอบ": 1,
             "หมายเหตุ": "ด่วนพิเศษ",
-            "สาขา": branchId !== 'All' ? branchId : "HQ"
+            "สาขา": customerBranchId || (branchId !== 'All' ? branchId : "HQ")
         }]
 
         const ws1 = utils.json_to_sheet(templateData)
         
         // Prepare DATA sheet content
         // Routes are not tied to Customer_ID in DB, so we show all branch routes.
-        const maxRows = Math.max(routes.length, drivers.length, vehicles.length)
+        // Filter lists by selected customer's branch if set to prevent showing data from other branches.
+        const filteredRoutes = customerBranchId ? routes.filter(r => r.Branch_ID === customerBranchId) : routes
+        const filteredDrivers = customerBranchId ? drivers.filter(d => d.Branch_ID === customerBranchId) : drivers
+        const filteredVehicles = customerBranchId ? vehicles.filter(v => v.Branch_ID === customerBranchId) : vehicles
+
+        // Align drivers and vehicles by mapping
+        const matchedPairs: { driver?: Driver; vehicle?: Vehicle }[] = []
+        const usedDriverIds = new Set<string>()
+        const usedVehiclePlates = new Set<string>()
+
+        // 1. Match by driver.Vehicle_Plate first
+        filteredDrivers.forEach(d => {
+            if (d.Vehicle_Plate) {
+                const matchedVehicle = filteredVehicles.find(v => v.Vehicle_Plate === d.Vehicle_Plate)
+                if (matchedVehicle) {
+                    matchedPairs.push({ driver: d, vehicle: matchedVehicle })
+                    usedDriverIds.add(d.Driver_ID)
+                    usedVehiclePlates.add(matchedVehicle.Vehicle_Plate)
+                }
+            }
+        })
+
+        // 2. Match by vehicle.Driver_ID next for remaining
+        filteredVehicles.forEach(v => {
+            if (v.Driver_ID && !usedVehiclePlates.has(v.Vehicle_Plate)) {
+                const matchedDriver = filteredDrivers.find(d => d.Driver_ID === v.Driver_ID && !usedDriverIds.has(d.Driver_ID))
+                if (matchedDriver) {
+                    matchedPairs.push({ driver: matchedDriver, vehicle: v })
+                    usedDriverIds.add(matchedDriver.Driver_ID)
+                    usedVehiclePlates.add(v.Vehicle_Plate)
+                }
+            }
+        })
+
+        // 3. Collect remaining unmapped drivers
+        const remainingDrivers = filteredDrivers.filter(d => !usedDriverIds.has(d.Driver_ID))
+        // 4. Collect remaining unmapped vehicles
+        const remainingVehicles = filteredVehicles.filter(v => !usedVehiclePlates.has(v.Vehicle_Plate))
+
+        // 5. Align remaining drivers and vehicles side-by-side
+        const maxRemaining = Math.max(remainingDrivers.length, remainingVehicles.length)
+        for (let i = 0; i < maxRemaining; i++) {
+            matchedPairs.push({
+                driver: remainingDrivers[i],
+                vehicle: remainingVehicles[i]
+            })
+        }
+
+        const maxRows = Math.max(filteredRoutes.length, matchedPairs.length)
         const dataSheetContent = []
 
         for (let i = 0; i < maxRows; i++) {
-            const r = routes[i]
-            const d = drivers[i]
-            const v = vehicles[i]
+            const r = filteredRoutes[i]
+            const pair = matchedPairs[i]
+            const d = pair?.driver
+            const v = pair?.vehicle
             
             dataSheetContent.push({
                 "ชื่อเส้นทาง (Route Name)": r?.Route_Name || "",
@@ -183,9 +235,13 @@ export function PlanningClient({
         
         // Auto-size columns for DATA sheet to make it readable
         const wscols = [
-            {wch: 20}, {wch: 40}, {wch: 5},
-            {wch: 20}, {wch: 30}, {wch: 5},
-            {wch: 20}, {wch: 15}
+            {wch: 30}, // ชื่อเส้นทาง (Route Name)
+            {wch: 5},  // Spacer 1
+            {wch: 15}, // รหัสคนขับ (Driver ID)
+            {wch: 25}, // ชื่อคนขับ (Driver Name)
+            {wch: 5},  // Spacer 2
+            {wch: 20}, // ทะเบียนรถ (Plate)
+            {wch: 15}  // ประเภทรถ (Type)
         ];
         ws2['!cols'] = wscols;
 
