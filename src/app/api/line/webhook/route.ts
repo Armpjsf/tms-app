@@ -7,8 +7,8 @@ import { aiToolExecutors, geminiToolDefinitions } from '@/lib/ai/tools'
 // Models (same as /api/chat) - Direct REST, no SDK
 // ─────────────────────────────────────────────────────────────────
 const GEMINI_MODELS = [
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
     "gemini-2.0-flash",
 ]
 
@@ -48,7 +48,7 @@ async function callGemini(
 
     try {
         // --- ROUND 1: Initial Call ---
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
         let res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -131,7 +131,7 @@ async function callGeminiMultimodal(
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
     if (!apiKey) return null
 
-    const modelName = "gemini-1.5-flash"
+    const modelName = "gemini-2.5-flash"
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`
     const tools = [{ function_declarations: geminiToolDefinitions }]
     

@@ -7,8 +7,8 @@ import { getUserBranchId } from '@/lib/permissions'
 
 // Models matching the new API key (Gemini 2.5/3.x generation)
 const GEMINI_MODELS = [
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
     "gemini-2.0-flash",
 ]
 
