@@ -334,6 +334,23 @@ export async function notifyDriverNewJob(driverId: string, jobId: string, custom
         type: 'new_job',
         tag: `new_job_${jobId}`,
     })
+
+    // LINE Push Notification
+    try {
+        const adminSupabase = createAdminClient()
+        const { data: driverInfo } = await adminSupabase
+            .from('Master_Drivers')
+            .select('Line_User_ID')
+            .eq('Driver_ID', driverId)
+            .single()
+        
+        if (driverInfo?.Line_User_ID) {
+            const { pushToUser } = await import('@/lib/integrations/line')
+            await pushToUser(driverInfo.Line_User_ID, `🔔 คุณได้รับงานจัดส่งใหม่!\n📦 เลขงาน: ${jobId}\n👤 ลูกค้า: ${customerName}\n\nพิมพ์ "งานวันนี้" หรือดูในเมนูเพื่อเริ่มทำงานครับ 🚛💨`)
+        }
+    } catch (e) {
+        console.error('[LINE Push New Job Error]', e)
+    }
 }
 
 /**
@@ -355,6 +372,23 @@ export async function notifyDriverNewBatch(driverId: string, jobCount: number) {
         type: 'new_job',
         tag: `new_batch_${Date.now()}`,
     })
+
+    // LINE Push Notification (Batch)
+    try {
+        const adminSupabase = createAdminClient()
+        const { data: driverInfo } = await adminSupabase
+            .from('Master_Drivers')
+            .select('Line_User_ID')
+            .eq('Driver_ID', driverId)
+            .single()
+        
+        if (driverInfo?.Line_User_ID) {
+            const { pushToUser } = await import('@/lib/integrations/line')
+            await pushToUser(driverInfo.Line_User_ID, `🔔 คุณได้รับงานจัดส่งใหม่เพิ่มอีก ${jobCount} รายการ!\n\nพิมพ์ "งานวันนี้" หรือดูในเมนูเพื่อตรวจสอบแผนการวิ่งงานวันนี้ครับ 🚛💨`)
+        }
+    } catch (e) {
+        console.error('[LINE Push Batch Jobs Error]', e)
+    }
 }
 
 // ─────────────────────────────────────────────

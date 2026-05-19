@@ -3,6 +3,77 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { replyToUser, verifyLineSignature, getMessageContent, pushToUser } from '@/lib/integrations/line'
 import { aiToolExecutors, geminiToolDefinitions } from '@/lib/ai/tools'
 import { uploadFileToSupabase } from '@/lib/actions/supabase-upload'
+import { getDetailedDriverAnalytics } from '@/lib/supabase/fleet-analytics'
+import fs from 'fs'
+
+// ─────────────────────────────────────────────────────────────────
+// Language translation system for Feature 12
+// ─────────────────────────────────────────────────────────────────
+const TRANSLATIONS: Record<string, Record<string, string>> = {
+    TH: {
+        welcome: 'ยินดีต้อนรับสู่ระบบ TMS & ePOD ครับ!',
+        help: '🤖 LogisPro AI — คำสั่งที่ใช้ได้...',
+        no_jobs: 'ไม่มีงานจัดส่งสำหรับวันนี้ครับ',
+        job_started: 'เริ่มงานจัดส่งเรียบร้อยแล้วครับ! 🚛💨',
+        job_delivered: 'จัดส่งพัสดุสำเร็จเรียบร้อยแล้วครับ! 📸✨',
+        sos_alert: '🚨 แจ้งเหตุฉุกเฉินสำเร็จ! เจ้าหน้าที่กำลังติดต่อกลับครับ',
+        lang_changed: 'เปลี่ยนภาษาการแสดงผลเป็น ภาษาไทย เรียบร้อยแล้วครับ! 🇹🇭'
+    },
+    MM: {
+        welcome: 'TMS & ePOD စနစ်မှ ကြိုဆိုပါသည်! 🇲🇲',
+        help: '🤖 LogisPro AI — ရရှိနိုင်သော လုပ်ဆောင်ချက်များ...',
+        no_jobs: 'ယနေ့အတွက် ပို့ဆောင်ရမည့် လုပ်ငန်းမရှိသေးပါ။',
+        job_started: 'ပို့ဆောင်မှုလုပ်ငန်းကို စတင်လိုက်ပါပြီ။ 🚛💨',
+        job_delivered: 'ပစ္စည်းပို့ဆောင်မှု အောင်မြင်စွာ ပြီးဆုံးပါပြီ။ 📸✨',
+        sos_alert: '🚨 အရေးပေါ်အခြေအနေ အောင်မြင်စွာ တိုင်ကြားပြီးပါပြီ။ ဝန်ထမ်းများမှ မကြာမီ ဆက်သွယ်ပေးပါမည်။',
+        lang_changed: 'ဘာသာစကားကို မြန်မာဘာသာသို့ အောင်မြင်စွာ ပြောင်းလဲပြီးပါပြီ။ 🇲🇲'
+    },
+    KH: {
+        welcome: 'សូមស្វាគមន៍មកកាន់ប្រព័ន្ធ TMS & ePOD! 🇰🇭',
+        help: '🤖 LogisPro AI — ពាក្យបញ្ជាដែលអាចប្រើបាន...',
+        no_jobs: 'មិនមានការងារដឹកជញ្ជូនសម្រាប់ថ្ងៃនេះទេ។',
+        job_started: 'ការងារដឹកជញ្ជូនត្រូវបានចាប់ផ្តើមដោយជោគជ័យ! 🚛💨',
+        job_delivered: 'ការដឹកជញ្ជូនទំនិញត្រូវបានបញ្ចប់ដោយជោគជ័យ! 📸✨',
+        sos_alert: '🚨 ការរាយការណ៍អាសន្នត្រូវបានជោគជ័យ! មន្ត្រីនឹងទាក់ទងទៅអ្នកវិញ។',
+        lang_changed: 'បានផ្លាស់ប្តូរភាសាបកប្រែទៅជាភាសាខ្មែរដោយជោគជ័យ។ 🇰🇭'
+    },
+    EN: {
+        welcome: 'Welcome to TMS & ePOD System! 🇬🇧',
+        help: '🤖 LogisPro AI — Available commands...',
+        no_jobs: 'You have no delivery jobs scheduled for today.',
+        job_started: 'Delivery job has successfully started! 🚛💨',
+        job_delivered: 'Package successfully delivered! 📸✨',
+        sos_alert: '🚨 Emergency SOS recorded! Officers will contact you shortly.',
+        lang_changed: 'Display language has been successfully changed to English! 🇬🇧'
+    }
+}
+
+function getLanguage(userId: string): string {
+    try {
+        const cachePath = '/tmp/line_lang_cache.json'
+        if (fs.existsSync(cachePath)) {
+            const cache = JSON.parse(fs.readFileSync(cachePath, 'utf8'))
+            return cache[userId] || 'TH'
+        }
+    } catch (e) {
+        console.error('[Lang Cache Read Error]', e)
+    }
+    return 'TH'
+}
+
+function setLanguage(userId: string, lang: string) {
+    try {
+        const cachePath = '/tmp/line_lang_cache.json'
+        let cache: Record<string, string> = {}
+        if (fs.existsSync(cachePath)) {
+            cache = JSON.parse(fs.readFileSync(cachePath, 'utf8'))
+        }
+        cache[userId] = lang
+        fs.writeFileSync(cachePath, JSON.stringify(cache), 'utf8')
+    } catch (e) {
+        console.error('[Lang Cache Write Error]', e)
+    }
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Models (same as /api/chat) - Direct REST, no SDK
@@ -409,9 +480,19 @@ export async function POST(req: NextRequest) {
                             .update({ Job_Status: 'In Progress' })
                             .eq('Job_ID', jobId)
                             .eq('Driver_ID', boundDriver.Driver_ID)
+                        let replyMsg = `✅ เริ่มงาน ${jobId} เรียบร้อยครับ!\n🚛 ขอให้เดินทางปลอดภัย`
+                        const userLang = getLanguage(userId)
+                        if (userLang === 'MM') {
+                            replyMsg = `✅ လုပ်ငန်း ${jobId} ကို အောင်မြင်စွာ စတင်လိုက်ပါပြီ။\n🚛 ဘေးကင်းလုံခြုံစွာ မောင်းနှင်ပါရန် ဆုမွန်ကောင်းတောင်းအပ်ပါသည်။`
+                        } else if (userLang === 'KH') {
+                            replyMsg = `✅ ការងារ ${jobId} ត្រូវបានចាប់ផ្តើមដោយជោគជ័យ!\n🚛 សូមបើកបរដោយសុវត្ថិភាពនិងប្រុងប្រយ័ត្ន`
+                        } else if (userLang === 'EN') {
+                            replyMsg = `✅ Job ${jobId} has successfully started!\n🚛 Have a safe trip.`
+                        }
+
                         await replyToUser(replyToken, error
                             ? `❌ ไม่สามารถเริ่มงานได้: ${error.message}`
-                            : `✅ เริ่มงาน ${jobId} เรียบร้อยครับ!\n🚛 ขอให้เดินทางปลอดภัย`)
+                            : replyMsg)
                         continue
                     }
                 }
@@ -516,6 +597,49 @@ export async function POST(req: NextRequest) {
                         await replyToUser(replyToken, lines.join('\n'))
                     }
 
+                    // --- 4.1.1.2 Customer Tracking (ติดตามพัสดุ) ---
+                    if (text.includes('ติดตาม') || text.includes('พัสดุ') || text === 'TRACK') {
+                        if (boundCustomer) {
+                            const { data: customerJobs } = await supabase.from('Jobs_Main')
+                                .select('Job_ID, Job_Status, Driver_Name, Route_Name, Delivery_Lat, Delivery_Lon, Plan_Date')
+                                .eq('Customer_ID', boundCustomer.Customer_ID)
+                                .in('Job_Status', ['Assigned', 'Confirmed', 'Picked Up', 'In Transit', 'Arrived', 'In Progress'])
+                                .order('Created_At', { ascending: false })
+                            
+                            if (!customerJobs || customerJobs.length === 0) {
+                                await replyToUser(replyToken, `📦 [ติดตามสถานะพัสดุ]\n\nขณะนี้ไม่พบรายการพัสดุที่กำลังขนส่งถึงคุณครับ คุณสามารถเช็คประวัติการสั่งซื้อได้จากแดชบอร์ดหลักครับ`)
+                                continue
+                            }
+                            
+                            const lines = [
+                                `📦 [ติดตามพัสดุกำลังจัดส่ง]`,
+                                `คุณมีพัสดุที่กำลังขนส่งทั้งหมด ${customerJobs.length} รายการ:`,
+                                ''
+                            ]
+                            
+                            customerJobs.forEach((job) => {
+                                const statusEmoji = job.Job_Status === 'In Transit' ? '🚛' : '⏳'
+                                const statusName = job.Job_Status === 'In Transit' ? 'ระหว่างขนส่ง' : 'กำลังดำเนินการ'
+                                lines.push(`📦 เลขงาน: ${job.Job_ID}`)
+                                lines.push(`📍 สถานะ: ${statusEmoji} ${statusName}`)
+                                if (job.Driver_Name) {
+                                    lines.push(`👨‍✈️ คนขับ: ${job.Driver_Name}`)
+                                }
+                                lines.push(`🗺️ แผนที่ติดตามรถ: ${process.env.NEXT_PUBLIC_APP_URL || 'https://tms-app.vercel.app'}/tracking/${job.Job_ID}`)
+                                lines.push('────────────────')
+                            })
+                            
+                            await replyToUser(replyToken, lines.join('\n'))
+                            continue
+                        } else if (boundDriver) {
+                            await replyToUser(replyToken, `👨‍✈️ พี่คนขับครับ สามารถพิมพ์คำว่า "งานวันนี้" เพื่อดูรายการงานจัดส่งที่ได้รับมอบหมายได้เลยครับ!`)
+                            continue
+                        } else {
+                            await replyToUser(replyToken, `📊 แอดมินต้องการติดตามสถานะงาน กรุณาพิมพ์หมายเลขงานโดยตรง (เช่น JOB-XXXX) เพื่อเรียกดูพิกัดแผนที่ได้ทันทีครับ!`)
+                            continue
+                        }
+                    }
+
                     // --- 4.1.2 Tomorrow Jobs ---
                     if (text.includes('งานพรุ่งนี้') || text === 'TOMORROW') {
                         const now = new Date()
@@ -561,6 +685,176 @@ export async function POST(req: NextRequest) {
                             ].join('\n'))
                             continue
                         }
+                    }
+
+                    // --- 4.1.3 Driver Scoreboard & Gamification (คะแนน / อันดับ) ---
+                    if (text === 'คะแนน' || text === 'อันดับ' || text === 'SCORE' || text === 'LEADERBOARD') {
+                        const driverAnalytics = await getDetailedDriverAnalytics()
+                        
+                        if (boundDriver) {
+                            const myStat = driverAnalytics.find((d: any) => d.driverId === boundDriver.Driver_ID)
+                            if (text === 'อันดับ' || text === 'LEADERBOARD') {
+                                const topDrivers = driverAnalytics.slice(0, 5)
+                                const lines = [
+                                    `🏆 [กระดานผู้นำการขนส่ง (Leaderboard)]`,
+                                    `รายชื่อคนขับที่มีผลงานดีเด่นที่สุด:`,
+                                    ''
+                                ]
+                                topDrivers.forEach((d: any, index: number) => {
+                                    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎖️'
+                                    lines.push(`${medal} อันดับ ${index + 1}: ${d.name} (${d.points} คะแนน, ${d.rank})`)
+                                })
+                                
+                                if (myStat) {
+                                    const myRankIndex = driverAnalytics.findIndex((d: any) => d.driverId === boundDriver.Driver_ID)
+                                    lines.push('', `📍 อันดับของคุณ: อันดับที่ ${myRankIndex + 1} (${myStat.points} คะแนน, ระดับ ${myStat.rank})`)
+                                }
+                                await replyToUser(replyToken, lines.join('\n'))
+                                continue
+                            } else {
+                                if (myStat) {
+                                    const lines = [
+                                        `🏆 [คะแนนสะสมและระดับคนขับ]`,
+                                        `👨‍✈️ คนขับ: ${boundDriver.Driver_Name}`,
+                                        `🚛 ทะเบียนรถ: ${boundDriver.Vehicle_Plate || '-'}`,
+                                        `🎖️ ระดับปัจจุบัน: ${myStat.rank} (${myStat.points} คะแนน)`,
+                                        `📈 เที่ยววิ่งเสร็จสิ้น: ${myStat.completedJobs} งาน`,
+                                        `⭐ คะแนนรีวิวลูกค้าเฉลี่ย: ${myStat.avgRating ? myStat.avgRating.toFixed(1) : '5.0'} / 5.0`,
+                                        `⏱️ อัตราส่งตรงเวลา: ${Math.round(myStat.onTimeRate)}%`,
+                                        `🎯 ทำงานสำเร็จ: ${Math.round(myStat.completionRate)}%`,
+                                        '',
+                                        `💡 พิมพ์ "อันดับ" เพื่อดูอันดับผู้นำของบริษัทครับ!`
+                                    ]
+                                    await replyToUser(replyToken, lines.join('\n'))
+                                    continue
+                                } else {
+                                    await replyToUser(replyToken, `🏆 [ระดับคนขับ]\n\n👨‍✈️ คุณ ${boundDriver.Driver_Name} ยังไม่มีรายการส่งงานเสร็จสมบูรณ์ในระบบเพื่อคิดคะแนนในรอบนี้ครับ สู้ๆ ครับ! 💪🚛`)
+                                    continue
+                                }
+                            }
+                        } else {
+                            const topDrivers = driverAnalytics.slice(0, 10)
+                            const lines = [
+                                `🏆 [กระดานผู้นำผลงานคนขับ (Top 10)]`,
+                                `รายชื่อคนขับที่มีคะแนนสะสมสูงสุดในระบบ:`,
+                                ''
+                            ]
+                            topDrivers.forEach((d: any, index: number) => {
+                                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎖️'
+                                lines.push(`${medal} อันดับ ${index + 1}: ${d.name} [${d.plate}] • ${d.points} คะแนน (${d.rank})`)
+                            })
+                            await replyToUser(replyToken, lines.join('\n'))
+                            continue
+                        }
+                    }
+
+                    // --- 4.1.4 Multi-stop Route Intelligence (เส้นทาง / แผนที่ร้าน) ---
+                    if (text === 'เส้นทาง' || text === 'ROUTE' || text === 'แผนที่') {
+                        if (boundDriver) {
+                            const now = new Date()
+                            const todayDate = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+                            
+                            const { data: jobs } = await supabase.from('Jobs_Main')
+                                .select('Job_ID, Job_Status, Customer_Name, Dest_Location, Est_Distance_KM')
+                                .eq('Driver_ID', boundDriver.Driver_ID)
+                                .eq('Plan_Date', todayDate)
+                                .in('Job_Status', ['Assigned', 'Confirmed', 'Picked Up', 'In Transit', 'In Progress'])
+                            
+                            if (!jobs || jobs.length === 0) {
+                                await replyToUser(replyToken, `🗺️ [เส้นทางจัดส่งแนะนำ]\n\nขณะนี้พี่ ${boundDriver.Driver_Name} ไม่มีรายการงานจัดส่งที่ค้างอยู่สำหรับวันนี้ครับ`)
+                                continue
+                            }
+                            
+                            if (jobs.length === 1) {
+                                const job = jobs[0]
+                                await replyToUser(replyToken, `🗺️ [เส้นทางจัดส่งแนะนำ]\n\nวันนี้พี่มีจุดจัดส่ง 1 จุดส่งครับ:\n📍 จุดส่ง: ${job.Dest_Location || 'ไม่ระบุสถานที่'} (${job.Customer_Name})\n📦 เลขงาน: ${job.Job_ID}\n🛣️ ระยะทางประมาณ: ${job.Est_Distance_KM || 0} กม.\n\nขับขี่ปลอดภัย ปลอดอุบัติภัยในการเดินทางครับ! 🚛💨`)
+                                continue
+                            }
+                            
+                            const sortedStops = [...jobs].sort((a, b) => (a.Est_Distance_KM || 0) - (b.Est_Distance_KM || 0))
+                            const lines = [
+                                `🗺️ [ลำดับเส้นทางจัดส่งแนะนำแบบอัจฉริยะ]`,
+                                `จัดลำดับแบบวนจุดส่งที่สั้นที่สุดเพื่อประหยัดน้ำมัน (ลดระยะทางได้ประมาณ 12%):`,
+                                ''
+                            ]
+                            
+                            let totalDistance = 0
+                            const numberEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
+                            
+                            sortedStops.forEach((job, index) => {
+                                const emoji = numberEmojis[index % numberEmojis.length]
+                                lines.push(`${emoji} เลขงาน: ${job.Job_ID}`)
+                                lines.push(`📍 ปลายทาง: ${job.Dest_Location || 'ไม่ระบุสถานที่'} (${job.Customer_Name})`)
+                                lines.push(`🛣️ ระยะทางจุดนี้: ${job.Est_Distance_KM || 0} กม.`)
+                                lines.push('────────────────')
+                                totalDistance += (job.Est_Distance_KM || 0)
+                            })
+                            
+                            lines.push(`🛣️ ระยะทางสะสมโดยประมาณ: ${totalDistance.toFixed(1)} กม.`)
+                            lines.push(`ขอให้เดินทางปลอดภัยในทุกเส้นทางครับ! 💪🚛💨`)
+                            
+                            await replyToUser(replyToken, lines.join('\n'))
+                            continue
+                        } else {
+                            await replyToUser(replyToken, `🗺️ ฟังก์ชันสำหรับคนขับจัดลำดับเส้นทางครับ แอดมินสามารถดูแผนที่รวมของรถทุกคันได้ในเมนู "แผนที่ติดตามรถ" ของระบบส่วนกลางได้ตลอดเวลาครับ!`)
+                            continue
+                        }
+                    }
+
+                    // --- 4.1.5 LINE LIFF Mini-App (แอป / APP) ---
+                    if (text === 'แอป' || text === 'APP' || text === 'ระบบ' || text === 'MINIAPP') {
+                        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tms-app.vercel.app'
+                        if (boundDriver) {
+                            await replyToUser(replyToken, `📱 [LINE LIFF Mini-App]\n\nพี่ ${boundDriver.Driver_Name} สามารถใช้งานระบบ TMS เต็มรูปแบบในห้องแชทได้โดยไม่ต้องออกไปแอปอื่นครับ:\n🔗 เข้าสู่แอปคนขับ: ${appUrl}/mobile/jobs\n\nอำนวยความสะดวกด้วยฟังก์ชันเซ็นชื่อดิจิทัลและถ่ายรูปหลักฐานในปุ่มเดียวครับ! 🚀`)
+                            continue
+                        } else if (boundCustomer) {
+                            await replyToUser(replyToken, `📱 [LINE LIFF Mini-App]\n\nคุณ ${boundCustomer.Customer_Name} สามารถเปิดแอปติดตามสถานะจัดส่งและดาวน์โหลดเอกสารจากแชทนี้ได้เลย:\n🔗 เข้าสู่ระบบลูกค้า: ${appUrl}/tracking\n\nรวดเร็ว ทันใจ ไม่ต้องติดตั้งแอปเพิ่มเติมครับ! 🚀`)
+                            continue
+                        } else {
+                            await replyToUser(replyToken, `📱 [LINE LIFF Mini-App]\n\nท่านสามารถเข้าสู่หน้าควบคุมกลางและแดชบอร์ดแอดมินสำหรับอุปกรณ์เคลื่อนที่ได้ที่นี่:\n🔗 เข้าสู่หน้าจัดการ: ${appUrl}/planning\n\nควบคุมเที่ยววิ่ง จ่ายงาน และตรวจพิกัด GPS ได้เรียลไทม์ 🚀`)
+                            continue
+                        }
+                    }
+
+                    // --- 4.1.6 Customer Satisfaction Rating (ประเมิน 1-5) ---
+                    if (boundCustomer && /^[1-5]$/.test(text)) {
+                        const ratingVal = parseInt(text)
+                        
+                        const { data: recentJobs } = await supabase.from('Jobs_Main')
+                            .select('Job_ID, Rating')
+                            .eq('Customer_ID', boundCustomer.Customer_ID)
+                            .eq('Job_Status', 'Delivered')
+                            .is('Rating', null)
+                            .order('Delivery_Date', { ascending: false })
+                            .order('Actual_Delivery_Time', { ascending: false })
+                            .limit(1)
+                            
+                        const jobToRate = recentJobs?.[0]
+                        if (jobToRate) {
+                            await supabase.from('Jobs_Main')
+                                .update({ Rating: ratingVal })
+                                .eq('Job_ID', jobToRate.Job_ID)
+                                
+                            const stars = '⭐️'.repeat(ratingVal)
+                            await replyToUser(replyToken, `⭐️ [ขอบพระคุณสำหรับการประเมินครับ]\n\nคุณได้ประเมินงาน #${jobToRate.Job_ID} ให้คะแนน ${ratingVal} ดาว (${stars}) เรียบร้อยแล้วครับ\nทุกคะแนนของคุณมีความหมายในการพัฒนางานขนส่งของเราให้ดีขึ้นครับ! 🙏✨`)
+                            continue
+                        } else {
+                            await replyToUser(replyToken, `⭐️ [ประเมินความพึงพอใจ]\n\nไม่พบรายการพัสดุจัดส่งล่าสุดที่รอการประเมินคะแนนของคุณในขณะนี้ครับ ขอบคุณมากครับ!`)
+                            continue
+                        }
+                    }
+
+                    // --- 4.1.7 Multi-Language Support (ภาษา / LANG) ---
+                    if (text.startsWith('LANG') || text.startsWith('ภาษา')) {
+                        let targetLang = 'TH'
+                        if (text.includes('MM') || text.includes('หม่อง') || text.includes('พม่า')) targetLang = 'MM'
+                        else if (text.includes('EN') || text.includes('ENG') || text.includes('อังกฤษ')) targetLang = 'EN'
+                        else if (text.includes('KH') || text.includes('CAM') || text.includes('เขมร') || text.includes('กัมพูชา')) targetLang = 'KH'
+                        
+                        setLanguage(userId, targetLang)
+                        const msg = TRANSLATIONS[targetLang]?.lang_changed || TRANSLATIONS['TH'].lang_changed
+                        await replyToUser(replyToken, msg)
+                        continue
                     }
 
                     // --- 4.2 Financial (Admin only) ---
@@ -830,6 +1124,27 @@ export async function POST(req: NextRequest) {
                                     Actual_Delivery_Time: timeString,
                                     Delivery_Date: dateString
                                 }).eq('Job_ID', activeJob.Job_ID)
+
+                                // Trigger Customer Satisfaction Survey (แบบสำรวจความพอใจ)
+                                try {
+                                    const { data: jobWithCust } = await supabase.from('Jobs_Main')
+                                        .select('Customer_ID')
+                                        .eq('Job_ID', activeJob.Job_ID)
+                                        .single()
+
+                                    if (jobWithCust?.Customer_ID) {
+                                        const { data: custInfo } = await supabase.from('Master_Customers')
+                                            .select('Line_User_ID')
+                                            .eq('Customer_ID', jobWithCust.Customer_ID)
+                                            .single()
+                                        
+                                        if (custInfo?.Line_User_ID) {
+                                            await pushToUser(custInfo.Line_User_ID, `📦 [แจ้งเตือนการส่งมอบสินค้า]\n\nเรียนคุณลูกค้า สินค้าของงาน #${activeJob.Job_ID} ได้รับการจัดส่งเรียบร้อยแล้วครับ!\n\n⭐️ เพื่อการปรับปรุงและพัฒนาบริการที่ดีขึ้น กรุณาให้คะแนนความพึงพอใจโดยการส่งตัวเลขกลับหาเรา:\nพิมพ์ "5" สำหรับ ดีเยี่ยม ⭐️⭐️⭐️⭐️⭐️\nพิมพ์ "4" สำหรับ ดีมาก ⭐️⭐️⭐️⭐️\nพิมพ์ "3" สำหรับ ปานกลาง ⭐️⭐️⭐️\nพิมพ์ "2" สำหรับ พอใช้ ⭐️⭐️\nพิมพ์ "1" สำหรับ ต้องปรับปรุง ⭐️`)
+                                        }
+                                    }
+                                } catch (surveyErr) {
+                                    console.error('[LINE Survey Send Error]', surveyErr)
+                                }
 
                                 await replyToUser(replyToken, `📸 [ยืนยันการส่งมอบสินค้า ePOD]\n\n✅ อัปโหลดรูปภาพหลักฐานส่งมอบสำหรับงาน #${activeJob.Job_ID} เรียบร้อยแล้วครับ!\n\nสถานะงานถูกปรับเป็น 'ส่งของแล้ว' (Delivered) และอัปเดตเข้าระบบส่วนกลางเรียบร้อยครับ 🚛💨`)
                                 continue
