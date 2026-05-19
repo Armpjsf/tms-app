@@ -875,7 +875,7 @@ export async function POST(req: NextRequest) {
                         }
 
                         const { data: drivers, error } = await supabase.from('Master_Drivers')
-                            .select('Driver_ID, Driver_Name, Vehicle_Plate, Current_Lat, Current_Lon, Last_Seen')
+                            .select('Driver_ID, Driver_Name, Vehicle_Plate')
                             .or(`Driver_Name.ilike.%${query}%,Vehicle_Plate.ilike.%${query}%`)
                             .limit(5)
 
@@ -891,19 +891,30 @@ export async function POST(req: NextRequest) {
                         }
 
                         const lines = [`📍 [ผลการค้นหาตำแหน่งรถ & คนขับ]\n`]
-                        drivers.forEach(d => {
-                            const lastSeenStr = d.Last_Seen ? new Date(d.Last_Seen).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : 'ไม่ระบุ'
+                        for (const d of drivers) {
+                            const { data: gpsLog } = await supabase.from('gps_logs')
+                                .select('latitude, longitude, timestamp')
+                                .eq('driver_id', d.Driver_ID)
+                                .order('timestamp', { ascending: false })
+                                .limit(1)
+                                .maybeSingle()
+
+                            const gps = gpsLog as any
+                            const lat = gps?.latitude ?? null
+                            const lon = gps?.longitude ?? null
+                            const lastSeenStr = gps?.timestamp ? new Date(gps.timestamp).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : null
+
                             lines.push(`👨‍✈️ คนขับ: ${d.Driver_Name}`)
                             lines.push(`🛻 ทะเบียนรถ: ${d.Vehicle_Plate || '-'}`)
-                            if (d.Current_Lat && d.Current_Lon) {
-                                lines.push(`🌐 พิกัดล่าสุด: ${d.Current_Lat}, ${d.Current_Lon}`)
+                            if (lat && lon) {
+                                lines.push(`🌐 พิกัดล่าสุด: ${lat}, ${lon}`)
                                 lines.push(`⏱️ อัปเดตเมื่อ: ${lastSeenStr}`)
-                                lines.push(`🔗 แผนที่นำทาง: https://www.google.com/maps/search/?api=1&query=${d.Current_Lat},${d.Current_Lon}`)
+                                lines.push(`🔗 แผนที่นำทาง: https://www.google.com/maps/search/?api=1&query=${lat},${lon}`)
                             } else {
                                 lines.push(`⚠️ ไม่พบพิกัด GPS ล่าสุดในระบบ (ออฟไลน์)`)
                             }
                             lines.push('')
-                        })
+                        }
 
                         await replyToUser(replyToken, lines.join('\n').trim())
                         continue
