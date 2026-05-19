@@ -3,210 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>คู่มือการใช้งาน LINE Bot (TMS & ePOD)</title>
+    <title>คู่มือการใช้งาน LINE Operations Hub v2.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;800&display=swap');
-        
-        body {
-            font-family: 'Sarabun', sans-serif;
-            line-height: 1.6;
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #0ea5e9;
+            --dark: #0f172a;
+            --slate: #475569;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+        }
+        body { 
+            font-family: 'Sarabun', 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            line-height: 1.7; 
             color: #334155;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 40px;
-            background-color: #f8fafc;
+            padding: 40px 20px;
+            background: #ffffff;
         }
-
-        .header {
+        header {
             text-align: center;
-            margin-bottom: 40px;
-            border-bottom: 4px solid #0ea5e9;
-            padding-bottom: 20px;
+            margin-bottom: 50px;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 30px;
         }
-
-        .header h1 {
-            color: #0f172a;
-            font-size: 32px;
-            font-weight: 800;
+        .version-badge {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary-dark);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.85em;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        h1 { 
+            color: var(--dark); 
+            font-size: 2.4em; 
             margin: 0;
-            text-transform: uppercase;
-        }
-
-        .header p {
-            font-size: 18px;
-            color: #64748b;
             font-weight: 700;
         }
-
-        .section-title {
-            background: #0ea5e9;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-size: 20px;
-            font-weight: 800;
-            margin-top: 40px;
-            margin-bottom: 20px;
+        h2 { 
+            color: var(--primary-dark); 
+            border-left: 8px solid var(--primary); 
+            padding-left: 15px; 
+            margin-top: 50px; 
+            background: var(--light); 
+            padding-top: 12px; 
+            padding-bottom: 12px;
+            border-radius: 0 8px 8px 0;
+            font-weight: 700;
         }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border-left: 6px solid #0ea5e9;
+        h3 { 
+            color: var(--secondary); 
+            margin-top: 30px; 
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            font-size: 1.3em;
         }
-
-        .card h3 {
-            margin: 0 0 15px 0;
-            font-size: 20px;
-            color: #0f172a;
-            font-weight: 800;
+        p { margin-bottom: 18px; }
+        code { 
+            background: #f1f5f9; 
+            padding: 3px 8px; 
+            border-radius: 6px; 
+            font-family: 'Consolas', 'Monaco', monospace; 
+            font-size: 0.9em; 
+            color: #db2777; 
+            font-weight: 500;
+        }
+        pre { 
+            background: var(--dark); 
+            color: #f8fafc; 
+            padding: 20px; 
+            border-radius: 12px; 
+            overflow-x: auto; 
+            margin: 20px 0; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+        }
+        pre code { 
+            background: transparent; 
+            color: inherit; 
+            padding: 0; 
+            font-size: 0.95em; 
+            font-family: inherit;
+        }
+        blockquote { 
+            border-left: 5px solid #94a3b8; 
+            margin: 25px 0; 
+            padding: 18px 25px; 
+            background: var(--light); 
+            font-style: normal; 
+            border-radius: 0 12px 12px 0; 
+        }
+        .important { 
+            border-left: 6px solid var(--primary); 
+            background: rgba(16, 185, 129, 0.03); 
+        }
+        .caution { 
+            border-left: 6px solid var(--accent); 
+            background: rgba(245, 158, 11, 0.03); 
+        }
+        .danger-alert {
+            border-left: 6px solid var(--danger);
+            background: rgba(239, 68, 68, 0.03);
+        }
+        .role-icon {
+            display: inline-block;
+            font-size: 1.2em;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .shortcut-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+        .shortcut-card {
+            background: var(--light);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .shortcut-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .shortcut-card h4 {
+            margin: 0 0 10px 0;
+            color: var(--dark);
+            font-size: 1.1em;
             display: flex;
             align-items: center;
-            gap: 10px;
         }
-
-        .role-superadmin { border-left-color: #8b5cf6; }
-        .role-superadmin h3 { color: #8b5cf6; }
-        
-        .role-admin { border-left-color: #3b82f6; }
-        .role-admin h3 { color: #3b82f6; }
-        
-        .role-customer { border-left-color: #f59e0b; }
-        .role-customer h3 { color: #f59e0b; }
-        
-        .role-driver { border-left-color: #10b981; }
-        .role-driver h3 { color: #10b981; }
-
-        .command-list {
-            list-style: none;
-            padding: 0;
+        .shortcut-card p {
             margin: 0;
+            font-size: 0.9em;
+            color: var(--slate);
         }
-
-        .command-list li {
-            margin-bottom: 12px;
-            padding-left: 20px;
-            position: relative;
+        ul, ol { margin-bottom: 20px; padding-left: 30px; }
+        li { margin-bottom: 10px; }
+        hr { border: 0; border-top: 2px solid var(--border); margin: 50px 0; }
+        a { 
+            color: var(--secondary); 
+            text-decoration: none; 
+            border-bottom: 1px solid transparent; 
+            transition: border-color 0.2s, color 0.2s; 
+            font-weight: 500;
         }
-
-        .command-list li::before {
-            content: "💬";
-            position: absolute;
-            left: 0;
-            top: 2px;
-            font-size: 14px;
+        a:hover { 
+            color: var(--primary-dark);
+            border-bottom-color: var(--primary-dark); 
         }
-
-        .cmd {
-            font-weight: 800;
-            color: #0f172a;
-            background: #f1f5f9;
-            padding: 2px 8px;
-            border-radius: 5px;
-            font-size: 16px;
+        .highlight-box {
+            background: rgba(14, 165, 233, 0.05);
+            border: 1px solid rgba(14, 165, 233, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 25px 0;
         }
-
-        .desc {
-            color: #475569;
-            font-size: 16px;
-            margin-left: 5px;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 50px;
-            font-size: 14px;
-            color: #94a3b8;
-        }
-
         @media print {
-            body { background: white; padding: 20px; }
-            .card { box-shadow: none; border: 1px solid #e2e8f0; border-left: 6px solid #0ea5e9; page-break-inside: avoid; }
-            .role-superadmin { border-left-color: #8b5cf6; }
-            .role-admin { border-left-color: #3b82f6; }
-            .role-customer { border-left-color: #f59e0b; }
-            .role-driver { border-left-color: #10b981; }
+            body { padding: 0; }
+            pre { white-space: pre-wrap; word-wrap: break-word; }
+            h2 { page-break-before: always; }
         }
     </style>
 </head>
 <body>
+    <header>
+        <span class="version-badge">ระบบจัดส่งด่วน v2.0 - อัปเกรดจำสถานะ (Stateful) & มินิแอปเซ็นชื่อ</span>
+        <h1>📖 คู่มือการใช้งาน LINE Operations Hub</h1>
+        <p style="color: var(--slate); margin-top: 10px; font-size: 1.1em;">คู่มือฉบับสมบูรณ์สำหรับ แอดมิน, คนขับรถ และลูกค้า เพื่อการใช้งานไลน์บอทอย่างเต็มประสิทธิภาพสูงสุด</p>
+    </header>
 
-    <div class="header">
-        <h1>คู่มือการใช้งาน LINE Bot</h1>
-        <p>ระบบจัดการขนส่ง Elite TMS & ePOD</p>
+    <h2>📌 สารบัญด่วนแยกตามกลุ่มผู้ใช้</h2>
+    <ul>
+        <li><a href="#admin-section">🛠️ ส่วนที่ 1: คู่มือสำหรับ แอดมิน (Admin)</a> — ตรวจสอบแผนงาน, ตำแหน่งรถจีพีเอสแบบเรียลไทม์ และบัญชีการเงิน</li>
+        <li><a href="#driver-section">🚚 ส่วนที่ 2: คู่มือสำหรับ คนขับรถ (Driver)</a> — สเต็ปรันงานแบบจำสถานะ (Stateful), ถ่ายรูปรับ-ส่ง และเซ็นชื่อผ่านมินิแอป</li>
+        <li><a href="#customer-section">📦 ส่วนที่ 3: คู่มือสำหรับ ลูกค้า (Customer)</a> — การติดตามสถานะพัสดุด่วน และส่งประเมินคะแนนดาว</li>
+    </ul>
+
+    <hr>
+
+    <h2 id="admin-section"><span class="role-icon">🛠️</span>ส่วนที่ 1: คู่มือสำหรับ แอดมิน (Admin)</h2>
+    <p>แอดมินสามารถควบคุมการสั่งการ, วิเคราะห์งบการเงินสะสม, ติดตามตำแหน่งคนขับรถแบบพิกัดสด และกระจายงานได้สะดวกสบายจากทุกที่ผ่านมือถือ</p>
+
+    <h3>1. การผูกบัญชีแอดมิน (Admin Binding)</h3>
+    <blockquote class="important">
+        <strong>IMPORTANT:</strong> เพื่อความปลอดภัยสูงสุดและสิทธิ์การเข้าถึงข้อมูลรายสาขา แอดมินจะต้องลงทะเบียนผูกบัญชี LINE OA เข้ากับชื่อผู้ใช้แอดมินในฐานข้อมูลก่อน
+    </blockquote>
+    <ul>
+        <li><strong>วิธีใช้งาน</strong>: เปิดแชท LINE OA ของบอทแล้วพิมพ์คำสั่งตามรูปแบบดังนี้:</li>
+    </ul>
+    <pre><code>BIND [ชื่อผู้ใช้แอดมิน] ADMIN</code></pre>
+    <p><em>ตัวอย่าง</em>: <code>BIND admin ADMIN</code> หรือ <code>BIND pongsakorn ADMIN</code></p>
+    <ul>
+        <li><strong>ผลลัพธ์</strong>: บอทจะทำการผูกบัญชีไลน์ของคุณเข้ากับชื่อแอดมิน และปลดล็อกสิทธิ์การอ่านข้อมูลเฉพาะสาขาที่เกี่ยวข้องของคุณทันที</li>
+    </ul>
+
+    <h3>2. การถามพิกัดรถและคนขับด้วยภาษาธรรมชาติ (Admin Real-Time GPS Tracking)</h3>
+    <p>แอดมินไม่จำเป็นต้องกดเข้าแดชบอร์ดคอมพิวเตอร์เพื่อส่องหาตำแหน่งรถอีกต่อไป! คุณสามารถพิมพ์ถามใน LINE OA ด้วยคำพูดภาษาง่าย ๆ ได้เลย:</p>
+    <div class="shortcut-grid">
+        <div class="shortcut-card">
+            <h4>🛻 ถามด้วยทะเบียนรถ</h4>
+            <p><strong>พิมพ์ข้อความ</strong>: `ทะเบียน 70-1234 อยู่ตรงไหน` หรือ `ทะเบียน 1กข-5678 อยู่ที่ไหน`</p>
+        </div>
+        <div class="shortcut-card">
+            <h4>👨‍✈️ ถามด้วยชื่อคนขับ</h4>
+            <p><strong>พิมพ์ข้อความ</strong>: `นายสมชาย อยู่ที่ไหน` หรือ `สมเกียรติ อยู่ตรงไหน`</p>
+        </div>
     </div>
+    <ul>
+        <li><strong>ผลลัพธ์</strong>: ระบบจะทำการค้นหาพิกัดล่าสุดจากสัญญาณดาวเทียมที่ส่งเข้ามาในตาราง `gps_logs` และตอบกลับมาทันทีด้วย:
+            <ol>
+                <li>ชื่อคนขับ และทะเบียนรถคันดังกล่าว</li>
+                <li>เวลาที่มีการจับสัญญาณล่าสุด</li>
+                <li><strong>ลิงก์แผนที่นำทางพิเศษ (Google Maps Navigator Link)</strong> ซึ่งเมื่อคลิกจะเปิดแอป Google Maps นำทางคุณไปยังจุดจอดรถคันนั้น ๆ บนมือถือได้ทันที!</li>
+            </ol>
+        </li>
+    </ul>
 
-    <!-- Section 1: Registration -->
-    <div class="section-title">1. การลงทะเบียนผูกบัญชี (Registration)</div>
-    <div class="card">
-        <p>เพื่อให้ LINE Bot รู้จักตัวตนและสิทธิ์การใช้งานของคุณ กรุณาทำตามขั้นตอนดังนี้:</p>
-        <ol style="font-size: 16px; color: #475569; margin-bottom: 0;">
-            <li style="margin-bottom: 10px;"><strong>เพิ่มเพื่อน (Add Friend):</strong> สแกน QR Code หรือแอดไอดี LINE Bot ของบริษัท</li>
-            <li style="margin-bottom: 10px;"><strong>กดเมนู "ลงทะเบียน":</strong> ที่เมนูด้านล่างหน้าจอ (Rich Menu) หรือพิมพ์คำว่า <span class="cmd">ลงทะเบียน</span></li>
-            <li style="margin-bottom: 10px;"><strong>กรอกข้อมูลระบุตัวตน:</strong> ระบบจะส่งลิงก์ให้คุณกรอก <b>"เบอร์โทรศัพท์"</b> หรือ <b>"รหัสพนักงาน (Username)"</b> ที่ลงทะเบียนไว้ในระบบ TMS</li>
-            <li><strong>ยืนยันสำเร็จ:</strong> เมื่อระบบตรวจสอบข้อมูลตรงกัน คุณจะได้รับข้อความยืนยันการเชื่อมต่อ และสามารถเริ่มใช้คำสั่งต่างๆ ตามสิทธิ์ของคุณได้ทันที</li>
+    <h3>3. ตรวจเช็คข้อมูลการเงินด่วนประจำเดือน (Financial Summary)</h3>
+    <ul>
+        <li><strong>วิธีใช้งาน</strong>: พิมพ์คำว่า <code>รายได้</code>, <code>กำไร</code> หรือ <code>เงิน</code> ในช่องแชท</li>
+        <li><strong>ผลลัพธ์</strong>: บอทจะดึงงบการเงินสะสมของเดือนปัจจุบันเฉพาะในสาขาของคุณมาคำนวณและแสดงผลทันที:
+            <ul>
+                <li>ยอดรายได้รวมสะสม (Total Revenue)</li>
+                <li>ต้นทุนรวมของคนขับรถจัดส่ง (Total Driver Cost)</li>
+                <li>กำไรสุทธิ (Net Profit) และเปอร์เซ็นต์อัตรากำไร (Margin %)</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>4. รายงานยามเช้าอัตโนมัติ (Daily Morning Briefing)</h3>
+    <ul>
+        <li><strong>วิธีใช้งาน</strong>: <strong>ไม่ต้องพิมพ์คำสั่งใด ๆ!</strong> ระบบอัตโนมัติจะประมวลผลข้อมูลส่งถึงไลน์แอดมินทุกสาขาโดยอัตโนมัติ **ทุกวันเวลา 6:30 น.** เพื่อรายงานภาพรวมงานที่แอดมินต้องรับผิดชอบก่อนเริ่มวันใหม่</li>
+        <li><strong>ข้อมูลที่สรุปส่งให้</strong>: ยอดใบงานสะสมวันนี้, จำนวนงานที่กำลังขนส่งจริง และยอดสายด่วนอุบัติเหตุ (SOS)</li>
+    </ul>
+
+    <h3>5. การเปิดดูแดชบอร์ดกลางบนมือถือ (Admin PWA Mobile View)</h3>
+    <ul>
+        <li><strong>วิธีใช้งาน</strong>: พิมพ์คำว่า <code>แอป</code> หรือกดปุ่ม <strong>"เปิดแอป / MOBILE APP"</strong> บน Rich Menu</li>
+        <li><strong>ผลลัพธ์</strong>: บอทจะส่งปุ่มลิงก์ `🔗 เข้าสู่หน้าจัดการ: https://tms-app.vercel.app/planning` ซึ่งเป็นมินิแอป Mobile Planning ให้ออกใบสั่งงานแบบ Drag & Drop บนมือถือได้เสมือนทำบนเครื่องคอมพิวเตอร์</li>
+    </ul>
+
+    <hr>
+
+    <h2 id="driver-section"><span class="role-icon">🚚</span>ส่วนที่ 2: คู่มือสำหรับ คนขับรถ (Driver)</h2>
+    <p><strong>ระบบจำสถานะอัจฉริยะ (Stateful Flow v2.0)</strong> ช่วยให้คนขับวิ่งงานรับและส่งได้ง่ายแสนง่าย เพียงส่งคำสั่งสั้น ๆ บอทจะเข้าใจความคืบหน้าทันทีโดย**ไม่ต้องกรอกรหัสเลขงานยาว ๆ** อีกต่อไป!</p>
+
+    <div class="highlight-box">
+        <h4>🚨 สเต็ปทำขั้นตอนการจัดส่ง 4 ขั้นตอนที่จำง่ายที่สุดสำหรับคนขับ:</h4>
+        <ol>
+            <li><strong>พิมพ์ `งาน`</strong> เพื่อตรวจดูงานวันนี้</li>
+            <li><strong>พิมพ์ `รับงาน`</strong> เพื่อเริ่มบันทึกเวลารถออกเดินทาง</li>
+            <li><strong>พิมพ์ `รับ` ➡️ ส่งภาพถ่าย</strong> เมื่อสินค้าถูกเอาขึ้นรถเสร็จสิ้น</li>
+            <li><strong>พิมพ์ `ส่ง` ➡️ เซ็นชื่อดิจิทัล</strong> เมื่อนำของส่งมอบถึงมือลูกค้าเรียบร้อย!</li>
         </ol>
     </div>
 
-    <!-- Section 2: Commands -->
-    <div class="section-title">2. ชุดคำสั่งแยกตามสิทธิ์ผู้ใช้งาน (Commands)</div>
-    <p style="font-size: 16px; color: #64748b; margin-bottom: 20px;">คุณสามารถพิมพ์ข้อความเหล่านี้ลงในช่องแชทเพื่อให้บอทดึงข้อมูลให้ทันที (ข้อมูลที่แสดงจะถูกกรองตามสิทธิ์ของคุณ)</p>
+    <h3>1. การผูกบัญชีคนขับรถครั้งแรก (Driver Binding)</h3>
+    <blockquote class="important">
+        <strong>IMPORTANT:</strong> คนขับรถจะต้องผูกไอดีไลน์กับระบบจัดส่งเป็นครั้งแรกเพื่อขอรับงานและใช้งานระบบนำทาง GPS
+    </blockquote>
+    <ul>
+        <li><strong>วิธีใช้งาน</strong>: พิมพ์รหัสคนขับ ว้นวรรค ตามด้วยเบอร์โทรศัพท์ลงไปในแชท:</li>
+    </ul>
+    <pre><code>BIND [รหัสคนขับ] [เบอร์โทรศัพท์]</code></pre>
+    <p><em>ตัวอย่าง</em>: <code>BIND DRV-001 0812345678</code></p>
 
-    <!-- Super Admin -->
-    <div class="card role-superadmin">
-        <h3>👑 สำหรับ Super Admin (ผู้บริหาร)</h3>
-        <p style="font-size: 14px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">เข้าถึงข้อมูลได้ทุกสาขาและภาพรวมบริษัท</p>
-        <ul class="command-list">
-            <li>พิมพ์ <span class="cmd">สรุปยอดวันนี้</span> <span class="desc">ดูจำนวนงานทั้งหมด, งานที่สำเร็จ, งานค้าง และเป้าหมายรายวัน</span></li>
-            <li>พิมพ์ <span class="cmd">สรุปรายได้เดือนนี้</span> <span class="desc">ดูยอดรายรับรวม, ค่าใช้จ่าย, และกำไร (Profit) แบบเรียลไทม์</span></li>
-            <li>พิมพ์ <span class="cmd">สถานะรถทั้งหมด</span> <span class="desc">ดูว่ารถคันไหนวิ่งอยู่ (Online) คันไหนจอด หรือคันไหนขาดการติดต่อ</span></li>
-            <li>พิมพ์ <span class="cmd">มีรถคันไหนซ่อมอยู่บ้าง</span> <span class="desc">ตรวจสอบรถที่แจ้งซ่อมหรือถึงกำหนดเข้าศูนย์บริการ</span></li>
-            <li>พิมพ์ <span class="cmd">แจ้งเตือน SOS</span> <span class="desc">ตรวจสอบการแจ้งเหตุฉุกเฉินจากคนขับรถในวันนี้</span></li>
-        </ul>
+    <h3>2. ขั้นที่ 1: ตรวจดูใบงานของฉัน (View Assigned Jobs)</h3>
+    <ul>
+        <li><strong>วิธีใช้งาน</strong>: กดปุ่ม **"งานของฉัน"** บน Rich Menu หรือพิมพ์คำว่า <code>งาน</code> หรือ <code>งานของฉัน</code></li>
+        <li><strong>ผลลัพธ์</strong>: ระบบจะลิสต์รายละเอียดงานที่ได้รับมอบหมาย เช่น รหัสงาน, ชื่อลูกค้า ปลายทางจัดส่ง และสเตตัสปัจจุบันของงาน</li>
+    </ul>
+
+    <h3>3. ขั้นที่ 2: เริ่มต้นวิ่งงาน (Start Job)</h3>
+    <ul>
+        <li><strong>วิธีใช้งาน</strong>: พิมพ์ข้อความสั้น ๆ ว่า <code>รับงาน</code> หรือ <code>เริ่มงาน</code></li>
+        <li><strong>ผลลัพธ์</strong>: ระบบจำสแกนหาใบงานแรกที่ได้รับมอบหมายในวันนั้นให้ทันที โดยไม่ต้องพิมพ์รหัสงาน และบันทึกเปลี่ยนสเตตัสในระบบเป็น **"กำลังเดินทาง" (In Progress)** พร้อมอัปเดตให้แอดมินทราบทันที</li>
+    </ul>
+
+    <h3>4. ขั้นที่ 3: ขั้นตอนรับสินค้าขึ้นรถ (Stateful Pick Up)</h3>
+    <ul>
+        <li><strong>วิธีใช้งาน</strong>: พิมพ์คำว่า <code>รับ</code>, <code>รับของ</code> หรือ <code>รับสินค้า</code></li>
+        <li><strong>ผลลัพธ์</strong>: ระบบจะเปลี่ยนสเตตัสคนขับเข้าสู่ **"โหมดรอยืนยันภาพรับของ"** และทักให้คุณถ่ายรูปส่งกลับมา</li>
+        <li><strong>ส่งรูปถ่าย</strong>: ให้คนขับกดปุ่มกล้องในไลน์แล้วถ่ายภาพสินค้าตอนเอาขึ้นท้ายรถส่งเข้าไปดื้อ ๆ ได้เลย! บอทจะนำภาพนั้นบันทึกเป็น ePOD ขารับสินค้า ปิดงานขารับเป็น **"รับสินค้าแล้ว" (Picked Up)** ทันทีครับ</li>
+    </ul>
+
+    <h3>5. ขั้นที่ 4: ขั้นตอนส่งมอบสินค้าปลายทาง (Stateful Delivery)</h3>
+    <ul>
+        <li><strong>วิธีใช้งาน</strong>: เมื่อส่งของถึงลูกค้าแล้ว ให้พิมพ์คำว่า <code>ส่ง</code>, <code>ส่งของ</code> หรือ <code>ส่งสินค้า</code></li>
+        <li><strong>ผลลัพธ์</strong>: บอทจะให้คนขับเลือกวิธียืนยันตัวตนได้ 2 รูปแบบตามความสะดวกดังนี้ครับ:</li>
+    </ul>
+
+    <div class="shortcut-grid">
+        <div class="shortcut-card" style="border-top: 4px solid var(--secondary);">
+            <h4>📸 วิธีที่ 1: แนบภาพใบรับของกระดาษ</h4>
+            <p><strong>ขั้นตอน</strong>: ให้คนขับถ่ายรูปใบรับของที่มีลายเซ็นลูกค้าจริง หรือถ่ายรูปสินค้าที่วางจัดส่งเสร็จแล้ว ส่งเข้ามาในช่องแชท ➡️ ระบบบันทึกปิดงานเป็น **"ส่งสินค้าแล้ว" (Delivered)** อัตโนมัติ</p>
+        </div>
+        <div class="shortcut-card" style="border-top: 4px solid var(--primary);">
+            <h4>✍️ วิธีที่ 2: มินิแอปเซ็นชื่อผ่านมือถือ (LINE LIFF)</h4>
+            <p><strong>ขั้นตอน</strong>: ในกรณีที่ไม่มีบิลกระดาษ ให้คลิกปุ่มสีฟ้า **"🔗 เซ็นชื่อรับสินค้า"** บนจอ ➡️ ยื่นมือถือให้ลูกค้าใช้นิ้วเขียนลายเซ็นสดลงบนหน้าจอ ➡️ ลูกค้ากดปุ่มยืนยัน ➡️ หน้าต่างมินิแอปจะปิดลงเองทันที และระบุปิดงานเป็น **"Delivered"** อัตโนมัติอย่างสมบูรณ์แบบปราศจากกระดาษ!</p>
+        </div>
     </div>
 
-    <!-- Admin / Staff -->
-    <div class="card role-admin">
-        <h3>💻 สำหรับ Admin (พนักงานสาขา)</h3>
-        <p style="font-size: 14px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">เข้าถึงข้อมูลเฉพาะสาขาที่ตนเองรับผิดชอบ</p>
-        <ul class="command-list">
-            <li>พิมพ์ <span class="cmd">งานของสาขาวันนี้</span> <span class="desc">ดูสถานะงานขนส่งเฉพาะของสาขาตัวเอง</span></li>
-            <li>พิมพ์ <span class="cmd">ตามงาน [รหัสงาน]</span> <span class="desc">เช่น 'ตามงาน JOB-12345' เพื่อดูพิกัดล่าสุดและสถานะงานนั้นๆ</span></li>
-            <li>พิมพ์ <span class="cmd">มีรถคันไหนว่างบ้าง</span> <span class="desc">เช็ครายชื่อคนขับในสาขาที่ยังไม่มีงานติดตัว</span></li>
-            <li>พิมพ์ <span class="cmd">ดูพิกัด [ทะเบียนรถ]</span> <span class="desc">ตรวจสอบตำแหน่งปัจจุบันของรถคันที่ต้องการ</span></li>
-        </ul>
-    </div>
+    <h3>6. การขอความช่วยเหลือฉุกเฉินและพิกัดแผนที่ (SOS Emergency Alert)</h3>
+    <blockquote class="danger-alert">
+        <strong>⚠️ CAUTION:</strong> ใช้เมื่อเกิดเหตุฉุกเฉิน ยางระเบิด รถชน หรือเครื่องยนต์ขัดข้องจนเดินทางต่อไม่ได้เท่านั้น
+    </blockquote>
+    <ol>
+        <li>พิมพ์ข้อความคำว่า <code>SOS</code> หรือ <code>ฉุกเฉิน</code> หรือกดปุ่ม SOS สีแดงในแผง Rich Menu</li>
+        <li>บอทจะตอบกลับคำสั่งนำทางฉุกเฉิน</li>
+        <li>ให้คนขับกดปุ่มบวก **(+)** ข้างแป้นพิมพ์ ➡️ เลือก **"ตำแหน่งที่ตั้ง" (Location)** ➡️ ปักพิกัดปัจจุบันแล้วส่ง</li>
+        <li>**ผลลัพธ์**: ระบบจะเปลี่ยนสเตตัสงานเป้น **"SOS"** (สีแดงในระบบหลังบ้าน) และบันทึกพิกัดดาวเทียมจริง เพื่อให้ทีมช่วยเหลือพร้อมพิกัดนำทางฉุกเฉินเข้าช่วยเหลือได้ทันเวลา</li>
+    </ol>
 
-    <!-- Customer -->
-    <div class="card role-customer">
-        <h3>🏢 สำหรับ ลูกค้า (Customer)</h3>
-        <p style="font-size: 14px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">เข้าถึงข้อมูลได้เฉพาะงานขนส่งของบริษัทตนเองเท่านั้น</p>
-        <ul class="command-list">
-            <li>พิมพ์ <span class="cmd">เช็คสถานะสินค้า</span> <span class="desc">ดูรายการสินค้าที่กำลังมาส่งในวันนี้ พร้อมประเมินเวลาถึง (ETA)</span></li>
-            <li>พิมพ์ <span class="cmd">ติดตามงาน [รหัสงาน]</span> <span class="desc">ดูสถานะและตำแหน่งรถของงานที่ระบุ</span></li>
-            <li>พิมพ์ <span class="cmd">สรุปค่าใช้จ่ายเดือนนี้</span> <span class="desc">ดูยอดรวมค่าขนส่งที่ต้องชำระในรอบบิลปัจจุบัน</span></li>
-            <li>พิมพ์ <span class="cmd">ขอดูหลักฐาน [รหัสงาน]</span> <span class="desc">เรียกดูรูปถ่ายสินค้าและลายเซ็น (ePOD) ของงานที่ส่งสำเร็จแล้ว</span></li>
-        </ul>
-    </div>
+    <h3>7. ตัวช่วยเปลี่ยนภาษาใช้งาน (Multi-Language Options)</h3>
+    <p>สำหรับอำนวยความสะดวกให้พี่น้องคนขับที่เป็นแรงงานต่างชาติ หรือคนขับที่ต้องการภาษาอังกฤษในการสื่อสาร:</p>
+    <ul>
+        <li>🇹🇭 พิมพ์ <code>LANG TH</code> หรือ <code>ภาษาไทย</code></li>
+        <li>🇲🇲 พิมพ์ <code>LANG MM</code> หรือ <code>ภาษาพม่า</code></li>
+        <li>🇰🇭 พิมพ์ <code>LANG KH</code> หรือ <code>ภาษาเขมร</code></li>
+        <li>🇺🇸 พิมพ์ <code>LANG EN</code> หรือ <code>ภาษาอังกฤษ</code></li>
+    </ul>
 
-    <!-- Driver -->
-    <div class="card role-driver">
-        <h3>🚚 สำหรับ คนขับรถ (Driver)</h3>
-        <p style="font-size: 14px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">จัดการงานของตนเองและสื่อสารกับแอดมิน</p>
-        <ul class="command-list">
-            <li>พิมพ์ <span class="cmd">งานของฉันวันนี้</span> <span class="desc">เรียกดูรายการจุดรับ-ส่งสินค้าที่ต้องวิ่งในวันนี้</span></li>
-            <li>พิมพ์ <span class="cmd">ค่าเที่ยวเดือนนี้</span> <span class="desc">ตรวจสอบยอดเงินรวมและค่ารอบที่สะสมในเดือนปัจจุบัน (หากแอดมินเปิดให้ดูได้)</span></li>
-            <li>พิมพ์ <span class="cmd">ส่งตำแหน่ง</span> <span class="desc">(การแชร์ Location ผ่าน LINE) เพื่ออัปเดตพิกัดให้แอดมินทราบทันที</span></li>
-            <li>พิมพ์ <span class="cmd">ติดต่อแอดมิน</span> <span class="desc">ขอความช่วยเหลือหรือแจ้งปัญหาให้แอดมินสาขาทราบ</span></li>
-        </ul>
-    </div>
+    <h3>8. ฟีเจอร์อำนวยความสะดวกอื่น ๆ ของคนขับ</h3>
+    <ul>
+        <li><strong>สแกนบิลน้ำมันเบิกตังค์ด่วน (AI Fuel Scanner)</strong>: ถ่ายรูปบิลน้ำมันส่งในแชท บอทจะใช้ AI ถอดค่าค่าน้ำมัน, ยอดลิตร, ชื่อปั๊ม และเลขทะเบียนรถ บันทึกเข้าบิลบัญชีค่าน้ำมันอัตโนมัติ</li>
+        <li><strong>จัดลำดับแผนที่ประหยัดพลังงาน (Route Optimization)</strong>: พิมพ์ <code>เส้นทาง</code> บอทจะวิเคราะห์และเรียงลำดับพิกัดจุดส่งทั้งหมดในวันนั้น จากใกล้ไปไกลให้โดยอัตโนมัติ เพื่อเซฟระยะทางและน้ำมันรถ</li>
+        <li><strong>คะแนนสะสมและกระดานผู้นำ (Leaderboard)</strong>: พิมพ์ `คะแนน` หรือ `อันดับ` เพื่อส่องเกรดผลงานการขับรถ ยอดสถิติความตรงต่อเวลา และการจัดอันดับคนขับดีเยี่ยมประจำปี</li>
+    </ul>
 
-    <div class="footer">
-        © 2026 Elite Transport Management System (ePOD)
-    </div>
+    <hr>
 
+    <h2 id="customer-section"><span class="role-icon">📦</span>ส่วนที่ 3: คู่มือสำหรับ ลูกค้า (Customer)</h2>
+    <p>ลูกค้าสามารถตรวจสอบสถานะการจัดส่งพัสดุและมีส่วนร่วมในการร่วมพัฒนาคะแนนประเมินคุณภาพจัดส่งได้ทันใจ</p>
+
+    <h3>1. การติดตามสถานะพัสดุด่วน (Real-Time Package Tracking)</h3>
+    <ul>
+        <li><strong>วิธีใช้งาน</strong>: ลูกค้าที่ผูกบัญชีเรียบร้อยแล้วสามารถพิมพ์คำว่า <code>ติดตาม</code>, <code>พัสดุ</code> หรือ <code>TRACK</code></li>
+        <li><strong>ผลลัพธ์</strong>: ระบบจะแสดงประวัติเที่ยววิ่งพัสดุที่กำลังดำเนินการเดินทางจัดส่งมาให้ทันที พร้อมแจ้งชื่อคนขับ, ทะเบียนรถยนต์ และแนบลิงก์สำหรับเปิดส่องพิกัดแผนที่รถคันที่ขนส่งแบบสด ๆ เรียลไทม์</li>
+    </ul>
+
+    <h3>2. แบบประเมินระดับความพึงพอใจดิจิทัล (Satisfaction Feedback Survey)</h3>
+    <ul>
+        <li><strong>วิธีใช้งาน</strong>: เมื่อคนขับขนส่งสินค้าถึงหน้าบ้านคุณและกดยืนยันปิดงานเรียบร้อยแล้ว แชทบอทของร้านจะส่งการแจ้งเตือนขอประเมินคะแนนการบริการ</li>
+        <li><strong>วิธีประเมิน</strong>: ลูกค้าตอบให้คะแนนบริการเพียงพิมพ์ตอบตัวเลข **1 ถึง 5** ส่งกลับเข้ามาในห้องแชทได้โดยตรงทันที:
+            <ul>
+                <li>`5` = บริการประทับใจดีเยี่ยม ⭐️⭐️⭐️⭐️⭐️</li>
+                <li>`4` = บริการระดับดีมาก ⭐️⭐️⭐️⭐️</li>
+                <li>`3` = บริการระดับปานกลาง ⭐️⭐️⭐️</li>
+                <li>`2` = บริการระดับพอใช้ ⭐️⭐️</li>
+                <li>`1` = ต้องปรับปรุงเร่งด่วน ⭐️</li>
+            </ul>
+        </li>
+    </ul>
 </body>
 </html>
