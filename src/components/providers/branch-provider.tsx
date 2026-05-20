@@ -1,10 +1,10 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, useCallback, Suspense, useTransition } from "react"
+import React, { createContext, useContext, useState, useEffect, useCallback, Suspense, useTransition, useRef } from "react"
 import { getAllBranches, Branch } from "@/lib/supabase/branches"
 import { getCurrentUserRole } from "@/lib/supabase/routes"
 import Cookies from "js-cookie"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 
 interface BranchContextType {
   selectedBranch: string
@@ -54,6 +54,8 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+  const pathname = usePathname()
+  const prevPathnameRef = useRef<string | null>(null)
 
   const init = useCallback(async () => {
     try {
@@ -82,6 +84,20 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     init()
   }, [init])
+
+  useEffect(() => {
+    const prevPathname = prevPathnameRef.current
+    prevPathnameRef.current = pathname
+
+    if (pathname === "/login") {
+      setBranches([])
+      setIsAdmin(false)
+      setSelectedBranchState("All")
+      setIsLoading(true)
+    } else if (prevPathname === "/login" && pathname !== "/login") {
+      init()
+    }
+  }, [pathname, init])
 
   const setSelectedBranch = useCallback((branchId: string) => {
     setSelectedBranchState(branchId)
