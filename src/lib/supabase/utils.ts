@@ -9,7 +9,7 @@ export const sanitizeJobData = (data: Record<string, unknown>) => {
         'original_destinations_json', 'extra_costs_json', 'Show_Price_To_Driver', 'Sub_ID', 
         'Weight_Kg', 'Volume_Cbm', 'Zone', 'Invoice_ID', 'Billing_Note_ID', 
         'Driver_Payment_ID', 'Pickup_Photo_Url', 'Pickup_Signature_Url', 
-        'Pickup_Lat', 'Pickup_Lon', 'Branch_ID', 'Created_At', 'lat', 'lon', 
+        'Pickup_Lat', 'Pickup_Lon', 'Delivery_Lat', 'Delivery_Lon', 'Branch_ID', 'Created_At', 'lat', 'lon', 
         'Expire_Date', 'Failed_Reason', 'Failed_Time', 'Rating', 
         'Payment_Date', 'Billing_Date',
         'Verification_Status', 'Verified_By', 'Verified_At',

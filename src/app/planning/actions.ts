@@ -277,6 +277,7 @@ export async function createBulkJobs(
     normalized.Notes = getValue(['Notes', 'remark', 'หมายเหตุ'])
     normalized.Ref_No = getValue(['Ref_No', 'so', 'do', 'เลขที่อ้างอิง'])
     normalized.Branch_ID = getValue(['Branch_ID', 'branch', 'สาขา'])
+    normalized.Job_Status = getValue(['Job_Status', 'status', 'สถานะ'])
     
     normalized.Origin_Location = getValue(['Origin_Location', 'origin', 'ต้นทาง', 'รับที่'])
     normalized.Dest_Location = getValue(['Dest_Location', 'destination', 'ปลายทาง', 'ส่งที่'])

@@ -81,7 +81,7 @@ export async function getEffectiveBranchId(branchId?: string) {
     
     // If there is NO active session (e.g. server-to-server, LINE webhook, or Cron job)
     if (!session) {
-        if (!branchId || branchId.toLowerCase() === 'all' || branchId.toLowerCase() === 'ทุกสาขา' || branchId.toUpperCase() === 'HQ') {
+        if (!branchId || branchId.toLowerCase() === 'all' || branchId.toLowerCase() === 'ทุกสาขา') {
             return null
         }
         
@@ -117,7 +117,7 @@ export async function getEffectiveBranchId(branchId?: string) {
     // Super Admin can override with provided branchId
     let target = branchId || userBranchId
     
-    if (!target || target.toLowerCase() === 'all' || target.toLowerCase() === 'ทุกสาขา' || target.toUpperCase() === 'HQ') return null
+    if (!target || target.toLowerCase() === 'all' || target.toLowerCase() === 'ทุกสาขา') return null
 
     // Robust ID Resolution:
     // If target is NOT a known ID (e.g. it's a long name), try to find the ID.

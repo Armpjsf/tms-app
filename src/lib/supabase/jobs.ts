@@ -225,8 +225,8 @@ export async function getAllJobs(
     } else {
         // STRICT ISOLATION
         if (!isSuper) {
-            if (userBranchId && userBranchId !== 'All') {
-                dbQuery = dbQuery.eq('Branch_ID', userBranchId)
+            if (branchId && branchId !== 'All') {
+                dbQuery = dbQuery.eq('Branch_ID', branchId)
             } else {
                 return { data: [], count: 0 }
             }
