@@ -108,7 +108,7 @@ function SignatureContent() {
             return
         }
 
-        const liffId = process.env.NEXT_PUBLIC_LIFF_SIGNATURE_ID || '2006123456-ABCdefgh'
+        const liffId = process.env.NEXT_PUBLIC_LIFF_ID || process.env.NEXT_PUBLIC_LIFF_SIGNATURE_ID || '2006123456-ABCdefgh'
         window.liff.init({ liffId })
             .then(() => {
                 setIsLiffInit(true)

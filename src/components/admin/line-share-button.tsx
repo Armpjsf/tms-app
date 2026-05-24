@@ -26,11 +26,11 @@ export function LineShareButton({ job, variant = "default" }: LineShareButtonPro
         return
     }
 
-    const liffId = process.env.NEXT_PUBLIC_LIFF_SHARE_ID || process.env.NEXT_PUBLIC_LIFF_SIGNATURE_ID || ""
+    const liffId = process.env.NEXT_PUBLIC_LIFF_ID || process.env.NEXT_PUBLIC_LIFF_SHARE_ID || process.env.NEXT_PUBLIC_LIFF_SIGNATURE_ID || ""
     
     if (!liffId) {
         setInitError("Missing LIFF ID")
-        console.warn("LIFF ID not found. Please set NEXT_PUBLIC_LIFF_SHARE_ID or NEXT_PUBLIC_LIFF_SIGNATURE_ID in Vercel.")
+        console.warn("LIFF ID not found. Please set NEXT_PUBLIC_LIFF_ID in Vercel.")
         return
     }
 

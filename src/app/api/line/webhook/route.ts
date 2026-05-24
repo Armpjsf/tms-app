@@ -604,7 +604,7 @@ export async function POST(req: NextRequest) {
                         setDriverState(userId, activeJob.Job_ID, 'waiting_for_delivery_proof')
                         
                         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tms-app.vercel.app'
-                        const liffUrl = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_SIGNATURE_ID || '2006123456-ABCdefgh'}?jobId=${activeJob.Job_ID}`
+                        const liffUrl = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID || process.env.NEXT_PUBLIC_LIFF_SIGNATURE_ID || '2006123456-ABCdefgh'}?jobId=${activeJob.Job_ID}`
                         
                         await replyToUser(replyToken, `🚛 [ส่งมอบสินค้า - ${activeJob.Job_ID}]\n\nพี่คนขับสามารถทำการยืนยันจัดส่งได้ผ่าน 2 วิธีนี้ครับ:\n\n📸 วิธีที่ 1: ถ่ายรูปสินค้าที่ส่งมอบ หรือรูปใบเสร็จที่มีลายเซ็นลูกค้าแล้วส่งเข้าห้องแชทนี้\n\n✍️ วิธีที่ 2: ในกรณีไม่มีเอกสารกระดาษ สามารถให้ลูกค้าเซ็นชื่อสดบนหน้าจอมือถือได้ทันทีที่นี่ครับ:\n🔗 เซ็นชื่อรับสินค้า: ${liffUrl}`)
                         continue
