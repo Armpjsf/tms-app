@@ -12,6 +12,7 @@ import { Vehicle } from "@/lib/supabase/vehicles"
 import { Customer } from "@/lib/supabase/customers"
 import { Subcontractor } from "@/types/subcontractor"
 import { useLanguage } from "@/components/providers/language-provider"
+import { LineShareButton } from "@/components/admin/line-share-button"
 
 type Props = {
   job: Job
@@ -83,14 +84,17 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
                     {job.Job_ID}
                 </p>
             </div>
-            <span className={cn(
-                "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border shadow-sm",
-                (job.Job_Status === 'Complete' || job.Job_Status === 'Delivered') 
-                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-            )}>
-              {getStatusLabel(job.Job_Status)}
-            </span>
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                <LineShareButton job={job} variant="icon" />
+                <span className={cn(
+                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border shadow-sm",
+                    (job.Job_Status === 'Complete' || job.Job_Status === 'Delivered') 
+                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                )}>
+                  {getStatusLabel(job.Job_Status)}
+                </span>
+            </div>
         </div>
 
         {/* Middle: Route & Vehicle */}

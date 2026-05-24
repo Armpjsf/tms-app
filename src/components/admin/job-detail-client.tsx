@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Calendar, Truck, User, Phone, Package, FileText, Navigation, Activity, Target, Cpu, Layers } from "lucide-react"
 import JobMapClient from "@/components/maps/job-map-client"
 import { AdminJobActions } from "@/components/admin/admin-job-actions"
+import { LineShareButton } from "@/components/admin/line-share-button"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { cn } from "@/lib/utils"
@@ -56,6 +57,7 @@ export function JobDetailClient({ job, routeHistory }: JobDetailClientProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-6 self-end lg:self-center">
+            <LineShareButton job={job} />
             <AdminJobActions jobId={job.Job_ID} currentStatus={job.Job_Status || 'New'} />
           </div>
         </div>
