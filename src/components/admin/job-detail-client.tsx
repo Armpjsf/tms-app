@@ -346,6 +346,73 @@ export function JobDetailClient({ job, routeHistory }: JobDetailClientProps) {
                 </CardContent>
             </PremiumCard>
 
+            {/* Stair Incentive Verification Panel */}
+            {job.Incentive_Claimed && (
+                <PremiumCard className={cn(
+                    "border-2 rounded-[3rem] overflow-hidden shadow-3xl bg-background/40",
+                    job.Sensor_Verified === 'Verified' ? 'border-emerald-500/30' : 
+                    job.Sensor_Verified === 'Suspect' ? 'border-rose-500/30 animate-pulse' : 'border-border/5'
+                )}>
+                    <div className="p-8 border-b border-border/5 bg-black/40 flex items-center justify-between">
+                        <h3 className="text-lg font-black text-foreground uppercase tracking-[0.2em] flex items-center gap-3 italic">
+                            <Layers size={16} className="text-primary" /> ตรวจสอบขึ้นชั้น 2-3
+                        </h3>
+                        <Badge className={cn(
+                            "px-3 py-1 text-xs font-black uppercase tracking-widest rounded-xl",
+                            job.Sensor_Verified === 'Verified' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                            job.Sensor_Verified === 'Suspect' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                            'bg-gray-500/20 text-gray-400'
+                        )}>
+                            {job.Sensor_Verified === 'Verified' ? 'อนุมัติแล้ว' : 
+                             job.Sensor_Verified === 'Suspect' ? 'ต้องสงสัย' : 'ยังไม่ตรวจ'}
+                        </Badge>
+                    </div>
+                    <CardContent className="p-8 space-y-6">
+                        <div className="space-y-4">
+                            <div className="p-4 bg-white/5 rounded-2xl border border-border/5">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">ผลต่างความสูงสูงสุด</span>
+                                <span className="text-xl font-black text-foreground">{job.Sensor_Max_Elevation_Diff || '0'} เมตร</span>
+                            </div>
+                            <div className="p-4 bg-white/5 rounded-2xl border border-border/5">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">จำนวนก้าวขึ้นบันไดสะสม</span>
+                                <span className="text-xl font-black text-foreground">{job.Sensor_Total_Steps_Upward || '0'} ก้าว</span>
+                            </div>
+                        </div>
+
+                        {/* Admin Action Override Panel */}
+                        <div className="pt-6 border-t border-border/5 space-y-4">
+                            <span className="text-xs font-black text-muted-foreground uppercase tracking-widest block italic">การดำเนินการของแอดมิน:</span>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={async () => {
+                                        if (confirm('คุณต้องการอนุมัติการจ่ายเงินพิเศษนี้ใช่หรือไม่?')) {
+                                            const { adminOverrideSensorVerification } = await import('@/app/admin/jobs/actions')
+                                            const res = await adminOverrideSensorVerification(job.Job_ID, 'Verified', `${job.Notes || ''}\n[แอดมินยืนยันตนด้วยตนเอง]`)
+                                            if (res.success) window.location.reload()
+                                        }
+                                    }}
+                                    className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                                >
+                                    อนุมัติจ่ายเงิน
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        if (confirm('คุณต้องการปฏิเสธการจ่ายเงินพิเศษและระบุเป็นต้องสงสัยใช่หรือไม่?')) {
+                                            const { adminOverrideSensorVerification } = await import('@/app/admin/jobs/actions')
+                                            const res = await adminOverrideSensorVerification(job.Job_ID, 'Suspect', `${job.Notes || ''}\n[แอดมินระงับการจ่ายเนื่องจากข้อมูลต้องสงสัย]`)
+                                            if (res.success) window.location.reload()
+                                        }
+                                    }}
+                                    className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                                >
+                                    ปฏิเสธการจ่าย
+                                </button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </PremiumCard>
+            )}
+
             {/* Operational Notes */}
             {job.Notes && (
                 <PremiumCard className="bg-background/40 border-2 border-primary/20 shadow-3xl rounded-[3rem] overflow-hidden border-border/5">

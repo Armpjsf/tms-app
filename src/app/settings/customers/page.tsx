@@ -405,6 +405,28 @@ export default function CustomersSettingsPage() {
                       </div>
                     </div>
 
+                    {/* Stair Climb Sensor Toggle Feature */}
+                    <div className="p-6 rounded-[2rem] border-2 border-primary/20 bg-primary/5 flex items-center justify-between shadow-lg">
+                      <div className="space-y-1">
+                        <Label className="text-lg font-black uppercase tracking-wide text-primary flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+                          ระบบตรวจสอบเซนเซอร์ขึ้นตึกสูง (Incentive Sensor Check)
+                        </Label>
+                        <p className="text-sm text-muted-foreground font-bold italic leading-none opacity-80">
+                          บังคับให้แอปพลิเคชันคนขับรันเซนเซอร์วัดความสูงและก้าวเดินอัตโนมัติเมื่อมาส่งสินค้าของลูกค้ารายนี้
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="Incentive_Sensor_Check"
+                          checked={!!formData.Incentive_Sensor_Check}
+                          onChange={(e) => updateForm("Incentive_Sensor_Check", e.target.checked)}
+                          className="w-8 h-8 rounded-lg border-border bg-muted text-primary focus:ring-primary/40 cursor-pointer accent-primary"
+                        />
+                      </div>
+                    </div>
+
                   <div className="space-y-4">
                     <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-primary ml-2 flex items-center gap-3">
                         <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />

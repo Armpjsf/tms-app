@@ -111,8 +111,8 @@ export async function createCustomer(customerData: Partial<Customer>) {
                     : (branchId !== 'All' ? branchId : 'HQ'), 
 
         Credit_Term: customerData.Credit_Term || 30, // Default to 30 days if not set
-        Price_Per_Unit: customerData.Price_Per_Unit || 0
-        // Is_Active: true
+        Price_Per_Unit: customerData.Price_Per_Unit || 0,
+        Incentive_Sensor_Check: (customerData as any).Incentive_Sensor_Check || false
       })
       .select()
       .single()

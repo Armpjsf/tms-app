@@ -70,3 +70,27 @@ export async function adminUpdateJobStatus(jobId: string, newStatus: string, not
   
   return { success: true, message: 'Job status updated successfully' }
 }
+
+export async function adminOverrideSensorVerification(jobId: string, status: 'Verified' | 'Suspect', notes: string) {
+  try {
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
+
+    const { error } = await supabase
+      .from('Jobs_Main')
+      .update({
+        Sensor_Verified: status,
+        Notes: notes
+      })
+      .eq('Job_ID', jobId)
+
+    if (error) {
+      return { success: false, message: `Failed to override status: ${error.message}` }
+    }
+
+    revalidatePath(`/admin/jobs/${jobId}`)
+    return { success: true, message: 'Sensor status updated successfully' }
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : 'Internal Server Error' }
+  }
+}

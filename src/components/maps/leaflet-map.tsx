@@ -111,8 +111,11 @@ type LeafletMapProps = {
 function RecenterMap({ position, zoom }: { position: [number, number], zoom?: number }) {
   const map = useMap()
   useEffect(() => {
-    if (position) {
-      map.setView(position, zoom || map.getZoom(), { animate: true })
+    if (position && map && typeof map.getContainer === 'function') {
+      const container = map.getContainer()
+      if (container && document.body.contains(container)) {
+        map.setView(position, zoom || map.getZoom(), { animate: false })
+      }
     }
   }, [position, zoom, map])
   return null
@@ -121,9 +124,12 @@ function RecenterMap({ position, zoom }: { position: [number, number], zoom?: nu
 function FitBounds({ positions }: { positions: [number, number][] }) {
     const map = useMap()
     useEffect(() => {
-        if (positions && positions.length > 0) {
-            const bounds = L.latLngBounds(positions)
-            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: true })
+        if (positions && positions.length > 0 && map && typeof map.getContainer === 'function') {
+            const container = map.getContainer()
+            if (container && document.body.contains(container)) {
+                const bounds = L.latLngBounds(positions)
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: false })
+            }
         }
     }, [positions, map])
     return null
@@ -259,7 +265,7 @@ export default function LeafletMap({
                                 <div className="space-y-1 mb-3">
                                     <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground bg-muted/30 px-2 py-1 rounded-lg border border-border/10">
                                         <MapPin size={10} className="text-primary" />
-                                        <span>พิกัด: {mission.lat.toFixed(6)}, {mission.lng.toFixed(6)}</span>
+                                        <span>พิกัด: {Number(mission.lat).toFixed(6)}, {Number(mission.lng).toFixed(6)}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">
                                         <div className="w-1.5 h-1.5 rounded-full bg-border" />
