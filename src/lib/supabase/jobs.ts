@@ -73,6 +73,12 @@ export type Job = {
   Billing_Notes?: {
     Status: string
   } | null
+  Requires_Incentive_Check?: boolean | null
+  Incentive_Claimed?: boolean | null
+  Sensor_Verified?: 'Verified' | 'Suspect' | null
+  Sensor_Max_Elevation_Diff?: number | null
+  Sensor_Total_Steps_Upward?: number | null
+  Sensor_Logs_Json?: any
 }
 
 // Removed duplicate definition
@@ -747,17 +753,25 @@ export async function createJob(jobData: Partial<Job>) {
         const branchId = await getUserBranchId() || 'HQ'
         let custTotal = Number(jobData.Price_Cust_Total) || 0
 
-        // Auto-calculate if total is 0 but we have customer and quantity
-        if (custTotal === 0 && jobData.Customer_ID) {
+        let requiresIncentiveCheck = jobData.Requires_Incentive_Check || false
+
+        // Fetch customer settings for auto-calculation and sensor checks
+        if (jobData.Customer_ID) {
             const { data: customer } = await supabase
                 .from('Master_Customers')
-                .select('Price_Per_Unit')
+                .select('Price_Per_Unit, Incentive_Sensor_Check')
                 .eq('Customer_ID', jobData.Customer_ID)
                 .single()
-            if (customer?.Price_Per_Unit) {
-                const qty = Number(jobData.Weight_Kg || jobData.Volume_Cbm || jobData.Loaded_Qty || 0)
-                if (qty > 0) {
-                    custTotal = Number((qty * customer.Price_Per_Unit).toFixed(2))
+            
+            if (customer) {
+                if (custTotal === 0 && customer.Price_Per_Unit) {
+                    const qty = Number(jobData.Weight_Kg || jobData.Volume_Cbm || jobData.Loaded_Qty || 0)
+                    if (qty > 0) {
+                        custTotal = Number((qty * customer.Price_Per_Unit).toFixed(2))
+                    }
+                }
+                if (customer.Incentive_Sensor_Check) {
+                    requiresIncentiveCheck = true
                 }
             }
         }
@@ -768,6 +782,7 @@ export async function createJob(jobData: Partial<Job>) {
             Job_Status: 'New',
             Branch_ID: branchId,
             Price_Cust_Total: custTotal,
+            Requires_Incentive_Check: requiresIncentiveCheck,
             Created_At: new Date().toISOString()
         })
 

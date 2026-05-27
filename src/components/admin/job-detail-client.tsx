@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Calendar, Truck, User, Phone, Package, FileText, Navigation, Activity, Target, Cpu, Layers } from "lucide-react"
+import { ArrowLeft, Calendar, Truck, User, Phone, Package, FileText, Navigation, Activity, Target, Cpu, Layers, TrendingUp } from "lucide-react"
 import JobMapClient from "@/components/maps/job-map-client"
 import { AdminJobActions } from "@/components/admin/admin-job-actions"
 import { LineShareButton } from "@/components/admin/line-share-button"
@@ -344,54 +344,111 @@ export function JobDetailClient({ job, routeHistory }: JobDetailClientProps) {
                         </div>
                      </div>
                 </CardContent>
-            </PremiumCard>
-
-            {/* Stair Incentive Verification Panel */}
-            {job.Incentive_Claimed && (
+            </PremiumCard>            {/* Stair Incentive Verification Panel */}
+            {(job.Incentive_Claimed || job.Requires_Incentive_Check) && (
                 <PremiumCard className={cn(
-                    "border-2 rounded-[3rem] overflow-hidden shadow-3xl bg-background/40",
-                    job.Sensor_Verified === 'Verified' ? 'border-emerald-500/30' : 
-                    job.Sensor_Verified === 'Suspect' ? 'border-rose-500/30 animate-pulse' : 'border-border/5'
+                    "border border-white/5 rounded-3xl overflow-hidden shadow-2xl bg-slate-900/60 backdrop-blur-2xl transition-all duration-300",
+                    job.Sensor_Verified === 'Verified' ? 'border-emerald-500/20 shadow-emerald-950/20' : 
+                    job.Sensor_Verified === 'Suspect' ? 'border-rose-500/20 shadow-rose-950/20 animate-pulse' : 'border-amber-500/25 shadow-amber-950/10'
                 )}>
-                    <div className="p-8 border-b border-border/5 bg-black/40 flex items-center justify-between">
-                        <h3 className="text-lg font-black text-foreground uppercase tracking-[0.2em] flex items-center gap-3 italic">
-                            <Layers size={16} className="text-primary" /> ตรวจสอบขึ้นชั้น 2-3
+                    <div className="p-8 border-b border-white/5 bg-black/30 flex items-center justify-between">
+                        <h3 className="text-base font-black text-foreground uppercase tracking-widest flex items-center gap-3 italic">
+                            <Layers size={18} className="text-primary" /> ตรวจสอบขึ้นชั้น 2-3
                         </h3>
                         <Badge className={cn(
-                            "px-3 py-1 text-xs font-black uppercase tracking-widest rounded-xl",
-                            job.Sensor_Verified === 'Verified' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                            job.Sensor_Verified === 'Suspect' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
-                            'bg-gray-500/20 text-gray-400'
+                            "px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl shadow-md border",
+                            job.Sensor_Verified === 'Verified' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-emerald-950/20' :
+                            job.Sensor_Verified === 'Suspect' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-rose-950/20' :
+                            'bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-amber-950/25 animate-pulse'
                         )}>
                             {job.Sensor_Verified === 'Verified' ? 'อนุมัติแล้ว' : 
-                             job.Sensor_Verified === 'Suspect' ? 'ต้องสงสัย' : 'ยังไม่ตรวจ'}
+                             job.Sensor_Verified === 'Suspect' ? 'ตรวจพบผิดปกติ' : 'รอกระบวนการตรวจ'}
                         </Badge>
                     </div>
-                    <CardContent className="p-8 space-y-6">
-                        <div className="space-y-4">
-                            <div className="p-4 bg-white/5 rounded-2xl border border-border/5">
-                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">ผลต่างความสูงสูงสุด</span>
-                                <span className="text-xl font-black text-foreground">{job.Sensor_Max_Elevation_Diff || '0'} เมตร</span>
-                            </div>
-                            <div className="p-4 bg-white/5 rounded-2xl border border-border/5">
-                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">จำนวนก้าวขึ้นบันไดสะสม</span>
-                                <span className="text-xl font-black text-foreground">{job.Sensor_Total_Steps_Upward || '0'} ก้าว</span>
-                            </div>
+                    <CardContent className="p-8 space-y-8">
+                        <div className="space-y-6">
+                            {/* Elevation Difference Meter */}
+                            {(() => {
+                                const elev = Number(job.Sensor_Max_Elevation_Diff || 0)
+                                const elevPct = Math.min((elev / 2.8) * 100, 100)
+                                const isPassed = elev >= 2.8
+                                return (
+                                    <div className="p-5 bg-black/25 rounded-2xl border border-white/5 space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-2">
+                                                <TrendingUp className={isPassed ? "text-emerald-400" : "text-amber-400"} size={16} />
+                                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">ผลต่างความสูงสะสม</span>
+                                            </div>
+                                            <span className="text-lg font-black text-foreground italic">{elev.toFixed(2)} / 2.80 ม.</span>
+                                        </div>
+                                        {/* Telemetry Progress Bar */}
+                                        <div className="space-y-1">
+                                            <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={cn(
+                                                        "h-full rounded-full transition-all duration-1000",
+                                                        isPassed ? "bg-gradient-to-r from-emerald-500 to-teal-400" : "bg-gradient-to-r from-amber-500 to-orange-400"
+                                                    )}
+                                                    style={{ width: `${elevPct}%` }}
+                                                />
+                                            </div>
+                                            <div className="flex justify-between text-[8px] font-bold text-muted-foreground/60 uppercase tracking-widest">
+                                                <span>ระดับพื้น</span>
+                                                <span className={cn(isPassed && "text-emerald-400 font-black")}>เกณฑ์ขึ้นชั้น (2.8 ม.)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })()}
+
+                            {/* Stair Steps Count Meter */}
+                            {(() => {
+                                const steps = Number(job.Sensor_Total_Steps_Upward || 0)
+                                const stepsPct = Math.min((steps / 15) * 100, 100)
+                                const isPassed = steps >= 15
+                                return (
+                                    <div className="p-5 bg-black/25 rounded-2xl border border-white/5 space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-2">
+                                                <Activity className={isPassed ? "text-emerald-400" : "text-amber-400"} size={16} />
+                                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">จำนวนก้าวขึ้นบันได</span>
+                                            </div>
+                                            <span className="text-lg font-black text-foreground italic">{steps} / 15 ก้าว</span>
+                                        </div>
+                                        {/* Telemetry Progress Bar */}
+                                        <div className="space-y-1">
+                                            <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={cn(
+                                                        "h-full rounded-full transition-all duration-1000",
+                                                        isPassed ? "bg-gradient-to-r from-emerald-500 to-teal-400" : "bg-gradient-to-r from-amber-500 to-orange-400"
+                                                    )}
+                                                    style={{ width: `${stepsPct}%` }}
+                                                />
+                                            </div>
+                                            <div className="flex justify-between text-[8px] font-bold text-muted-foreground/60 uppercase tracking-widest">
+                                                <span>เริ่มต้น</span>
+                                                <span className={cn(isPassed && "text-emerald-400 font-black")}>เกณฑ์ก้าวขึ้น (15 ก้าว)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })()}
                         </div>
 
                         {/* Admin Action Override Panel */}
-                        <div className="pt-6 border-t border-border/5 space-y-4">
-                            <span className="text-xs font-black text-muted-foreground uppercase tracking-widest block italic">การดำเนินการของแอดมิน:</span>
+                        <div className="pt-6 border-t border-white/5 space-y-4">
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block italic">การดำเนินการจัดการสิทธิ์โดยแอดมิน:</span>
                             <div className="flex gap-4">
                                 <button
                                     onClick={async () => {
                                         if (confirm('คุณต้องการอนุมัติการจ่ายเงินพิเศษนี้ใช่หรือไม่?')) {
                                             const { adminOverrideSensorVerification } = await import('@/app/admin/jobs/actions')
-                                            const res = await adminOverrideSensorVerification(job.Job_ID, 'Verified', `${job.Notes || ''}\n[แอดมินยืนยันตนด้วยตนเอง]`)
+                                            const res = await adminOverrideSensorVerification(job.Job_ID, 'Verified', `${job.Notes || ''}\n[แอดมินยืนยันสิทธิ์ด้วยตนเอง]`)
                                             if (res.success) window.location.reload()
                                         }
                                     }}
-                                    className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                                    className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-lg shadow-emerald-950/20"
                                 >
                                     อนุมัติจ่ายเงิน
                                 </button>
@@ -399,11 +456,11 @@ export function JobDetailClient({ job, routeHistory }: JobDetailClientProps) {
                                     onClick={async () => {
                                         if (confirm('คุณต้องการปฏิเสธการจ่ายเงินพิเศษและระบุเป็นต้องสงสัยใช่หรือไม่?')) {
                                             const { adminOverrideSensorVerification } = await import('@/app/admin/jobs/actions')
-                                            const res = await adminOverrideSensorVerification(job.Job_ID, 'Suspect', `${job.Notes || ''}\n[แอดมินระงับการจ่ายเนื่องจากข้อมูลต้องสงสัย]`)
+                                            const res = await adminOverrideSensorVerification(job.Job_ID, 'Suspect', `${job.Notes || ''}\n[แอดมินปฏิเสธสิทธิ์เนื่องจากข้อมูลต้องสงสัย]`)
                                             if (res.success) window.location.reload()
                                         }
                                     }}
-                                    className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                                    className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-lg shadow-rose-950/20"
                                 >
                                     ปฏิเสธการจ่าย
                                 </button>
