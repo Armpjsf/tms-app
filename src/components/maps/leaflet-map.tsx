@@ -383,6 +383,7 @@ function MovingMarker({ driver, onShowRoute }: { driver: DriverLocation, onShowR
   const [heading, setHeading] = useState<number>(driver.heading || 0)
 
   useEffect(() => {
+    let isMounted = true
     let animationFrame: number
     const startPos = lastPosRef.current
     const targetPos: [number, number] = [driver.lat, driver.lng]
@@ -395,18 +396,20 @@ function MovingMarker({ driver, onShowRoute }: { driver: DriverLocation, onShowR
                   Math.sin(startPos[0] * (Math.PI / 180)) * Math.cos(targetPos[0] * (Math.PI / 180)) * Math.cos((targetPos[1] - startPos[1]) * (Math.PI / 180))
         let bearing = Math.atan2(y, x) * (180 / Math.PI)
         bearing = (bearing + 360) % 360
-        setHeading(bearing)
+        if (isMounted) setHeading(bearing)
     }
 
     const animate = (currentTime: number) => {
+      if (!isMounted) return
       const elapsed = currentTime - startTime
       const progress = Math.min(elapsed / duration, 1)
       const ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2
       const lat = startPos[0] + (targetPos[0] - startPos[0]) * ease
       const lng = startPos[1] + (targetPos[1] - startPos[1]) * ease
-      setCurrentPos([lat, lng])
+      
+      if (isMounted) setCurrentPos([lat, lng])
 
-      if (progress < 1) {
+      if (progress < 1 && isMounted) {
         animationFrame = requestAnimationFrame(animate)
       } else {
         lastPosRef.current = targetPos
@@ -414,7 +417,10 @@ function MovingMarker({ driver, onShowRoute }: { driver: DriverLocation, onShowR
     }
 
     animationFrame = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(animationFrame)
+    return () => {
+      isMounted = false
+      cancelAnimationFrame(animationFrame)
+    }
   }, [driver.lat, driver.lng])
 
   const isSpeeding = (driver.speed || 0) * 3.6 > 90;
