@@ -47,7 +47,7 @@ function estimateAltitude(pressureHpa: number): number {
 /**
  * วิเคราะห์และตรวจสอบความถูกต้องของการเดินขึ้นชั้น 2-3 ด้วยเซนเซอร์ย้อนหลัง
  */
-export function verifyStairClimbing(sensorLogs: Array<{ pressure: number; steps_upward?: number }>) {
+export async function verifyStairClimbing(sensorLogs: Array<{ pressure: number; steps_upward?: number }>) {
   if (!sensorLogs || sensorLogs.length < 2) {
     return {
       status: 'Suspect',
@@ -121,7 +121,7 @@ export async function updateJobStatus(
 
             if (jobInfo?.Requires_Incentive_Check && options.sensorLogs) {
                 // ทำการวิเคราะห์ตรวจจับความทุจริตจากข้อมูลที่ส่งมา
-                const sensorResult = verifyStairClimbing(options.sensorLogs);
+                const sensorResult = await verifyStairClimbing(options.sensorLogs);
                 
                 updatePayload.Sensor_Verified = sensorResult.status;
                 updatePayload.Sensor_Max_Elevation_Diff = sensorResult.elevationDiff;
