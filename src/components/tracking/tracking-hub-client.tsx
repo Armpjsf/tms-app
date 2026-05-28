@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { useState, useEffect, useTransition, useMemo } from "react"
 import { 
   Search, Package, Truck, MapPin, Clock, ChevronRight, Loader2,
   Activity, Navigation, ExternalLink, ShieldCheck, Target, Cpu, 
   Layers, TrendingUp, AlertTriangle, Info, DollarSign, User, 
   CheckCircle2, Calendar, Phone, Smartphone, Box, Scale, Maximize2, 
-  RefreshCw, ArrowRight, Eye, PenTool, ArrowLeft
+  RefreshCw, ArrowRight, Eye, PenTool, ArrowLeft, Send
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useLanguage } from "@/components/providers/language-provider"
+import { LineShareButton } from "@/components/admin/line-share-button"
+import { AdminJobActions } from "@/components/admin/admin-job-actions"
 
 interface TrackingHubClientProps {
   initialActiveJobs: PublicJobDetails[]
@@ -36,6 +38,7 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
   const [isSearching, startSearch] = useTransition()
   const [isLoadingDetails, setIsLoadingDetails] = useState(false)
+  const [activeTab, setActiveTab] = useState<'ACTIVE' | 'NEW'>('ACTIVE')
 
   // Sync with URL & Initial Load
   useEffect(() => {
@@ -46,6 +49,14 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
   useEffect(() => {
     setActiveJobs(initialActiveJobs)
   }, [initialActiveJobs])
+
+  // Categorize Jobs
+  const categorizedJobs = useMemo(() => {
+    return {
+        NEW: activeJobs.filter(j => ['New', 'Assigned', 'Pending'].includes(j.status)),
+        ACTIVE: activeJobs.filter(j => !['New', 'Assigned', 'Pending'].includes(j.status))
+    }
+  }, [activeJobs])
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) return
@@ -127,15 +138,43 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
           </div>
         </div>
 
+        {/* Status Tabs */}
+        <div className="flex bg-muted/20 p-1 rounded-xl border border-border/40">
+            <button 
+                onClick={() => setActiveTab('ACTIVE')}
+                className={cn(
+                    "flex-1 py-2 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    activeTab === 'ACTIVE' ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+            >
+                <div className="flex items-center justify-center gap-2">
+                    <Activity size={10} className={activeTab === 'ACTIVE' ? "animate-pulse" : ""} />
+                    Active Fleet ({categorizedJobs.ACTIVE.length})
+                </div>
+            </button>
+            <button 
+                onClick={() => setActiveTab('NEW')}
+                className={cn(
+                    "flex-1 py-2 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    activeTab === 'NEW' ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+            >
+                <div className="flex items-center justify-center gap-2">
+                    <Package size={10} />
+                    New Missions ({categorizedJobs.NEW.length})
+                </div>
+            </button>
+        </div>
+
         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1 pb-10">
           <div className="flex items-center justify-between px-2 py-2">
-             <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic flex items-center gap-2">
-                <Activity size={12} className="text-primary animate-pulse" /> LIVE RADAR
+             <h3 className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">
+                {activeTab === 'ACTIVE' ? 'REAL-TIME TRACKING' : 'PENDING DISPATCH'}
              </h3>
              <button onClick={() => router.refresh()} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><RefreshCw size={12} /></button>
           </div>
 
-          {activeJobs.map((job) => (
+          {(activeTab === 'ACTIVE' ? categorizedJobs.ACTIVE : categorizedJobs.NEW).map((job) => (
             <div 
               key={job.jobId}
               onClick={() => selectJobFromRadar(job)}
@@ -149,7 +188,7 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
               {selectedJob?.jobId === job.jobId && <div className="absolute left-0 top-3 bottom-3 w-1 bg-primary rounded-r-full" />}
               <div className="flex justify-between items-start mb-2">
                 <span className={cn("text-xs font-black tracking-tighter uppercase font-display", selectedJob?.jobId === job.jobId ? "text-primary" : "text-foreground")}>
-                  {job.jobId}
+                  {job.jobId.split(',')[0]}
                 </span>
                 <Badge className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-muted text-muted-foreground border-none">
                   {job.status}
@@ -169,6 +208,12 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
               </div>
             </div>
           ))}
+
+          {(activeTab === 'ACTIVE' ? categorizedJobs.ACTIVE : categorizedJobs.NEW).length === 0 && (
+            <div className="py-20 text-center opacity-30">
+                <p className="text-[9px] font-black uppercase tracking-widest italic">NO {activeTab} UNITS FOUND</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -202,7 +247,7 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
                                             Job_ID: selectedJob.jobId,
                                             Customer_Name: selectedJob.customerName,
                                             Job_Status: selectedJob.status
-                                        }} />
+                                        }} variant="icon" />
                                         <AdminJobActions jobId={selectedJob.jobId} currentStatus={selectedJob.status} />
                                     </div>
                                 )}
@@ -480,18 +525,18 @@ function EvidenceBox({ label, photos, signature, phase }: { label: string, photo
             </div>
             <div className="flex flex-wrap gap-3">
                 {photos.map((p, i) => (
-                    <div key={i} className="w-16 h-16 rounded-2xl border border-border shadow-sm overflow-hidden bg-black relative group/img cursor-pointer">
+                    <div key={i} className="w-14 h-14 rounded-2xl border border-border shadow-sm overflow-hidden bg-black relative group/img cursor-pointer">
                         <Image src={p} alt="Proof" fill className="object-cover group-hover/img:scale-110 transition-transform" />
                         <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center"><Eye size={16} className="text-white" /></div>
                     </div>
                 ))}
                 {signature && (
-                    <div className="w-16 h-16 rounded-2xl border border-border shadow-sm overflow-hidden bg-white p-1 relative flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-2xl border border-border shadow-sm overflow-hidden bg-white p-1 relative flex items-center justify-center">
                         <Image src={signature} alt="Sig" fill className="object-contain" />
                     </div>
                 )}
                 {photos.length === 0 && !signature && (
-                    <div className="h-16 flex items-center px-4 bg-muted/40 rounded-2xl border border-dashed border-border/60">
+                    <div className="h-14 flex items-center px-4 bg-muted/40 rounded-2xl border border-dashed border-border/60">
                         <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest italic opacity-40">WAITING_INTEL</p>
                     </div>
                 )}
