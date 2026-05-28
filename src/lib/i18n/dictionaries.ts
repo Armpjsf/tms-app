@@ -203,6 +203,7 @@ export const dictionaries = {
       request_mission: 'สั่งงานใหม่',
       routes: 'จัดการเส้นทาง',
       danger_zones: 'พื้นที่อันตราย',
+      tracking_hub: 'ศูนย์ติดตามงานสด',
       billing_automation: 'ระบบวางบิลอัตโนมัติ',
     },
     automation: {
@@ -2088,6 +2089,7 @@ export const dictionaries = {
       request_mission: 'New Job',
       routes: 'Routes',
       danger_zones: 'Danger Zones',
+      tracking_hub: 'Live Tracking Radar',
       billing_automation: 'Billing Automation',
     },
     assignments: {

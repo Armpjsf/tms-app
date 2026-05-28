@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient, createAdminClient } from "@/utils/supabase/server";
+import { getUserBranchId, getCustomerId } from "@/lib/permissions";
 
 export interface PublicJobDetails {
   jobId: string;
@@ -38,6 +39,7 @@ export interface PublicJobDetails {
   priceCustExtra?: number | null;
   priceCustTotal?: number | null;
   extraCostsJson?: string | null;
+  branchId?: string | null;
 }
 
 export async function submitJobFeedback(
@@ -87,16 +89,23 @@ export async function getActiveJobs(
     .select("*")
     .in("Job_Status", activeStatuses);
 
-  // If customer mode, filter by their ID
+  // Apply Branch Filtering for Admin (Non-Customer Mode)
+  if (!customerMode) {
+    const branchId = await getUserBranchId();
+    if (branchId) {
+      dbQuery = dbQuery.eq("Branch_ID", branchId);
+    }
+  }
+
+  // Apply Customer Filtering
   if (customerMode) {
-    const { getCustomerId } = await import("@/lib/permissions");
     const customerId = await getCustomerId();
     if (customerId) {
       dbQuery = dbQuery.eq("Customer_ID", customerId);
     }
   }
 
-  const { data, error } = await dbQuery.order('Created_At', { ascending: false }).limit(20);
+  const { data, error } = await dbQuery.order('Created_At', { ascending: false }).limit(50);
 
   if (error || !data) return [];
 
@@ -134,6 +143,7 @@ export async function getActiveJobs(
     priceCustExtra: job.Price_Cust_Extra,
     priceCustTotal: job.Price_Cust_Total,
     extraCostsJson: job.extra_costs_json || job.extra_costs,
+    branchId: job.Branch_ID,
   }));
 }
 
@@ -174,7 +184,8 @@ export async function getPublicJobDetails(
     : [];
 
   let lastLocation = null;
-  if (["Assigned", "Picked Up", "In Transit", "Arrived", "SOS", "En Route", "En-Route"].includes(job.Job_Status)) {
+  // Use Driver_ID to find location
+  if (job.Driver_ID && ["Assigned", "Picked Up", "In Transit", "Arrived", "SOS", "En Route", "En-Route"].includes(job.Job_Status)) {
     const adminSupabase = createAdminClient();
     const { data: gpsData } = await adminSupabase
       .from("gps_logs")
@@ -227,5 +238,6 @@ export async function getPublicJobDetails(
     priceCustExtra: job.Price_Cust_Extra,
     priceCustTotal: job.Price_Cust_Total,
     extraCostsJson: job.extra_costs_json || job.extra_costs,
+    branchId: job.Branch_ID,
   };
 }
