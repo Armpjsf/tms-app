@@ -88,21 +88,26 @@ export async function getActiveJobs(
   customerMode = false
 ): Promise<PublicJobDetails[]> {
   const supabase = createAdminClient();
-  const today = new Date().toISOString().split('T')[0];
+  
+  // Use Asia/Bangkok date for Plan_Date comparison
+  const now = new Date();
+  const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Bangkok' }).format(now);
+  
+  console.log(`[Tracking] Fetching active jobs for: ${today} (Branch Filter Active)`);
   
   // Define active statuses
-  const activeStatuses = ["Assigned", "Picked Up", "In Transit", "Arrived", "SOS", "En Route", "En-Route", "In Progress", "Pending"];
+  const activeStatuses = ["Assigned", "Picked Up", "In Transit", "Arrived", "SOS", "En Route", "En-Route", "In Progress", "Pending", "Completed", "Delivered"];
 
   let dbQuery = supabase
     .from("Jobs_Main")
     .select("*")
     .in("Job_Status", activeStatuses)
-    .eq("Plan_Date", today); // ONLY TODAY
+    .eq("Plan_Date", today); 
 
   // Apply Branch Filtering for Admin (Non-Customer Mode)
   if (!customerMode) {
     const branchId = await getUserBranchId();
-    if (branchId) {
+    if (branchId && branchId !== 'All') {
       dbQuery = dbQuery.eq("Branch_ID", branchId);
     }
   }
@@ -117,9 +122,11 @@ export async function getActiveJobs(
 
   const { data, error } = await dbQuery.order('Created_At', { ascending: false }).limit(100);
 
-  if (error || !data) return [];
+  if (error || !data) {
+    console.error("[Tracking] Fetch error:", error);
+    return [];
+  }
 
-  // Map to PublicJobDetails
   return data.map(job => mapJobToPublicDetails(job));
 }
 
