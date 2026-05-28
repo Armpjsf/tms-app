@@ -200,32 +200,71 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
 
             {/* Photos & Evidence */}
             {(job.pickupPhotos.length > 0 || job.podPhotos.length > 0 || job.signature || job.pickupSignature) && (
-                <section className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                <section className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-8">
                     <h3 className="text-lg font-bold text-slate-900 border-l-4 border-emerald-500 pl-4 uppercase tracking-tight">หลักฐานการขนส่ง</h3>
 
-                    <div className="space-y-6">
-                        {job.podPhotos.length > 0 && (
-                            <div className="space-y-3">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">ภาพถ่ายยืนยันการส่งสินค้า</p>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {job.podPhotos.map((url, i) => (
-                                        <div key={i} className="aspect-video relative rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shadow-inner group cursor-pointer">
-                                            <Image src={url} alt="POD" fill sizes="(max-width: 768px) 50vw, 300px" className="object-cover transition-transform group-hover:scale-105" />
-                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <ExternalLink size={20} className="text-white" />
-                                            </div>
-                                        </div>
-                                    ))}
+                    <div className="space-y-8">
+                        {/* Pickup Evidence Section */}
+                        {(job.pickupPhotos.length > 0 || job.pickupSignature) && (
+                            <div className="space-y-6 pb-6 border-b border-slate-100">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                                    <p className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">หลักฐานการรับสินค้า (Pickup)</p>
                                 </div>
+                                
+                                {job.pickupPhotos.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {job.pickupPhotos.map((url, i) => (
+                                            <div key={i} className="aspect-video relative rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shadow-inner group cursor-pointer">
+                                                <Image src={url} alt="Pickup" fill sizes="(max-width: 768px) 50vw, 300px" className="object-cover transition-transform group-hover:scale-105" />
+                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <ExternalLink size={20} className="text-white" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {job.pickupSignature && (
+                                    <div className="space-y-3">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">ลายเซ็นผู้ส่ง/คลังสินค้า</p>
+                                        <div className="h-24 bg-slate-50 rounded-xl overflow-hidden relative border border-slate-100">
+                                            <Image src={job.pickupSignature} alt="Pickup Sig" fill sizes="(max-width: 768px) 100vw, 400px" className="object-contain p-4" />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
-                        
-                        {job.signature && (
-                            <div className="space-y-3">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">ลายเซ็นผู้รับสินค้า</p>
-                                <div className="h-24 bg-slate-50 rounded-xl overflow-hidden relative border border-slate-100">
-                                    <Image src={job.signature} alt="POD Sig" fill sizes="(max-width: 768px) 100vw, 400px" className="object-contain p-4" />
+
+                        {/* Delivery Evidence Section */}
+                        {(job.podPhotos.length > 0 || job.signature) && (
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                    <p className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">หลักฐานการส่งสินค้า (Delivery)</p>
                                 </div>
+
+                                {job.podPhotos.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {job.podPhotos.map((url, i) => (
+                                            <div key={i} className="aspect-video relative rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shadow-inner group cursor-pointer">
+                                                <Image src={url} alt="POD" fill sizes="(max-width: 768px) 50vw, 300px" className="object-cover transition-transform group-hover:scale-105" />
+                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <ExternalLink size={20} className="text-white" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {job.signature && (
+                                    <div className="space-y-3">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">ลายเซ็นผู้รับสินค้า</p>
+                                        <div className="h-24 bg-slate-50 rounded-xl overflow-hidden relative border border-slate-100">
+                                            <Image src={job.signature} alt="POD Sig" fill sizes="(max-width: 768px) 100vw, 400px" className="object-contain p-4" />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

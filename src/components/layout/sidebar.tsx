@@ -62,6 +62,7 @@ const navigation: NavGroup[] = [
     titleKey: "nav_groups.operations",
     items: [
       { titleKey: "navigation.planning", href: "/planning", icon: <CalendarDays size={20} /> },
+      { titleKey: "navigation.tracking_hub", href: "/admin/tracking", icon: <Activity size={20} />, badge: "common.live", badgeColor: "blue" },
       { titleKey: "navigation.calendar", href: "/calendar", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
       { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "common.live", badgeColor: "green" },

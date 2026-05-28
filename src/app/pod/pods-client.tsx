@@ -135,7 +135,8 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: any
                 <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('common.date')}</th>
                 <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('navigation.customers')}</th>
                 <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('navigation.drivers')}</th>
-                <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic text-center">{t('pod.visual_proof')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic text-center">{t('pod.pickup_evidence') || 'PICKUP PROOF'}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic text-center">{t('pod.visual_proof')} (POD)</th>
                 <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic text-center">{t('common.status')}</th>
                 <th className="px-6 py-4 text-right text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('common.action')}</th>
               </tr>
@@ -171,37 +172,73 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: any
                         <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest italic">{pod.Driver_Name || t('common.auto')}</span>
                      </div>
                   </td>
+                  {/* Pickup Evidence */}
                   <td className="px-4 py-3 text-center">
-                     <div className="flex items-center justify-center gap-3">
-                        {pod.Photo_Proof_Url ? (
+                     <div className="flex items-center justify-center gap-2">
+                        {pod.Pickup_Photo_Url ? (
                            <div className="group/visual relative">
-                              <div className="w-10 h-10 rounded-xl border border-border/10 overflow-hidden bg-black shadow-lg relative transition-all group-hover/visual:scale-125 group-hover/visual:rotate-3 z-10 group-hover/visual:border-primary">
+                              <div className="w-8 h-8 rounded-lg border border-border/10 overflow-hidden bg-black shadow-lg relative transition-all group-hover/visual:scale-125 z-10 group-hover/visual:border-indigo-500">
                                  <NextImage 
-                                    src={pod.Photo_Proof_Url.split(',')[0]} 
-                                    alt={t('pod.visual_proof')} 
+                                    src={pod.Pickup_Photo_Url.split(',')[0]} 
+                                    alt="Pickup Photo" 
                                     fill 
-                                    sizes="40px"
+                                    sizes="32px"
                                     className="object-cover opacity-80 group-hover/visual:opacity-100 transition-opacity" 
                                  />
                               </div>
                            </div>
                         ) : (
-                           <div className="w-6 h-px bg-muted/30" />
+                           <div className="w-4 h-px bg-muted/20" />
                         )}
-                        {pod.Signature_Url ? (
+                        {pod.Pickup_Signature_Url ? (
                            <div className="group/sig relative">
-                              <div className="w-12 h-9 rounded-lg border border-border/10 overflow-hidden bg-white shadow-lg relative transition-all group-hover/sig:scale-125 group-hover/sig:-rotate-3 z-10 group-hover/sig:border-primary">
+                              <div className="w-10 h-7 rounded border border-border/10 overflow-hidden bg-white shadow-lg relative transition-all group-hover/sig:scale-125 z-10 group-hover/sig:border-indigo-500">
                                  <NextImage 
-                                    src={pod.Signature_Url} 
-                                    alt={t('pod.auth_sig')} 
+                                    src={pod.Pickup_Signature_Url} 
+                                    alt="Pickup Sig" 
                                     fill 
-                                    sizes="48px"
-                                    className="object-contain p-1" 
+                                    sizes="40px"
+                                    className="object-contain p-0.5" 
                                  />
                               </div>
                            </div>
                         ) : (
-                           <div className="w-6 h-px bg-muted/30" />
+                           <div className="w-4 h-px bg-muted/20" />
+                        )}
+                     </div>
+                  </td>
+                  {/* Delivery Evidence */}
+                  <td className="px-4 py-3 text-center">
+                     <div className="flex items-center justify-center gap-2">
+                        {pod.Photo_Proof_Url ? (
+                           <div className="group/visual relative">
+                              <div className="w-8 h-8 rounded-lg border border-border/10 overflow-hidden bg-black shadow-lg relative transition-all group-hover/visual:scale-125 z-10 group-hover/visual:border-primary">
+                                 <NextImage 
+                                    src={pod.Photo_Proof_Url.split(',')[0]} 
+                                    alt={t('pod.visual_proof')} 
+                                    fill 
+                                    sizes="32px"
+                                    className="object-cover opacity-80 group-hover/visual:opacity-100 transition-opacity" 
+                                 />
+                              </div>
+                           </div>
+                        ) : (
+                           <div className="w-4 h-px bg-muted/20" />
+                        )}
+                        {pod.Signature_Url ? (
+                           <div className="group/sig relative">
+                              <div className="w-10 h-7 rounded border border-border/10 overflow-hidden bg-white shadow-lg relative transition-all group-hover/sig:scale-125 z-10 group-hover/sig:border-primary">
+                                 <NextImage 
+                                    src={pod.Signature_Url} 
+                                    alt={t('pod.auth_sig')} 
+                                    fill 
+                                    sizes="40px"
+                                    className="object-contain p-0.5" 
+                                 />
+                              </div>
+                           </div>
+                        ) : (
+                           <div className="w-4 h-px bg-muted/20" />
                         )}
                      </div>
                   </td>

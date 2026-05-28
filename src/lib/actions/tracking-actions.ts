@@ -74,24 +74,96 @@ export async function submitJobFeedback(
   return { success: true };
 }
 
+export async function getActiveJobs(
+  customerMode = false
+): Promise<PublicJobDetails[]> {
+  const supabase = createAdminClient();
+  
+  // Define active statuses
+  const activeStatuses = ["Assigned", "Picked Up", "In Transit", "Arrived", "SOS", "En Route", "En-Route", "New", "In Progress", "Pending"];
+
+  let dbQuery = supabase
+    .from("Jobs_Main")
+    .select("*")
+    .in("Job_Status", activeStatuses);
+
+  // If customer mode, filter by their ID
+  if (customerMode) {
+    const { getCustomerId } = await import("@/lib/permissions");
+    const customerId = await getCustomerId();
+    if (customerId) {
+      dbQuery = dbQuery.eq("Customer_ID", customerId);
+    }
+  }
+
+  const { data, error } = await dbQuery.order('Created_At', { ascending: false }).limit(20);
+
+  if (error || !data) return [];
+
+  // Map to PublicJobDetails
+  return data.map(job => ({
+    jobId: job.Job_ID,
+    trackingCode: job.Job_ID,
+    status: job.Job_Status || "Pending",
+    customerName: job.Customer_Name || "Unknown",
+    origin: job.Location_Origin_Name || job.Origin_Location || "-",
+    destination: job.Location_Destination_Name || job.Dest_Location || "-",
+    driverName: job.Driver_Name || "-",
+    driverPhone: "-",
+    vehiclePlate: job.Vehicle_Plate || "-",
+    planDate: job.Plan_Date || "-",
+    pickupDate: job.Actual_Pickup_Time || null,
+    deliveryDate: (job.Delivery_Date && job.Actual_Delivery_Time) 
+      ? `${job.Delivery_Date}T${job.Actual_Delivery_Time}`
+      : (job.Actual_Delivery_Time || null),
+    pickupPhotos: job.Pickup_Photo_Url ? job.Pickup_Photo_Url.split(",").filter(Boolean) : [],
+    podPhotos: job.Photo_Proof_Url ? job.Photo_Proof_Url.split(",").filter(Boolean) : [],
+    signature: job.Signature_Proof_Url || job.Signature_Url || null,
+    pickupSignature: job.Signature_Pickup_Url || job.Pickup_Signature_Url || null,
+    notes: job.Notes || null,
+    customerPhone: job.Phone || job.Customer_Phone || null,
+    cargoType: job.Cargo_Type || null,
+    weight: job.Weight_Kg || job.Weight || null,
+    volume: job.Volume_Cbm || job.Volume || null,
+    vehicleType: job.Vehicle_Type || null,
+    pickupLat: job.Pickup_Lat,
+    pickupLon: job.Pickup_Lon,
+    dropoffLat: job.Delivery_Lat || job.Dropoff_Lat,
+    dropoffLon: job.Delivery_Lon || job.Dropoff_Lon,
+    priceCustBase: job.Price_Cust_Base,
+    priceCustExtra: job.Price_Cust_Extra,
+    priceCustTotal: job.Price_Cust_Total,
+    extraCostsJson: job.extra_costs_json || job.extra_costs,
+  }));
+}
+
 export async function getPublicJobDetails(
   jobId: string,
 ): Promise<PublicJobDetails | null> {
   const supabase = createAdminClient();
 
-  // Query Jobs_Main with all relevant columns
-  // Query Jobs_Main: Search by Job_ID OR if Ref_No contains the jobId (SO number)
-  const { data: job, error } = await supabase
+  // Split jobId by comma in case user provides multiple IDs (like SO numbers)
+  const tokens = jobId.split(',').map(t => t.trim()).filter(Boolean);
+  
+  if (tokens.length === 0) return null;
+
+  // Build a comprehensive OR filter for all tokens
+  const orConditions = tokens.flatMap(token => [
+    `Job_ID.eq."${token}"`,
+    `Notes.ilike."%${token}%"`
+  ]).join(',');
+
+  const { data: jobs, error } = await supabase
     .from("Jobs_Main")
     .select("*")
-    .or(`Job_ID.eq."${jobId}",Notes.ilike."%${jobId}%"`)
-    .order('Created_At', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .or(orConditions)
+    .order('Created_At', { ascending: false });
 
-  if (error || !job) {
+  if (error || !jobs || jobs.length === 0) {
     return null;
   }
+
+  const job = jobs[0];
 
   // Process Photos
   const pickupPhotos = job.Pickup_Photo_Url
@@ -101,8 +173,6 @@ export async function getPublicJobDetails(
     ? job.Photo_Proof_Url.split(",").filter(Boolean)
     : [];
 
-  // Fetch latest location for the vehicle/driver associated with this job
-  // Use admin client to bypass RLS for public tracking page
   let lastLocation = null;
   if (["Assigned", "Picked Up", "In Transit", "Arrived", "SOS", "En Route", "En-Route"].includes(job.Job_Status)) {
     const adminSupabase = createAdminClient();
@@ -125,7 +195,7 @@ export async function getPublicJobDetails(
 
   return {
     jobId: job.Job_ID,
-    trackingCode: job.Job_ID,
+    trackingCode: jobId,
     status: job.Job_Status || "Pending",
     customerName: job.Customer_Name || "Unknown",
     origin: job.Location_Origin_Name || job.Origin_Location || "-",
@@ -140,9 +210,8 @@ export async function getPublicJobDetails(
       : (job.Actual_Delivery_Time || null),
     pickupPhotos,
     podPhotos,
-    signature: job.Signature_Proof_Url || job.Signature_Url || (job as Record<string, unknown>).signature_url || null,
-    pickupSignature:
-      job.Signature_Pickup_Url || job.Pickup_Signature_Url || (job as Record<string, unknown>).pickup_signature_url || null,
+    signature: job.Signature_Proof_Url || job.Signature_Url || null,
+    pickupSignature: job.Signature_Pickup_Url || job.Pickup_Signature_Url || null,
     lastLocation,
     notes: job.Notes || null,
     customerPhone: job.Phone || job.Customer_Phone || null,
@@ -152,7 +221,7 @@ export async function getPublicJobDetails(
     vehicleType: job.Vehicle_Type || null,
     pickupLat: job.Pickup_Lat,
     pickupLon: job.Pickup_Lon,
-    dropoffLat: job.Delivery_Lat || job.Dropoff_Lat, // Use Delivery_Lat for compatibility
+    dropoffLat: job.Delivery_Lat || job.Dropoff_Lat,
     dropoffLon: job.Delivery_Lon || job.Dropoff_Lon,
     priceCustBase: job.Price_Cust_Base,
     priceCustExtra: job.Price_Cust_Extra,

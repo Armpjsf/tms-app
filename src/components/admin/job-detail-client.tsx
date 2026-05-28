@@ -475,6 +475,78 @@ export function JobDetailClient({ job, routeHistory }: JobDetailClientProps) {
         )}
       </div>
 
+      {/* 4.5 Pickup Evidence Hub (Inception Phase) */}
+      {(job.Pickup_Photo_Url || job.Pickup_Signature_Url) && (
+        <PremiumCard className="bg-slate-950/20 border border-white/5 shadow-2xl rounded-3xl overflow-hidden mb-8">
+            <div className="p-6 border-b border-white/5 bg-black/40 flex items-center justify-between">
+            <h3 className="text-sm font-black text-foreground uppercase tracking-[0.3em] flex items-center gap-2.5 italic">
+                <Package className="h-4 w-4 text-indigo-400" /> {t('job_detail.pickup_proof') || 'หลักฐานการรับสินค้า (Pickup)'}
+            </h3>
+            <div className="px-3 py-1 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-[10px] font-black text-indigo-400 uppercase tracking-widest italic">INCEPTION PHASE</div>
+            </div>
+            <CardContent className="p-8">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                    {/* Pickup Photos Section */}
+                    <div className="md:col-span-8 space-y-4">
+                        <h3 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2 italic">
+                            <Camera className="h-3.5 w-3.5 text-indigo-400" /> {t('job_detail.pickup_visual_proof') || 'ภาพถ่ายขณะรับสินค้า'}
+                        </h3>
+                        {job.Pickup_Photo_Url ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                {job.Pickup_Photo_Url.split(',').map((url: string, i: number) => (
+                                    <div key={i} className="relative aspect-square bg-slate-950 rounded-2xl overflow-hidden border border-white/5 group cursor-pointer shadow-xl">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img 
+                                            src={url} 
+                                            alt={`Pickup ${i+1}`} 
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-indigo-500/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                                            <a href={url} target="_blank" rel="noreferrer" className="transform group-hover:rotate-12 transition-transform">
+                                                <div className="p-3 bg-white rounded-full text-indigo-600 shadow-2xl">
+                                                    <Eye className="h-4 w-4" />
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-8 text-center text-muted-foreground border border-dashed border-white/5 rounded-2xl bg-black/25 italic font-black uppercase tracking-widest text-xs">
+                                NO PICKUP PHOTOS CAPTURED
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Pickup Signature Section */}
+                    <div className="md:col-span-4 space-y-4">
+                        <h3 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2 italic">
+                            <PenTool className="h-3.5 w-3.5 text-indigo-400" /> {t('job_detail.pickup_signature') || 'ลายเซ็นต้นทาง/คลังสินค้า'}
+                        </h3>
+                        {job.Pickup_Signature_Url ? (
+                            <div className="relative aspect-square w-full bg-white rounded-2xl overflow-hidden border-2 border-indigo-500/20 shadow-2xl flex items-center justify-center p-8 group">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img 
+                                    src={job.Pickup_Signature_Url} 
+                                    alt="Pickup Signature" 
+                                    className="w-full h-full object-contain filter contrast-125"
+                                />
+                                <div className="absolute bottom-4 right-4 px-3 py-1 bg-slate-950 rounded-xl border border-indigo-500/20 text-[9px] font-black text-indigo-400 uppercase tracking-widest italic shadow-lg">
+                                    AUTHENTICATED ORIGIN
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="aspect-square w-full rounded-2xl border border-dashed border-white/5 flex flex-col items-center justify-center gap-3 text-muted-foreground bg-black/25 italic font-black uppercase tracking-widest text-xs">
+                                <PenTool className="text-muted-foreground/30" size={24} />
+                                NO PICKUP SIGNATURE
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </CardContent>
+        </PremiumCard>
+      )}
+
       {/* 5. Proof of Delivery (POD) Hub (Completion Phase) */}
       <PremiumCard className="bg-slate-950/20 border border-white/5 shadow-2xl rounded-3xl overflow-hidden">
         <div className="p-6 border-b border-white/5 bg-black/40 flex items-center justify-between">

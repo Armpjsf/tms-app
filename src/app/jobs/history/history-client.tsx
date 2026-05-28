@@ -334,16 +334,14 @@ export function HistoryClient({
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1.5">
                                         <p className="text-foreground font-black text-sm tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase truncate">{job.Job_ID}</p>
-                                        <a 
-                                            href={`/track/${job.Job_ID}`} 
-                                            target="_blank" 
-                                            rel="noreferrer"
+                                        <Link 
+                                            href={customerMode ? `/dashboard/tracking?q=${job.Job_ID}` : `/admin/tracking?q=${job.Job_ID}`} 
                                             className="p-1 text-muted-foreground hover:text-indigo-400 bg-white/5 hover:bg-indigo-500/10 rounded border border-white/5 transition-all shrink-0"
-                                            title="เปิดหน้าติดตามงาน (Track)"
+                                            title="ติดตามงานใน Tracking Hub"
                                             onClick={(e) => e.stopPropagation()}
                                         >
-                                            <ExternalLink size={10} strokeWidth={2.5} />
-                                        </a>
+                                            <Activity size={10} strokeWidth={2.5} />
+                                        </Link>
                                     </div>
                                     <div className="flex items-center gap-1.5 mt-0.5">
                                         <Clock size={10} className="text-muted-foreground" />
@@ -397,38 +395,83 @@ export function HistoryClient({
                                 )}
                             </div>
 
-                            {/* Section 5: POD Photos */}
-                            <div className="flex items-center justify-center gap-2 shrink-0">
-                                {job.Photo_Proof_Url ? (
-                                    <div className="relative w-8 h-8 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-muted/50 group/img ring-2 ring-primary/0 hover:ring-primary/40 transition-all duration-500">
-                                        <NextImage 
-                                            src={job.Photo_Proof_Url.split(',')[0]} 
-                                            alt="POD Photo" 
-                                            fill 
-                                            className="object-cover group-hover/img:scale-125 transition-transform duration-1000" 
-                                        />
-                                        <a href={job.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-primary/40 opacity-0 group-hover/img:opacity-100 transition-opacity">
-                                            <Eye size={12} className="text-foreground" />
-                                        </a>
+                            {/* Section 5: Pickup & POD Photos */}
+                            <div className="flex items-center justify-center gap-3 shrink-0">
+                                {/* Pickup Evidence */}
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className="flex items-center gap-1">
+                                        {job.Pickup_Photo_Url ? (
+                                            <div className="relative w-7 h-7 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-muted/50 group/img ring-2 ring-indigo-500/0 hover:ring-indigo-500/40 transition-all duration-500">
+                                                <NextImage 
+                                                    src={job.Pickup_Photo_Url.split(',')[0]} 
+                                                    alt="Pickup Photo" 
+                                                    fill 
+                                                    className="object-cover group-hover/img:scale-125 transition-transform duration-1000" 
+                                                />
+                                                <a href={job.Pickup_Photo_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-indigo-500/40 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                                    <Eye size={10} className="text-foreground" />
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <div className="w-7 h-7 rounded-lg border border-dashed border-border/5 flex items-center justify-center text-muted-foreground/30">
+                                                <ImageIcon size={10} strokeWidth={1.5} />
+                                            </div>
+                                        )}
+                                        {job.Pickup_Signature_Url ? (
+                                            <div className="relative w-9 h-7 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-white p-1 group/sig ring-2 ring-indigo-500/0 hover:ring-indigo-500/40 transition-all duration-500">
+                                                <NextImage 
+                                                    src={job.Pickup_Signature_Url} 
+                                                    alt="Pickup Sig" 
+                                                    fill 
+                                                    className="object-contain p-0.5" 
+                                                />
+                                                <a href={job.Pickup_Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-indigo-500/40 opacity-0 group-hover/img:opacity-100 transition-opacity" />
+                                            </div>
+                                        ) : (
+                                            <div className="w-9 h-7 rounded-lg border border-dashed border-border/5" />
+                                        )}
                                     </div>
-                                ) : (
-                                    <div className="w-8 h-8 rounded-lg border border-dashed border-border/5 flex items-center justify-center text-muted-foreground transition-colors group-hover/row:border-primary/20">
-                                        <ImageIcon size={12} strokeWidth={1.5} />
+                                    <span className="text-[7px] font-black text-indigo-400 uppercase tracking-widest leading-none">PICKUP</span>
+                                </div>
+
+                                <div className="h-6 w-px bg-white/5 mx-1" />
+
+                                {/* Delivery Evidence */}
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className="flex items-center gap-1">
+                                        {job.Photo_Proof_Url ? (
+                                            <div className="relative w-7 h-7 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-muted/50 group/img ring-2 ring-primary/0 hover:ring-primary/40 transition-all duration-500">
+                                                <NextImage 
+                                                    src={job.Photo_Proof_Url.split(',')[0]} 
+                                                    alt="POD Photo" 
+                                                    fill 
+                                                    className="object-cover group-hover/img:scale-125 transition-transform duration-1000" 
+                                                />
+                                                <a href={job.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-primary/40 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                                    <Eye size={10} className="text-foreground" />
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <div className="w-7 h-7 rounded-lg border border-dashed border-border/5 flex items-center justify-center text-muted-foreground/30">
+                                                <ImageIcon size={10} strokeWidth={1.5} />
+                                            </div>
+                                        )}
+                                        {job.Signature_Url ? (
+                                            <div className="relative w-9 h-7 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-white p-1 group/sig ring-2 ring-accent/0 hover:ring-accent/40 transition-all duration-500">
+                                                <NextImage 
+                                                    src={job.Signature_Url} 
+                                                    alt="Signature" 
+                                                    fill 
+                                                    className="object-contain p-0.5 group-hover/sig:scale-110 transition-transform duration-700" 
+                                                />
+                                                <a href={job.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-accent/40 opacity-0 group-hover/sig:opacity-100 transition-opacity" />
+                                            </div>
+                                        ) : (
+                                            <div className="w-9 h-7 rounded-lg border border-dashed border-border/5 transition-colors group-hover/row:border-accent/20" />
+                                        )}
                                     </div>
-                                )}
-                                {job.Signature_Url ? (
-                                    <div className="relative w-10 h-8 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-muted/80 p-1.5 group/sig ring-2 ring-accent/0 hover:ring-accent/40 transition-all duration-500">
-                                        <NextImage 
-                                            src={job.Signature_Url} 
-                                            alt="Signature" 
-                                            fill 
-                                            className="object-contain p-1 group-hover/sig:scale-110 transition-transform duration-700 invert group-hover/sig:invert-0" 
-                                        />
-                                        <a href={job.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-accent/40 opacity-0 group-hover/sig:opacity-100 transition-opacity" />
-                                    </div>
-                                ) : (
-                                    <div className="w-10 h-8 rounded-lg border border-dashed border-border/5 transition-colors group-hover/row:border-accent/20" />
-                                )}
+                                    <span className="text-[7px] font-black text-primary uppercase tracking-widest leading-none">DELIVERY</span>
+                                </div>
                             </div>
 
                             {/* Section 6: Pricing Matrix */}

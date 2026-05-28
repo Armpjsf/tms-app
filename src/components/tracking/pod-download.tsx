@@ -188,17 +188,40 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
         }
 
         // Evidence
-        container.appendChild(createSectionHeader('3. DELIVERY EVIDENCE & SIGNATURES'))
+        container.appendChild(createSectionHeader('3. SHIPMENT EVIDENCE'))
         const evidence = document.createElement('div')
         
-        const pPhL = document.createElement('p')
-        pPhL.style.cssText = 'margin: 0 0 15px 0; font-size: 11px; font-weight: 950; color: #64748b; text-transform: uppercase;'
-        pPhL.textContent = 'Photo Proofs'
-        evidence.appendChild(pPhL)
+        // Pickup Photos
+        if (job.pickupPhotos && job.pickupPhotos.length > 0) {
+            const pPhL = document.createElement('p')
+            pPhL.style.cssText = 'margin: 0 0 15px 0; font-size: 11px; font-weight: 950; color: #6366f1; text-transform: uppercase;'
+            pPhL.textContent = 'Inception Proofs (Pickup Photos)'
+            evidence.appendChild(pPhL)
+
+            const photoGrid = document.createElement('div')
+            photoGrid.style.cssText = 'margin-top: 5px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px;'
+            job.pickupPhotos.forEach(url => {
+                const imgBox = document.createElement('div')
+                imgBox.style.cssText = 'aspect-ratio: 4/3; border-radius: 12px; overflow: hidden; background: #f1f5f9; border: 1px solid #e2e8f0;'
+                const img = document.createElement('img')
+                img.src = url
+                img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;'
+                img.setAttribute('crossorigin', 'anonymous')
+                imgBox.appendChild(img)
+                photoGrid.appendChild(imgBox)
+            })
+            evidence.appendChild(photoGrid)
+        }
+
+        // Delivery Photos
+        const pPodL = document.createElement('p')
+        pPodL.style.cssText = 'margin: 0 0 15px 0; font-size: 11px; font-weight: 950; color: #10b981; text-transform: uppercase;'
+        pPodL.textContent = 'Completion Proofs (Delivery Photos)'
+        evidence.appendChild(pPodL)
 
         if (job.podPhotos && job.podPhotos.length > 0) {
             const photoGrid = document.createElement('div')
-            photoGrid.style.cssText = 'margin-top: 15px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 35px;'
+            photoGrid.style.cssText = 'margin-top: 5px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 35px;'
             job.podPhotos.forEach(url => {
                 const imgBox = document.createElement('div')
                 imgBox.style.cssText = 'aspect-ratio: 4/3; border-radius: 12px; overflow: hidden; background: #f1f5f9; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);'
@@ -213,7 +236,7 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
         } else {
             const emptyP = document.createElement('p')
             emptyP.style.cssText = 'color: #94a3b8; font-size: 13px; font-style: italic; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px dashed #e2e8f0; text-align: center; margin-bottom: 35px;'
-            emptyP.textContent = 'ไม่มีภาพถ่ายหลักฐานในระบบ'
+            emptyP.textContent = 'ไม่มีภาพถ่ายหลักฐานการจัดส่งในระบบ'
             evidence.appendChild(emptyP)
         }
 
