@@ -159,6 +159,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                         status={job.status}
                         pickup={{ lat: job.pickupLat ?? null, lng: job.pickupLon ?? null, name: job.origin }}
                         dropoff={{ lat: job.dropoffLat ?? null, lng: job.dropoffLon ?? null, name: job.destination }}
+                        vehiclePlate={job.vehiclePlate}
                     />
                 </div>
             </div>

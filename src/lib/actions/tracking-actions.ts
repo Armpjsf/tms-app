@@ -159,25 +159,50 @@ export async function getPublicJobDetails(
     jobs = splitJobs;
     error = splitError || exactError;
 
-    // If no jobs found by exact Job_ID tokens, try searching Notes, original_destinations_json, Dest_Location, and Job_ID for SO numbers
+    // If no jobs found by exact Job_ID tokens, try searching Notes, Dest_Location, and Job_ID, or JSON destinations
     if (!jobs || jobs.length === 0) {
-        const conditions: string[] = [];
+        const textConditions: string[] = [];
         for (const token of tokens) {
-            conditions.push(`Notes.ilike.%${token}%`);
-            conditions.push(`original_destinations_json.ilike.%${token}%`);
-            conditions.push(`Dest_Location.ilike.%${token}%`);
-            conditions.push(`Job_ID.ilike.%${token}%`);
+            textConditions.push(`Notes.ilike.%${token}%`);
+            textConditions.push(`Dest_Location.ilike.%${token}%`);
+            textConditions.push(`Job_ID.ilike.%${token}%`);
         }
-
-        const { data: noteJobs } = await supabase
+        
+        const textQuery = supabase
           .from("Jobs_Main")
           .select("*")
-          .or(conditions.join(','))
+          .or(textConditions.join(','))
           .order('Created_At', { ascending: false });
-          
-        if (noteJobs && noteJobs.length > 0) {
-            jobs = noteJobs;
+
+        const jsonQueries = tokens.map(token => 
+          supabase
+            .from("Jobs_Main")
+            .select("*")
+            .contains("original_destinations_json", [{ so_no: token }])
+            .order('Created_At', { ascending: false })
+        );
+
+        const [textResult, ...jsonResults] = await Promise.all([
+          textQuery,
+          ...jsonQueries
+        ]);
+
+        let mergedJobs: any[] = [];
+        if (textResult.data) {
+          mergedJobs = [...mergedJobs, ...textResult.data];
         }
+        for (const res of jsonResults) {
+          if (res.data) {
+            mergedJobs = [...mergedJobs, ...res.data];
+          }
+        }
+
+        const seenIds = new Set();
+        jobs = mergedJobs.filter(j => {
+          if (seenIds.has(j.Job_ID)) return false;
+          seenIds.add(j.Job_ID);
+          return true;
+        });
     }
   }
 
