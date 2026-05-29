@@ -2,10 +2,17 @@ import { getActiveJobs } from "@/lib/actions/tracking-actions"
 import { TrackingHubClient } from "@/components/tracking/tracking-hub-client"
 import { Suspense } from "react"
 import { Loader2 } from "lucide-react"
+import { hasPermission } from "@/lib/permissions"
+import { redirect } from "next/navigation"
 
 export const dynamic = 'force-dynamic'
 
 export default async function CustomerTrackingPage() {
+  const canAccess = await hasPermission('navigation.customer_tracking_hub')
+  if (!canAccess) {
+    redirect('/dashboard')
+  }
+
   const activeJobs = await getActiveJobs(true) // Customer mode true
 
   return (

@@ -132,32 +132,45 @@ export async function getPublicJobDetails(
 ): Promise<PublicJobDetails | null> {
   const supabase = createAdminClient();
 
-  // Split jobId by comma in case user provides multiple IDs (like SO numbers)
-  const tokens = jobId.split(',').map(t => t.trim()).filter(Boolean);
-  
-  if (tokens.length === 0) return null;
+  let jobs = null;
+  let error = null;
 
-  // Since combining multiple exact matches and partial matches in a single string 
-  // can cause parsing issues with Supabase's .or(), we query by Job_ID using .in() first
-  let { data: jobs, error } = await supabase
+  // 1. Try exact match on the full unsplit jobId first to support manually entered keys containing commas
+  const { data: exactJobs, error: exactError } = await supabase
     .from("Jobs_Main")
     .select("*")
-    .in("Job_ID", tokens)
+    .eq("Job_ID", jobId.trim())
     .order('Created_At', { ascending: false });
 
-  // If no jobs found by exact Job_ID, try searching the Notes for SO numbers
-  if (!jobs || jobs.length === 0) {
-      // Build a safe OR condition for Notes only
-      const noteConditions = tokens.map(token => `Notes.ilike.%${token}%`).join(',');
-      const { data: noteJobs } = await supabase
-        .from("Jobs_Main")
-        .select("*")
-        .or(noteConditions)
-        .order('Created_At', { ascending: false });
-        
-      if (noteJobs && noteJobs.length > 0) {
-          jobs = noteJobs;
-      }
+  if (exactJobs && exactJobs.length > 0) {
+    jobs = exactJobs;
+  } else {
+    // 2. Fall back to split-by-comma logic if no exact match is found
+    const tokens = jobId.split(',').map(t => t.trim()).filter(Boolean);
+    if (tokens.length === 0) return null;
+
+    const { data: splitJobs, error: splitError } = await supabase
+      .from("Jobs_Main")
+      .select("*")
+      .in("Job_ID", tokens)
+      .order('Created_At', { ascending: false });
+
+    jobs = splitJobs;
+    error = splitError || exactError;
+
+    // If no jobs found by exact Job_ID tokens, try searching the Notes for SO numbers
+    if (!jobs || jobs.length === 0) {
+        const noteConditions = tokens.map(token => `Notes.ilike.%${token}%`).join(',');
+        const { data: noteJobs } = await supabase
+          .from("Jobs_Main")
+          .select("*")
+          .or(noteConditions)
+          .order('Created_At', { ascending: false });
+          
+        if (noteJobs && noteJobs.length > 0) {
+            jobs = noteJobs;
+        }
+    }
   }
 
   if (error || !jobs || jobs.length === 0) {

@@ -41,6 +41,8 @@ export const MODULE_GROUPS = [
       { key: "navigation.calendar", label: "ปฏิทินงาน", icon: CalendarDays },
       { key: "navigation.history", label: "ประวัติงาน", icon: History },
       { key: "navigation.monitoring", label: "ติดตามรถ", icon: Activity },
+      { key: "navigation.tracking_hub", label: "ศูนย์ติดตามงานสด (Admin)", icon: Activity },
+      { key: "navigation.customer_tracking_hub", label: "ศูนย์ติดตามงานลูกค้า (Customer Tracking)", icon: Activity },
       { key: "navigation.pod", label: "หลักฐานการส่งสินค้า (POD)", icon: FileText },
       { key: "navigation.notifications", label: "แจ้งเตือน & SOS", icon: AlertTriangle },
       { key: "navigation.chat", label: "แชท", icon: MessageSquare },

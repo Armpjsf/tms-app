@@ -240,7 +240,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
 
                         {/* Action */}
                         <Link href={`/mobile/jobs/${currentJob.Job_ID}`} className="block">
-                            <Button className="w-full h-14 rounded-xl bg-foreground text-white font-bold text-base shadow-lg active:scale-95 transition-all gap-2">
+                            <Button className="w-full h-14 rounded-xl bg-primary text-white font-bold text-base shadow-lg active:scale-95 transition-all gap-2">
                                 จัดการงานนี้ <ArrowUpRight className="w-4 h-4" />
                             </Button>
                         </Link>

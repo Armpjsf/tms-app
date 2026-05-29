@@ -124,7 +124,7 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
             
             <button
                 onClick={() => setShowForm(true)}
-                className="w-full bg-foreground text-white rounded-[2.5rem] p-8 text-left relative overflow-hidden shadow-2xl shadow-foreground/20 active:scale-95 transition-all group"
+                className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white rounded-[2.5rem] p-8 text-left relative overflow-hidden shadow-2xl shadow-red-600/20 active:scale-95 transition-all group"
             >
                 <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
                     <AlertOctagon size={100} />
@@ -184,7 +184,7 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
                         onClick={() => setCategory(t.value)}
                         className={cn(
                             "h-16 rounded-2xl border-2 flex items-center justify-center font-black text-sm transition-all",
-                            category === t.value ? "bg-foreground text-white border-foreground scale-[1.02] shadow-lg shadow-foreground/20" : "bg-muted/50 text-muted-foreground border-transparent hover:border-muted"
+                             category === t.value ? "bg-primary text-white border-primary scale-[1.02] shadow-lg shadow-primary/20" : "bg-muted/50 text-muted-foreground border-transparent hover:border-muted"
                         )}
                       >
                         {t.label}

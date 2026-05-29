@@ -151,7 +151,7 @@ export default function PermissionsPage() {
                                 className={cn(
                                     "w-full h-16 px-6 rounded-2xl flex items-center justify-between font-black uppercase tracking-widest transition-all active:scale-95",
                                     selectedRole === role 
-                                    ? "bg-foreground text-white shadow-2xl shadow-foreground/20 scale-[1.02]" 
+                                    ? "bg-primary text-white shadow-2xl shadow-primary/20 scale-[1.02]" 
                                     : "bg-background/40 text-slate-500 border border-border/10 hover:bg-muted/50"
                                 )}
                             >

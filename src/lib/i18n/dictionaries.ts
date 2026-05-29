@@ -205,6 +205,7 @@ export const dictionaries = {
       danger_zones: 'พื้นที่อันตราย',
       tracking_hub: 'ศูนย์ติดตามงานสด',
       billing_automation: 'ระบบวางบิลอัตโนมัติ',
+      customer_tracking_hub: 'ศูนย์ติดตามงานลูกค้า',
     },
     automation: {
       title: 'ศูนย์ควบคุมการวางบิลอัตโนมัติ',
@@ -2095,6 +2096,7 @@ export const dictionaries = {
       danger_zones: 'Danger Zones',
       tracking_hub: 'Live Tracking Radar',
       billing_automation: 'Billing Automation',
+      customer_tracking_hub: 'Customer Tracking Hub',
     },
     assignments: {
       carrier_type: 'Carrier Type',

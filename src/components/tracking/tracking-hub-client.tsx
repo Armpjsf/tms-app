@@ -101,13 +101,6 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
   }
 
   // Financial Helpers
-  // Ensure we fall back to 0 if undefined, or to total if base is missing but total exists.
-  const priceCustTotal = Number(selectedJob?.priceCustTotal || 0)
-  const costDriverTotal = Number(selectedJob?.costDriverTotal || 0)
-  const priceCustBase = Number(selectedJob?.priceCustBase || priceCustTotal) // Fallback to total if base is 0
-  const costDriverBase = Number(selectedJob?.costDriverBase || costDriverTotal) // Fallback to total if base is 0
-  const netMargin = priceCustTotal - costDriverTotal
-
   let extraCostsList: any[] = []
   if (selectedJob?.extraCostsJson) {
     try {
@@ -117,6 +110,23 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
       if (Array.isArray(parsed)) extraCostsList = parsed
     } catch {}
   }
+
+  // Calculate Extra Costs sums dynamically
+  let extraCustSum = 0
+  let extraDriverSum = 0
+  extraCostsList.forEach(c => {
+    extraCustSum += Number(c.charge_cust || 0)
+    extraDriverSum += Number(c.cost_driver || 0)
+  })
+
+  // Retrieve Base Prices
+  const priceCustBase = Number(selectedJob?.priceCustBase || selectedJob?.priceCustTotal || 0)
+  const costDriverBase = Number(selectedJob?.costDriverBase || selectedJob?.costDriverTotal || 0)
+
+  // Calculate dynamic Total Revenue and Driver Payout including minor extra costs
+  const priceCustTotal = priceCustBase + extraCustSum
+  const costDriverTotal = costDriverBase + extraDriverSum
+  const netMargin = priceCustTotal - costDriverTotal
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-140px)] gap-6 overflow-hidden bg-background">

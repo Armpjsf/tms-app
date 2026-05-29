@@ -31,6 +31,8 @@ import {
   ShieldCheck,
   ShieldAlert,
   Key,
+  Compass,
+  MapPin,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
@@ -55,17 +57,17 @@ const navigation: NavGroup[] = [
     titleKey: "nav_groups.ops_command",
     items: [
       { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
-      { titleKey: "navigation.user_monitor", href: "/admin/monitoring/users", icon: <Activity size={20} />, badge: "common.live", badgeColor: "green" },
+      { titleKey: "navigation.user_monitor", href: "/admin/monitoring/users", icon: <Users size={20} /> },
     ],
   },
   {
     titleKey: "nav_groups.operations",
     items: [
       { titleKey: "navigation.planning", href: "/planning", icon: <CalendarDays size={20} /> },
-      { titleKey: "navigation.tracking_hub", href: "/admin/tracking", icon: <Activity size={20} />, badge: "common.live", badgeColor: "blue" },
+      { titleKey: "navigation.tracking_hub", href: "/admin/tracking", icon: <Compass size={20} /> },
       { titleKey: "navigation.calendar", href: "/calendar", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
-      { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "common.live", badgeColor: "green" },
+      { titleKey: "navigation.monitoring", href: "/monitoring", icon: <MapPin size={20} /> },
       { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
       { titleKey: "navigation.notifications", href: "/notifications", icon: <AlertTriangle size={20} />, badgeColor: "red" },
       { titleKey: "navigation.chat", href: "/chat", icon: <MessageSquare size={20} />, badgeColor: "blue" },    
@@ -113,6 +115,25 @@ const navigation: NavGroup[] = [
   },
 ]
 
+const customerNavigation: NavGroup[] = [
+  {
+    titleKey: "nav_groups.client_portal",
+    items: [
+      { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+      { titleKey: "navigation.customer_tracking_hub", href: "/dashboard/tracking", icon: <Compass size={20} /> },
+      { titleKey: "navigation.monitoring", href: "/monitoring", icon: <MapPin size={20} /> },
+      { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
+      { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
+    ],
+  },
+  {
+    titleKey: "nav_groups.documents",
+    items: [
+      { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
+    ]
+  }
+]
+
 interface SidebarProps {
   collapsed?: boolean
   onToggle?: () => void
@@ -123,9 +144,11 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const { t } = useLanguage()
   const [sidebarState, setSidebarState] = React.useState<{
     allowedMenus: string[] | null
+    isCustomerUser: boolean
     isLoaded: boolean
   }>({
     allowedMenus: null,
+    isCustomerUser: false,
     isLoaded: false
   })
 
@@ -133,11 +156,16 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
     async function loadPermissions() {
         // 1. Instant Cache Load
         const cachedContent = localStorage.getItem("sidebar_permissions")
+        const cachedCustomer = localStorage.getItem("sidebar_is_customer")
         if (cachedContent) {
             try {
                 let parsed = JSON.parse(cachedContent)
                 if (parsed && parsed.length === 0) parsed = null
-                setSidebarState({ allowedMenus: parsed, isLoaded: true })
+                setSidebarState({ 
+                    allowedMenus: parsed, 
+                    isCustomerUser: cachedCustomer === 'true',
+                    isLoaded: true 
+                })
             } catch (e) {}
         }
 
@@ -146,28 +174,34 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
             const { getEffectivePermissions } = await import("@/lib/actions/permission-actions")
             let perms = await getEffectivePermissions()
 
-            // Optional: Re-fetch profile for Role-specific hardcoded overrides if needed
-            // But getEffectivePermissions should handle the core logic.
-            // If it's a Super Admin, it returns null, which the sidebar interprets as "Show All".
+            const { getUserRole, isCustomer } = await import("@/lib/permissions")
+            const { getUserProfile } = await import("@/lib/supabase/users")
+            
+            const role = await getUserRole()
+            const profile = await getUserProfile()
+            const isCust = (await isCustomer()) || (Number(role) === 7) || (profile?.Role === 'Customer')
 
             localStorage.setItem("sidebar_permissions", JSON.stringify(perms))
+            localStorage.setItem("sidebar_is_customer", String(isCust))
             setSidebarState({
                 allowedMenus: perms,
+                isCustomerUser: !!isCust,
                 isLoaded: true
             })
         } catch (error) {
             console.error("Sidebar permission error:", error)
             if (!cachedContent) {
-                setSidebarState({ allowedMenus: [], isLoaded: true })
+                setSidebarState({ allowedMenus: [], isCustomerUser: false, isLoaded: true })
             }
         }
     }
     loadPermissions()
   }, [])
 
-  const { allowedMenus, isLoaded } = sidebarState
+  const { allowedMenus, isCustomerUser, isLoaded } = sidebarState
+  const activeNavigation = isCustomerUser ? customerNavigation : navigation
 
-  const filteredNavigation = navigation.map(group => ({
+  const filteredNavigation = activeNavigation.map(group => ({
     ...group,
     items: group.items.filter(item => {
         if (!isLoaded) return false // Don't show until loaded to prevent "มาๆหายๆ"
@@ -361,7 +395,7 @@ function SidebarItem({ item, collapsed, pathname, t }: { item: NavItem, collapse
 
                 {!collapsed && (
                 <span className={cn(
-                    "text-lg font-bold tracking-normal z-10 transition-colors duration-300",
+                    "text-sm font-bold tracking-wide z-10 transition-colors duration-300 whitespace-nowrap",
                     isActive ? "text-accent dark:text-foreground font-black" : "text-secondary-foreground/80 group-hover:text-foreground"
                 )}>
                     {t(item.titleKey)}
