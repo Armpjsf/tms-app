@@ -137,17 +137,28 @@ export async function getPublicJobDetails(
   
   if (tokens.length === 0) return null;
 
-  // Build a comprehensive OR filter for all tokens
-  const orConditions = tokens.flatMap(token => [
-    `Job_ID.eq."${token}"`,
-    `Notes.ilike."%${token}%"`
-  ]).join(',');
-
-  const { data: jobs, error } = await supabase
+  // Since combining multiple exact matches and partial matches in a single string 
+  // can cause parsing issues with Supabase's .or(), we query by Job_ID using .in() first
+  let { data: jobs, error } = await supabase
     .from("Jobs_Main")
     .select("*")
-    .or(orConditions)
+    .in("Job_ID", tokens)
     .order('Created_At', { ascending: false });
+
+  // If no jobs found by exact Job_ID, try searching the Notes for SO numbers
+  if (!jobs || jobs.length === 0) {
+      // Build a safe OR condition for Notes only
+      const noteConditions = tokens.map(token => `Notes.ilike.%${token}%`).join(',');
+      const { data: noteJobs } = await supabase
+        .from("Jobs_Main")
+        .select("*")
+        .or(noteConditions)
+        .order('Created_At', { ascending: false });
+        
+      if (noteJobs && noteJobs.length > 0) {
+          jobs = noteJobs;
+      }
+  }
 
   if (error || !jobs || jobs.length === 0) {
     return null;
@@ -158,10 +169,15 @@ export async function getPublicJobDetails(
   let lastLocation = null;
   if (job.Driver_ID) {
     const adminSupabase = createAdminClient();
+    // Optimize GPS log query by checking only the last 3 days to prevent massive table scans
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
     const { data: gpsData } = await adminSupabase
       .from("gps_logs")
       .select("*")
       .eq("driver_id", job.Driver_ID) 
+      .gte("timestamp", threeDaysAgo.toISOString())
       .order("timestamp", { ascending: false })
       .limit(1);
 
