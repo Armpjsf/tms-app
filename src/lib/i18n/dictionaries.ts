@@ -177,6 +177,8 @@ export const dictionaries = {
       pod: 'หลักฐานการส่งสินค้า (POD)',
       notifications: 'แจ้งเตือน & SOS',
       chat: 'แชท',
+      jobs: 'รายการงาน',
+      job: 'รายการงาน',
       drivers: 'พนักงานขับรถ',
       fleet: 'ยานพาหนะ',
       fleet_intelligence: 'วิเคราะห์ความเสี่ยง Fleet',
@@ -1306,6 +1308,7 @@ export const dictionaries = {
         historical_node: 'บันทึกประวัติ',
         integrity: 'ความถูกต้อง',
         agent: 'ผู้ดำเนินการ',
+        price_matrix: 'ราคา/ค่าเที่ยว',
     },
     days: {
       sun: 'อาทิตย์',
@@ -2068,6 +2071,8 @@ export const dictionaries = {
       pod: 'Proof of Delivery',
       notifications: 'SOS & Alerts',
       chat: 'Chat',
+      jobs: 'Jobs',
+      job: 'Job',
       drivers: 'Drivers',
       fleet: 'Fleet',
       fleet_intelligence: 'Fleet Intelligence',
@@ -3188,6 +3193,7 @@ export const dictionaries = {
         historical_node: 'History',
         integrity: 'Accuracy',
         agent: 'Operator',
+        price_matrix: 'Price Matrix',
     },
     days: {
       sun: 'Sunday',

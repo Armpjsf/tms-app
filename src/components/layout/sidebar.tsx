@@ -20,6 +20,7 @@ import {
   Navigation,
   Users,
   Building,
+  Calendar,
   CalendarDays,
   Receipt,
   Wallet,
@@ -65,10 +66,9 @@ const navigation: NavGroup[] = [
     items: [
       { titleKey: "navigation.planning", href: "/planning", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.tracking_hub", href: "/admin/tracking", icon: <Compass size={20} /> },
-      { titleKey: "navigation.calendar", href: "/calendar", icon: <CalendarDays size={20} /> },
+      { titleKey: "navigation.calendar", href: "/calendar", icon: <Calendar size={20} /> },
       { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
       { titleKey: "navigation.monitoring", href: "/monitoring", icon: <MapPin size={20} /> },
-      { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
       { titleKey: "navigation.notifications", href: "/notifications", icon: <AlertTriangle size={20} />, badgeColor: "red" },
       { titleKey: "navigation.chat", href: "/chat", icon: <MessageSquare size={20} />, badgeColor: "blue" },    
     ],
@@ -126,12 +126,6 @@ const customerNavigation: NavGroup[] = [
       { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
     ],
   },
-  {
-    titleKey: "nav_groups.documents",
-    items: [
-      { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
-    ]
-  }
 ]
 
 interface SidebarProps {
@@ -387,8 +381,8 @@ function SidebarItem({ item, collapsed, pathname, t }: { item: NavItem, collapse
                 )}
 
                 <div className={cn(
-                    "flex-shrink-0 transition-all duration-300 z-10",
-                    isActive ? "text-primary scale-110" : "group-hover:scale-110 group-hover:text-primary/80"   
+                    "flex-shrink-0 transition-all duration-300 z-10 text-accent",
+                    isActive ? "scale-110" : "group-hover:scale-110 group-hover:text-accent/80"   
                 )}>
                     {item.icon}
                 </div>

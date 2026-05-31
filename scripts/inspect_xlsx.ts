@@ -18,8 +18,9 @@ function inspectFile(filename: string) {
     console.log(`--- Inspection of ${filename} ---`);
     console.log(`Sheet Name: ${sheetName}`);
     
-    // Print first 10 rows to be safe and find Row 7 (index 6)
-    for (let i = 0; i < Math.min(data.length as number, 15); i++) {
+    // Print rows 25-45 to find footer
+    console.log(`--- Footer Area of ${filename} ---`);
+    for (let i = 24; i < Math.min(data.length as number, 45); i++) {
         console.log(`Row ${i + 1}:`, (data as any[])[i]);
     }
     console.log('\n');

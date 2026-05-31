@@ -32,25 +32,25 @@ export default async function FleetDashboardPage(props: { searchParams: Promise<
   ])
 
   return (
-    <div className="space-y-12 pb-20 p-4 lg:p-10 bg-background">
+    <div className="space-y-8 pb-10 p-4 lg:p-6 bg-background">
       {/* Tactical Fleet Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-2xl relative overflow-hidden group">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-background/60 backdrop-blur-3xl p-6 lg:p-8 rounded-br-[4rem] rounded-tl-[2rem] border border-border/5 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
           
-          <div className="relative z-10 space-y-8">
-              <Link href="/admin/analytics" className="inline-flex items-center gap-2 text-muted-foreground hover:text-emerald-500 transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
-                  <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+          <div className="relative z-10 space-y-4">
+              <Link href="/admin/analytics" className="inline-flex items-center gap-2 text-muted-foreground hover:text-emerald-500 transition-all font-black uppercase tracking-[0.4em] text-xs font-bold group/back italic">
+                  <ArrowLeft className="w-3 h-3 group-hover/back:-translate-x-1 transition-transform" /> 
                   Strategic Intelligence
               </Link>
-              <div className="flex items-center gap-6">
-                  <div className="p-4 bg-emerald-500/20 rounded-[2.5rem] border-2 border-emerald-500/30 shadow-[0_0_40px_rgba(16,185,129,0.2)] text-emerald-400 group-hover:scale-110 transition-all duration-500">
-                      <Truck size={42} strokeWidth={2.5} />
+              <div className="flex items-center gap-4">
+                  <div className="p-3 bg-emerald-500/20 rounded-[1.5rem] border-2 border-emerald-500/30 shadow-[0_0_40px_rgba(16,185,129,0.2)] text-emerald-400 group-hover:scale-110 transition-all duration-500">
+                      <Truck size={32} strokeWidth={2.5} />
                   </div>
                   <div>
-                      <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
+                      <h1 className="text-3xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
                           Fleet Nexus
                       </h1>
-                      <p className="text-base font-bold font-black text-emerald-500 uppercase tracking-[0.6em] mt-2 opacity-80 italic">Asset Optimization & Tactical Performance Matrix</p>
+                      <p className="text-xs font-bold font-black text-emerald-500 uppercase tracking-[0.4em] mt-1 opacity-80 italic">Asset Optimization & Tactical Performance Matrix</p>
                   </div>
               </div>
           </div>
@@ -85,31 +85,31 @@ export default async function FleetDashboardPage(props: { searchParams: Promise<
                       <div className="space-y-6">
                           <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-2">ACTIVE_RATIO_SYNC</p>
                           <div className="flex items-baseline gap-4">
-                              <span className="text-7xl font-black text-foreground italic premium-text-gradient">{opStats.fleet.utilization.toFixed(1)}%</span>
-                              <span className="text-base font-bold text-emerald-400 font-black flex items-center gap-1 uppercase tracking-widest italic animate-pulse">
-                                  <TrendingUp size={14} /> TGT_85%
+                              <span className="text-5xl font-black text-foreground italic premium-text-gradient">{opStats.fleet.utilization.toFixed(1)}%</span>
+                              <span className="text-xs font-bold text-emerald-400 font-black flex items-center gap-1 uppercase tracking-widest italic animate-pulse">
+                                  <TrendingUp size={12} /> TGT_85%
                               </span>
                           </div>
-                          <div className="w-full bg-muted/50 rounded-full h-3 overflow-hidden border border-border/5 shadow-inner">
+                          <div className="w-full bg-muted/50 rounded-full h-2 overflow-hidden border border-border/5 shadow-inner">
                               <div 
                                   className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-indigo-600 shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-1000" 
                                   style={{ width: `${opStats.fleet.utilization}%` }} 
                               />
                           </div>
                       </div>
-                      <div className="space-y-6 md:border-l md:border-border/5 md:pl-10">
-                          <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-2">ON_TIME_PRECISION</p>
-                          <p className="text-7xl font-black text-emerald-500 leading-none italic">{opStats.fleet.onTimeDelivery.toFixed(1)}%</p>
-                          <div className="px-5 py-2 rounded-xl bg-muted/50 border border-border/10 text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic w-fit">
+                      <div className="space-y-4 md:border-l md:border-border/5 md:pl-10">
+                          <p className="text-xs font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-1">ON_TIME_PRECISION</p>
+                          <p className="text-5xl font-black text-emerald-500 leading-none italic">{opStats.fleet.onTimeDelivery.toFixed(1)}%</p>
+                          <div className="px-4 py-1.5 rounded-xl bg-muted/50 border border-border/10 text-xs font-bold font-black text-muted-foreground uppercase tracking-widest italic w-fit">
                             // ACTUAL_VS_PLAN_DELTA
                           </div>
                       </div>
-                      <div className="space-y-6 md:border-l md:border-border/5 md:pl-10">
-                          <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-2">TRANSIT_NODES</p>
-                          <p className="text-7xl font-black text-foreground leading-none italic">{opStats.fleet.active}</p>
-                          <div className="flex items-center gap-3">
-                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,1)]" />
-                             <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">IN_FIELD_OPERATIONS: {opStats.fleet.active}</p>
+                      <div className="space-y-4 md:border-l md:border-border/5 md:pl-10">
+                          <p className="text-xs font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-1">TRANSIT_NODES</p>
+                          <p className="text-5xl font-black text-foreground leading-none italic">{opStats.fleet.active}</p>
+                          <div className="flex items-center gap-2">
+                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,1)]" />
+                             <p className="text-xs font-bold font-black text-muted-foreground uppercase tracking-widest italic">IN_FIELD_OPERATIONS: {opStats.fleet.active}</p>
                           </div>
                       </div>
                   </div>

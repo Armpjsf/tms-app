@@ -47,8 +47,8 @@ export default function RootLayout({
         className={`${outfit.variable} ${prompt.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
+        <NotificationSoundProvider />
         <ClientProviders>
-          <NotificationSoundProvider />
           {children}
         </ClientProviders>
       </body>

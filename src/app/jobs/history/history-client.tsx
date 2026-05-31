@@ -40,7 +40,7 @@ import { useState } from "react"
 interface HistoryClientProps {
   jobs: any[]
   count: number
-  stats: { success: number, failed: number, cancelled: number, total: number }
+  stats: { success: number, failed: number, cancelled: number, total: number, withPhoto: number, withSignature: number }
   drivers: any[]
   vehicles: any[]
   customers: any[]
@@ -203,12 +203,14 @@ export function HistoryClient({
       </div>
 
       {/* Metrics Matrix */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-10">
         {[
           { label: t('navigation.pod'), value: stats.total || 0, icon: Package, color: "text-muted-foreground", bg: "bg-muted/50", border: "border-border/5" },
           { label: t('common.success'), value: stats.success || 0, icon: CheckCircle2, color: "text-primary", bg: "bg-primary/20", border: "border-primary/20" },
           { label: t('common.failed'), value: stats.failed || 0, icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" },
           { label: t('common.cancelled'), value: stats.cancelled || 0, icon: XCircle, color: "text-muted-foreground", bg: "bg-muted/50", border: "border-border/5" },
+          { label: t('pod.visual_proof'), value: stats.withPhoto || 0, icon: ImageIcon, color: "text-primary", bg: "bg-primary/20", border: "border-primary/20" },
+          { label: t('pod.auth_sig'), value: stats.withSignature || 0, icon: Eye, color: "text-primary", bg: "bg-primary/20", border: "border-primary/20" },
         ].map((stat, idx) => (
           <div key={idx} className={cn(
                   "p-6 rounded-2xl border backdrop-blur-3xl shadow-xl relative overflow-hidden group transition-all hover:scale-[1.02] bg-background/40",
@@ -304,15 +306,15 @@ export function HistoryClient({
           ) : (
             <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
               {/* Header Row (Hidden on small screens) */}
-              <div className="hidden lg:grid lg:grid-cols-[1.5fr_1.5fr_1.2fr_1fr_0.8fr_1fr_1fr_0.8fr] gap-4 px-6 py-3 bg-muted/40 rounded-xl mb-4 border border-white/5">
-                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.action')} ID</div>
-                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.reports')}</div>
-                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.vehicles')}</div>
-                <div className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.integrity')}</div>
-                <div className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.pod')}</div>
-                {canViewPrice && <div className="text-right text-[10px] font-black text-primary uppercase tracking-[0.3em]">Matrix</div>}
-                <div className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.status')}</div>
-                <div className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.action')}</div>
+              <div className="hidden lg:grid lg:grid-cols-[1.5fr_1.5fr_1.2fr_1fr_0.8fr_1fr_1fr_0.8fr] gap-4 px-6 py-4 bg-muted/40 rounded-xl mb-4 border border-white/5 items-center">
+                <div className="text-2xl font-black text-accent uppercase tracking-wider">{t('jobs.col_id')}</div>
+                <div className="text-2xl font-black text-accent uppercase tracking-wider">รายละเอียด</div>
+                <div className="text-2xl font-black text-accent uppercase tracking-wider">ทะเบียน</div>
+                <div className="text-center text-2xl font-black text-accent uppercase tracking-wider">ตรวจสอบ</div>
+                <div className="text-center text-2xl font-black text-accent uppercase tracking-wider">POD</div>
+                {canViewPrice && <div className="text-right text-2xl font-black text-accent uppercase tracking-wider">{t('history.price_matrix')}</div>}
+                <div className="text-center text-2xl font-black text-accent uppercase tracking-wider">{t('common.status')}</div>
+                <div className="text-right text-2xl font-black text-accent uppercase tracking-wider">{t('common.action')}</div>
               </div>
 
               {/* Cards List */}
@@ -382,7 +384,7 @@ export function HistoryClient({
                                 ) : (
                                     <div className="flex items-center gap-1.5">
                                         <span className="w-1 h-1 rounded-full bg-slate-700 animate-ping" />
-                                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest italic shrink-0">{`${t('common.pending')} ${t('common.integrity')}`}</span>
+                                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest italic shrink-0">รอตรวจ</span>
                                     </div>
                                 )}
                                 {job.Verified_At && (

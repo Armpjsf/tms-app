@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense, useActionState } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Shield, X, Truck, Building } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -14,10 +14,28 @@ function StaffLoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<'info' | 'staff_form'>('info')
-  const [state, formAction, isPending] = useActionState(login, undefined)
+  const [isPending, setIsPending] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
   
   const queryError = searchParams.get("error")
-  const error = state?.error || queryError
+  const error = errorMessage || queryError
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setIsPending(true)
+    setErrorMessage("")
+    const formData = new FormData(event.currentTarget)
+    try {
+      const result = await login(undefined, formData)
+      if (result && result.error) {
+        setErrorMessage(result.error)
+      }
+    } catch (e: any) {
+      setErrorMessage(e.message || "เกิดข้อผิดพลาด")
+    } finally {
+      setIsPending(false)
+    }
+  }
 
   // Mobile detection and redirect
   useEffect(() => {
@@ -155,7 +173,7 @@ function StaffLoginContent() {
                         <p className="text-xl text-muted-foreground font-medium tracking-tight">Enterprise staff authentication</p>
                     </div>
 
-                    <form action={formAction} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-3 text-left">
                             <Label htmlFor="email" className="text-muted-foreground text-base font-bold font-black uppercase tracking-normal ml-1">Username / Fleet ID</Label>
                             <Input 

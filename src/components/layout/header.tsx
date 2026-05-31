@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { Search, Building2, Loader2 } from "lucide-react"
+import { Building2, Loader2 } from "lucide-react"
 import { useBranch } from "@/components/providers/branch-provider"
 import { useLanguage } from "@/components/providers/language-provider"
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
@@ -82,16 +82,6 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
             </div>
           )}
 
-        {/* Search */}
-        <div 
-          className="relative cursor-pointer group"
-          onClick={() => window.dispatchEvent(new CustomEvent('toggle-command-palette'))}
-        >
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-primary group-hover:scale-110 transition-transform" size={20} strokeWidth={2.5} />
-          <div className="w-80 h-14 pl-14 pr-6 rounded-2xl bg-muted border border-border text-muted-foreground flex items-center text-sm font-bold font-black uppercase tracking-wide hover:bg-muted/80 hover:border-primary/30 transition-all shadow-inner group-hover:text-foreground">
-             {t('header.quick_cmd')} <span className="ml-auto text-[10px] font-bold bg-background px-3 py-1.5 rounded-xl border border-border text-muted-foreground font-black">Ctrl + K</span>
-          </div>
-        </div>
       </div>
 
       {/* Right Section */}

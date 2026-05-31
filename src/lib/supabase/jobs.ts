@@ -368,7 +368,7 @@ export async function getJobStatsSummary(query = '', startDate = '', endDate = '
     
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('Job_Status')
+      .select('Job_Status, Photo_Proof_Url, Signature_Url, Pickup_Photo_Url, Pickup_Signature_Url')
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
@@ -378,7 +378,7 @@ export async function getJobStatsSummary(query = '', startDate = '', endDate = '
             if (branchId && branchId !== 'All') {
                 dbQuery = dbQuery.eq('Branch_ID', branchId)
             } else {
-                return { success: 0, failed: 0, cancelled: 0, total: 0 }
+                return { success: 0, failed: 0, cancelled: 0, total: 0, withPhoto: 0, withSignature: 0 }
             }
         } else if (branchId && branchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', branchId)
@@ -393,16 +393,18 @@ export async function getJobStatsSummary(query = '', startDate = '', endDate = '
 
     const { data } = await dbQuery
     
-    if (!data) return { success: 0, failed: 0, cancelled: 0, total: 0 }
+    if (!data) return { success: 0, failed: 0, cancelled: 0, total: 0, withPhoto: 0, withSignature: 0 }
     
     return {
       total: data.length,
       success: data.filter((j: any) => ['Delivered', 'Complete', 'Completed'].includes(j.Job_Status || '')).length,
       failed: data.filter((j: any) => j.Job_Status === 'Failed').length,
-      cancelled: data.filter((j: any) => j.Job_Status === 'Cancelled').length
+      cancelled: data.filter((j: any) => j.Job_Status === 'Cancelled').length,
+      withPhoto: data.filter((j: any) => j.Photo_Proof_Url || j.Pickup_Photo_Url).length,
+      withSignature: data.filter((j: any) => j.Signature_Url || j.Pickup_Signature_Url).length
     }
   } catch {
-    return { success: 0, failed: 0, cancelled: 0, total: 0 }
+    return { success: 0, failed: 0, cancelled: 0, total: 0, withPhoto: 0, withSignature: 0 }
   }
 }
 
@@ -941,7 +943,7 @@ export async function getJobsForBilling(
 
         let dbQuery = supabase
             .from('Jobs_Main')
-            .select('*')
+            .select('Job_ID, Job_Status, Plan_Date, Customer_ID, Customer_Name, Route_Name, Vehicle_Plate, Vehicle_Type, Origin_Location, Dest_Location, Price_Cust_Total, Price_Per_Unit, Loaded_Qty, Created_At, Branch_ID')
             .in('Job_Status', ['Completed', 'Delivered'])
         
         if (mode === 'driver') {
@@ -969,6 +971,7 @@ export async function getJobsForBilling(
 
         let query = dbQuery
             .order('Plan_Date', { ascending: false })
+            .limit(100)
             
         // Add default date range if not provided (e.g. last 30 days) to keep initial load snappy
         if (startDate) {
@@ -1189,6 +1192,7 @@ export async function getBillableJobs(customerId?: string, startDate?: string, e
 
         const priceMap = new Map(customerPrices?.map((c: any) => [c.Customer_ID, c.Price_Per_Unit]) || [])
 
+        /* 
         // Process each job to find the best matching price for its specific date
         const enhancedJobs = await Promise.all(data.map(async (job: any) => {
             const dateStr = String(job.Plan_Date || "")
@@ -1222,6 +1226,8 @@ export async function getBillableJobs(customerId?: string, startDate?: string, e
         }))
 
         return enhancedJobs as Job[]
+        */
+        return data as Job[]
     } catch (e) {
         console.error("Enriching unit prices failed in getBillableJobs:", e)
         return data as Job[]

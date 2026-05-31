@@ -1,7 +1,7 @@
 import { cookies } from "next/headers"
 import { getInvoices } from "@/lib/supabase/invoices"
 import { getJobsForBilling, Job } from "@/lib/supabase/jobs"
-import { Language } from "@/lib/i18n/dictionaries"
+import { getAllCustomers } from "@/lib/supabase/customers"
 import { Customer } from "@/lib/supabase/customers"
 import InvoicesClient from "./invoices-client"
 
@@ -30,12 +30,11 @@ export default async function InvoicesPage({
   const selectedBranch = cookieStore.get('selectedBranch')?.value || "All"
   
   // Fetch all required data: Invoices, Billable Jobs, and Customers
-  const [invoicesRes, billableJobs, { getAllCustomers }] = await Promise.all([
+  const [invoicesRes, billableJobs, customersRes] = await Promise.all([
     getInvoices(1, 100, query),
     getJobsForBilling(undefined, undefined, undefined, 'customer'),
-    import("@/lib/supabase/customers")
+    getAllCustomers()
   ])
-  const customersRes = await getAllCustomers()
   const customers = (customersRes.data || []) as Customer[]
 
   return (

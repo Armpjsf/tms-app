@@ -11,15 +11,14 @@ interface PresenceState {
 
 const PresenceContext = createContext<PresenceState>({ user: null, onlineUsers: [] })
 
-import { useIdle } from "@/components/providers/idle-provider"
+
 
 export function PresenceProvider({ children, user }: { children: React.ReactNode, user: UserData | null }) {
-    const { isIdle } = useIdle()
     const [onlineUsers, setOnlineUsers] = useState<any[]>([])
     const supabase = useMemo(() => createClient(), [])
 
     useEffect(() => {
-        if (!user || isIdle) return
+        if (!user) return
 
         // Generate a unique session ID for this tab/instance
         const sessionId = Math.random().toString(36).substring(2, 10)

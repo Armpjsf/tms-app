@@ -1,13 +1,10 @@
 "use client"
 
-import dynamic from "next/dynamic"
 import { useState, useEffect } from "react"
-
-const PWAInstallHint = dynamic(() => import("@/components/mobile/pwa-install-hint").then(mod => mod.PWAInstallHint), { ssr: false })
-const CommandPalette = dynamic(() => import("@/components/command-palette").then(mod => mod.CommandPalette), { ssr: false })
-const Toaster = dynamic(() => import("sonner").then(mod => mod.Toaster), { ssr: false })
-const AdminPushRequesterDynamic = dynamic(() => import("@/components/layout/admin-push-requester").then(mod => mod.AdminPushRequester), { ssr: false })
-const AdminGlobalNotifier = dynamic(() => import("@/components/notifications/admin-global-notifier").then(mod => mod.AdminGlobalNotifier), { ssr: false })
+import { PWAInstallHint } from "@/components/mobile/pwa-install-hint"
+import { Toaster } from "sonner"
+import { AdminPushRequester } from "@/components/layout/admin-push-requester"
+import { AdminGlobalNotifier } from "@/components/notifications/admin-global-notifier"
 
 export function GlobalClientComponents() {
   const [adminUserId, setAdminUserId] = useState<string | null>(null)
@@ -41,15 +38,17 @@ export function GlobalClientComponents() {
     return () => controller.abort()
   }, []) // Fix: Execute only once on mount
 
-  if (!isMounted) return null
-
   return (
     <>
-      <CommandPalette />
-      <PWAInstallHint />
-      <Toaster />
-      <AdminPushRequesterDynamic userId={adminUserId} />
-      <AdminGlobalNotifier branchId={adminBranchId} isAdmin={isAdmin} />
+      {isMounted && (
+        <>
+          <PWAInstallHint />
+          <Toaster />
+          <AdminPushRequester userId={adminUserId} />
+          <AdminGlobalNotifier branchId={adminBranchId} isAdmin={isAdmin} />
+        </>
+      )}
     </>
   )
 }
+

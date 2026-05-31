@@ -57,6 +57,8 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const prevPathnameRef = useRef<string | null>(null)
 
+  const initialized = useRef(false)
+
   const init = useCallback(async () => {
     try {
         const [fetchedBranches, roleId] = await Promise.all([
@@ -74,15 +76,17 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         }
     } catch (error) {
         console.warn("BranchProvider initialization partial failure or timeout:", error)
-        // Set defaults if we timed out
-        if (branches.length === 0) setBranches([])
+        setBranches([])
     } finally {
         setIsLoading(false)
     }
-  }, [branches.length])
+  }, []) // Stable reference - no dependency on branches.length
 
   useEffect(() => {
-    init()
+    if (!initialized.current) {
+      initialized.current = true
+      init()
+    }
   }, [init])
 
   useEffect(() => {
@@ -94,7 +98,9 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
       setIsAdmin(false)
       setSelectedBranchState("All")
       setIsLoading(true)
+      initialized.current = false // Reset so init runs again after login
     } else if (prevPathname === "/login" && pathname !== "/login") {
+      initialized.current = false
       init()
     }
   }, [pathname, init])

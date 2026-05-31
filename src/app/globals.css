@@ -132,16 +132,23 @@ body[style*="pointer-events: none"] {
     outline: none !important;
   }
   html {
-    -webkit-font-smoothing: initial; /* Let browser decide for subpixel accuracy at 75% scale */
+    -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+  }
+
+  /* Global Scale Adjustment: Reduce scale by 20% (Set to 80%) on Desktop */
+  @media (min-width: 1024px) {
+    html {
+      font-size: 80%;
+    }
   }
   body {
     @apply bg-background text-foreground selection:bg-primary/30;
     font-family: var(--font-prompt), var(--font-outfit), ui-sans-serif, system-ui, sans-serif !important;
     background-image: var(--gradient-elite);
     min-height: 100dvh;
-    font-size: 15px; /* Slightly smaller base font for compaction */
+    font-size: 16px; /* Optimized base font size for 100% zoom */
     
     /* Native App Feel for Mobile/PWA */
     -webkit-touch-callout: none; /* iOS Safari */
@@ -160,13 +167,16 @@ body[style*="pointer-events: none"] {
     user-select: auto;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-black tracking-tighter text-accent transition-colors duration-300;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    transition-property: color;
+    transition-duration: 300ms;
     font-family: var(--font-prompt), var(--font-outfit), ui-sans-serif, system-ui, sans-serif !important;
     -webkit-font-smoothing: antialiased;
   }
-  /* In dark mode, ensure headers are not too dark if they are Red */
+  /* In dark mode, ensure headers are not too dark */
   .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-    @apply text-accent;
+    /* Let components decide color or use a safe default */
   }
   input, textarea, select {
     background-color: hsl(var(--input)) !important;

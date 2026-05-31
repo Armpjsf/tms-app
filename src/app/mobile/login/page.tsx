@@ -44,9 +44,11 @@ function DriverLoginContent() {
     return () => clearTimeout(timer)
   }, [urlError])
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     setLoading(true)
     setError("")
+    const formData = new FormData(event.currentTarget)
     
     const result = await loginDriver(formData)
     
@@ -90,7 +92,7 @@ function DriverLoginContent() {
 
         {/* Login Form Card */}
         <div className="glass-panel rounded-[2.5rem] p-8 shadow-2xl relative">
-          <form action={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-3">
               <Label htmlFor="identifier" className="text-accent text-base font-bold font-black uppercase tracking-widest ml-1">รหัสพนักงาน / เบอร์โทรศัพท์</Label>
               <div className="relative">
