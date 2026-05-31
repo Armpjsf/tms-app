@@ -127,10 +127,10 @@ export async function getTodayJobs(date?: string, branchId?: string): Promise<Jo
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        // STRICT ISOLATION: Non-SuperAdmins MUST be filtered by their branch
+        // STRICT ISOLATION: Non-SuperAdmins MUST be filtered by their branch (but can see unassigned 'null' or global 'All' drafts/jobs)
         if (!isSuper) {
             if (userBranchId && userBranchId !== 'All') {
-                dbQuery = dbQuery.eq('Branch_ID', userBranchId)
+                dbQuery = dbQuery.or(`Branch_ID.eq.${userBranchId},Branch_ID.eq.All,Branch_ID.is.null`)
             } else {
                 return []
             }
@@ -319,10 +319,10 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        // STRICT ISOLATION: Non-SuperAdmins MUST be filtered by their branch
+        // STRICT ISOLATION: Non-SuperAdmins MUST be filtered by their branch (but can see unassigned 'null' or global 'All' drafts/jobs)
         if (!isSuper) {
             if (userBranchId && userBranchId !== 'All') {
-                dbQuery = dbQuery.eq('Branch_ID', userBranchId)
+                dbQuery = dbQuery.or(`Branch_ID.eq.${userBranchId},Branch_ID.eq.All,Branch_ID.is.null`)
             } else {
                 return { total: 0, delivered: 0, inProgress: 0, pending: 0, totalQty: 0 }
             }
@@ -539,9 +539,9 @@ export async function getJobById(jobId: string): Promise<Job | null> {
         
         // Apply Filters
         if (isSuper || isRegularAdmin) {
-            // Admin sees all within branch (or all if Super)
+            // Admin sees all within branch (or all if Super), including unassigned/global jobs
             if (!isSuper && branchId && branchId !== 'All') {
-                baseQuery.eq('Branch_ID', branchId)
+                baseQuery.or(`Branch_ID.eq.${branchId},Branch_ID.eq.All,Branch_ID.is.null`)
             }
         } else if (customerId) {
             baseQuery.eq('Customer_ID', customerId)
@@ -570,7 +570,7 @@ export async function getJobById(jobId: string): Promise<Job | null> {
                 
                 // If it's an admin/staff, let them access if they are superadmin or branch matches
                 if (isSuper || isRegularAdmin) {
-                    if (isSuper || !branchId || branchId === 'All' || jobObj.Branch_ID === branchId) {
+                    if (isSuper || !branchId || branchId === 'All' || jobObj.Branch_ID === branchId || jobObj.Branch_ID === 'All' || !jobObj.Branch_ID) {
                         return await enrichJobWithCustomerData(jobObj)
                     }
                 } 
