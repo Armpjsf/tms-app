@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Sus
 import { getAllBranches, Branch } from "@/lib/supabase/branches"
 import { getCurrentUserRole } from "@/lib/supabase/routes"
 import Cookies from "js-cookie"
-import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 
 interface BranchContextType {
   selectedBranch: string
@@ -35,14 +35,15 @@ function BranchParamSync({
     onParamFound: (branch: string) => void,
     branches: Branch[]
 }) {
-  const searchParams = useSearchParams()
-  const branchParam = searchParams.get('branch')
-
   useEffect(() => {
-    if (branchParam && (branchParam === 'All' || branches.some(b => b.Branch_ID === branchParam))) {
-        onParamFound(branchParam)
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      const branchParam = params.get('branch')
+      if (branchParam && (branchParam === 'All' || branches.some(b => b.Branch_ID === branchParam))) {
+          onParamFound(branchParam)
+      }
     }
-  }, [branchParam, branches, onParamFound])
+  }, [branches, onParamFound])
 
   return null
 }

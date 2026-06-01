@@ -25,7 +25,7 @@ import { Job } from "@/lib/supabase/jobs"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
 import { RequestShipmentDialog } from "./request-shipment-dialog"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { ExcelExport } from "@/components/ui/excel-export"
 
 const container: Variants = {
@@ -115,7 +115,6 @@ export function DashboardClient({
 }: DashboardClientProps) {
     const { t } = useLanguage()
     const router = useRouter()
-    const searchParams = useSearchParams()
     const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false)
     const [startDate, setStartDate] = useState(initialStart)
     const [endDate, setEndDate] = useState(initialEnd)
@@ -144,7 +143,7 @@ export function DashboardClient({
 
     const handleSync = () => {
         setIsSyncing(true)
-        const params = new URLSearchParams(searchParams.toString())
+        const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "")
         if (startDate) params.set('start', startDate)
         else params.delete('start')
         
@@ -180,7 +179,7 @@ export function DashboardClient({
     const handleReset = () => {
         setStartDate("")
         setEndDate("")
-        const params = new URLSearchParams(searchParams.toString())
+        const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "")
         params.delete('start')
         params.delete('end')
         router.push(`/dashboard?${params.toString()}`)
