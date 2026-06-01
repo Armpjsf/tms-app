@@ -15,6 +15,23 @@ interface ClientProvidersProps {
 }
 
 export function ClientProviders({ children }: ClientProvidersProps) {
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      if (process.env.NODE_ENV === "development") {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const registration of registrations) {
+            registration.unregister().then((success) => {
+              if (success) {
+                console.log("[PWA] Unregistered service worker in development mode");
+                window.location.reload();
+              }
+            });
+          }
+        });
+      }
+    }
+  }, []);
+
   return (
     <ThemeProvider
       attribute="class"

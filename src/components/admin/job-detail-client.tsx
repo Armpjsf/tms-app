@@ -5,7 +5,8 @@ import { CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { 
   ArrowLeft, Calendar, Truck, User, Phone, Package, FileText, Navigation, 
-  Activity, Target, Cpu, Layers, TrendingUp, AlertTriangle, ShieldCheck, Info, DollarSign, Eye
+  Activity, Target, Cpu, Layers, TrendingUp, AlertTriangle, ShieldCheck, Info, DollarSign, Eye,
+  Camera, PenTool
 } from "lucide-react"
 import JobMapClient from "@/components/maps/job-map-client"
 import { AdminJobActions } from "@/components/admin/admin-job-actions"

@@ -124,7 +124,7 @@ export async function getActiveJobs(
     return [];
   }
 
-  return data.map(job => mapJobToPublicDetails(job));
+  return data.map((job: any) => mapJobToPublicDetails(job));
 }
 
 export async function getPublicJobDetails(
