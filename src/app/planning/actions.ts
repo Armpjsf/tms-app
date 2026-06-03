@@ -333,6 +333,18 @@ export async function createBulkJobs(
     normalized.Show_Price_To_Driver = getValue(['Show_Price_To_Driver', 'show_price', 'การแสดงรายได้'])
     normalized.Round = getValue(['Round', 'trip', 'รอบ', 'เที่ยว', 'รอบวิ่ง', 'ลำดับรอบ'])
     
+    // Container Fields
+    normalized.job_type = getValue(['job_type', 'ประเภทงาน'])
+    normalized.chassis_plate = getValue(['chassis_plate', 'ทะเบียนหาง', 'หางลาก'])
+    normalized.container_no = getValue(['container_no', 'หมายเลขตู้', 'เลขตู้'])
+    normalized.seal_no = getValue(['seal_no', 'หมายเลขซีล', 'เลขซีล'])
+    normalized.container_size = getValue(['container_size', 'ขนาดตู้'])
+    normalized.shipping_line = getValue(['shipping_line', 'สายเรือ'])
+    normalized.vessel_voyage = getValue(['vessel_voyage', 'เรือ/เที่ยว'])
+    normalized.lfd_demurrage = getValue(['lfd_demurrage', 'LFD Demurrage'])
+    normalized.lfd_detention = getValue(['lfd_detention', 'LFD Detention'])
+    normalized.target_temperature = getValue(['target_temperature', 'อุณหภูมิเป้าหมาย'])
+
     // Multi-Origin & Destination Detection
     const origins: { name: string, lat: number | null, lng: number | null }[] = []
     const destinations: { name: string, lat: number | null, lng: number | null }[] = []
@@ -518,13 +530,28 @@ export async function createBulkJobs(
         : (route?.Destination ? 1 : 1),
       Est_Distance_KM: Number(data.Est_Distance_KM) || route?.Distance_KM || 0,
       Show_Price_To_Driver: data.Show_Price_To_Driver !== undefined ? (data.Show_Price_To_Driver === true || data.Show_Price_To_Driver === 'true') : (j.Show_Price_To_Driver ?? true),
-      Round: data.Round || null
+      Round: data.Round || null,
+      job_type: data.job_type || 'normal',
+      chassis_plate: data.chassis_plate || null
     })
+    
+    // Add raw container fields back to the object so handleContainerData can find them
+    const fullJobData = {
+        ...sanitized,
+        container_no: data.container_no,
+        seal_no: data.seal_no,
+        container_size: data.container_size,
+        shipping_line: data.shipping_line,
+        vessel_voyage: data.vessel_voyage,
+        lfd_demurrage: data.lfd_demurrage,
+        lfd_detention: data.lfd_detention,
+        target_temperature: data.target_temperature
+    }
     
     if (typeof sanitized.Price_Cust_Total === 'string') sanitized.Price_Cust_Total = parseFloat(sanitized.Price_Cust_Total) || 0
     if (typeof sanitized.Cost_Driver_Total === 'string') sanitized.Cost_Driver_Total = parseFloat(sanitized.Cost_Driver_Total) || 0
     
-    return sanitized
+    return fullJobData
   }).filter(j => j.Customer_Name)
 
   // Apply Draft status if requested via options
@@ -561,6 +588,9 @@ export async function createBulkJobs(
   if (error) {
     return { success: false, message: `Failed to import: ${error.message}` }
   }
+
+  // Save Container Data for each job (if applicable)
+  await Promise.allSettled(finalizedData.map(j => handleContainerData(supabase, j.Job_ID, j as JobFormData)))
 
   // Auto-save locations from the batch
   const locationsToSave: { name: string, lat: number, lng: number }[] = []
