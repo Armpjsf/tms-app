@@ -31,3 +31,22 @@ export async function fetchCustomerList() {
         return { data: [], count: 0 }
     }
 }
+
+import { getCustomerId, isCustomer } from "@/lib/permissions"
+
+export async function getCustomerSessionInfo() {
+    try {
+        const custId = await getCustomerId()
+        const isCust = await isCustomer()
+        return {
+            customerId: custId || null,
+            isCustomerUser: !!isCust
+        }
+    } catch {
+        return {
+            customerId: null,
+            isCustomerUser: false
+        }
+    }
+}
+

@@ -28,6 +28,7 @@ import {
   Zap,
   Bot,
   Settings,
+  Package,
 } from "lucide-react"
 
 import { SidebarProfile } from "../layout/sidebar-profile"
@@ -61,6 +62,7 @@ const navigation: NavGroup[] = [
       { titleKey: "navigation.calendar", href: "/calendar", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
       { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "common.live", badgeColor: "green" },
+      { titleKey: "navigation.container", href: "/container", icon: <Package size={20} /> },
       { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
       { titleKey: "navigation.notifications", href: "/notifications", icon: <AlertTriangle size={20} />, badgeColor: "red" },
       { titleKey: "navigation.chat", href: "/chat", icon: <MessageSquare size={20} />, badgeColor: "blue" },

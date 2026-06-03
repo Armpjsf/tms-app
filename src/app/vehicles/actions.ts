@@ -20,6 +20,7 @@ export type VehicleFormData = {
   Sub_ID?: string
   Max_Weight_kg?: number
   Max_Volume_cbm?: number
+  is_chassis?: boolean
 }
 
 export async function createVehicle(data: VehicleFormData) {
@@ -49,6 +50,7 @@ export async function createVehicle(data: VehicleFormData) {
       Sub_ID: data.Sub_ID || null,
       Max_Weight_kg: numOrNull(data.Max_Weight_kg),
       Max_Volume_cbm: numOrNull(data.Max_Volume_cbm),
+      is_chassis: data.is_chassis || false,
       Branch_ID: finalBranchId
     }, { onConflict: 'Vehicle_Plate' })
 
@@ -172,7 +174,8 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
         Act_Expiry: data.Act_Expiry || null,
         Sub_ID: data.Sub_ID || null,
         Max_Weight_kg: data.Max_Weight_kg,
-        Max_Volume_cbm: data.Max_Volume_cbm
+        Max_Volume_cbm: data.Max_Volume_cbm,
+        is_chassis: data.is_chassis
     }
 
     if (isAdmin && data.Branch_ID) {

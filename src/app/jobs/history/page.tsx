@@ -24,13 +24,14 @@ export default async function JobHistoryPage(props: Props) {
   const dateFrom = (searchParams.from as string) || ''
   const dateTo = (searchParams.to as string) || ''
   const status = (searchParams.status as string) || ''
+  const customerId = (searchParams.customer as string) || ''
   const limit = 25
 
   const isAdminUser = await isAdmin()
 
   const [jobsResult, stats, creationData, hasPriceView, hasDeletePermission, hasExportPermission] = await Promise.all([
-    getAllJobs(page, limit, query, status, dateFrom, dateTo, currentBranchId),
-    getJobStatsSummary(query, dateFrom, dateTo, currentBranchId),
+    getAllJobs(page, limit, query, status, dateFrom, dateTo, currentBranchId, customerId),
+    getJobStatsSummary(query, dateFrom, dateTo, currentBranchId, customerId),
     getJobCreationData(currentBranchId),
     hasPermission('job_price_view'),
     hasPermission('job_delete'),

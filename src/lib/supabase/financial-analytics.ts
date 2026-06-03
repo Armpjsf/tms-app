@@ -15,11 +15,11 @@ import {
 import { CO2_COEFFICIENTS } from '../utils/esg-utils'
 
 // 1. Unified Executive Dashboard (Ultra-Performance via RPC)
-export async function getExecutiveDashboardUnified(branchId?: string, startDate?: string, endDate?: string, customerNames?: string[]) {
+export async function getExecutiveDashboardUnified(branchId?: string, startDate?: string, endDate?: string, customerNames?: string[], providedCustomerId?: string | null) {
     const supabase = await createAdminClient()
     const customerId = await getCustomerId()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
-    console.log(`[DEBUG] getExecutiveDashboardUnified: branchId=${branchId}, effectiveBranchId=${effectiveBranchId}`)
+    console.log(`[DEBUG] getExecutiveDashboardUnified: branchId=${branchId}, effectiveBranchId=${effectiveBranchId}, customerId=${providedCustomerId}`)
 
     const { start: currentStart, end: currentEnd } = getThaiMonthBoundaries()
     
@@ -34,8 +34,25 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
 
     const isCust = await isCustomer()
     // Safety: If customer role but no customerId, they shouldn't see anything
-    const finalCustomerId = customerId || null
+    const finalCustomerId = customerId || providedCustomerId || null
     const isRestricted = isCust && !customerId
+
+    // Fetch customer-dedicated vehicles & drivers for cost isolation
+    let dedicatedVehiclePlates: string[] = []
+    let dedicatedDriverIds: string[] = []
+
+    if (finalCustomerId) {
+        try {
+            const [vehiclesRes, driversRes] = await Promise.all([
+                supabase.from('Master_Vehicles').select('Vehicle_Plate').eq('Customer_ID', finalCustomerId),
+                supabase.from('Master_Drivers').select('Driver_ID').eq('Customer_ID', finalCustomerId)
+            ])
+            dedicatedVehiclePlates = (vehiclesRes.data || []).map((v: any) => v.Vehicle_Plate).filter(Boolean)
+            dedicatedDriverIds = (driversRes.data || []).map((d: any) => d.Driver_ID).filter(Boolean)
+        } catch (e) {
+            console.error('[getExecutiveDashboardUnified] Failed to fetch dedicated vehicles/drivers:', e)
+        }
+    }
 
     // CHECK PERMISSION: Financial Visibility
     const { hasPermission } = await import("@/lib/permissions")
@@ -127,6 +144,26 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         if (effectiveBranchId) {
             fuelQuery = fuelQuery.ilike('Branch_ID', effectiveBranchId)
             maintQuery = maintQuery.ilike('Branch_ID', effectiveBranchId)
+        }
+
+        if (finalCustomerId) {
+            if (dedicatedVehiclePlates.length > 0 || dedicatedDriverIds.length > 0) {
+                let fuelOrFilters = []
+                let maintOrFilters = []
+                if (dedicatedVehiclePlates.length > 0) {
+                    fuelOrFilters.push(`Vehicle_Plate.in.(${dedicatedVehiclePlates.join(',')})`)
+                    maintOrFilters.push(`Vehicle_Plate.in.(${dedicatedVehiclePlates.join(',')})`)
+                }
+                if (dedicatedDriverIds.length > 0) {
+                    fuelOrFilters.push(`Driver_ID.in.(${dedicatedDriverIds.join(',')})`)
+                    maintOrFilters.push(`Driver_ID.in.(${dedicatedDriverIds.join(',')})`)
+                }
+                fuelQuery = fuelQuery.or(fuelOrFilters.join(','))
+                maintQuery = maintQuery.or(maintOrFilters.join(','))
+            } else {
+                fuelQuery = fuelQuery.eq('Log_ID', 'FORCE_EMPTY_RESULTS')
+                maintQuery = maintQuery.eq('Ticket_ID', 'FORCE_EMPTY_RESULTS')
+            }
         }
 
         const [fuelData, maintData] = await Promise.all([fuelQuery, maintQuery])
@@ -264,6 +301,29 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             fetchPipeline.eq('Branch_ID', effectiveBranchId)
             fetchFuel.eq('Branch_ID', effectiveBranchId)
             fetchMaint.eq('Branch_ID', effectiveBranchId)
+        }
+
+        if (finalCustomerId) {
+            fetchPipeline.eq('Customer_ID', finalCustomerId)
+            if (dedicatedVehiclePlates.length > 0 || dedicatedDriverIds.length > 0) {
+                let fuelOrFilters = []
+                let maintOrFilters = []
+                if (dedicatedVehiclePlates.length > 0) {
+                    fuelOrFilters.push(`Vehicle_Plate.in.(${dedicatedVehiclePlates.join(',')})`)
+                    maintOrFilters.push(`Vehicle_Plate.in.(${dedicatedVehiclePlates.join(',')})`)
+                }
+                if (dedicatedDriverIds.length > 0) {
+                    fuelOrFilters.push(`Driver_ID.in.(${dedicatedDriverIds.join(',')})`)
+                    maintOrFilters.push(`Driver_ID.in.(${dedicatedDriverIds.join(',')})`)
+                }
+                fetchFuel.or(fuelOrFilters.join(','))
+                fetchMaint.or(maintOrFilters.join(','))
+            } else {
+                fetchFuel.eq('Log_ID', 'FORCE_EMPTY_RESULTS')
+                fetchMaint.eq('Ticket_ID', 'FORCE_EMPTY_RESULTS')
+            }
+        } else if (customerNames && customerNames.length > 0) {
+            fetchPipeline.in('Customer_Name', customerNames)
         }
         
         const [pipeRes, fuelRes, maintRes] = await Promise.all([
@@ -1037,9 +1097,10 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
     return Object.values(stats).sort((a: any, b: any) => b.netProfit - a.netProfit).slice(0, 10) // Show more for the ledger
 }
 
-export async function getProfitHeatmapData(startDate?: string, endDate?: string, branchId?: string) {
+export async function getProfitHeatmapData(startDate?: string, endDate?: string, branchId?: string, customerId?: string | null) {
     const supabase = await createAdminClient()
-    const customerId = await getCustomerId()
+    const loggedInCustomerId = await getCustomerId()
+    const finalCustomerId = customerId || loggedInCustomerId
     const effectiveBranchId = await getEffectiveBranchId(branchId)
     
     // Default to current month if no range provided (prevent huge historical fetches)
@@ -1055,9 +1116,10 @@ export async function getProfitHeatmapData(startDate?: string, endDate?: string,
         .select('Job_ID, Job_Status, Origin_Location, Dest_Location, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, original_destinations_json, original_origins_json')
         .in('Job_Status', REVENUE_STATUSES)
     
-    if (customerId) query = query.eq('Customer_ID', customerId)
+    if (finalCustomerId) query = query.eq('Customer_ID', finalCustomerId)
     else if (await isCustomer()) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
-    else if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+    
+    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
 
     if (sDate) query = query.gte('Plan_Date', sDate)
     if (eDate) query = query.lte('Plan_Date', eDate)

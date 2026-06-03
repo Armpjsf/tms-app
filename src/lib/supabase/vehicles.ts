@@ -30,6 +30,8 @@ export type Vehicle = {
   Sub_ID?: string | null
   Preferred_Zone?: string | null
   Primary_Driver_Name?: string | null
+  is_chassis?: boolean | null
+  Customer_ID?: string | null
 }
 
 export async function getAllVehiclesFromTable(providedBranchId?: string): Promise<Vehicle[]> {

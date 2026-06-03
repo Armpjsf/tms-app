@@ -84,6 +84,21 @@ export type Job = {
   Verified_At?: string | null
   Loaded_Qty?: number | null
   Price_Per_Unit?: number | null
+  job_type?: 'normal' | 'container' | null
+  chassis_plate?: string | null
+  container?: {
+    container_no: string | null
+    seal_no: string | null
+    container_size: string | null
+    shipping_line: string | null
+    vessel_voyage: string | null
+    lfd_demurrage: string | null
+    lfd_detention: string | null
+    eir_gate_in_url: string | null
+    eir_gate_out_url: string | null
+    container_condition_json: any
+    target_temperature?: number | null
+  } | null
   Billing_Notes?: {
     Status: string
   } | null
@@ -114,7 +129,7 @@ export async function getTodayJobs(date?: string, branchId?: string): Promise<Jo
 
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('*')
+      .select('*, container:jobs_container(*)')
       .eq('Plan_Date', targetDate)
     
     // UI REFINEMENT: In Planning, if viewing TODAY, hide active jobs that are already in Tracking Hub
@@ -163,17 +178,17 @@ export async function getLiveActiveJobs(branchId?: string, customerId?: string |
 
         if (customerId) {
             query = query.eq('Customer_ID', customerId)
-        } else {
-            // STRICT ISOLATION
-            if (!isSuper) {
-                if (userBranchId && userBranchId !== 'All') {
-                    query = query.eq('Branch_ID', userBranchId)
-                } else {
-                    return []
-                }
-            } else if (branchId && branchId !== 'All') {
-                query = query.eq('Branch_ID', branchId)
+        }
+
+        // Apply Branch isolation filter
+        if (!isSuper) {
+            if (userBranchId && userBranchId !== 'All') {
+                query = query.eq('Branch_ID', userBranchId)
+            } else if (!customerId) {
+                return []
             }
+        } else if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
         }
 
         const { data } = await query
@@ -194,7 +209,7 @@ export async function getJobsByStatus(status: string): Promise<Job[]> {
 
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('*')
+      .select('*, container:jobs_container(*)')
       .eq('Job_Status', status)
     
     if (customerId) {
@@ -226,7 +241,6 @@ export async function getJobsByStatus(status: string): Promise<Job[]> {
   }
 }
 
-// ดึงงานทั้งหมด (pagination + search + status filter)
 export async function getAllJobs(
   page = 1, 
   limit = 50, 
@@ -234,7 +248,8 @@ export async function getAllJobs(
   status = '', // Add status parameter
   startDate = '', // Add startDate parameter
   endDate = '', // Add endDate parameter
-  providedBranchId = ''
+  providedBranchId = '',
+  providedCustomerId = ''
 ): Promise<{ data: Job[], count: number }> {
   try {
     const isSuper = await isSuperAdmin()
@@ -248,20 +263,24 @@ export async function getAllJobs(
     
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('*', { count: 'exact' })
+      .select('*, container:jobs_container(*)', { count: 'exact' })
       .neq('Job_Status', 'Draft') // UI REFINEMENT: Hide Drafts from History (They belong in Planning)
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        // STRICT ISOLATION
-        if (!isSuper) {
+        // STRICT ISOLATION: Apply customer filter first if a specific customer is selected
+        if (providedCustomerId && providedCustomerId !== 'All') {
+            dbQuery = dbQuery.eq('Customer_ID', providedCustomerId)
+        } else if (!isSuper) {
+            // No customer selected — enforce branch isolation for non-super admins
             if (branchId && branchId !== 'All') {
                 dbQuery = dbQuery.eq('Branch_ID', branchId)
             } else {
                 return { data: [], count: 0 }
             }
         } else if (branchId && branchId !== 'All') {
+            // Super admin with a specific branch selected
             dbQuery = dbQuery.eq('Branch_ID', branchId)
         }
     }
@@ -297,13 +316,14 @@ export async function getAllJobs(
 }
 
 // นับสถิติงานตามช่วงเวลา (Default: วันนี้)
-export async function getTodayJobStats(branchId?: string, startDate?: string, endDate?: string, customerNames?: string[]) {
+export async function getTodayJobStats(branchId?: string, startDate?: string, endDate?: string, customerNames?: string[], customerId?: string | null) {
   try {
     const isSuper = await isSuperAdmin()
     const isRegularAdmin = await isAdmin()
     const userBranchId = await getUserBranchId()
-    const customerId = await getCustomerId()
-    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
+    const loggedInCustomerId = await getCustomerId()
+    const finalCustomerId = customerId || loggedInCustomerId
+    const supabase = (isSuper || isRegularAdmin || finalCustomerId) ? await createAdminClient() : await createClient()
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     
     let dbQuery = supabase
@@ -316,8 +336,8 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
         dbQuery = dbQuery.eq('Plan_Date', today)
     }
 
-    if (customerId) {
-        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    if (finalCustomerId) {
+        dbQuery = dbQuery.eq('Customer_ID', finalCustomerId)
     } else {
         // STRICT ISOLATION: Non-SuperAdmins MUST be filtered by their branch (but can see unassigned 'null' or global 'All' drafts/jobs)
         if (!isSuper) {
@@ -356,8 +376,7 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
   }
 }
 
-// นับสถิติงานรวม (Global Stats สำหรับหน้า History)
-export async function getJobStatsSummary(query = '', startDate = '', endDate = '', providedBranchId = '') {
+export async function getJobStatsSummary(query = '', startDate = '', endDate = '', providedBranchId = '', providedCustomerId = '') {
   try {
     const isSuper = await isSuperAdmin()
     const isRegularAdmin = await isAdmin()
@@ -373,8 +392,11 @@ export async function getJobStatsSummary(query = '', startDate = '', endDate = '
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        // STRICT ISOLATION
-        if (!isSuper) {
+        // STRICT ISOLATION: Apply customer filter first if a specific customer is selected
+        if (providedCustomerId && providedCustomerId !== 'All') {
+            dbQuery = dbQuery.eq('Customer_ID', providedCustomerId)
+        } else if (!isSuper) {
+            // No customer selected — enforce branch isolation for non-super admins
             if (branchId && branchId !== 'All') {
                 dbQuery = dbQuery.eq('Branch_ID', branchId)
             } else {
@@ -534,7 +556,7 @@ export async function getJobById(jobId: string): Promise<Job | null> {
         // We use select('*') first to rule out any join syntax errors
         const baseQuery = supabase
             .from('Jobs_Main')
-            .select('*')
+            .select('*, container:jobs_container(*)')
             .eq('Job_ID', decodedJobId)
         
         // Apply Filters
@@ -1241,11 +1263,12 @@ export async function getBillableJobs(customerId?: string, startDate?: string, e
   }
 }
 // Get unassigned jobs for the marketplace
-export async function getMarketplaceJobs(providedBranchId?: string): Promise<Job[]> {
+export async function getMarketplaceJobs(providedBranchId?: string, customerId?: string | null): Promise<Job[]> {
   try {
     // Use Admin Client to bypass branch RLS so we can show global bidding pool
     const supabase = createAdminClient()
-    const customerId = await getCustomerId()
+    const loggedInCustomerId = await getCustomerId()
+    const finalCustomerId = customerId || loggedInCustomerId
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -1254,12 +1277,12 @@ export async function getMarketplaceJobs(providedBranchId?: string): Promise<Job
       .is('Driver_ID', null)
     
     // Logic:
-    // 1. If it's a customer login, ONLY show their own unassigned jobs
-    if (customerId) {
-        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    // 1. Filter by customer if logged in as customer or selected customer filter
+    if (finalCustomerId) {
+        dbQuery = dbQuery.eq('Customer_ID', finalCustomerId)
     } 
     // 2. If a specific branch is selected (and not 'All'), filter by that branch
-    else if (providedBranchId && providedBranchId !== 'All' && providedBranchId !== 'Global') {
+    if (providedBranchId && providedBranchId !== 'All' && providedBranchId !== 'Global') {
         dbQuery = dbQuery.eq('Branch_ID', providedBranchId)
     }
     // 3. Otherwise (Super Admin / Staff viewing 'All'), show everything!

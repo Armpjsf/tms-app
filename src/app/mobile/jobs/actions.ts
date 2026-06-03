@@ -212,3 +212,64 @@ export async function createSOSAlert(params: { type: string, lat: number, lng: n
         return { success: false, message: "SOS Failed" }
     }
 }
+
+export async function submitContainerTemp(jobId: string, temperature: number, driverName?: string, remark?: string) {
+    try {
+        const supabase = createAdminClient()
+        
+        // Fetch target temp and container details
+        const { data: container } = await supabase
+            .from('jobs_container')
+            .select('target_temperature, container_no')
+            .eq('job_id', jobId)
+            .maybeSingle()
+
+        const { error } = await supabase
+            .from('container_temp_logs')
+            .insert({
+                job_id: jobId,
+                temperature: Number(temperature),
+                recorded_by: driverName,
+                remark: remark
+            })
+
+        if (error) throw error
+
+        // If target temperature is set, check if actual temp is > target + 2
+        if (container && container.target_temperature !== null && container.target_temperature !== undefined) {
+            const targetTemp = Number(container.target_temperature)
+            const diff = Number(temperature) - targetTemp
+            if (diff > 2) {
+                const { logActivity } = await import('@/lib/supabase/logs')
+                
+                // Get job details to match branch_id
+                const { data: jobData } = await supabase
+                    .from('Jobs_Main')
+                    .select('Branch_ID')
+                    .eq('Job_ID', jobId)
+                    .maybeSingle()
+
+                await logActivity({
+                    module: "Jobs",
+                    action_type: "UPDATE",
+                    target_id: jobId,
+                    branch_id: jobData?.Branch_ID || undefined,
+                    details: {
+                        alert_type: "REEFER_TEMP",
+                        message: `อุณหภูมิตู้คอนเทนเนอร์เย็นไม่ได้ระดับ: ตู้: ${container.container_no || 'ไม่ระบุ'} อุณหภูมิ ${temperature}°C (เป้าหมาย ${targetTemp}°C)`,
+                        container_no: container.container_no,
+                        temperature: Number(temperature),
+                        target_temperature: targetTemp,
+                        driver_name: driverName
+                    }
+                })
+            }
+        }
+
+        revalidatePath(`/mobile/jobs/${jobId}`)
+        return { success: true }
+    } catch (err) {
+        console.error('Temp log failed:', err)
+        return { success: false, message: "บันทึกอุณหภูมิไม่สำเร็จ" }
+    }
+}

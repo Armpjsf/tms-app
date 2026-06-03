@@ -1,6 +1,8 @@
 export interface Job {
     Job_ID: string;
     Job_Status?: string | null;
+    job_type?: 'normal' | 'container' | null;
+    chassis_plate?: string | null;
     Plan_Date?: string | null;
     Route_Name?: string | null;
     Price_Cust_Total?: string | number | null;
@@ -29,6 +31,57 @@ export interface Job {
     Charge_Labor?: number | null;
     Charge_Wait?: number | null;
     Price_Cust_Other?: number | null;
+}
+
+export interface JobContainer {
+    container_id: string;
+    job_id: string;
+    container_no?: string | null;
+    seal_no?: string | null;
+    container_size?: string | null;
+    shipping_line?: string | null;
+    vessel_voyage?: string | null;
+    lfd_demurrage?: string | null;
+    lfd_detention?: string | null;
+    target_temperature?: number | null;
+    eir_gate_in_url?: string | null;
+    eir_gate_out_url?: string | null;
+    container_condition_json?: any;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface ContainerTempLog {
+    log_id: string;
+    job_id: string;
+    temperature: number;
+    recorded_at: string;
+    recorded_by?: string | null;
+    remark?: string | null;
+}
+
+export interface ContainerYardLog {
+    log_id: string;
+    job_id?: string | null;
+    container_no?: string | null;
+    chassis_plate?: string | null;
+    location_name?: string | null;
+    action_type: 'DROP' | 'PICKUP';
+    action_time?: string;
+    driver_id?: string | null;
+    notes?: string | null;
+}
+
+export interface Vehicle {
+    vehicle_plate: string;
+    vehicle_type?: string | null;
+    brand?: string | null;
+    model?: string | null;
+    is_chassis?: boolean;
+    current_head_plate?: string | null;
+    active_status?: string | null;
+    branch_id?: string | null;
+    driver_id?: string | null;
 }
 
 export interface Billing_Note {

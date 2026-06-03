@@ -11,6 +11,7 @@ import { submitJobPOD } from "@/lib/actions/pod-actions"
 import { getJobDetails } from "@/app/mobile/jobs/actions"
 import { Loader2, CheckCircle, BrainCircuit, AlertTriangle, ScanLine, Box } from "lucide-react"
 import { PodReport } from "@/components/mobile/pod-report"
+import { ContainerDeliveryReport } from "@/components/mobile/container-delivery-report"
 import { Job } from "@/lib/supabase/jobs"
 import html2canvas from "html2canvas"
 import { analyzePODImage, AIAnalysisResult } from "@/lib/utils/ai-verification"
@@ -33,6 +34,7 @@ export default function JobCompletePage() {
   // Job Data for Report
   const [job, setJob] = useState<Job | null>(null)
   const reportRef = useRef<HTMLDivElement>(null)
+  const isContainer = job?.job_type === 'container'
 
   useEffect(() => {
     if (params.id) {
@@ -82,11 +84,11 @@ export default function JobCompletePage() {
     const handleSubmit = async () => {
     // Explicit Validation Feedback
     if (photos.length === 0) {
-        toast.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
+        toast.error(isContainer ? "กรุณาถ่ายรูปใบ EIR (ขาเข้า/คืนตู้)" : "กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
         return
     }
     if (!signature) {
-        toast.error("กรุณาลงลายเซ็นผู้รับสินค้า")
+        toast.error(isContainer ? "กรุณาลงลายเซ็นเจ้าหน้าที่ลานตู้" : "กรุณาลงลายเซ็นผู้รับสินค้า")
         return
     }
 
@@ -124,7 +126,7 @@ export default function JobCompletePage() {
 
             const reportBlob = await captureReport()
             if (reportBlob && reportBlob.size > 5000) { 
-                formData.append("pod_report", reportBlob, `POD_Report_${params.id}.jpg`)
+                formData.append("pod_report", reportBlob, isContainer ? `Container_Delivery_Report_${params.id}.jpg` : `POD_Report_${params.id}.jpg`)
             }
         }
 
@@ -133,6 +135,9 @@ export default function JobCompletePage() {
         formData.append("photo_count", photos.length.toString())
         formData.append("signature", signature, "signature.png")
         if (loadedQty) formData.append("loaded_qty", loadedQty)
+        if (isContainer) {
+            formData.append("job_type", "container")
+        }
         
         const result = await submitJobPOD(params.id, formData)
         
@@ -219,71 +224,84 @@ export default function JobCompletePage() {
 
   return (
     <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
-      <MobileHeader title="ส่งงาน (POD)" showBack />
+      <MobileHeader title={isContainer ? "คืนตู้ (Gate-In EIR)" : "ส่งงาน (POD)"} showBack />
 
       {/* Hidden Report Container */}
       {job && (
           <div className="fixed left-[-9999px] top-0">
-             <PodReport 
-                ref={reportRef} 
-                job={job} 
-                photos={photos.map(f => URL.createObjectURL(f))} 
-                signature={signature ? URL.createObjectURL(signature) : null} 
-             />
+             {isContainer ? (
+                 <ContainerDeliveryReport
+                     ref={reportRef}
+                     job={job}
+                     photos={photos.map(f => URL.createObjectURL(f))}
+                     signature={signature ? URL.createObjectURL(signature) : null}
+                 />
+             ) : (
+                 <PodReport 
+                    ref={reportRef} 
+                    job={job} 
+                    photos={photos.map(f => URL.createObjectURL(f))} 
+                    signature={signature ? URL.createObjectURL(signature) : null} 
+                 />
+             )}
           </div>
       )}
 
       <div className="space-y-6">
         <section>
-            <h2 className="text-muted-foreground font-bold mb-2">1. ถ่ายรูปสินค้า</h2>
-            <CameraInput onImagesChange={setPhotos} maxImages={5} />
+            <h2 className="text-muted-foreground font-bold mb-2">
+                {isContainer ? "1. ถ่ายรูปใบ EIR ขาเข้า (คืนตู้)" : "1. ถ่ายรูปสินค้า"}
+            </h2>
+            <CameraInput onImagesChange={setPhotos} maxImages={isContainer ? 2 : 5} />
             
             {/* AI Verification Feedback - Reserved space to prevent signature jumping */}
-            <div className="mt-3 bg-card border border-slate-800 rounded-lg p-3 min-h-[5rem] flex flex-col justify-center">
-                {photos.length > 0 ? (
-                    <>
-                    {verifying ? (
-                        <div className="flex items-center gap-3 text-purple-400 animate-pulse">
-                            <ScanLine className="animate-spin-slow" size={20} />
-                            <span className="text-xl">กำลังตรวจสอบคุณภาพรูปภาพ (AI)...</span>
+            {!isContainer && (
+                <div className="mt-3 bg-card border border-slate-800 rounded-lg p-3 min-h-[5rem] flex flex-col justify-center">
+                    {photos.length > 0 ? (
+                        <>
+                        {verifying ? (
+                            <div className="flex items-center gap-3 text-purple-400 animate-pulse">
+                                <ScanLine className="animate-spin-slow" size={20} />
+                                <span className="text-xl">กำลังตรวจสอบคุณภาพรูปภาพ (AI)...</span>
+                            </div>
+                        ) : verificationResult ? (
+                            <div>
+                                 <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <BrainCircuit size={16} className={verificationResult.isValid ? "text-emerald-400" : "text-amber-400"} />
+                                        <span className={`text-xl font-bold ${verificationResult.isValid ? "text-emerald-400" : "text-amber-400"}`}>
+                                            คะแนน AI: {verificationResult.score}/100
+                                        </span>
+                                    </div>
+                                    {verificationResult.isValid && <CheckCircle size={16} className="text-emerald-500" />}
+                                 </div>
+                                 
+                                 {!verificationResult.isValid && (
+                                    <div className="space-y-1">
+                                        {verificationResult.issues.map((issue, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-lg font-bold text-red-400">
+                                                <AlertTriangle size={12} />
+                                                {issue}
+                                            </div>
+                                        ))}
+                                        <p className="text-lg font-bold text-muted-foreground mt-1 pl-5">แนะนำให้ถ่ายใหม่อีกครั้งเพื่อความชัดเจน</p>
+                                    </div>
+                                 )}
+                            </div>
+                        ) : null}
+                        </>
+                    ) : (
+                        <div className="flex items-center gap-3 text-muted-foreground/40 italic">
+                            <ScanLine size={20} />
+                            <span className="text-lg">ถ่ายรูปเพื่อรับการตรวจสอบด้วย AI</span>
                         </div>
-                    ) : verificationResult ? (
-                        <div>
-                             <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <BrainCircuit size={16} className={verificationResult.isValid ? "text-emerald-400" : "text-amber-400"} />
-                                    <span className={`text-xl font-bold ${verificationResult.isValid ? "text-emerald-400" : "text-amber-400"}`}>
-                                        คะแนน AI: {verificationResult.score}/100
-                                    </span>
-                                </div>
-                                {verificationResult.isValid && <CheckCircle size={16} className="text-emerald-500" />}
-                             </div>
-                             
-                             {!verificationResult.isValid && (
-                                <div className="space-y-1">
-                                    {verificationResult.issues.map((issue, i) => (
-                                        <div key={i} className="flex items-center gap-2 text-lg font-bold text-red-400">
-                                            <AlertTriangle size={12} />
-                                            {issue}
-                                        </div>
-                                    ))}
-                                    <p className="text-lg font-bold text-muted-foreground mt-1 pl-5">แนะนำให้ถ่ายใหม่อีกครั้งเพื่อความชัดเจน</p>
-                                </div>
-                             )}
-                        </div>
-                    ) : null}
-                    </>
-                ) : (
-                    <div className="flex items-center gap-3 text-muted-foreground/40 italic">
-                        <ScanLine size={20} />
-                        <span className="text-lg">ถ่ายรูปเพื่อรับการตรวจสอบด้วย AI</span>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
         </section>
 
                 {/* Always allow quantity input if piece-rate is configured, even if a total price exists */}
-                {job && job.Price_Per_Unit && Number(job.Price_Per_Unit) > 0 && (
+                {!isContainer && job && job.Price_Per_Unit && Number(job.Price_Per_Unit) > 0 && (
                 <section>
                     <h2 className="text-muted-foreground font-bold mb-2">2. ยืนยันจำนวนที่ส่งจริง</h2>
                     <QuantityStepper 
@@ -296,7 +314,8 @@ export default function JobCompletePage() {
 
                 <section>
                 <h2 className="text-muted-foreground font-bold mb-2">
-                    {job && job.Price_Per_Unit && Number(job.Price_Per_Unit) > 0 && (!job.Price_Cust_Total || Number(job.Price_Cust_Total) === 0) ? "3. ลายเซ็นผู้รับ" : "2. ลายเซ็นผู้รับ"}
+                    {isContainer ? "2. ลายเซ็นเจ้าหน้าที่ลานตู้ (ผู้รับตู้)" : 
+                     (job && job.Price_Per_Unit && Number(job.Price_Per_Unit) > 0 && (!job.Price_Cust_Total || Number(job.Price_Cust_Total) === 0) ? "3. ลายเซ็นผู้รับ" : "2. ลายเซ็นผู้รับ")}
                 </h2>
                 <SignaturePad onSave={setSignature} />
                 </section>
@@ -309,16 +328,20 @@ export default function JobCompletePage() {
                         : "bg-slate-800 text-muted-foreground opacity-70 grayscale translate-y-1"
                 }`}
             >
-                ยืนยันการส่งงาน
+                {isContainer ? "ยืนยันการคืนตู้" : "ยืนยันการส่งงาน"}
             </Button>
             
             {/* Validation Feedback */}
             <div className="text-center space-y-1">
                 {photos.length === 0 && (
-                    <p className="text-lg font-bold text-red-400 animate-pulse">* กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป</p>
+                    <p className="text-lg font-bold text-red-400 animate-pulse">
+                        {isContainer ? "* กรุณาถ่ายรูปใบ EIR อย่างน้อย 1 รูป" : "* กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป"}
+                    </p>
                 )}
                 {!signature && (
-                    <p className="text-lg font-bold text-red-400 animate-pulse">* กรุณาลงลายเซ็นผู้รับ</p>
+                    <p className="text-lg font-bold text-red-400 animate-pulse">
+                        {isContainer ? "* กรุณาลงลายเซ็นเจ้าหน้าที่ลานตู้" : "* กรุณาลงลายเซ็นผู้รับ"}
+                    </p>
                 )}
             </div>
         </div>

@@ -15,6 +15,7 @@ import { Car, Shield, Calendar, Scale, Box, Save, Loader2 } from "lucide-react"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Branch } from "@/lib/supabase/branches"
 import { Subcontractor } from "@/types/subcontractor"
+import { cn } from "@/lib/utils"
 
 type VehicleDialogProps = {
   mode?: 'create' | 'edit'
@@ -68,6 +69,7 @@ export function VehicleDialog({
     Sub_ID: vehicle?.Sub_ID || '',
     Max_Weight_kg: vehicle?.Max_Weight_kg || '',
     Max_Volume_cbm: vehicle?.Max_Volume_cbm || '',
+    is_chassis: (vehicle as any)?.is_chassis || false,
     Tax_Expiry: vehicle?.Tax_Expiry || '',
     Insurance_Expiry: vehicle?.Insurance_Expiry || '',
     Act_Expiry: vehicle?.Act_Expiry || ''
@@ -110,6 +112,7 @@ export function VehicleDialog({
               Sub_ID: '',
               Max_Weight_kg: 0,
               Max_Volume_cbm: 0,
+              is_chassis: false,
               Tax_Expiry: '',
               Insurance_Expiry: '',
               Act_Expiry: ''
@@ -359,6 +362,26 @@ export function VehicleDialog({
                     )}
                 </SelectContent>
             </Select>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/10">
+                <div className="space-y-0.5">
+                    <Label className="text-base font-black uppercase tracking-tight">หางลาก (Chassis)</Label>
+                    <p className="text-xs text-muted-foreground font-bold">ระบุว่าเป็นหางลากสำหรับงานตู้คอนเทนเนอร์</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, is_chassis: !formData.is_chassis })}
+                    className={cn(
+                        "w-12 h-6 rounded-full transition-all duration-300 relative",
+                        formData.is_chassis ? "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]" : "bg-muted-foreground/20"
+                    )}
+                >
+                    <div className={cn(
+                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                        formData.is_chassis ? "left-7" : "left-1"
+                    )} />
+                </button>
           </div>
 
           {mode === 'edit' && (

@@ -2,8 +2,9 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { Building2, Loader2 } from "lucide-react"
+import { Building2, Loader2, Users } from "lucide-react"
 import { useBranch } from "@/components/providers/branch-provider"
+import { useCustomer } from "@/components/providers/customer-provider"
 import { useLanguage } from "@/components/providers/language-provider"
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
@@ -22,6 +23,7 @@ interface HeaderProps {
 
 export function Header({ sidebarCollapsed = false }: HeaderProps) {
   const { selectedBranch, setSelectedBranch, branches, isAdmin, isPending } = useBranch()
+  const { selectedCustomer, setSelectedCustomer, customers, isCustomerUser, isPending: isCustomerPending } = useCustomer()
   const { t } = useLanguage()
 
   return (
@@ -75,6 +77,43 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
                         {branches.map(b => (
                             <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="rounded-xl hover:bg-primary/10 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer py-3 h-12">
                                 {b.Branch_Name?.toUpperCase()}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+          )}
+
+         {/* Customer Selector (Global) - For Admins and Dispatchers */}
+         {!isCustomerUser && (
+            <div className="w-56 shrink-0 relative z-[60]">
+                <Select 
+                    value={selectedCustomer} 
+                    onValueChange={setSelectedCustomer}
+                    disabled={isCustomerPending}
+                >
+                    <SelectTrigger className="bg-muted border-border text-foreground h-14 w-full focus:ring-1 focus:ring-primary/40 hover:bg-muted/80 transition-all rounded-2xl group">
+                            <div className="flex items-center gap-3 truncate">
+                            <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                                {isCustomerPending ? (
+                                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                                ) : (
+                                    <Users className="w-4 h-4 text-primary shrink-0" />
+                                )}
+                            </div>
+                             <span className={cn(
+                                 "truncate font-black text-accent text-sm font-bold uppercase tracking-normal",
+                                 isCustomerPending && "opacity-50"
+                             )}>
+                                {selectedCustomer === 'All' ? t('header.all_customers') : customers.find(c => c.Customer_ID === selectedCustomer)?.Customer_Name || selectedCustomer}
+                            </span>
+                            </div>
+                    </SelectTrigger>
+                    <SelectContent className="z-[70] bg-popover border border-border shadow-[0_20px_60px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.6)] rounded-[2rem] text-popover-foreground p-2">
+                        <SelectItem value="All" className="rounded-xl hover:bg-primary/10 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer py-3 h-12">{t('header.all_customers')}</SelectItem>
+                        {customers.map(c => (
+                            <SelectItem key={c.Customer_ID} value={c.Customer_ID} className="rounded-xl hover:bg-primary/10 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer py-3 h-12">
+                                {c.Customer_Name?.toUpperCase()}
                             </SelectItem>
                         ))}
                     </SelectContent>

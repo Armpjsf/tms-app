@@ -39,6 +39,7 @@ export const MODULE_GROUPS = [
       { key: "ops.create_job", label: "→ สร้าง/แก้ไขงาน", icon: FileText },
       { key: "ops.assign_driver", label: "→ จ่ายงาน/เลือกคนขับ", icon: Truck },
       { key: "navigation.calendar", label: "ปฏิทินงาน", icon: CalendarDays },
+      { key: "navigation.container", label: "ระบบงานตู้คอนเทนเนอร์", icon: Database },
       { key: "navigation.history", label: "ประวัติงาน", icon: History },
       { key: "navigation.monitoring", label: "ติดตามรถ", icon: Activity },
       { key: "navigation.tracking_hub", label: "ศูนย์ติดตามงานสด (Admin)", icon: Activity },

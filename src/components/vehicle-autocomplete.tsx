@@ -15,7 +15,10 @@ interface VehicleAutocompleteProps {
   className?: string
   placeholder?: string
   disabled?: boolean
+  customerId?: string | null
 }
+
+import { useMemo } from "react"
 
 export function VehicleAutocomplete({
   value,
@@ -24,17 +27,33 @@ export function VehicleAutocomplete({
   onSelect,
   className,
   placeholder = "ค้นหาทะเบียนรถ...",
-  disabled = false
+  disabled = false,
+  customerId
 }: VehicleAutocompleteProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const wrapperRef = useRef<HTMLDivElement>(null)
 
+  // Filter and sort based on customerId
+  const processedVehicles = useMemo(() => {
+    if (!customerId || customerId === 'All') {
+      return vehicles
+    }
+    const allowed = vehicles.filter(
+      (v) => v.Customer_ID === customerId || !v.Customer_ID
+    )
+    return [...allowed].sort((a, b) => {
+      const aIsDedicated = a.Customer_ID === customerId ? 1 : 0
+      const bIsDedicated = b.Customer_ID === customerId ? 1 : 0
+      return bIsDedicated - aIsDedicated
+    })
+  }, [vehicles, customerId])
+
   // Filter based on query
   const filteredVehicles =
     query === ""
-      ? vehicles
-      : vehicles.filter((v) =>
+      ? processedVehicles
+      : processedVehicles.filter((v) =>
           (v.Vehicle_Plate || "").toLowerCase().includes(query.toLowerCase())
         )
 
@@ -113,6 +132,16 @@ export function VehicleAutocomplete({
                     <Truck size={14} className="text-emerald-600" />
                     <span>{vehicle.Vehicle_Plate}</span>
                     <span className="text-lg font-bold text-muted-foreground font-black">({vehicle.Vehicle_Type})</span>
+                    {customerId && customerId !== 'All' && (
+                      <span className={cn(
+                        "text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest",
+                        vehicle.Customer_ID === customerId
+                          ? "bg-primary/20 text-primary border border-primary/30"
+                          : "bg-muted-foreground/10 text-muted-foreground"
+                      )}>
+                        {vehicle.Customer_ID === customerId ? 'เฉพาะลูกค้านี้ / Dedicated' : 'ส่วนกลาง / Shared'}
+                      </span>
+                    )}
                   </div>
                   {value === vehicle.Vehicle_Plate && (
                     <Check className="w-4 h-4 text-emerald-500" />

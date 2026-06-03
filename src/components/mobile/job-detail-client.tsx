@@ -7,7 +7,7 @@ import { MobileHeader } from "@/components/mobile/mobile-header"
 import { 
     MapPin, Phone, User, CheckCircle, 
     Info, Activity, Navigation, 
-    TrendingUp, Target, Copy
+    TrendingUp, Target, Copy, Thermometer
 } from "lucide-react"
 import { JobActionButton } from "@/components/mobile/job-action-button"
 import { JobWorkflow } from "@/components/mobile/job-workflow"
@@ -17,6 +17,9 @@ import { Job } from "@/lib/supabase/jobs"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { parseISO, isAfter, startOfDay } from "date-fns"
+import { ContainerTempForm } from "@/components/mobile/container-temp-form"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 interface JobDetailClientProps {
     job: Job
@@ -31,6 +34,7 @@ export function JobDetailClient({ job, success, initialTab = 'mission' }: JobDet
     // Sync tab with URL to prevent "bounce" on refresh
     const [activeTab, setActiveTab] = useState<'mission' | 'info'>(initialTab as 'mission' | 'info')
     const [mounted, setMounted] = useState(false)
+    const [showTempModal, setShowTempModal] = useState(false)
 
     useEffect(() => {
         setMounted(true)
@@ -142,6 +146,73 @@ export function JobDetailClient({ job, success, initialTab = 'mission' }: JobDet
                         <p className="text-sm text-amber-900 font-medium">{job.Notes}</p>
                     </div>
                 )}
+
+                {/* Workflow Tracker */}
+                <div className="bg-card rounded-3xl p-6 border border-border shadow-sm">
+                    <h3 className="text-lg font-black text-foreground mb-4 flex items-center gap-2">
+                        <Activity size={20} className="text-primary" />
+                        สถานะปัจจุบัน
+                    </h3>
+                    <JobWorkflow 
+                        currentStatus={job.Job_Status} 
+                        totalDrop={destinations.length} 
+                        completedDrops={job.Signature_Url ? job.Signature_Url.split(',').filter(Boolean).length : 0}
+                        jobType={job.job_type}
+                    />
+                </div>
+
+                {/* Container Specific Info */}
+                {job.job_type === 'container' && job.container && (
+                    <div className="bg-card rounded-3xl p-6 border border-border shadow-sm space-y-6">
+                        <h3 className="text-lg font-black text-foreground flex items-center gap-2">
+                            <Info size={20} className="text-primary" />
+                            ข้อมูลตู้คอนเทนเนอร์
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase">หมายเลขตู้</p>
+                                <p className="text-sm font-black text-primary">{job.container.container_no || 'N/A'}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase">เบอร์ซีล</p>
+                                <p className="text-sm font-black text-indigo-500">{job.container.seal_no || 'N/A'}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase">ขนาดตู้</p>
+                                <p className="text-sm font-bold">{job.container.container_size || 'N/A'}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase">สายเรือ</p>
+                                <p className="text-sm font-bold">{job.container.shipping_line || 'N/A'}</p>
+                            </div>
+                        </div>
+
+                        {/* REEFER SPECIFIC: Temp Update Button */}
+                        {job.container.container_size === 'REEFER' && (
+                            <div className="pt-4 border-t border-border/50">
+                                <Button 
+                                    onClick={() => setShowTempModal(true)}
+                                    className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black gap-2 shadow-lg shadow-blue-500/20"
+                                >
+                                    <Thermometer size={20} />
+                                    อัปเดตอุณหภูมิ (REEFER)
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Temperature Update Modal */}
+                <Dialog open={showTempModal} onOpenChange={setShowTempModal}>
+                    <DialogContent className="max-w-[90vw] p-0 bg-transparent border-none shadow-none">
+                        <ContainerTempForm 
+                            jobId={job.Job_ID}
+                            targetTemp={job.container?.target_temperature}
+                            driverName={job.Driver_Name}
+                            onClose={() => setShowTempModal(false)}
+                        />
+                    </DialogContent>
+                </Dialog>
 
                 {/* 4. PAYOUT (If visible) */}
                 {job?.Show_Price_To_Driver && (

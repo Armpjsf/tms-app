@@ -179,9 +179,16 @@ export async function getLatestDriverLocations() {
     // Filter by branch manually if needed
     const logs = Array.from(latestLocations.values());
     if (customerId) {
-      // For customers, further security filter (though they already use admin client)
-      // This is just a safeguard. Ideally getActiveFleetStatus is used instead for map.
-      return logs; 
+      // For customers, further security filter: only show locations of drivers on their active jobs
+      const { data: activeJobs } = await supabase
+        .from("Jobs_Main")
+        .select("Driver_ID")
+        .eq("Customer_ID", customerId)
+        .not("Driver_ID", "is", null)
+        .not("Job_Status", "in", '("Complete", "Completed", "Cancelled", "Delivered")');
+
+      const activeDriverIds = new Set(activeJobs?.map((j: any) => j.Driver_ID) || []);
+      return logs.filter((l) => activeDriverIds.has(l.Driver_ID));
     }
     if (branchId && branchId !== "All") {
       return logs.filter((l) => l.Master_Drivers?.Branch_ID === branchId);
@@ -240,23 +247,28 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
     const isAdminUser = await isAdmin();
     const supabase = await createAdminClient();
 
-    // 1. Get all drivers
+    // Get branch context
     const sessionBranchId = await getUserBranchId();
     const effectiveBranchId = isSuper ? (branchId || sessionBranchId) : sessionBranchId;
 
-    // 1. Get all drivers with their current location from Master_Drivers
     let driversQuery = supabase
       .from("Master_Drivers")
       .select("*");
 
     if (customerId) {
       // Find Driver_IDs from Jobs_Main for this customer
-      const { data: activeJobs } = await supabase
+      let activeJobsQuery = supabase
         .from("Jobs_Main")
         .select("Driver_ID")
         .eq("Customer_ID", customerId)
         .not("Driver_ID", "is", null)
         .not("Job_Status", "in", '("Complete", "Completed", "Cancelled", "Delivered")');
+
+      if (effectiveBranchId && effectiveBranchId !== "All") {
+        activeJobsQuery = activeJobsQuery.eq("Branch_ID", effectiveBranchId);
+      }
+
+      const { data: activeJobs } = await activeJobsQuery;
 
       const activeDriverIds = Array.from(
         new Set(activeJobs?.map((j: any) => j.Driver_ID) || []),
@@ -264,11 +276,11 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
       if (activeDriverIds.length === 0) return [];
 
       driversQuery = driversQuery.in("Driver_ID", activeDriverIds);
-    } else if (isSuper && (!effectiveBranchId || effectiveBranchId === "All")) {
-      // Super Admin viewing all: No filter
-    } else if (effectiveBranchId && effectiveBranchId !== "All") {
+    }
+
+    if (effectiveBranchId && effectiveBranchId !== "All") {
       driversQuery = driversQuery.eq("Branch_ID", effectiveBranchId);
-    } else if (!isSuper && !isAdminUser && !effectiveBranchId) {
+    } else if (!isSuper && !isAdminUser && !effectiveBranchId && !customerId) {
       return [];
     }
 

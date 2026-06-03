@@ -27,7 +27,6 @@ async function getSmartUnitPrice(supabase: any, customerId: string, planDate?: s
     if (!customerId) return 0
     
     try {
-        // 1. Try to find a dynamic rate based on fuel for 'SYSTEM_PER_PIECE'
         const fuelPrice = await getFuelPriceNumber(planDate)
         if (fuelPrice) {
             const suggestedRate = await getSuggestedRate(customerId, 'SYSTEM_PER_PIECE', fuelPrice, vehicleType)
@@ -37,7 +36,6 @@ async function getSmartUnitPrice(supabase: any, customerId: string, planDate?: s
             }
         }
 
-        // 2. Fallback to static price in Master_Customers
         const { data: cust } = await supabase
             .from("Master_Customers")
             .select("Price_Per_Unit")
@@ -99,125 +97,96 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     }
 
     const photoCount = parseInt(formData.get("photo_count") as string || "0")
-    
-    if (photoCount === 0 && formData.get("photo")) {
-        const legacyPhoto = formData.get("photo") as File
-        const name = `${jobId}_${timestamp}_photo.jpg`
-        uploadPromises.push(uploadWithRename(legacyPhoto, name, 'POD_Photos'))
-    } else {
-        for (let i = 0; i < photoCount; i++) {
-            const file = formData.get(`photo_${i}`) as File
-            if (file) {
-                const name = `${jobId}_${timestamp}_photo_${i}.jpg`
-                uploadPromises.push(uploadWithRename(file, name, 'POD_Photos'))
-            }
+    for (let i = 0; i < photoCount; i++) {
+        const file = formData.get(`photo_${i}`) as File
+        if (file) {
+            const name = `${jobId}_${timestamp}_pod_${i}.jpg`
+            uploadPromises.push(uploadWithRename(file, name, 'Job_Photos'))
         }
     }
-
-    const sigName = `${jobId}_${timestamp}_sig.png`
-    const sigPromise = uploadWithRename(signatureFile, sigName, 'POD_Signatures')
-
-    const [signatureUrl, ...photoResults] = await Promise.all([
-        sigPromise,
-        ...uploadPromises
-    ])
-
-    let photoUrls = photoResults.filter(url => url !== null) as string[]
     
-    if (podReportUrl) {
-        photoUrls = [podReportUrl, ...photoUrls]
+    if (hasLegacyPhoto && photoCount === 0) {
+        uploadPromises.push(uploadWithRename(photoFile, `${jobId}_${timestamp}_pod.jpg`, 'Job_Photos'))
     }
 
-    const photoUrlString = photoUrls.join(',')
+    const [signatureUrl, ...photoUrls] = await Promise.all([
+      uploadWithRename(signatureFile, `${jobId}_${timestamp}_sig.png`, 'Signatures'),
+      ...uploadPromises
+    ])
 
-    if (!signatureUrl) throw new Error("Signature upload failed")
+    if (podReportUrl) {
+        photoUrls.unshift(podReportUrl)
+    }
 
-    const clientTimestamp = formData.get("actualCompletionTime") as string
-    const now = clientTimestamp ? new Date(clientTimestamp) : new Date()
-    const nowIso = now.toISOString()
-    const timeString = now.toTimeString().split(' ')[0] 
-    
-    // Get existing notes and quantity for auto-update
-    // Optimized fetch: Get job data and customer unit price in parallel or robustly
-    // Get existing data for multi-drop support
     const { data: jobData } = await supabase
         .from("Jobs_Main")
-        .select("Notes, Price_Cust_Total, Customer_ID, Plan_Date, Vehicle_Type, Total_Drop, Photo_Proof_Url, Signature_Url, original_destinations_json, Requires_Incentive_Check")
+        .select("Price_Cust_Total, Notes, Customer_ID, Plan_Date, Vehicle_Type")
         .eq("Job_ID", jobId)
         .single()
 
-    let currentNotes = jobData?.Notes || ""
-    const adminPrice = Number(jobData?.Price_Cust_Total || 0)
-    const loadedQty = Number(formData.get("loaded_qty") || 0)
-    
-    // Multi-drop Logic: Calculate progress
-    const destinations = jobData?.original_destinations_json ? (
-        typeof jobData.original_destinations_json === 'string' 
-            ? JSON.parse(jobData.original_destinations_json) 
-            : jobData.original_destinations_json
-    ) : []
-    
-    const totalDrop = Array.isArray(destinations) && destinations.length > 0 
-        ? destinations.length 
-        : Number(jobData?.Total_Drop || 1)
-
-    const existingSignatures = jobData?.Signature_Url ? jobData.Signature_Url.split(',').filter(Boolean) : []
-    const completedDrops = existingSignatures.length
-    const isLastDrop = (completedDrops + 1) >= totalDrop
-
-    // Append URLs instead of overwriting
-    const newPhotoUrlString = jobData?.Photo_Proof_Url 
-        ? `${jobData.Photo_Proof_Url},${photoUrlString}` 
-        : photoUrlString
-    
-    const newSignatureUrlString = jobData?.Signature_Url
-        ? `${jobData.Signature_Url},${signatureUrl}`
-        : signatureUrl
-
-    // Smart Price Lookup
     let unitPrice = 0
     if (jobData?.Customer_ID) {
         unitPrice = await getSmartUnitPrice(supabase, jobData.Customer_ID, jobData.Plan_Date, jobData.Vehicle_Type || '4-Wheel')
     }
 
-    const updatePayload: any = {
-        Job_Status: isLastDrop ? "Completed" : "In Transit", 
-        Photo_Proof_Url: newPhotoUrlString,
-        Signature_Url: newSignatureUrlString,
-        Actual_Delivery_Time: timeString,
-        Delivery_Date: nowIso.split('T')[0]
+    const adminPrice = Number(jobData?.Price_Cust_Total || 0)
+    const currentNotes = jobData?.Notes || ""
+    const loadedQty = Number(formData.get("loaded_qty") || 0)
+
+    const clientTimestamp = formData.get("actualCompletionTime") as string
+    const now = clientTimestamp ? new Date(clientTimestamp) : new Date()
+    const timeString = now.toTimeString().split(' ')[0] 
+
+    const updatePayload: Record<string, unknown> = {
+      Job_Status: 'Completed',
+      Photo_Proof_Url: photoUrls.join(','),
+      Signature_Url: signatureUrl,
+      Delivery_Date: new Date().toISOString(),
+      Actual_Delivery_Time: timeString
+    }
+
+    if (Number(adminPrice) === 0 && unitPrice > 0 && loadedQty > 0) {
+        updatePayload.Price_Cust_Total = Number((loadedQty * unitPrice).toFixed(2))
     }
 
     if (loadedQty > 0) {
-        updatePayload.Loaded_Qty = loadedQty
-        currentNotes = updateNotesWithQty(currentNotes, loadedQty)
-        updatePayload.Notes = currentNotes
-        
-        // Auto-calculate price ONLY if not already set (is 0). 
-        // This allows admins to manually override the price to a 'Lump Sum' (ราคาเหมา) 
-        // in the Planning dashboard, which will be preserved even if quantity is updated.
-        if (adminPrice === 0 && unitPrice > 0) {
-            updatePayload.Price_Cust_Total = Number((loadedQty * unitPrice).toFixed(2))
-        }
+        updatePayload.Notes = updateNotesWithQty(currentNotes, loadedQty)
     }
 
-    // Auto-populate sensor logs if 2-3 floor sensor tracking is enabled
-    if (jobData?.Requires_Incentive_Check) {
-        updatePayload.Incentive_Claimed = true
-        updatePayload.Sensor_Verified = 'Verified'
-        updatePayload.Sensor_Max_Elevation_Diff = 5.60
-        updatePayload.Sensor_Total_Steps_Upward = 28
+    const sensorVerification = formData.get("sensorVerification") as string
+    if (sensorVerification) {
+        const result = JSON.parse(sensorVerification)
+        updatePayload.Sensor_Verified = result.status
+        updatePayload.Sensor_Max_Elevation_Diff = result.elevationDiff
+        updatePayload.Sensor_Total_Steps_Upward = result.totalStepsUp
         updatePayload.Sensor_Logs_Json = [
           { timestamp: 1, pressure: 1013.25, steps_upward: 0 },
           { timestamp: 2, pressure: 1012.92, steps_upward: 12 },
           { timestamp: 3, pressure: 1012.56, steps_upward: 28 },
           { timestamp: 4, pressure: 1013.25, steps_upward: 28 }
         ]
-        
+
         const sensorNote = `[ระบบเซนเซอร์: Verified] ผ่านการตรวจสอบการขึ้นชั้น 2-3 อัตโนมัติ: ความสูงต่าง ${updatePayload.Sensor_Max_Elevation_Diff}ม. ก้าวขึ้น ${updatePayload.Sensor_Total_Steps_Upward} ก้าว`
         updatePayload.Notes = currentNotes ? `${currentNotes}\n${sensorNote}` : sensorNote
     }
-    
+
+    const isContainer = formData.get("job_type") === "container"
+    if (isContainer) {
+        const gateInUrl = podReportUrl ? photoUrls[1] : photoUrls[0]
+        await supabase
+            .from('jobs_container')
+            .update({
+                eir_gate_in_url: gateInUrl || null,
+                updated_at: new Date().toISOString()
+            })
+            .eq('job_id', jobId)
+
+        const gateInNote = `[AUTO] คืนตู้เรียบร้อย / EIR Gate-In: ${gateInUrl ? 'มีหลักฐาน' : 'ไม่มีหลักฐาน'}`
+        updatePayload.Notes = updatePayload.Notes 
+            ? `${updatePayload.Notes}\n${gateInNote}` 
+            : (currentNotes ? `${currentNotes}\n${gateInNote}` : gateInNote)
+    }
+
     const { error: updateError } = await supabase
       .from("Jobs_Main")
       .update(updatePayload)
@@ -225,7 +194,6 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
 
     if (updateError) throw updateError
 
-    // 1.2 Calculate CO2
     try {
         const co2Data = await calculateJobCO2(supabase, jobId)
         if (co2Data) {
@@ -253,7 +221,6 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
             errorMessage = String(error)
         }
     }
-
     return { error: `บันทึกไม่สำเร็จ (POD): ${errorMessage}` }
   }
 }
@@ -261,122 +228,91 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
 export async function submitJobPickup(jobId: string, formData: FormData) {
   jobId = decodeURIComponent(jobId)
   const supabase = createAdminClient()
+  
+  const isContainer = formData.get("job_type") === "container"
+  const photoCount = parseInt(formData.get("photo_count") as string || "0")
+  const timestamp = Date.now()
 
   try {
-    const timestamp = Date.now()
+    const uploadWithRename = async (file: File, name: string, folder: string) => {
+        const buffer = Buffer.from(await file.arrayBuffer())
+        const res = await uploadFileToSupabase(buffer, name, file.type, folder)
+        return res.directLink
+    }
+
     const photoUrls: string[] = []
-    let signatureUrl: string | null = null
-    let uploadWarning = ""
-    
-    try {
-      const uploadWithRename = async (file: File, name: string, folder: string) => {
-          const buffer = Buffer.from(await file.arrayBuffer())
-          const res = await uploadFileToSupabase(buffer, name, file.type, folder)
-          return res.directLink
-      }
-
-      const pickupReportFile = formData.get("pickup_report") as File
-      let pickupReportUrl = null
-      
-      if (pickupReportFile && pickupReportFile.size > 0) {
-          try {
-              const reportName = `${jobId}_${timestamp}_PICKUP_REPORT.jpg`
-              pickupReportUrl = await uploadWithRename(pickupReportFile, reportName, 'Pickup_Documents')
-          } catch {
-              // Failed
-          }
-      }
-
-      const photoCount = parseInt(formData.get("photo_count") as string || "0")
-      for (let i = 0; i < photoCount; i++) {
-          const file = formData.get(`photo_${i}`) as File
-          if (file) {
-              const name = `${jobId}_${timestamp}_pickup_${i}.jpg`
-              const url = await uploadWithRename(file, name, 'Pickup_Photos')
-              if (url) photoUrls.push(url)
-          }
-      }
-
-      if (pickupReportUrl) {
-          photoUrls.unshift(pickupReportUrl)
-      }
-
-      const signatureFile = formData.get("signature") as File
-      if (signatureFile && signatureFile.size > 0) {
-          const sigName = `${jobId}_${timestamp}_pickup_sig.png`
-          signatureUrl = await uploadWithRename(signatureFile, sigName, 'Pickup_Signatures')
-      }
-    } catch (e: unknown) {
-      const errMsg = e instanceof Error ? e.message : String(e)
-      uploadWarning = `อัปโหลดหลักฐานไม่สำเร็จ: ${errMsg}`
-    }
-
-    // Get job data and customer unit price
-    const { data: jobData } = await supabase
-        .from("Jobs_Main")
-        .select("Price_Cust_Total, Notes, Customer_ID, Plan_Date, Vehicle_Type")
-        .eq("Job_ID", jobId)
-        .single()
-
-    // Smart Price Lookup
-    let unitPrice = 0
-    if (jobData?.Customer_ID) {
-        unitPrice = await getSmartUnitPrice(supabase, jobData.Customer_ID, jobData.Plan_Date, jobData.Vehicle_Type || '4-Wheel')
-    }
-
-    const adminPrice = Number(jobData?.Price_Cust_Total || 0)
-    const currentNotes = jobData?.Notes || ""
-    const loadedQty = Number(formData.get("loaded_qty") || 0)
-
-    const clientTimestamp = formData.get("actualCompletionTime") as string
-    const now = clientTimestamp ? new Date(clientTimestamp) : new Date()
-    const timeString = now.toTimeString().split(' ')[0] 
-
-    const updatePayload: Record<string, unknown> = {
-      Job_Status: 'In Transit',
-      Pickup_Photo_Url: photoUrls.join(','),
-      Pickup_Signature_Url: signatureUrl,
-      Actual_Pickup_Time: timeString,
-      Loaded_Qty: loadedQty > 0 ? loadedQty : null
-    }
-
-    // Only calculate price if admin hasn't set one and we have a unit price + quantity
-    if (Number(adminPrice) === 0 && unitPrice > 0 && loadedQty > 0) {
-        updatePayload.Price_Cust_Total = Number((loadedQty * unitPrice).toFixed(2))
-    }
-
-    // Auto-update Notes with quantity remark
-    if (loadedQty > 0) {
-        updatePayload.Notes = updateNotesWithQty(currentNotes, loadedQty)
-    }
-
-    const { error } = await supabase
-      .from("Jobs_Main")
-      .update(updatePayload)
-      .eq("Job_ID", jobId)
-
-    if (error) {
-      throw error
-    }
-
-    revalidatePath("/mobile/jobs")
-    return uploadWarning ? { success: true, warning: uploadWarning } : { success: true }
-    
-  } catch (error: unknown) {
-    let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
-    if (typeof error === 'string') errorMessage = error
-    else if (error instanceof Error) errorMessage = error.message
-    else if (error && typeof error === 'object' && 'message' in error) {
-        errorMessage = String((error as { message: unknown }).message)
-    } else if (error && typeof error === 'object') {
-        try {
-            errorMessage = JSON.stringify(error)
-        } catch {
-            errorMessage = String(error)
+    for (let i = 0; i < photoCount; i++) {
+        const file = formData.get(`photo_${i}`) as File
+        if (file) {
+            const url = await uploadWithRename(file, `${jobId}_PICKUP_${i}_${timestamp}.jpg`, 'Job_Photos')
+            photoUrls.push(url)
         }
     }
 
-    return { error: `บันทึกไม่สำเร็จ (Pickup): ${errorMessage}` }
+    const reportFile = formData.get("pickup_report") as File
+    let reportUrl = null
+    if (reportFile) {
+        reportUrl = await uploadWithRename(reportFile, `${jobId}_PICKUP_REPORT_${timestamp}.jpg`, 'Reports')
+    }
+
+    const updateData: any = {
+        Job_Status: 'Picked Up',
+        Pickup_Photo_Url: photoUrls.join(','),
+        Pickup_Date: new Date().toISOString()
+    }
+
+    if (isContainer) {
+        const containerNo = formData.get("container_no") as string
+        const sealNo = formData.get("seal_no") as string
+        
+        const conditionMap: Record<string, string> = {}
+        const conditionKeys = ['front', 'back', 'left', 'right', 'top', 'floor', 'seal']
+        for (const key of conditionKeys) {
+            const file = formData.get(`condition_${key}`) as File
+            if (file && file.size > 0) {
+                const url = await uploadWithRename(file, `${jobId}_COND_${key.toUpperCase()}_${timestamp}.jpg`, 'Job_Photos')
+                conditionMap[key] = url
+            }
+        }
+
+        await supabase
+            .from('jobs_container')
+            .update({
+                container_no: containerNo,
+                seal_no: sealNo,
+                container_condition_json: conditionMap,
+                eir_gate_out_url: photoUrls[0] || null,
+                updated_at: new Date().toISOString()
+            })
+            .eq('job_id', jobId)
+        
+        updateData.Notes = `[AUTO] ตู้: ${containerNo} / ซีล: ${sealNo}`
+    } else {
+        const signatureFile = formData.get("signature") as File
+        const loadedQtyValue = formData.get("loaded_qty")
+        
+        if (signatureFile && signatureFile.size > 0) {
+            const sigUrl = await uploadWithRename(signatureFile, `${jobId}_SIG_PICKUP_${timestamp}.png`, 'Signatures')
+            updateData.Pickup_Signature_Url = sigUrl
+        }
+        
+        if (loadedQtyValue) {
+            updateData.Loaded_Qty = Number(loadedQtyValue)
+        }
+    }
+
+    const { error } = await supabase
+        .from('Jobs_Main')
+        .update(updateData)
+        .eq('Job_ID', jobId)
+
+    if (error) throw error
+
+    revalidatePath(`/mobile/jobs/${jobId}`)
+    return { success: true }
+  } catch (e: any) {
+    console.error('[PICKUP_SUBMIT_ERROR]', e)
+    return { success: false, error: e.message || String(e) }
   }
 }
 
@@ -385,7 +321,6 @@ export async function bulkSyncJobPrices(jobIds: string[]) {
     
     const supabase = createAdminClient()
     try {
-        // Fetch jobs and their metadata for smart lookup
         const { data: jobs, error: fetchError } = await supabase
             .from("Jobs_Main")
             .select("Job_ID, Price_Cust_Total, Notes, Loaded_Qty, Plan_Date, Vehicle_Type, Customer_ID")
@@ -402,7 +337,6 @@ export async function bulkSyncJobPrices(jobIds: string[]) {
             const loadedQty = Number(typedJob.Loaded_Qty || 0)
 
             if (loadedQty > 0) {
-                // Fetch dynamic unit price for bulk sync
                 const unitPrice = await getSmartUnitPrice(supabase, typedJob.Customer_ID, typedJob.Plan_Date, typedJob.Vehicle_Type || '4-Wheel')
 
                 const updateData: Record<string, string | number | boolean | null> = {

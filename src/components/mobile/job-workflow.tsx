@@ -9,6 +9,7 @@ interface JobWorkflowProps {
   currentStatus: string
   totalDrop?: number
   completedDrops?: number
+  jobType?: 'normal' | 'container' | null
   className?: string
 }
 
@@ -20,7 +21,7 @@ const STEPS: { status: JobStep; label: string; icon: React.ElementType; descript
   { status: 'Completed', label: 'สำเร็จ', icon: Package, description: 'ส่งมอบเรียบร้อย' }
 ]
 
-export function JobWorkflow({ currentStatus, totalDrop = 1, completedDrops = 0, className }: JobWorkflowProps) {
+export function JobWorkflow({ currentStatus, totalDrop = 1, completedDrops = 0, jobType = 'normal', className }: JobWorkflowProps) {
   // Normalize status
   const normalizedStatus = (currentStatus === 'New' || currentStatus === 'Assigned') ? 'Pending' : currentStatus as JobStep
   
@@ -104,7 +105,7 @@ export function JobWorkflow({ currentStatus, totalDrop = 1, completedDrops = 0, 
                 <p className="text-sm font-medium text-foreground leading-snug">
                    {currentIndex === -1 ? 'กรุณากด "รับงาน" เพื่อเริ่มงานนี้' : 
                     currentIndex === 0 ? 'กำลังเดินทางไปยังจุดรับสินค้า' :
-                    currentIndex === 1 ? 'ถึงจุดรับแล้ว กรุณาถ่ายรูปสินค้าเพื่อรับงาน' :
+                    currentIndex === 1 ? (jobType === 'container' ? 'ถึงจุดรับแล้ว กรุณาถ่ายรูป EIR และสภาพตู้เพื่อรับงาน' : 'ถึงจุดรับแล้ว กรุณาถ่ายรูปสินค้าเพื่อรับงาน') :
                     currentIndex === 2 ? (isMultiDrop ? `กำลังนำสินค้าไปส่งยังจุดที่ ${currentDropIndex}` : 'กำลังนำสินค้าไปส่งยังจุดหมาย') :
                     (isMultiDrop ? `ถึงจุดที่ ${currentDropIndex} แล้ว กรุณาถ่ายรูปและเซ็นชื่อ` : 'ถึงจุดหมายแล้ว กรุณาถ่ายรูปและให้ลูกค้าเซ็นชื่อ')}
                 </p>

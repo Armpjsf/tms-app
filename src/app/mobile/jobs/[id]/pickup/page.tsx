@@ -7,52 +7,80 @@ import { Button } from "@/components/ui/button"
 import { CameraInput } from "@/components/mobile/camera-input"
 import { SignaturePad } from "@/components/mobile/signature-pad"
 import { PickupReport } from "@/components/mobile/pickup-report"
+import { ContainerPickupReport } from "@/components/mobile/container-pickup-report"
 import { toast } from "sonner"
 import { submitJobPickup } from "@/lib/actions/pod-actions"
 import { getJobDetails } from "@/app/mobile/jobs/actions"
 import { Job } from "@/lib/supabase/jobs"
-import { Loader2, Box, Info } from "lucide-react"
+import { Loader2, Box, Info, Camera, ShieldCheck, ChevronRight } from "lucide-react"
 import html2canvas from "html2canvas"
 import { QuantityStepper } from "@/components/mobile/quantity-stepper"
 import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
 
 export default function JobPickupPage() {
   const router = useRouter()
   const params = useParams<{ id: string }>()
   const [photos, setPhotos] = useState<File[]>([])
+  const [conditionPhotos, setConditionPhotos] = useState<Record<string, File>>({})
   const [signature, setSignature] = useState<Blob | null>(null)
   const [loadedQty, setLoadedQty] = useState<string>("")
   const [completed, setCompleted] = useState(false)
   const [loading, setLoading] = useState(false)
   
+  // Container Fields overrides (Driver can update if needed)
+  const [containerNo, setContainerNo] = useState("")
+  const [sealNo, setSealNo] = useState("")
+
   // Job Data for Report
   const [job, setJob] = useState<Job | null>(null)
   const reportRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (params.id) {
-        getJobDetails(params.id).then(setJob)
+        getJobDetails(params.id).then(j => {
+            setJob(j)
+            if (j?.container) {
+                setContainerNo(j.container.container_no || "")
+                setSealNo(j.container.seal_no || "")
+            }
+        })
     }
   }, [params.id])
 
-  const canSubmit = photos.length > 0 && signature && (
-    (loadedQty && Number(loadedQty) > 0) ||
-    (!job?.Price_Per_Unit || Number(job.Price_Per_Unit) === 0) ||
-    (job?.Price_Cust_Total && Number(job.Price_Cust_Total) > 0) // Fixed price ignores quantity requirement
-  )
+  const isContainer = job?.job_type === 'container'
+
+  const canSubmit = isContainer 
+    ? (photos.length > 0 && Object.keys(conditionPhotos).length >= 4)
+    : (photos.length > 0 && signature && (
+        (loadedQty && Number(loadedQty) > 0) ||
+        (!job?.Price_Per_Unit || Number(job.Price_Per_Unit) === 0) ||
+        (job?.Price_Cust_Total && Number(job.Price_Cust_Total) > 0)
+      ))
+
+  const handleConditionPhoto = (key: string, file: File | null) => {
+    if (file) {
+        setConditionPhotos(prev => ({ ...prev, [key]: file }))
+    }
+  }
 
     const handleSubmit = async () => {
-    // Enhanced Validation with feedback
     if (photos.length === 0) {
-        toast.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
+        toast.error(isContainer ? "กรุณาถ่ายรูปใบ EIR" : "กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
         return
     }
-    if (!signature) {
+    
+    if (isContainer && Object.keys(conditionPhotos).length < 4) {
+        toast.error("กรุณาถ่ายรูปสภาพตู้ให้ครบถ้วน (อย่างน้อย 4 ด้าน)")
+        return
+    }
+
+    if (!isContainer && !signature) {
         toast.error("กรุณาลงลายเซ็นผู้ส่งของ")
         return
     }
     
-    const needsQty = (job?.Price_Per_Unit && Number(job.Price_Per_Unit) > 0) && 
+    const needsQty = !isContainer && (job?.Price_Per_Unit && Number(job.Price_Per_Unit) > 0) && 
                      (!job?.Price_Cust_Total || Number(job.Price_Cust_Total) === 0)
     
     if (needsQty && (!loadedQty || Number(loadedQty) <= 0)) {
@@ -77,7 +105,7 @@ export default function JobPickupPage() {
                 })
                 
                 const reportBlob = await new Promise<Blob | null>(resolve => 
-                    canvas.toBlob(resolve, 'image/jpeg', 0.7)
+                    canvas.toBlob(resolve, 'image/jpeg', 0.8)
                 )
                 
                 if (reportBlob) {
@@ -88,161 +116,207 @@ export default function JobPickupPage() {
             }
         }
 
-        // 2. Append Photos & Signature
+        // 2. Append Photos & Data
         photos.forEach((photo, index) => formData.append(`photo_${index}`, photo))
         formData.append("photo_count", photos.length.toString())
-        formData.append("signature", signature, "signature.png")
-        if (loadedQty) formData.append("loaded_qty", loadedQty)
+        
+        if (isContainer) {
+            formData.append("job_type", "container")
+            formData.append("container_no", containerNo)
+            formData.append("seal_no", sealNo)
+            Object.entries(conditionPhotos).forEach(([key, file]) => {
+                formData.append(`condition_${key}`, file)
+            })
+        } else {
+            if (signature) formData.append("signature", signature, "signature.png")
+            if (loadedQty) formData.append("loaded_qty", loadedQty)
+        }
         
         const result = await submitJobPickup(params.id, formData)
         
         if (result.success) {
             toast.success("บันทึกข้อมูลเรียบร้อยแล้ว", { id: "pickup-upload" })
             setCompleted(true)
+            setTimeout(() => {
+                router.push(`/mobile/jobs/${params.id}?success=pickup`)
+            }, 1500)
         } else {
-            throw new Error(typeof result.error === 'string' ? result.error : "Upload failed")
+            toast.error(result.error || "เกิดข้อผิดพลาด", { id: "pickup-upload" })
         }
-    } catch (error) {
-        console.error("Submission failed, saving to IndexedDB:", error)
-        try {
-            const { blobToB64, saveJobOffline } = await import("@/lib/utils/offline-storage")
-            const photoB64s = await Promise.all(photos.map(p => blobToB64(p)))
-            const sigB64 = signature ? await blobToB64(signature) : null
-            
-            const offlineData = {
-                photos: photoB64s,
-                signature: sigB64,
-                photo_count: photos.length,
-                actualCompletionTime: new Date().toISOString()
-            }
-
-            await saveJobOffline(params.id, offlineData, 'PICKUP')
-            toast.info("บันทึกข้อมูลแบบ Offline สำเร็จ", {
-                id: "pickup-upload",
-                description: "ระบบจะอัปโหลดใหม่อัตโนมัติเมื่อเน็ตเสถียร"
-            })
-            setCompleted(true)
-        } catch (offlineErr) {
-            console.error("Critical: Failed to save pickup even to IndexedDB")
-            toast.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล", { id: "pickup-upload" })
-        }
+    } catch (err: any) {
+        toast.error(err.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ", { id: "pickup-upload" })
     } finally {
         setLoading(false)
     }
   }
 
-  if (loading) {
-      return (
-          <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center space-y-6 animate-in fade-in duration-500">
-              <div className="relative">
-                  <div className="w-24 h-24 rounded-full border-4 border-amber-500/10 border-t-amber-500 animate-spin" />
-                  <div className="absolute inset-0 flex items-center justify-center text-amber-500">
-                      <Loader2 className="animate-spin" size={36} />
-                  </div>
-              </div>
-              <div className="space-y-2">
-                  <h1 className="text-2xl font-black text-foreground tracking-tight animate-pulse">กำลังบันทึกข้อมูลรับสินค้า</h1>
-                  <p className="text-muted-foreground text-sm font-bold leading-relaxed max-w-[280px] mx-auto">
-                      ระบบกำลังอัปโหลดรายงาน ลายเซ็น และรูปภาพหลักฐานความปลอดภัย...
-                  </p>
-              </div>
-          </div>
-      )
-  }
-
   if (completed) {
-      return (
-          <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center space-y-4 animate-in zoom-in duration-300">
-              <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-500">
-                  <Box size={48} />
-              </div>
-              <h1 className="text-2xl font-bold text-foreground">รับของสำเร็จ!</h1>
-              <p className="text-muted-foreground italic">ข้อมูลหลักฐานอัปโหลดเรียบร้อยแล้ว</p>
-              <Button 
-                onClick={() => router.push(`/mobile/jobs/${params.id}`)}
-                className="w-full bg-amber-600 hover:bg-amber-700 font-bold h-12 rounded-xl"
-              >
-                  กลับหน้ารายละเอียดงาน
-              </Button>
-          </div>
-      )
+    return (
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-6 animate-bounce">
+                <ShieldCheck size={48} className="text-white" />
+            </div>
+            <h1 className="text-3xl font-black text-foreground mb-2 italic">สำเร็จ!</h1>
+            <p className="text-muted-foreground font-bold tracking-tight">บันทึกข้อมูลการรับตู้เรียบร้อยแล้ว</p>
+        </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
-      <MobileHeader title="รับสินค้า (Pickup)" showBack />
+    <div className="min-h-screen bg-background pb-32">
+        <MobileHeader title={isContainer ? "บันทึกข้อมูลตู้ (EIR)" : "บันทึกการรับสินค้า"} showBack />
 
-      {/* Hidden Report Container for html2canvas */}
-      {job && (
-          <div className="fixed left-[-9999px] top-0">
-             <PickupReport 
-                ref={reportRef} 
-                job={job} 
-                photos={photos.map(f => URL.createObjectURL(f))} 
-                signature={signature ? URL.createObjectURL(signature) : null} 
-                loadedQty={parseFloat(loadedQty) || 0}
-             />
-          </div>
-      )}
-
-      <div className="space-y-6">
-        <section className="space-y-4">
-             <div className="flex items-center gap-3 text-white">
-                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
-                    <Box size={20} />
-                </div>
-                <div>
-                    <h2 className="font-bold">ยืนยันการรับสินค้า</h2>
-                    <p className="text-xl text-muted-foreground">ถ่ายรูปสินค้าเพื่อยืนยันสภาพก่อนขนส่ง</p>
-                </div>
-             </div>
-
-            <CameraInput onImagesChange={setPhotos} maxImages={10} />
-        </section>
-
-        {/* Quantify Input Section */}
-        {job && (
-            <section className="space-y-4">
-                {job.Price_Cust_Total && Number(job.Price_Cust_Total) > 0 ? (
-                    <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-[2.5rem] flex items-start gap-4">
-                        <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
-                            <Info className="text-white" size={24} />
-                        </div>
-                        <div>
-                            <p className="font-black text-white uppercase tracking-widest text-sm mb-1 italic">ราคาถูกกำหนดโดยแอดมินแล้ว</p>
-                            <p className="text-blue-300 text-[11px] font-black uppercase tracking-widest leading-relaxed">
-                                หากต้องการแก้ไขราคาหรือจำนวน กรุณาติดต่อแอดมินโดยตรง
-                            </p>
+        <div className="px-5 pt-6 space-y-8">
+            {isContainer ? (
+                <>
+                    <div className="bg-card rounded-3xl p-6 border border-border shadow-sm space-y-6">
+                        <h3 className="text-lg font-black flex items-center gap-2 text-primary">
+                            <Box size={20} /> ข้อมูลหน้างานจริง
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">หมายเลขตู้ (Container No.)</Label>
+                                <input 
+                                    value={containerNo}
+                                    onChange={(e) => setContainerNo(e.target.value.toUpperCase())}
+                                    placeholder="ระบุหมายเลขตู้..."
+                                    className="w-full h-14 bg-muted/50 border border-border rounded-2xl px-4 text-xl font-black focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">หมายเลขซีล (Seal No.)</Label>
+                                <input 
+                                    value={sealNo}
+                                    onChange={(e) => setSealNo(e.target.value.toUpperCase())}
+                                    placeholder="ระบุหมายเลขซีล..."
+                                    className="w-full h-14 bg-muted/50 border border-border rounded-2xl px-4 text-xl font-black focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                />
+                            </div>
                         </div>
                     </div>
-                ) : job.Price_Per_Unit && Number(job.Price_Per_Unit) > 0 ? (
-                    <QuantityStepper 
-                        value={loadedQty}
-                        onChange={setLoadedQty}
-                        label="ระบุจำนวนที่รับจริง (ชิ้น)"
+
+                    <div className="space-y-4">
+                        <Label className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                            <Camera size={16} className="text-primary" /> รูปถ่ายใบ EIR
+                        </Label>
+                        <CameraInput 
+                            onImagesChange={setPhotos} 
+                            maxImages={2} 
+                        />
+                    </div>
+
+                    <div className="space-y-4">
+                        <Label className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                            <ShieldCheck size={16} className="text-indigo-500" /> ตรวจสอบสภาพตู้ (7-Point Check)
+                        </Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            {[
+                                { key: 'front', label: 'ด้านหน้า' },
+                                { key: 'back', label: 'ด้านหลัง' },
+                                { key: 'left', label: 'ด้านซ้าย' },
+                                { key: 'right', label: 'ด้านขวา' },
+                                { key: 'top', label: 'เพดาน' },
+                                { key: 'floor', label: 'พื้นตู้' },
+                                { key: 'seal', label: 'จุดล็อคซีล' }
+                            ].map((item) => (
+                                <div key={item.key} className="relative group">
+                                    <p className="text-[10px] font-bold text-muted-foreground mb-1 ml-1">{item.label}</p>
+                                    <CameraInput 
+                                        onImagesChange={(files: File[]) => handleConditionPhoto(item.key, files[0] || null)}
+                                        maxImages={1}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <div className="space-y-4">
+                        <Label className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                            <Camera size={16} className="text-primary" /> รูปถ่ายสินค้าขณะรับ
+                        </Label>
+                        <CameraInput 
+                            onImagesChange={setPhotos} 
+                            maxImages={5} 
+                        />
+                    </div>
+
+                    {(job?.Price_Per_Unit && Number(job.Price_Per_Unit) > 0) && (!job?.Price_Cust_Total || Number(job.Price_Cust_Total) === 0) && (
+                        <div className="bg-card rounded-3xl p-6 border border-border shadow-sm space-y-4">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                    <Box size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ปริมาณงาน</p>
+                                    <h4 className="text-sm font-bold">ระบุจำนวนสินค้าที่รับ</h4>
+                                </div>
+                            </div>
+                            
+                            <QuantityStepper 
+                                value={loadedQty} 
+                                onChange={setLoadedQty} 
+                                label="จำนวน (ชิ้น/หน่วย)"
+                            />
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        <Label className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-indigo-500">
+                            <ShieldCheck size={16} /> ลายเซ็นพนักงาน (ผู้ส่งของ)
+                        </Label>
+                        <SignaturePad 
+                            onSave={setSignature} 
+                        />
+                    </div>
+                </>
+            )}
+
+            {job && (
+                isContainer ? (
+                    <ContainerPickupReport 
+                        ref={reportRef} 
+                        job={{
+                            ...job,
+                            container: {
+                                ...job.container,
+                                container_no: containerNo,
+                                seal_no: sealNo
+                            }
+                        } as any}
+                        photos={photos.map(p => URL.createObjectURL(p))}
+                        conditionPhotos={Object.fromEntries(
+                            Object.entries(conditionPhotos).map(([k, v]) => [k, URL.createObjectURL(v)])
+                        )}
                     />
-                ) : null}
-            </section>
-        )}
+                ) : (
+                    <PickupReport 
+                        ref={reportRef} 
+                        job={job} 
+                        photos={photos.map(p => URL.createObjectURL(p))} 
+                        signature={signature ? URL.createObjectURL(signature) : null}
+                        loadedQty={Number(loadedQty)}
+                    />
+                )
+            )}
+        </div>
 
-        <section>
-            <h2 className="text-muted-foreground font-bold mb-2">2. ลายเซ็นผู้ส่งของ</h2>
-            <SignaturePad onSave={setSignature} />
-        </section>
-
-        <Button 
-            onClick={handleSubmit}
-            disabled={false}
-            className={`w-full h-14 font-black text-lg shadow-xl transition-all duration-500 rounded-2xl ${
-                canSubmit
-                    ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 shadow-amber-500/30 text-white translate-y-0 active:scale-95" 
-                    : "bg-slate-800 text-muted-foreground opacity-70 grayscale translate-y-1"
-            }`}
-        >
-            ยืนยันการรับสินค้า / ออกเดินทาง
-        </Button>
-      </div>
-
+        <div className="fixed bottom-0 left-0 right-0 p-5 bg-background/80 backdrop-blur-xl border-t border-border/50 z-50">
+            <Button 
+                onClick={handleSubmit}
+                disabled={loading || !canSubmit}
+                className="w-full h-16 rounded-2xl text-lg font-black uppercase tracking-widest gap-3 shadow-2xl transition-all active:scale-95"
+            >
+                {loading ? (
+                    <Loader2 className="animate-spin" size={24} />
+                ) : (
+                    <>
+                        บันทึกและดำเนินการต่อ <ChevronRight size={20} />
+                    </>
+                )}
+            </Button>
+        </div>
     </div>
   )
 }

@@ -34,11 +34,12 @@ function calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lo
     return R * c
 }
 
-export async function getESGStats(startDate?: string, endDate?: string, branchId?: string): Promise<ESGStats> {
+export async function getESGStats(startDate?: string, endDate?: string, branchId?: string, customerId?: string | null): Promise<ESGStats> {
     try {
         const supabase = await createAdminClient()
         const effectiveBranchId = await getEffectiveBranchId(branchId)
-        const customerId = await getCustomerId()
+        const loggedInCustomerId = await getCustomerId()
+        const finalCustomerId = customerId || loggedInCustomerId
 
         const sDate = formatDateSafe(startDate)
         const eDate = formatDateSafe(endDate)
@@ -51,15 +52,16 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
         if (sDate) query = query.gte('Plan_Date', sDate)
         if (eDate) query = query.lte('Plan_Date', eDate)
 
-        if (customerId) {
-            query = query.eq('Customer_ID', customerId)
-        } else if (effectiveBranchId) {
+        if (finalCustomerId) {
+            query = query.eq('Customer_ID', finalCustomerId)
+        }
+        if (effectiveBranchId) {
             query = query.eq('Branch_ID', effectiveBranchId)
         }
         
         const { data: jobs, error: queryError } = await query
         
-        console.log(`[ESG] Query executed for Branch: ${effectiveBranchId}, Customer: ${customerId}`)
+        console.log(`[ESG] Query executed for Branch: ${effectiveBranchId}, Customer: ${finalCustomerId}`)
         console.log(`[ESG] Date Range: ${sDate} to ${eDate}`)
         console.log(`[ESG] Jobs found: ${jobs?.length || 0}`)
 

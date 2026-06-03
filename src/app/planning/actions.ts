@@ -49,6 +49,17 @@ export type JobFormData = {
   Round?: string | number | null
   Loaded_Qty?: number | string | null
   Price_Per_Unit?: number | null
+  // Container Fields
+  job_type?: 'normal' | 'container' | null
+  chassis_plate?: string | null
+  container_no?: string | null
+  seal_no?: string | null
+  container_size?: string | null
+  shipping_line?: string | null
+  vessel_voyage?: string | null
+  lfd_demurrage?: string | null
+  lfd_detention?: string | null
+  target_temperature?: number | string | null
 }
 
 const parseIfString = (val: string | undefined | null) => {
@@ -128,6 +139,9 @@ export async function createJob(data: JobFormData) {
       // Disable auto-save to Master_Routes as per user request to prevent data clutter
       // autoSaveOriginDestinations(data.Branch_ID || null, data.original_origins_json, data.original_destinations_json).catch(() => {})
       
+      // Save Container Data if applicable
+      await handleContainerData(supabase, data.Job_ID, data)
+
       return { success: true, message: 'Job created successfully' }
   }
 
@@ -144,6 +158,9 @@ export async function createJob(data: JobFormData) {
                   try { await notifyMarketplaceNewJob(newId, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
               }
           }
+
+          // Save Container Data if applicable
+          await handleContainerData(supabase, newId, data)
 
           revalidatePath('/planning')
           revalidatePath('/dashboard')
@@ -204,7 +221,32 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
         : (data.original_destinations_json ? 1 : 1),
       Loaded_Qty: Number(data.Loaded_Qty) || 0,
       Created_At: new Date().toISOString(),
+      job_type: data.job_type || 'normal',
+      chassis_plate: data.chassis_plate || null
   }
+}
+
+async function handleContainerData(supabase: any, jobId: string, data: JobFormData) {
+  if (data.job_type !== 'container') return
+
+  const containerData = {
+    job_id: jobId,
+    container_no: data.container_no || null,
+    seal_no: data.seal_no || null,
+    container_size: data.container_size || null,
+    shipping_line: data.shipping_line || null,
+    vessel_voyage: data.vessel_voyage || null,
+    lfd_demurrage: data.lfd_demurrage || null,
+    lfd_detention: data.lfd_detention || null,
+    target_temperature: data.target_temperature ? Number(data.target_temperature) : null,
+    updated_at: new Date().toISOString()
+  }
+
+  const { error } = await supabase
+    .from('jobs_container')
+    .upsert(containerData, { onConflict: 'job_id' })
+
+  if (error) console.error('[CONTAINER_ERROR] Failed to save container data:', error)
 }
 
 /**
@@ -728,6 +770,9 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   if (error) {
     return { success: false, message: `Failed to update job: ${error.message}` }
   }
+
+  // Save Container Data if applicable
+  await handleContainerData(supabase, jobId, { ...updateData, Job_ID: jobId } as JobFormData)
 
   // Auto-save locations for future use
   const branchId = await getUserBranchId()

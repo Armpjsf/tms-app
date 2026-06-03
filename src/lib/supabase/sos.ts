@@ -130,7 +130,7 @@ export async function getSOSCount(): Promise<number> {
 }
 
 // ดึง SOS Driver IDs ที่ Active
-export async function getSOSDriverIds(): Promise<string[]> {
+export async function getSOSDriverIds(customerId?: string | null): Promise<string[]> {
   try {
     const isAdmin = await isSuperAdmin()
     const supabase = isAdmin ? createAdminClient() : await createClient()
@@ -141,6 +141,10 @@ export async function getSOSDriverIds(): Promise<string[]> {
       .from('Jobs_Main')
       .select('Driver_ID')
       .eq('Job_Status', 'SOS')
+    
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    }
     
     // STRICT ISOLATION
     if (!isAdmin) {

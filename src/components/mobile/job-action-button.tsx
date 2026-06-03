@@ -32,6 +32,7 @@ interface Destination {
 interface Job {
     Job_ID: string
     Job_Status: string
+    job_type?: 'normal' | 'container' | null
     Plan_Date: string | null
     Delivery_Date: string | null
     Total_Drop: number | null
@@ -141,7 +142,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
           break
 
       case 'Arrived Pickup':
-          label = "รับสินค้าเข้า"
+          label = job.job_type === 'container' ? "บันทึก EIR & ตู้" : "รับสินค้าเข้า"
           variant = "primary"
           action = () => {
               router.push(`/mobile/jobs/${job.Job_ID}/pickup`)
@@ -232,7 +233,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
                         <h4 className="text-sm font-bold text-foreground leading-tight mt-1">
                             {currentStatus === 'Assigned' || currentStatus === 'New' ? 'กรุณากด "เริ่มงาน" เพื่อเริ่มต้นภารกิจ' : 
                                 currentStatus === 'Accepted' ? 'เดินทางไปยังจุดรับสินค้า' :
-                                currentStatus === 'Arrived Pickup' ? 'ถึงจุดรับแล้ว กรุณาถ่ายรูปรับสินค้า' :
+                                currentStatus === 'Arrived Pickup' ? (job.job_type === 'container' ? 'ถึงลานตู้แล้ว กรุณาถ่ายรูป EIR และสภาพตู้' : 'ถึงจุดรับแล้ว กรุณาถ่ายรูปรับสินค้า') :
                                 currentStatus === 'Picked Up' || currentStatus === 'In Transit' ? (isMultiDrop ? `กำลังเดินทางไปจุดที่ ${currentDropIndex}` : 'กำลังเดินทางไปยังจุดหมาย') :
                                 currentStatus === 'Arrived Dropoff' ? (isMultiDrop ? `ถึงจุดส่งที่ ${currentDropIndex} แล้ว บันทึกส่งงาน` : 'ถึงที่หมายแล้ว บันทึกส่งงาน') :
                                 'อยู่ระหว่างดำเนินการ'}

@@ -37,6 +37,7 @@ import { Route } from "@/lib/supabase/routes"
 import { Subcontractor } from "@/types/subcontractor"
 import { getFuelPrice, getSuggestedRate, syncDailyFuelPrices } from "@/lib/actions/fuel-actions"
 import { getVehicleTypes, VehicleType as MasterVehicleType } from "@/lib/actions/vehicle-type-actions"
+import { getExpenseTypes, ExpenseType } from "@/lib/supabase/master-data"
 import { JobTimeline } from "./job-timeline"
 
 type LocationPoint = {
@@ -70,16 +71,7 @@ type JobDialogProps = {
   defaultDate?: string
 }
 
-// Common expense types
-const EXPENSE_TYPES = [
-  "Labor",
-  "Pallet",
-  "Expressway",
-  "Overtime",
-  "Parking",
-  "Fuel Surcharge",
-  "Other"
-]
+
 
 function generateJobId() {
   const now = new Date()
@@ -112,7 +104,7 @@ export function JobDialog({
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'info' | 'location' | 'items' | 'assign' | 'price' | 'history'>('info')
+  const [activeTab, setActiveTab] = useState<'info' | 'location' | 'items' | 'assign' | 'price' | 'history' | 'container'>('info')
   const [internalMode, setInternalMode] = useState<'create' | 'edit'>(mode)
 
   // Sync internalMode state with mode prop if it changes
@@ -215,6 +207,16 @@ export function JobDialog({
     Price_Cust_Extra: job?.Price_Cust_Extra || '',
     Cost_Driver_Extra: job?.Cost_Driver_Extra || '',
     Loaded_Qty: job?.Loaded_Qty || '',
+    job_type: (job as any)?.job_type || 'normal',
+    chassis_plate: (job as any)?.chassis_plate || '',
+    container_no: (job as any)?.container?.container_no || '',
+    seal_no: (job as any)?.container?.seal_no || '',
+    container_size: (job as any)?.container?.container_size || '',
+    shipping_line: (job as any)?.container?.shipping_line || '',
+    vessel_voyage: (job as any)?.container?.vessel_voyage || '',
+    lfd_demurrage: (job as any)?.container?.lfd_demurrage || '',
+    lfd_detention: (job as any)?.container?.lfd_detention || '',
+    target_temperature: (job as any)?.container?.target_temperature || '',
   })
 
   // Multi-point origins
@@ -270,12 +272,20 @@ export function JobDialog({
   const [isPerPieceMode, setIsPerPieceMode] = useState(false)
   const [checkingRate, setCheckingRate] = useState(false)
   const [masterVehicleTypes, setMasterVehicleTypes] = useState<MasterVehicleType[]>([])
+  const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
 
   // 3. Effects (Must be after state declarations)
   // Fetch master vehicle types
   useEffect(() => {
     getVehicleTypes().then(types => {
       setMasterVehicleTypes(types || [])
+    })
+  }, [])
+
+  // Fetch expense types from database (active only)
+  useEffect(() => {
+    getExpenseTypes().then(types => {
+      setExpenseTypes((types || []).filter((et: ExpenseType) => et.is_active))
     })
   }, [])
   // Fetch fuel price for plan date
@@ -545,6 +555,16 @@ export function JobDialog({
         Delivery_Lat: job.Delivery_Lat || null,
         Delivery_Lon: job.Delivery_Lon || null,
         Loaded_Qty: job.Loaded_Qty !== null && job.Loaded_Qty !== undefined ? job.Loaded_Qty : '',
+        job_type: (job as any)?.job_type || 'normal',
+        chassis_plate: (job as any)?.chassis_plate || '',
+        container_no: (job as any)?.container?.container_no || '',
+        seal_no: (job as any)?.container?.seal_no || '',
+        container_size: (job as any)?.container?.container_size || '',
+        shipping_line: (job as any)?.container?.shipping_line || '',
+        vessel_voyage: (job as any)?.container?.vessel_voyage || '',
+        lfd_demurrage: (job as any)?.container?.lfd_demurrage || '',
+        lfd_detention: (job as any)?.container?.lfd_detention || '',
+        target_temperature: (job as any)?.container?.target_temperature || '',
       }
       setFormData(newFormData);
 
@@ -579,6 +599,16 @@ export function JobDialog({
         Delivery_Lat: null,
         Delivery_Lon: null,
         Loaded_Qty: '',
+        job_type: 'normal',
+        chassis_plate: '',
+        container_no: '',
+        seal_no: '',
+        container_size: '',
+        shipping_line: '',
+        vessel_voyage: '',
+        lfd_demurrage: '',
+        lfd_detention: '',
+        target_temperature: '',
       })
       setOrigins([{ name: '', lat: '', lng: '' }])
       setDestinations([{ name: '', lat: '', lng: '' }])
@@ -822,7 +852,8 @@ export function JobDialog({
   }
 
   const addExtraCost = () => {
-    setExtraCosts([...extraCosts, { type: 'Other', cost_driver: 0, charge_cust: 0 }])
+    const defaultType = expenseTypes.length > 0 ? expenseTypes[0].name : 'Other'
+    setExtraCosts([...extraCosts, { type: defaultType, cost_driver: 0, charge_cust: 0 }])
   }
 
   const handleEditRates = () => {
@@ -1051,6 +1082,7 @@ export function JobDialog({
   const tabs = [
     { id: 'info', label: t('jobs.dialog.tabs.info'), icon: <FileText className="w-4 h-4" /> },
     { id: 'location', label: t('jobs.dialog.tabs.locations'), icon: <MapPin className="w-4 h-4" /> },
+    ...(formData.job_type === 'container' ? [{ id: 'container', label: t('navigation.container'), icon: <Package className="w-4 h-4" /> }] as const : []),
     { id: 'items', label: t('jobs.dialog.tabs.items') || 'Items', icon: <Package className="w-4 h-4" /> },
     ...(canAssign ? [{ id: 'assign', label: t('jobs.dialog.tabs.assignment'), icon: <Truck className="w-4 h-4" /> }] as const : []),
     ...(canViewIncome || canViewExpense ? [{ id: 'price', label: t('jobs.dialog.tabs.price'), icon: <Banknote className="w-4 h-4" /> }] as const : []),
@@ -1109,6 +1141,39 @@ export function JobDialog({
           {activeTab === 'info' && (
             <div className="space-y-12">
               <div className="grid grid-cols-1 gap-10">
+                <div className="space-y-2">
+                  <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">ประเภทงาน (Job Type)</Label>
+                  <div className="flex p-1 bg-muted rounded-xl border border-border h-14">
+                    <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, job_type: 'normal' })
+                          if ((activeTab as string) === 'container') setActiveTab('info')
+                        }}
+                        className={cn(
+                            "flex-1 rounded-lg text-lg font-black transition-all",
+                            formData.job_type === 'normal' 
+                                ? "bg-background text-primary shadow-sm" 
+                                : "text-muted-foreground hover:bg-background/50"
+                        )}
+                    >
+                        งานทั่วไป (Normal)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, job_type: 'container' })}
+                        className={cn(
+                            "flex-1 rounded-lg text-lg font-black transition-all",
+                            formData.job_type === 'container' 
+                                ? "bg-background text-primary shadow-sm" 
+                                : "text-muted-foreground hover:bg-background/50"
+                        )}
+                    >
+                        งานตู้คอนเทนเนอร์ (Container)
+                    </button>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.job_id')}</Label>
                   <Input
@@ -1311,6 +1376,134 @@ export function JobDialog({
                 </div>
             </div>
           )}
+          {/* Tab: ตู้คอนเทนเนอร์ */}
+          {activeTab === 'container' && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                        <Label className="text-primary text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                            <Package className="w-5 h-5" /> {t('container.form.container_no')}
+                        </Label>
+                        <Input
+                            value={formData.container_no}
+                            onChange={(e) => setFormData({ ...formData, container_no: e.target.value.toUpperCase() })}
+                            placeholder="e.g. TCNU1234567"
+                            className="bg-background border-input text-xl h-14 font-black"
+                        />
+                    </div>
+                    <div className="space-y-4">
+                        <Label className="text-indigo-400 text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5" /> {t('container.form.seal_no')}
+                        </Label>
+                        <Input
+                            value={formData.seal_no}
+                            onChange={(e) => setFormData({ ...formData, seal_no: e.target.value.toUpperCase() })}
+                            placeholder="e.g. S123456"
+                            className="bg-background border-input text-xl h-14 font-black"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                    <div className="space-y-4">
+                        <Label className="text-xl font-black uppercase tracking-tight">{t('container.form.container_size')}</Label>
+                        <Select 
+                            value={formData.container_size} 
+                            onValueChange={(val) => setFormData({ ...formData, container_size: val })}
+                        >
+                            <SelectTrigger className="h-14 text-xl">
+                                <SelectValue placeholder="Select Size" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="20'">20' Standard</SelectItem>
+                                <SelectItem value="40'">40' Standard</SelectItem>
+                                <SelectItem value="40'HC">40' High Cube</SelectItem>
+                                <SelectItem value="REEFER">Reefer</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-4">
+                        <Label className="text-xl font-black uppercase tracking-tight">{t('container.form.shipping_line')}</Label>
+                        <Input
+                            value={formData.shipping_line}
+                            onChange={(e) => setFormData({ ...formData, shipping_line: e.target.value })}
+                            placeholder="e.g. MAERSK, MSC"
+                            className="bg-background border-input text-xl h-14"
+                        />
+                    </div>
+                    <div className="space-y-4">
+                        <Label className="text-xl font-black uppercase tracking-tight">{t('container.form.vessel_voyage')}</Label>
+                        <Input
+                            value={formData.vessel_voyage}
+                            onChange={(e) => setFormData({ ...formData, vessel_voyage: e.target.value })}
+                            placeholder="e.g. EVER GIVEN V.001"
+                            className="bg-background border-input text-xl h-14"
+                        />
+                    </div>
+                </div>
+
+                {formData.container_size === 'REEFER' && (
+                    <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl animate-in slide-in-from-top-2 duration-500">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-blue-500/20 rounded-xl">
+                                <Zap className="text-blue-500" size={24} />
+                            </div>
+                            <div className="flex-1 space-y-2">
+                                <Label className="text-blue-600 text-xl font-black uppercase tracking-tight">
+                                    อุณหภูมิที่กำหนด (Set Temp °C)
+                                </Label>
+                                <Input
+                                    type="number"
+                                    value={formData.target_temperature}
+                                    onChange={(e) => setFormData({ ...formData, target_temperature: e.target.value })}
+                                    placeholder="-18.0"
+                                    step="0.1"
+                                    className="bg-background border-blue-500/30 text-2xl h-14 font-black"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 p-6 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
+                    <div className="space-y-4">
+                        <Label className="text-amber-600 text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5" /> {t('container.form.lfd_demurrage')}
+                        </Label>
+                        <Input
+                            type="date"
+                            value={formData.lfd_demurrage}
+                            onChange={(e) => setFormData({ ...formData, lfd_demurrage: e.target.value })}
+                            className="bg-background border-amber-500/30 text-xl h-14"
+                        />
+                    </div>
+                    <div className="space-y-4">
+                        <Label className="text-amber-600 text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5" /> {t('container.form.lfd_detention')}
+                        </Label>
+                        <Input
+                            type="date"
+                            value={formData.lfd_detention}
+                            onChange={(e) => setFormData({ ...formData, lfd_detention: e.target.value })}
+                            className="bg-background border-amber-500/30 text-xl h-14"
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <Label className="text-primary text-xl font-black uppercase tracking-tight">ทะเบียนหางลาก (Chassis Plate)</Label>
+                    <VehicleAutocomplete
+                        value={formData.chassis_plate}
+                        onChange={(val) => setFormData({ ...formData, chassis_plate: val })}
+                        vehicles={vehicles.filter(v => v.is_chassis || v.Vehicle_Type?.includes('หาง'))}
+                        onSelect={(v) => setFormData({ ...formData, chassis_plate: v.Vehicle_Plate })}
+                        placeholder="ค้นหาทะเบียนหาง..."
+                        className="bg-background border-input text-xl h-14"
+                    />
+                </div>
+            </div>
+          )}
+
           {/* Tab: สถานที่ */}
           {activeTab === 'location' && (
             <div className="space-y-6">
@@ -1735,6 +1928,7 @@ export function JobDialog({
                                         const typeMatch = !assignment.Vehicle_Type || v.Vehicle_Type === assignment.Vehicle_Type
                                         return subMatch && typeMatch
                                     })}
+                                    customerId={formData.Customer_ID}
                                     onSelect={(v) => {
                                         const newAssignments = [...assignments]
                                         const current = newAssignments[index]
@@ -1781,6 +1975,7 @@ export function JobDialog({
                                         const subMatch = !assignment.Sub_ID ? (!d.Sub_ID) : d.Sub_ID === assignment.Sub_ID
                                         return subMatch
                                     })}
+                                    customerId={formData.Customer_ID}
                                     onSelect={(d) => {
                                         const newAssignments = [...assignments]
                                         const current = newAssignments[index]
@@ -2114,11 +2309,14 @@ export function JobDialog({
                             onChange={(e) => updateExtraCost(index, 'type', e.target.value)}
                             className="w-full h-9 px-2 rounded-md bg-background border border-input text-foreground text-xl"
                         >
-                            {EXPENSE_TYPES.map(expenseType => (
-                              <option key={expenseType} value={expenseType}>
-                                {t(`jobs.dialog.expenses.${expenseType}` as any) || expenseType}
+                            {expenseTypes.map(expenseType => (
+                              <option key={expenseType.id} value={expenseType.name}>
+                                {expenseType.name}
                               </option>
                             ))}
+                            {expenseTypes.length === 0 && (
+                              <option value="Other">Other</option>
+                            )}
                         </select>
                     </div>
                     {canViewExpense && (

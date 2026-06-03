@@ -27,6 +27,7 @@ export type Driver = {
   Sub_ID?: string | null
   Show_Price_Default?: boolean | null
   Branch_ID?: string | null
+  Customer_ID?: string | null
 }
 
 // Get all drivers from Master_Drivers table
@@ -234,20 +235,24 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
 }
 
 // Get driver stats for dashboard
-export async function getDriverStats(providedBranchId?: string) {
+export async function getDriverStats(providedBranchId?: string, customerId?: string | null) {
   try {
     const isSuper = await isSuperAdmin()
     const isAdminUser = await isAdmin()
     const branchId = providedBranchId || await getUserBranchId()
-    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isAdminUser || customerId) ? await createAdminClient() : await createClient()
     
     let query = supabase.from('Master_Drivers').select('*')
     
+    if (customerId) {
+        query = query.or(`Customer_ID.eq.${customerId},Customer_ID.is.null`)
+    }
+
     if (branchId && branchId !== 'All' && !isSuper) {
         query = query.eq('Branch_ID', branchId)
     } else if (isSuper && branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
-    } else if (!isSuper && !isAdminUser && !branchId) {
+    } else if (!isSuper && !isAdminUser && !branchId && !customerId) {
         return { total: 0, active: 0, onJob: 0 }
     }
 
@@ -262,6 +267,10 @@ export async function getDriverStats(providedBranchId?: string) {
       .eq('Plan_Date', today)
       .not('Driver_ID', 'is', null)
       .in('Job_Status', ['Pending', 'Confirmed', 'In Progress'])
+
+    if (customerId) {
+        onJobQuery = onJobQuery.eq('Customer_ID', customerId)
+    }
 
     if (branchId && branchId !== 'All' && !isSuper) {
         onJobQuery = onJobQuery.eq('Branch_ID', branchId)

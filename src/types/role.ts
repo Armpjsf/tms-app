@@ -46,6 +46,7 @@ export const SYSTEM_PERMISSIONS: Permission[] = [
   // Operations
   { id: 'create_job', label: 'Create & Edit Jobs', desc: 'สร้างงานใหม่และแก้ไขรายละเอียดงานขนส่ง', category: 'Operations' },
   { id: 'dispatch_job', label: 'Dispatch & Assign Drivers', desc: 'จ่ายงานให้คนขับและเลือกรถขนส่ง', category: 'Operations' },
+  { id: 'manage_container_jobs', label: 'Manage Container Logistics', desc: 'จัดการงานตู้คอนเทนเนอร์, ติดตาม LFD และการคืนตู้', category: 'Operations' },
   { id: 'view_live_tracking', label: 'Live GPS Tracking', desc: 'ติดตามตำแหน่งรถแบบเรียลไทม์บนแผนที่', category: 'Operations' },
   { id: 'navigation.tracking_hub', label: 'Tracking Radar Hub (Admin)', desc: 'เข้าถึงศูนย์กลางติดตามงานและค้นหาด้วย SO Number แบบ Real-time', category: 'Operations' },
   { id: 'navigation.customer_tracking_hub', label: 'Customer Tracking Hub', desc: 'อนุญาตให้ลูกค้าเข้าถึงหน้าติดตามสถานะงานสดใน Dashboard ของตนเอง', category: 'Operations' },

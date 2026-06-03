@@ -68,6 +68,20 @@ export async function getNotifications(): Promise<AppNotification[]> {
           })
         }
 
+        // REEFER TEMP ALERT
+        else if (details.alert_type === 'REEFER_TEMP') {
+           notifications.push({
+             id: `reefer-temp-log-${log.id}`,
+             type: 'system',
+             title: `❄️ อุณหภูมิตู้เย็นสูงผิดปกติ`,
+             message: details.message || `ตู้: ${details.container_no || 'ไม่ระบุ'} อุณหภูมิ ${details.temperature}°C (เป้าหมาย ${details.target_temperature}°C)`,
+             timestamp: log.created_at,
+             read: false,
+             href: `/container`,
+             severity: 'critical'
+           })
+        }
+
         // FUEL
         else if (log.module === 'Fuel' && log.action_type === 'CREATE') {
            notifications.push({

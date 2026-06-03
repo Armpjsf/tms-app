@@ -18,6 +18,7 @@ interface DashboardContentProps {
     start?: string; 
     end?: string; 
     customers?: string; // Comma separated names
+    customer?: string; // Selected customer ID
   }
 }
 
@@ -27,7 +28,24 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   const branch = (userBranchId && userBranchId !== 'All') ? userBranchId : (searchParams.branch || 'All')
   const start = searchParams.start
   const end = searchParams.end
+  
+  const cookieStore = await cookies()
+  const cookieCustomerId = cookieStore.get('selectedCustomer')?.value
+  const selectedCustomerId = (searchParams.customer !== undefined) ? searchParams.customer : cookieCustomerId
+  
+  console.log(`[DEBUG] DashboardContent - branch: ${branch}, searchParams.customer: ${searchParams.customer}, cookie.customer: ${cookieCustomerId}, selectedCustomerId: ${selectedCustomerId}`)
+  
   const customers = searchParams.customers ? searchParams.customers.split(',') : []
+  
+  if (selectedCustomerId && selectedCustomerId !== 'All') {
+      const custName = await getCustomerName(selectedCustomerId)
+      if (custName) {
+          console.log(`[DEBUG] DashboardContent - resolved customer name: ${custName} for ID: ${selectedCustomerId}`)
+          // Override dashboard-specific multi-select to prioritize global header selection
+          customers.length = 0
+          customers.push(custName)
+      }
+  }
   
   const currentBranchId = branch === 'All' ? undefined : branch
   
@@ -39,20 +57,21 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   try {
     customerMode = await isCustomer()
     custId = (await getCustomerId()) ?? null
+    const activeCustomerId = customerMode ? custId : (selectedCustomerId && selectedCustomerId !== 'All' ? selectedCustomerId : null)
 
     const results = await Promise.allSettled([
-      getExecutiveDashboardUnified(currentBranchId, start || undefined, end || undefined, customers),
-      getSOSDriverIds(),
-      getMarketplaceJobs(currentBranchId),
+      getExecutiveDashboardUnified(currentBranchId, start || undefined, end || undefined, customers, activeCustomerId),
+      getSOSDriverIds(activeCustomerId),
+      getMarketplaceJobs(currentBranchId, activeCustomerId),
       Promise.resolve(customerMode),
       Promise.resolve(custId),
-      getTodayJobStats(currentBranchId, start || undefined, end || undefined, customers),
-      getDriverStats(currentBranchId),
-      getESGStats(start || undefined, end || undefined, currentBranchId),
-      getActiveFleetAlerts(undefined, currentBranchId),
-      getProfitHeatmapData(start || undefined, end || undefined, currentBranchId),
+      getTodayJobStats(currentBranchId, start || undefined, end || undefined, customers, activeCustomerId),
+      getDriverStats(currentBranchId, activeCustomerId),
+      getESGStats(start || undefined, end || undefined, currentBranchId, activeCustomerId),
+      getActiveFleetAlerts(undefined, currentBranchId, activeCustomerId),
+      getProfitHeatmapData(start || undefined, end || undefined, currentBranchId, activeCustomerId),
       getAllCustomers(1, 1000, undefined, isAdminUser ? undefined : currentBranchId),
-      getLiveActiveJobs(currentBranchId, customerMode ? custId : null)
+      getLiveActiveJobs(currentBranchId, activeCustomerId)
     ]);
 
     // Map results with fallbacks
@@ -99,7 +118,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   // Fetch Live Fleet GPS Status
   let fleetStatus = [];
   try {
-    fleetStatus = await getActiveFleetStatus(currentBranchId, customerMode ? custId : null)
+    fleetStatus = await getActiveFleetStatus(currentBranchId, customerMode ? custId : (selectedCustomerId && selectedCustomerId !== 'All' ? selectedCustomerId : null))
   } catch (e) {
     console.warn("[Dashboard] GPS Status fetch failed", e);
   }
@@ -134,8 +153,6 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
       heatmapJobs={heatmapJobs}
       activeJobs={activeJobs}
       fleetHealth={98}
-      allCustomers={allCustomers}
-      initialCustomers={customers}
       esg={{
         fuelSaved: esgResult?.fuelSavedLiters || unified.esg?.fuelSaved || 0,
         co2Saved: esgResult?.co2SavedKg || unified.esg?.co2Saved || 0,

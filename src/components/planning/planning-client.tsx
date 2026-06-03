@@ -33,6 +33,7 @@ import { useRouter } from "next/navigation"
 import { useRealtime } from "@/hooks/useRealtime"
 import { RealtimeIndicator } from "@/components/ui/realtime-indicator"
 import { useLanguage } from "@/components/providers/language-provider"
+import { useCustomer } from "@/components/providers/customer-provider"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { PremiumButton } from "../ui/premium-button"
 
@@ -99,6 +100,7 @@ export function PlanningClient({
     const [publishing, setPublishing] = useState(false)
     const [templateCustomerId, setTemplateCustomerId] = useState<string>("")
     const { t } = useLanguage()
+    const { selectedCustomer } = useCustomer()
 
     // Real-time: Jobs_Main (Throttled to protect Vercel Serverless quota)
     const throttledRefresh = useMemo(() => {
@@ -270,14 +272,39 @@ export function PlanningClient({
         handleDateChange(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }))
     }
 
+    const filteredTodayJobs = useMemo(() => {
+        if (selectedCustomer && selectedCustomer !== 'All') {
+            return todayJobs.filter(j => j.Customer_ID === selectedCustomer)
+        }
+        return todayJobs
+    }, [todayJobs, selectedCustomer])
+
     const filteredJobs = useMemo(() => {
         if (view === 'requests') {
-            return requestedJobs
+            return selectedCustomer && selectedCustomer !== 'All'
+                ? requestedJobs.filter(j => j.Customer_ID === selectedCustomer)
+                : requestedJobs
         }
-        return todayJobs.filter(j => j.Job_Status !== 'Requested')
-    }, [todayJobs, requestedJobs, view])
+        return filteredTodayJobs.filter(j => j.Job_Status !== 'Requested')
+    }, [filteredTodayJobs, requestedJobs, view, selectedCustomer])
 
-    const requestCount = requestedJobs.length
+    const calculatedStats = useMemo(() => {
+        if (!selectedCustomer || selectedCustomer === 'All') {
+            return stats
+        }
+        const total = filteredTodayJobs.length
+        const delivered = filteredTodayJobs.filter(j => j.Job_Status === 'Delivered' || j.Job_Status === 'Completed').length
+        const inProgress = filteredTodayJobs.filter(j => j.Job_Status === 'In Transit' || j.Job_Status === 'In Progress' || j.Job_Status === 'Arrived Pickup' || j.Job_Status === 'Arrived Dropoff').length
+        const pending = filteredTodayJobs.filter(j => j.Job_Status === 'New' || j.Job_Status === 'Assigned' || j.Job_Status === 'Requested' || j.Job_Status === 'Pending' || j.Job_Status === 'Draft').length
+        return { total, pending, inProgress, delivered }
+    }, [stats, filteredTodayJobs, selectedCustomer])
+
+    const requestCount = useMemo(() => {
+        if (selectedCustomer && selectedCustomer !== 'All') {
+            return requestedJobs.filter(j => j.Customer_ID === selectedCustomer).length
+        }
+        return requestedJobs.length
+    }, [requestedJobs, selectedCustomer])
 
     return (
         <motion.div 
@@ -431,25 +458,25 @@ export function PlanningClient({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard 
                     label={t('planning.stats_total')}
-                    value={stats.total} 
+                    value={calculatedStats.total} 
                     icon={<Zap size={18} />}
                     color="primary"
                 />
                 <StatCard 
                     label={t('planning.stats_pending')}
-                    value={stats.pending} 
+                    value={calculatedStats.pending} 
                     icon={<Clock size={18} />}
                     color="yellow"
                 />
                 <StatCard 
                     label={t('planning.stats_in_progress')}
-                    value={stats.inProgress} 
+                    value={calculatedStats.inProgress} 
                     icon={<Truck size={18} />}
                     color="blue"
                 />
                 <StatCard 
                     label={t('planning.stats_delivered')}
-                    value={stats.delivered} 
+                    value={calculatedStats.delivered} 
                     icon={<CheckCircle2 size={18} />}
                     color="green"
                 />
@@ -459,7 +486,7 @@ export function PlanningClient({
             <motion.div variants={item} className="relative z-10 min-h-[500px]">
                 {view === 'kanban' ? (
                     <KanbanBoard 
-                        jobs={todayJobs}
+                        jobs={filteredTodayJobs}
                         drivers={drivers}
                         vehicles={vehicles}
                         customers={customers}

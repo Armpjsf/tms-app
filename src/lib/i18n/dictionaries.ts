@@ -166,6 +166,7 @@ export const dictionaries = {
     header: {
       command_centre: 'ศูนย์ควบคุมการดำเนินงาน',
       all_branches: 'ทุกสาขา',
+      all_customers: 'ลูกค้าทั้งหมด',
       quick_cmd: 'ค้นหาด่วน...',
     },
     navigation: {
@@ -208,6 +209,35 @@ export const dictionaries = {
       tracking_hub: 'ศูนย์ติดตามงานสด',
       billing_automation: 'ระบบวางบิลอัตโนมัติ',
       customer_tracking_hub: 'ศูนย์ติดตามงานลูกค้า',
+      container: 'ระบบงานตู้คอนเทนเนอร์',
+    },
+    container: {
+      title: 'จัดการงานตู้คอนเทนเนอร์',
+      subtitle: 'ระบบติดตามตู้, LFD และการจัดการหางลาก',
+      stats: {
+        total: 'ตู้ทั้งหมด',
+        active: 'กำลังวิ่งงาน',
+        near_lfd: 'ใกล้กำหนดคืน',
+        overdue: 'เลยกำหนดคืน',
+      },
+      tabs: {
+        tracking: 'ติดตามตู้',
+        chassis: 'จัดการหางลาก',
+        lfd_alerts: 'แจ้งเตือน LFD',
+        yard: 'ลานพักตู้',
+      },
+      form: {
+        container_no: 'หมายเลขตู้',
+        seal_no: 'หมายเลขซีล',
+        container_size: 'ขนาดตู้',
+        shipping_line: 'สายเรือ',
+        vessel_voyage: 'ชื่อเรือ/เที่ยวเรือ',
+        lfd_demurrage: 'LFD (Demurrage)',
+        lfd_detention: 'LFD (Detention)',
+        eir_in: 'ใบ EIR ขาเข้า',
+        eir_out: 'ใบ EIR ขาออก',
+        condition: 'สภาพตู้ (7-Point Check)',
+      }
     },
     automation: {
       title: 'ศูนย์ควบคุมการวางบิลอัตโนมัติ',
@@ -2060,6 +2090,7 @@ export const dictionaries = {
     header: {
       command_centre: 'Command Centre',
       all_branches: 'All Branches',
+      all_customers: 'All Customers',
       quick_cmd: 'Quick Command...',
     },
     navigation: {
@@ -2102,6 +2133,35 @@ export const dictionaries = {
       tracking_hub: 'Live Tracking Radar',
       billing_automation: 'Billing Automation',
       customer_tracking_hub: 'Customer Tracking Hub',
+      container: 'Container Logistics',
+    },
+    container: {
+      title: 'Container Management',
+      subtitle: 'Tracking, LFD, and Chassis Management',
+      stats: {
+        total: 'Total Containers',
+        active: 'Active',
+        near_lfd: 'Near LFD',
+        overdue: 'Overdue',
+      },
+      tabs: {
+        tracking: 'Tracking',
+        chassis: 'Chassis Management',
+        lfd_alerts: 'LFD Alerts',
+        yard: 'Container Yard',
+      },
+      form: {
+        container_no: 'Container No.',
+        seal_no: 'Seal No.',
+        container_size: 'Size',
+        shipping_line: 'Shipping Line',
+        vessel_voyage: 'Vessel/Voyage',
+        lfd_demurrage: 'LFD (Demurrage)',
+        lfd_detention: 'LFD (Detention)',
+        eir_in: 'Gate-in EIR',
+        eir_out: 'Gate-out EIR',
+        condition: 'Container Condition',
+      }
     },
     assignments: {
       carrier_type: 'Carrier Type',

@@ -15,7 +15,10 @@ interface DriverAutocompleteProps {
   className?: string
   placeholder?: string
   disabled?: boolean
+  customerId?: string | null
 }
+
+import { useMemo } from "react"
 
 export function DriverAutocomplete({
   value,
@@ -24,7 +27,8 @@ export function DriverAutocomplete({
   onSelect,
   className,
   placeholder = "ค้นหาคนขับ...",
-  disabled = false
+  disabled = false,
+  customerId
 }: DriverAutocompleteProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
@@ -33,11 +37,26 @@ export function DriverAutocomplete({
   // Find selected driver object for display
   const selectedDriver = drivers.find(d => d.Driver_ID === value)
 
+  // Filter and sort based on customerId
+  const processedDrivers = useMemo(() => {
+    if (!customerId || customerId === 'All') {
+      return drivers
+    }
+    const allowed = drivers.filter(
+      (d) => d.Customer_ID === customerId || !d.Customer_ID
+    )
+    return [...allowed].sort((a, b) => {
+      const aIsDedicated = a.Customer_ID === customerId ? 1 : 0
+      const bIsDedicated = b.Customer_ID === customerId ? 1 : 0
+      return bIsDedicated - aIsDedicated
+    })
+  }, [drivers, customerId])
+
   // Filter based on query
   const filteredDrivers =
     query === ""
-      ? drivers
-      : drivers.filter((d) =>
+      ? processedDrivers
+      : processedDrivers.filter((d) =>
           (d.Driver_Name?.toLowerCase() || "").includes(query.toLowerCase()) ||
           (d.Vehicle_Plate?.toLowerCase() || "").includes(query.toLowerCase())
         )
@@ -125,6 +144,16 @@ export function DriverAutocomplete({
                   <div className="flex items-center gap-2">
                     <User size={14} className="text-emerald-600" />
                     <span>{driver.Driver_Name} <span className="text-muted-foreground ml-1">({driver.Vehicle_Plate || '-'})</span></span>
+                    {customerId && customerId !== 'All' && (
+                      <span className={cn(
+                        "text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest",
+                        driver.Customer_ID === customerId
+                          ? "bg-primary/20 text-primary border border-primary/30"
+                          : "bg-muted-foreground/10 text-muted-foreground"
+                      )}>
+                        {driver.Customer_ID === customerId ? 'เฉพาะลูกค้านี้ / Dedicated' : 'ส่วนกลาง / Shared'}
+                      </span>
+                    )}
                   </div>
                   {value === driver.Driver_ID && (
                     <Check className="w-4 h-4 text-emerald-500" />

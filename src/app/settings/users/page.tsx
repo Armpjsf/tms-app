@@ -158,6 +158,9 @@ export default function UserSettingsPage() {
             if (isSuperAdminRole && (!payload.Branch_ID || payload.Branch_ID === "")) {
                 payload.Branch_ID = 'All'
             }
+            if (payload.Role !== 'Customer') {
+                payload.Customer_ID = null
+            }
 
             if (editingUser) {
                 const updateData = { ...payload }
@@ -437,54 +440,46 @@ export default function UserSettingsPage() {
                             </div>
                         </div>
 
-                        {/* Customer Link (Optional or Required for Customer Role) */}
-                        <div className={cn(
-                            "space-y-3 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border-2 shadow-inner group/client transition-all duration-500",
-                            formData.Role === 'Customer' 
-                                ? "bg-primary/10 border-primary animate-pulse shadow-[0_0_30px_rgba(255,30,133,0.15)]" 
-                                : "bg-primary/5 border-primary/10"
-                        )}>
-                            <div className="flex items-center justify-between gap-3 mb-2 ml-4">
-                                <div className="flex items-center gap-3">
-                                    <Key size={14} className={cn("text-primary transition-transform", formData.Role === 'Customer' && "rotate-45")} />
-                                    <Label className={cn(
-                                        "text-sm sm:text-base font-bold font-black uppercase tracking-widest",
-                                        formData.Role === 'Customer' ? "text-primary" : "text-muted-foreground"
-                                    )}>
-                                        {t('common.tactical.ext_client_link')}
-                                        {formData.Role === 'Customer' && <span className="text-rose-500 ml-2 animate-bounce inline-block">*</span>}
-                                    </Label>
-                                </div>
-                                {formData.Role === 'Customer' && (
+                        {/* Customer Link (Required for Customer Role) */}
+                        {formData.Role === 'Customer' && (
+                            <div className="space-y-3 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border-2 shadow-inner group/client transition-all duration-500 bg-primary/10 border-primary animate-pulse shadow-[0_0_30px_rgba(255,30,133,0.15)]">
+                                <div className="flex items-center justify-between gap-3 mb-2 ml-4">
+                                    <div className="flex items-center gap-3">
+                                        <Key size={14} className="text-primary transition-transform rotate-45" />
+                                        <Label className="text-sm sm:text-base font-bold font-black uppercase tracking-widest text-primary">
+                                            {t('common.tactical.ext_client_link')}
+                                            <span className="text-rose-500 ml-2 animate-bounce inline-block">*</span>
+                                        </Label>
+                                    </div>
                                     <span className="text-[10px] font-black uppercase bg-primary text-foreground px-2 py-0.5 rounded-md italic">Mandatory</span>
-                                )}
+                                </div>
+                                <Select 
+                                    value={formData.Customer_ID || "none"} 
+                                    onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
+                                >
+                                    <SelectTrigger className={cn(
+                                        "h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-normal shadow-inner",
+                                        !formData.Customer_ID && "border-rose-500/50 shake-subtle"
+                                    )}>
+                                        <SelectValue placeholder={customers.length > 0 ? t('common.tactical.synergy_link') : "--- NO CUSTOMERS FOUND ERROR ---"} />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-popover border-border/10 text-foreground">
+                                        <SelectItem value="none" className="font-black italic uppercase tracking-normal text-muted-foreground underline">{t('common.tactical.remove_link')}</SelectItem>
+                                        {customers.length === 0 ? (
+                                            <div className="p-4 text-center text-rose-500 font-black uppercase italic text-sm">
+                                                No customers found! Please add customers first.
+                                            </div>
+                                        ) : (
+                                            customers.map(c => (
+                                                <SelectItem key={c.Customer_ID} value={c.Customer_ID} className="font-black italic uppercase tracking-normal">
+                                                    {c.Customer_Name}
+                                                </SelectItem>
+                                            ))
+                                        )}
+                                    </SelectContent>
+                                </Select>
                             </div>
-                            <Select 
-                                value={formData.Customer_ID || "none"} 
-                                onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
-                            >
-                                <SelectTrigger className={cn(
-                                    "h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-normal shadow-inner",
-                                    formData.Role === 'Customer' && !formData.Customer_ID && "border-rose-500/50 shake-subtle"
-                                )}>
-                                    <SelectValue placeholder={customers.length > 0 ? t('common.tactical.synergy_link') : "--- NO CUSTOMERS FOUND ERROR ---"} />
-                                </SelectTrigger>
-                                <SelectContent className="bg-popover border-border/10 text-foreground">
-                                    <SelectItem value="none" className="font-black italic uppercase tracking-normal text-muted-foreground underline">{t('common.tactical.remove_link')}</SelectItem>
-                                    {customers.length === 0 ? (
-                                        <div className="p-4 text-center text-rose-500 font-black uppercase italic text-sm">
-                                            No customers found! Please add customers first.
-                                        </div>
-                                    ) : (
-                                        customers.map(c => (
-                                            <SelectItem key={c.Customer_ID} value={c.Customer_ID} className="font-black italic uppercase tracking-normal">
-                                                {c.Customer_Name}
-                                            </SelectItem>
-                                        ))
-                                    )}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        )}
 
                          <div className="space-y-6 pt-6 border-t border-border/5">
                             <div className="flex items-center justify-between px-4">
