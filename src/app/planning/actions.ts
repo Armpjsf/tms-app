@@ -536,7 +536,7 @@ export async function createBulkJobs(
     })
     
     // Add raw container fields back to the object so handleContainerData can find them
-    const fullJobData = {
+    const fullJobData: any = {
         ...sanitized,
         container_no: data.container_no,
         seal_no: data.seal_no,
@@ -548,11 +548,11 @@ export async function createBulkJobs(
         target_temperature: data.target_temperature
     }
     
-    if (typeof sanitized.Price_Cust_Total === 'string') sanitized.Price_Cust_Total = parseFloat(sanitized.Price_Cust_Total) || 0
-    if (typeof sanitized.Cost_Driver_Total === 'string') sanitized.Cost_Driver_Total = parseFloat(sanitized.Cost_Driver_Total) || 0
+    if (typeof sanitized.Price_Cust_Total === 'string') fullJobData.Price_Cust_Total = parseFloat(sanitized.Price_Cust_Total) || 0
+    if (typeof sanitized.Cost_Driver_Total === 'string') fullJobData.Cost_Driver_Total = parseFloat(sanitized.Cost_Driver_Total) || 0
     
     return fullJobData
-  }).filter(j => j.Customer_Name)
+  }).filter((j: any) => j.Customer_Name)
 
   // Apply Draft status if requested via options
   const finalCleanData: any[] = options.isDraft 
@@ -802,7 +802,7 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   }
 
   // Save Container Data if applicable
-  await handleContainerData(supabase, jobId, { ...updateData, Job_ID: jobId } as JobFormData)
+  await handleContainerData(supabase, jobId, { ...data, Job_ID: jobId } as JobFormData)
 
   // Auto-save locations for future use
   const branchId = await getUserBranchId()
