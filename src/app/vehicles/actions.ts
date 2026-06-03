@@ -104,6 +104,9 @@ export async function createBulkVehicles(vehicles: Record<string, unknown>[]) {
     // Entity
     normalized.Sub_ID = getValue(['sub_id', 'subcontractor_id', 'รหัสผู้รับเหมา', 'รหัสรถร่วม', 'Sub_ID']) as string
     
+    // Chassis Flag
+    normalized.is_chassis = getValue(['is_chassis', 'chassis', 'หางลาก', 'เป็นหางลาก'])
+    
     // Keep internal fields
     const rowAsRecord = row as unknown as Record<string, unknown>
     if (rowAsRecord.Branch_ID) normalized.Branch_ID = rowAsRecord.Branch_ID as string
@@ -128,6 +131,7 @@ export async function createBulkVehicles(vehicles: Record<string, unknown>[]) {
       Max_Weight_kg: Number(data.Max_Weight_kg) || null,
       Max_Volume_cbm: Number(data.Max_Volume_cbm) || null,
       Sub_ID: data.Sub_ID || null,
+      is_chassis: data.is_chassis === true || data.is_chassis === 'true' || data.is_chassis === 'Yes',
       Branch_ID: branchId
     }
   }).filter(v => v.Vehicle_Plate) // Filter out rows without active_status or vehicle_plate

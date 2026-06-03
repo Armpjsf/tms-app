@@ -99,6 +99,7 @@ export async function createVehicle(vehicleData: Partial<Vehicle>) {
         Active_Status: vehicleData.Active_Status || 'Active',
         Sub_ID: vehicleData.Sub_ID,
         Preferred_Zone: vehicleData.Preferred_Zone,
+        is_chassis: vehicleData.is_chassis || false,
         Branch_ID: vehicleData.Branch_ID || await getUserBranchId()
       })
       .select()
@@ -128,7 +129,8 @@ export async function updateVehicle(plate: string, vehicleData: Partial<Vehicle>
         Driver_ID: vehicleData.Driver_ID,
         Active_Status: vehicleData.Active_Status,
         Sub_ID: vehicleData.Sub_ID,
-        Preferred_Zone: vehicleData.Preferred_Zone
+        Preferred_Zone: vehicleData.Preferred_Zone,
+        is_chassis: vehicleData.is_chassis
       })
       .eq('Vehicle_Plate', plate)
       .select()
@@ -351,6 +353,7 @@ export async function createBulkVehicles(vehicles: Partial<Vehicle>[]) {
     normalized.Driver_ID = getValue(['Driver_ID', 'driver_id', 'รหัสคนขับ'])
     normalized.Sub_ID = getValue(['Sub_ID', 'sub_id', 'รหัสผู้รับเหมาช่วง'])
     normalized.Active_Status = getValue(['Active_Status', 'status', 'สถานะ']) || 'Active'
+    normalized.is_chassis = getValue(['is_chassis', 'chassis', 'หางลาก', 'เป็นหางลาก'])
     normalized.Branch_ID = getValue(['Branch_ID', 'branch', 'สาขา']) || effectiveBranchId
 
     return normalized
@@ -368,6 +371,7 @@ export async function createBulkVehicles(vehicles: Partial<Vehicle>[]) {
       Driver_ID: data.Driver_ID || null,
       Sub_ID: data.Sub_ID || null,
       Active_Status: data.Active_Status,
+      is_chassis: data.is_chassis === true || data.is_chassis === 'true' || data.is_chassis === 'Yes',
       Branch_ID: data.Branch_ID
     }
   }).filter(v => v.Vehicle_Plate)
