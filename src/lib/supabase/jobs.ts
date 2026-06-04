@@ -999,20 +999,25 @@ export async function getJobsForBilling(
             dbQuery = dbQuery.eq('Branch_ID', branchId)
         }
 
-        let query = dbQuery
-            .order('Plan_Date', { ascending: false })
-            .limit(1000)
+        let query = dbQuery.order('Plan_Date', { ascending: false })
             
         // Add default date range if not provided (e.g. last 30 days) to keep initial load snappy
-        if (startDate) {
-            query = query.gte('Plan_Date', startDate)
-        } else if (!explicitCustomerId) {
-            const defaultPast = new Date()
-            defaultPast.setDate(defaultPast.getDate() - 45)
-            query = query.gte('Plan_Date', defaultPast.toISOString().split('T')[0])
-        }
-        if (endDate) {
-            query = query.lte('Plan_Date', endDate)
+        if (startDate || endDate) {
+            if (startDate) {
+                query = query.gte('Plan_Date', startDate)
+            }
+            if (endDate) {
+                query = query.lte('Plan_Date', endDate)
+            }
+            // Lift limit to 10,000 when explicit dates are searched to guarantee complete exports
+            query = query.limit(10000)
+        } else {
+            if (!explicitCustomerId) {
+                const defaultPast = new Date()
+                defaultPast.setDate(defaultPast.getDate() - 45)
+                query = query.gte('Plan_Date', defaultPast.toISOString().split('T')[0])
+            }
+            query = query.limit(1000)
         }
         
         const { data } = await query
