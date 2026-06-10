@@ -45,14 +45,18 @@ export async function getOperationsHealth(branchId?: string, customerId?: string
     const status = job.Job_Status;
 
     // ISSUE: Missing POD Proof
-    if ((status === 'Completed' || status === 'Delivered') && !job.Photo_Proof_Url && !job.Signature_Url) {
+    const isPastDue = job.Plan_Date && job.Plan_Date < new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    const isActive = !['Draft', 'New', 'Assigned', 'Requested', 'Completed', 'Delivered', 'Cancelled', 'Verified', 'Billed', 'Paid'].includes(status);
+    const missingProof = !job.Photo_Proof_Url && !job.Signature_Url;
+
+    if (((status === 'Completed' || status === 'Delivered') && missingProof) || (isPastDue && isActive && missingProof)) {
       issues.push({
         jobId: job.Job_ID,
         planDate: job.Plan_Date,
         customerName: job.Customer_Name,
         issueType: 'MISSING_POD',
         severity: 'CRITICAL',
-        description: "งานสำเร็จแล้วแต่ไม่มีหลักฐาน (รูปถ่ายหรือลายเซ็น)"
+        description: isPastDue ? "งานค้างส่งและยังไม่มีหลักฐาน" : "งานสำเร็จแล้วแต่ไม่มีหลักฐาน (รูปถ่ายหรือลายเซ็น)"
       });
     }
 

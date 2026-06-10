@@ -62,7 +62,8 @@ export async function adminUpdateJobStatus(jobId: string, newStatus: string, not
   // 2. Transition Status using Machine
   const transition = await transitionJobStatus(jobId, newStatus, {
       reason: 'Admin manual status update',
-      notes: note
+      notes: note,
+      force: true // Allow admin manual overrides to bypass POD/Identity guards
   })
 
   if (!transition.success) {
