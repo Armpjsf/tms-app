@@ -3,7 +3,7 @@
 import { CheckCircle2, Clock, MapPin, Package, Truck, Zap, ShieldCheck, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export type JobStep = 'New' | 'Accepted' | 'Arrived Pickup' | 'In Transit' | 'Arrived Dropoff' | 'Completed'
+export type JobStep = 'New' | 'Accepted' | 'Arrived Pickup' | 'In Transit' | 'Arrived Dropoff' | 'Completed' | 'Verified' | 'Rejected'
 
 interface JobWorkflowProps {
   currentStatus: string
@@ -23,7 +23,7 @@ const STEPS: { status: JobStep; label: string; icon: React.ElementType; descript
 
 export function JobWorkflow({ currentStatus, totalDrop = 1, completedDrops = 0, jobType = 'normal', className }: JobWorkflowProps) {
   // Normalize status
-  const normalizedStatus = (currentStatus === 'New' || currentStatus === 'Assigned') ? 'Pending' : currentStatus as JobStep
+  const normalizedStatus = (currentStatus === 'New' || currentStatus === 'Assigned') ? 'Pending' : currentStatus as string
   
   const getStepIndex = (status: string) => {
     if (status === 'Pending') return -1
@@ -42,7 +42,7 @@ export function JobWorkflow({ currentStatus, totalDrop = 1, completedDrops = 0, 
         <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border/40" />
 
         {STEPS.map((step, index) => {
-          const isCompleted = index < currentIndex || normalizedStatus === 'Completed' || normalizedStatus === 'Verified' || normalizedStatus === 'Rejected'
+          const isCompleted = index < currentIndex || ['Completed', 'Verified', 'Rejected'].includes(normalizedStatus)
           const isActive = index === currentIndex && !['Completed', 'Verified', 'Rejected'].includes(normalizedStatus)
           const StepIcon = step.icon
 
