@@ -54,9 +54,9 @@ const ALLOWED_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
   'Completed': ['Verified', 'Rejected', 'Billed', 'Cancelled'],
   'Complete': ['Verified', 'Rejected', 'Billed', 'Cancelled'],
   'Delivered': ['Verified', 'Rejected', 'Billed', 'Cancelled'],
-  'Verified': ['Billed', 'Paid', 'Cancelled'],
+  'Verified': ['Billed', 'Paid', 'Cancelled', 'Completed', 'Delivered', 'Rejected'],
   'Rejected': ['Completed', 'Delivered', 'Cancelled'], // Can go back if driver re-uploads or admin fixes
-  'Billed': ['Paid', 'Cancelled'],
+  'Billed': ['Paid', 'Cancelled', 'Verified', 'Completed', 'Delivered', 'Rejected'],
   'Paid': [], // Final state
   'Cancelled': [], // Final state
   'Failed': ['Cancelled'],

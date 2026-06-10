@@ -369,7 +369,7 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
     const jobs = data || []
     return {
       total: jobs.length,
-      delivered: jobs.filter((j: Partial<Job>) => j.Job_Status === 'Delivered' || j.Job_Status === 'Completed').length,
+      delivered: jobs.filter((j: Partial<Job>) => j.Job_Status === 'Delivered' || j.Job_Status === 'Completed' || j.Job_Status === 'Verified').length,
       inProgress: jobs.filter((j: Partial<Job>) => j.Job_Status === 'In Transit' || j.Job_Status === 'In Progress' || j.Job_Status === 'Arrived Pickup' || j.Job_Status === 'Arrived Dropoff').length,
       pending: jobs.filter((j: Partial<Job>) => j.Job_Status === 'New' || j.Job_Status === 'Assigned' || j.Job_Status === 'Requested' || j.Job_Status === 'Pending').length,
       sos: jobs.filter((j: Partial<Job>) => j.Job_Status === 'SOS').length,
@@ -423,7 +423,7 @@ export async function getJobStatsSummary(query = '', startDate = '', endDate = '
     
     return {
       total: data.length,
-      success: data.filter((j: Partial<Job>) => ['Delivered', 'Complete', 'Completed'].includes(j.Job_Status || '')).length,
+      success: data.filter((j: Partial<Job>) => ['Delivered', 'Complete', 'Completed', 'Verified'].includes(j.Job_Status || '')).length,
       failed: data.filter((j: Partial<Job>) => j.Job_Status === 'Failed').length,
       cancelled: data.filter((j: Partial<Job>) => j.Job_Status === 'Cancelled').length,
       withPhoto: data.filter((j: Partial<Job>) => j.Photo_Proof_Url || j.Pickup_Photo_Url).length,
@@ -974,7 +974,7 @@ export async function getJobsForBilling(
         let dbQuery = supabase
             .from('Jobs_Main')
             .select('Job_ID, Job_Status, Plan_Date, Customer_ID, Customer_Name, Route_Name, Vehicle_Plate, Vehicle_Type, Origin_Location, Dest_Location, Price_Cust_Total, Price_Per_Unit, Loaded_Qty, Created_At, Branch_ID, Driver_ID, Driver_Name, Cost_Driver_Total, extra_costs_json, Driver_Payment_ID, Billing_Note_ID, Invoice_ID')
-            .in('Job_Status', ['Completed', 'Delivered'])
+            .in('Job_Status', ['Completed', 'Delivered', 'Verified'])
         
         if (mode === 'driver') {
             // For driver payments, only filter out if already paid to driver
@@ -1105,7 +1105,7 @@ export async function getDriverDashboardStats(driverId: string) {
         .from('Jobs_Main')
         .select('*', { count: 'exact', head: true })
         .eq('Driver_ID', driverId)
-        .in('Job_Status', ['Completed', 'Delivered']),
+        .in('Job_Status', ['Completed', 'Delivered', 'Verified']),
 
       // 4. Monthly completed count for Gamification
       supabase
@@ -1113,7 +1113,7 @@ export async function getDriverDashboardStats(driverId: string) {
         .select('*', { count: 'exact', head: true })
         .eq('Driver_ID', driverId)
         .gte('Plan_Date', startOfMonth)
-        .in('Job_Status', ['Completed', 'Delivered'])
+        .in('Job_Status', ['Completed', 'Delivered', 'Verified'])
     ])
 
     const jobs = jobsRes.data
@@ -1187,7 +1187,7 @@ export async function getBillableJobs(customerId?: string, startDate?: string, e
       .select('*')
       .is('Invoice_ID', null) 
       .is('Billing_Note_ID', null)
-      .in('Job_Status', ['Completed', 'Delivered'])
+      .in('Job_Status', ['Completed', 'Delivered', 'Verified'])
 
     if (customerId && customerId !== 'all') {
         dbQuery = dbQuery.eq('Customer_ID', customerId)

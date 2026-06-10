@@ -1254,6 +1254,11 @@ export function JobDialog({
                           <SelectItem value="In Transit">{t('jobs.status_in_transit')} (In Transit)</SelectItem>
                           <SelectItem value="Delivered">{t('jobs.status_delivered')} (Delivered)</SelectItem>
                           <SelectItem value="Completed">{t('jobs.status_completed')} (Completed)</SelectItem>
+                          <SelectItem value="Verified">{t('jobs.status_verified') || 'Verified'} (Verified)</SelectItem>
+                          <SelectItem value="Rejected">{t('jobs.status_rejected') || 'Rejected'} (Rejected)</SelectItem>
+                          <SelectItem value="Billed">{t('jobs.status_billed') || 'Billed'} (Billed)</SelectItem>
+                          <SelectItem value="Paid">{t('jobs.status_paid') || 'Paid'} (Paid)</SelectItem>
+                          <SelectItem value="SOS">{t('jobs.status_sos') || 'SOS'} (SOS)</SelectItem>
                           <SelectItem value="Cancelled">{t('jobs.status_cancelled')} (Cancelled)</SelectItem>
                       </SelectContent>
                     </Select>
