@@ -117,7 +117,7 @@ export default function JobPickupPage() {
         if (reportRef.current && job) {
             try {
                 const canvas = await html2canvas(reportRef.current, {
-                    scale: 1.5,
+                    scale: 1, // Keep memory low — scale>1 on retina iOS crashes the WebView
                     useCORS: true,
                     logging: false,
                     windowWidth: 800

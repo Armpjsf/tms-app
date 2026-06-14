@@ -51,39 +51,40 @@ export async function analyzePODImage(file: File): Promise<AIAnalysisResult> {
 
 function getImageBrightness(file: File): Promise<number> {
     return new Promise((resolve) => {
+        const url = URL.createObjectURL(file)
         const img = new Image()
-        img.src = URL.createObjectURL(file)
         img.onload = () => {
-            const canvas = document.createElement('canvas')
-            canvas.width = img.width
-            canvas.height = img.height
-            const ctx = canvas.getContext('2d')
-            if (!ctx) return resolve(128)
-            
-            ctx.drawImage(img, 0, 0)
-            
-            // Sample center 100x100 pixels for speed
-            const cx = Math.floor(img.width / 2)
-            const cy = Math.floor(img.height / 2)
-            const w = Math.min(100, img.width)
-            const h = Math.min(100, img.height)
-            
-            const imageData = ctx.getImageData(cx - w/2, cy - h/2, w, h)
-            const data = imageData.data
-            let r,g,b,avg
-            let colorSum = 0
-            
-            for(let x = 0, len = data.length; x < len; x+=4) {
-                r = data[x]
-                g = data[x+1]
-                b = data[x+2]
-                avg = Math.floor((r+g+b)/3)
-                colorSum += avg
+            try {
+                // Draw into a TINY canvas. A full-resolution canvas of a 12MP
+                // phone photo allocates ~48MB and, run per photo, blows the iOS
+                // Safari per-tab memory limit and crashes the page. A small
+                // downscaled sample is plenty to gauge brightness.
+                const MAX = 64
+                const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+                const cw = Math.max(1, Math.round(img.width * scale))
+                const ch = Math.max(1, Math.round(img.height * scale))
+
+                const canvas = document.createElement('canvas')
+                canvas.width = cw
+                canvas.height = ch
+                const ctx = canvas.getContext('2d')
+                if (!ctx) { resolve(128); return }
+
+                ctx.drawImage(img, 0, 0, cw, ch)
+                const data = ctx.getImageData(0, 0, cw, ch).data
+
+                let colorSum = 0
+                for (let i = 0, len = data.length; i < len; i += 4) {
+                    colorSum += (data[i] + data[i + 1] + data[i + 2]) / 3
+                }
+                resolve(Math.floor(colorSum / (cw * ch)))
+            } catch {
+                resolve(128)
+            } finally {
+                URL.revokeObjectURL(url)
             }
-            
-            const brightness = Math.floor(colorSum / (w*h))
-            resolve(brightness)
         }
-        img.onerror = () => resolve(128)
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(128) }
+        img.src = url
     })
 }
