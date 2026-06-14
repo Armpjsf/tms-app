@@ -113,7 +113,7 @@ export default function JobCompletePage() {
                     await new Promise(resolve => setTimeout(resolve, delay))
 
                     const canvas = await html2canvas(reportRef.current!, {
-                        scale: 1.5, // Reduced scale for performance on mobile
+                        scale: 1, // Keep memory low — scale>1 on retina iOS crashes the WebView
                         useCORS: true,
                         logging: false,
                         backgroundColor: "#ffffff",
@@ -165,7 +165,7 @@ export default function JobCompletePage() {
             // Try one last time to capture report for offline if needed
             if (reportRef.current && job) {
                 try {
-                    const canvas = await html2canvas(reportRef.current!, { scale: 1.2, useCORS: true })
+                    const canvas = await html2canvas(reportRef.current!, { scale: 1, useCORS: true })
                     reportB64 = canvas.toDataURL('image/jpeg', 0.6)
                 } catch { /* Fail silently */ }
             }
