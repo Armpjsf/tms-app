@@ -270,16 +270,25 @@ export async function getFuelPrice(date?: string) {
         }
     }
 
-    // 2. If it's today and missing, attempt sync
+    // 2. If it's today and missing, attempt sync (best-effort).
+    // syncDailyFuelPrices() is admin-guarded, so this throws for non-admin
+    // callers — e.g. a driver submitting POD, whose pricing path reaches here
+    // via calculateJobPrice -> getSuggestedRate. A missing daily fuel price must
+    // never break downstream flows, so swallow the error and fall through to the
+    // historical fallback below instead of propagating it.
     const todayStr = new Date().toISOString().split('T')[0]
     if (targetDate === todayStr) {
-        console.log(`[FUEL_ACTION] No price in DB for today (${targetDate}), triggering sync...`)
-        const syncResult = await syncDailyFuelPrices()
-        if (syncResult.success && syncResult.price) {
-            return { 
-                price: syncResult.price, 
-                priceTomorrow: syncResult.priceTomorrow || null 
+        try {
+            console.log(`[FUEL_ACTION] No price in DB for today (${targetDate}), triggering sync...`)
+            const syncResult = await syncDailyFuelPrices()
+            if (syncResult.success && syncResult.price) {
+                return {
+                    price: syncResult.price,
+                    priceTomorrow: syncResult.priceTomorrow || null
+                }
             }
+        } catch (syncErr) {
+            console.warn(`[FUEL_ACTION] Sync skipped (${(syncErr as Error).message}); using historical fallback.`)
         }
     }
 
