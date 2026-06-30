@@ -1,7 +1,7 @@
 "use client"
 
 import { submitJobPOD, submitJobPickup } from "@/lib/actions/pod-actions"
-import { updateJobStatus } from "@/app/mobile/jobs/actions"
+import { updateJobStatus, getJobDetails } from "@/app/mobile/jobs/actions"
 import { notifyTrackingStateChanged } from "@/lib/tracking-state"
 
 export interface OfflineJob {
@@ -152,6 +152,25 @@ export const syncOfflineJobs = async () => {
     if (jobs.length === 0) return
 
     for (const job of jobs) {
+        // The proof may already be on the server — e.g. the driver re-submitted
+        // from the job page after this entry got stuck, or an earlier retry
+        // succeeded but we lost the response. Drop the redundant entry so it
+        // stops lingering as a "pending" zombie that flickers on every sync.
+        // Runs before the retry-cap check so retry-exhausted items clear too.
+        if (job.type === 'POD' || job.type === 'PICKUP') {
+            try {
+                const current = await getJobDetails(job.jobId)
+                const podDone = !!(current?.Photo_Proof_Url || current?.Signature_Url)
+                const pickupDone = !!(current?.Pickup_Photo_Url || current?.Pickup_Signature_Url)
+                if ((job.type === 'POD' && podDone) || (job.type === 'PICKUP' && pickupDone)) {
+                    await removeOfflineJob(job.id)
+                    continue
+                }
+            } catch {
+                // Lookup failed (offline/transient) — fall through to normal replay.
+            }
+        }
+
         if ((job.retryCount || 0) >= MAX_RETRIES) {
             // Status waypoints are low-stakes — give up cleanly so the queue
             // doesn't stay stuck forever. Proof (POD/PICKUP) is kept for review.
