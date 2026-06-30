@@ -53,3 +53,11 @@ __pycache__/
 .pytest_cache/
 *.pyc
 *.bak
+
+# gh auth / push scratch artifacts
+.gh-auth.*
+.github-known-hosts
+.tmp-push-*/
+
+# stray spreadsheet exports dropped at repo root (templates live in public/)
+/*.xlsx
