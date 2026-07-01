@@ -1,4 +1,5 @@
 import { getJobById, getAllJobs } from "@/lib/supabase/jobs"
+import { todayTH } from "@/lib/utils/date-th"
 import { transitionBulkJobStatus } from "@/services/job-status-machine"
 import { getDriverById, getAllDriversFromTable } from "@/lib/supabase/drivers"
 import { getVehicleByPlate, getAllVehiclesFromTable } from "@/lib/supabase/vehicles"
@@ -335,7 +336,7 @@ export const aiToolExecutors = {
     
     const { data, error } = await supabase.from('Jobs_Main').insert({
         Customer_Name: args.customerName,
-        Plan_Date: args.planDate || new Date().toISOString().split('T')[0],
+        Plan_Date: args.planDate || todayTH(),
         Route_Name: args.routeName,
         Price_Cust_Total: args.price,
         Notes: args.notes,

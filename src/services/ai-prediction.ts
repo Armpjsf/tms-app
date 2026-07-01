@@ -1,6 +1,7 @@
 "use client";
 
 import { Job } from "@/lib/supabase/jobs";
+import { hourTH } from "@/lib/utils/date-th";
 
 export type DelayRisk = 'low' | 'medium' | 'high' | 'critical';
 
@@ -41,7 +42,7 @@ export function predictJobDelay(job: Job, currentLat: number, currentLng: number
 
     // 3. วิเคราะห์ความเสี่ยง (Risk Assessment)
     // สมมติว่ามีตัวแปรภายนอก (ในระบบจริงจะดึงจาก Traffic/Weather API)
-    const isRushHour = [8, 9, 16, 17, 18].includes(new Date().getHours());
+    const isRushHour = [8, 9, 16, 17, 18].includes(hourTH());
     let riskFactor = 0;
 
     if (isRushHour) riskFactor += 30; // รถติดช่วงเร่งด่วน

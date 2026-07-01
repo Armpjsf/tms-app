@@ -7,6 +7,7 @@ import { Job } from "@/lib/supabase/jobs"
 import { calculateJobCO2 } from "@/app/mobile/jobs/actions"
 import { transitionJobStatus } from "@/services/job-status-machine"
 import { calculateJobPrice } from "@/services/pricing-engine"
+import { timeTH } from "@/lib/utils/date-th"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 /**
@@ -110,7 +111,7 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
 
     const clientTimestamp = formData.get("actualCompletionTime") as string
     const now = clientTimestamp ? new Date(clientTimestamp) : new Date()
-    const timeString = now.toTimeString().split(' ')[0] 
+    const timeString = timeTH(now)
 
     const updatePayload: Record<string, unknown> = {
       Photo_Proof_Url: photoUrls.join(','),

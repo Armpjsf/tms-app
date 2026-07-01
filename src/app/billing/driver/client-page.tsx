@@ -6,6 +6,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { useLanguage } from "@/components/providers/language-provider"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
+import { todayTH } from "@/lib/utils/date-th"
 import { Label } from "@/components/ui/label"
 import {
   Wallet,
@@ -185,7 +186,7 @@ export default function DriverPaymentClient({
 
     setLoading(true)
     try {
-        const today = new Date().toISOString().split('T')[0]
+        const today = todayTH()
 
         const result = await createDriverPayment(
             selectedItems, 
@@ -236,7 +237,7 @@ export default function DriverPaymentClient({
             const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
             const netTotal = subtotal - withholding
             const bankCode = getBankCode(driverInfo.Bank_Name)
-            lines.push(`${bankCode},${driverInfo.Bank_Account_No},${netTotal.toFixed(2)},${driverInfo.Bank_Account_Name || driverName},Salary,${new Date().toISOString().split('T')[0]}`)
+            lines.push(`${bankCode},${driverInfo.Bank_Account_No},${netTotal.toFixed(2)},${driverInfo.Bank_Account_Name || driverName},Salary,${todayTH()}`)
         })
     } else {
         const jobsBySub: Record<string, Job[]> = {}
@@ -257,7 +258,7 @@ export default function DriverPaymentClient({
             const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
             const netTotal = subtotal - withholding
             const bankCode = getBankCode(subInfo.Bank_Name)
-            lines.push(`${bankCode},${subInfo.Bank_Account_No},${netTotal.toFixed(2)},${subInfo.Bank_Account_Name || subInfo.Sub_Name},Salary,${new Date().toISOString().split('T')[0]}`)
+            lines.push(`${bankCode},${subInfo.Bank_Account_No},${netTotal.toFixed(2)},${subInfo.Bank_Account_Name || subInfo.Sub_Name},Salary,${todayTH()}`)
         })
     }
 
@@ -270,7 +271,7 @@ export default function DriverPaymentClient({
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
     const link = document.createElement("a")
     link.href = URL.createObjectURL(blob)
-    link.setAttribute("download", `SCB_Bulk_Export_${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute("download", `SCB_Bulk_Export_${todayTH()}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

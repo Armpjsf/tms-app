@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { TrendingUp, Activity, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { todayTH } from '@/lib/utils/date-th'
 import { cn } from '@/lib/utils'
 
 import { useLanguage } from '@/components/providers/language-provider'
@@ -280,7 +281,7 @@ export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosi
 
     const handleShowTodayRoute = (plate: string) => {
         setSelectedVehicle(plate)
-        const today = new Date().toISOString().split('T')[0]
+        const today = todayTH()
         setStartDate(today)
         setEndDate(today)
         setShowHistory(true)

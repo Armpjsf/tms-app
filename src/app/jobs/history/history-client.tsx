@@ -6,6 +6,7 @@ import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import { todayTH } from "@/lib/utils/date-th"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { 
   History, 
@@ -133,7 +134,7 @@ export function HistoryClient({
         const wb = XLSX.utils.book_new()
         const ws = XLSX.utils.json_to_sheet(exportData)
         XLSX.utils.book_append_sheet(wb, ws, "Mission History")
-        XLSX.writeFile(wb, `mission_history_${new Date().toISOString().split('T')[0]}.xlsx`)
+        XLSX.writeFile(wb, `mission_history_${todayTH()}.xlsx`)
     } catch (error) {
         console.error("Export failed:", error)
         alert("Failed to export data")

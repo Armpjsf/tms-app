@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { getLatestDriverLocations } from '@/lib/supabase/gps'
 import { getAllDriversFromTable } from '@/lib/supabase/drivers'
 import { transitionJobStatus } from "@/services/job-status-machine"
+import { todayTH } from "@/lib/utils/date-th"
 
 // ============================================================
 // AI Auto-Assign Engine — TMS 2026
@@ -75,7 +76,7 @@ export async function getSuggestedDrivers(jobData: {
     })
 
     // 3. Get today's job assignments (for availability check)
-    const planDate = jobData.Plan_Date || new Date().toISOString().split('T')[0]
+    const planDate = jobData.Plan_Date || todayTH()
     const { data: todayJobs } = await supabase
       .from('Jobs_Main')
       .select('Driver_ID, Job_Status')

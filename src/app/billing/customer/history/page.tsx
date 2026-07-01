@@ -6,6 +6,7 @@ import Link from "next/link"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { todayTH } from "@/lib/utils/date-th"
 import { PremiumCard, PremiumCardHeader, PremiumCardTitle } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { motion } from "framer-motion"
@@ -156,7 +157,7 @@ export default function CustomerBillingHistory() {
       'จำนวนเงินรวม': note.Total_Amount,
       'สถานะ': note.Status === 'Paid' ? 'ชำระแล้ว' : note.Status === 'Pending' ? 'รอดำเนินการ' : note.Status,
     }))
-    exportToCSV(dataToExport, `Billing_History_${new Date().toISOString().split('T')[0]}`)
+    exportToCSV(dataToExport, `Billing_History_${todayTH()}`)
     toast.success(`Export ${filteredNotes.length} รายการสำเร็จ`)
   }
 

@@ -1,3 +1,5 @@
+import { todayTH } from "@/lib/utils/date-th";
+
 export function exportToCSV(data: Record<string, unknown>[], filename: string) {
     if (!data || !data.length) return;
 
@@ -25,7 +27,7 @@ export function exportToCSV(data: Record<string, unknown>[], filename: string) {
     const link = document.createElement("a");
     
     link.setAttribute("href", url);
-    link.setAttribute("download", `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `${filename}_${todayTH()}.csv`);
     link.style.visibility = 'hidden';
     
     document.body.appendChild(link);

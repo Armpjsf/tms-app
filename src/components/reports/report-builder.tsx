@@ -4,6 +4,7 @@ import { useState, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { todayTH, dateKeyTH, monthStartTH } from "@/lib/utils/date-th"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -96,7 +97,7 @@ function exportToCSV(data: Record<string, unknown>[], columns: string[], fileNam
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.setAttribute('download', `${fileName}_${new Date().toISOString().slice(0, 10)}.csv`)
+  link.setAttribute('download', `${fileName}_${todayTH()}.csv`)
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
@@ -119,7 +120,7 @@ function exportToExcel(data: Record<string, unknown>[], columns: string[], fileN
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, "Report")
-  XLSX.writeFile(wb, `${fileName}_${new Date().toISOString().slice(0, 10)}.xlsx`)
+  XLSX.writeFile(wb, `${fileName}_${todayTH()}.xlsx`)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -140,7 +141,7 @@ async function exportToPDF(elementId: string, fileName: string) {
   const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
   
   pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-  pdf.save(`${fileName}_${new Date().toISOString().slice(0, 10)}.pdf`)
+  pdf.save(`${fileName}_${todayTH()}.pdf`)
 }
 
 // Status badge component
@@ -355,10 +356,10 @@ export function ReportBuilder() {
                 {activeReport.hasDate && (
                   <div className="flex gap-2 mt-3">
                     {[
-                      { label: 'วันนี้', from: new Date().toISOString().slice(0, 10), to: new Date().toISOString().slice(0, 10) },
-                      { label: '7 วัน', from: new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10), to: new Date().toISOString().slice(0, 10) },
-                      { label: '30 วัน', from: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10), to: new Date().toISOString().slice(0, 10) },
-                      { label: 'เดือนนี้', from: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`, to: new Date().toISOString().slice(0, 10) },
+                      { label: 'วันนี้', from: todayTH(), to: todayTH() },
+                      { label: '7 วัน', from: dateKeyTH(Date.now() - 7 * 86400000), to: todayTH() },
+                      { label: '30 วัน', from: dateKeyTH(Date.now() - 30 * 86400000), to: todayTH() },
+                      { label: 'เดือนนี้', from: monthStartTH(), to: todayTH() },
                     ].map(preset => (
                       <button
                         key={preset.label}

@@ -4,6 +4,7 @@ import { createAdminClient } from "@/utils/supabase/server"
 import { getNextInvoiceId } from "./invoices"
 import { BillingNote } from "./billing"
 import { sendBillingEmail } from "../actions/email-actions"
+import { todayTH } from "@/lib/utils/date-th"
 import { Job } from "@/types/database"
 
 type BillingAutomationJob = Partial<Job> & {
@@ -70,7 +71,7 @@ export async function generateMonthlyBillingNotes() {
                 .insert({
                     Billing_Note_ID: billingNoteId,
                     Customer_Name: customerName,
-                    Billing_Date: new Date().toISOString().split('T')[0],
+                    Billing_Date: todayTH(),
                     Total_Amount: totalAmount,
                     Status: 'Pending',
                     Branch_ID: customerJobs[0].Branch_ID || 'HQ',

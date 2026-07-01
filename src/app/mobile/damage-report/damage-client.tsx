@@ -3,6 +3,7 @@
 import { useState, useRef } from "react"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { createDamageReport, getMyDamageReports, DamageReport } from "@/lib/supabase/damage-reports"
+import { todayTH } from "@/lib/utils/date-th"
 import { AlertOctagon, CheckCircle2, Send, Camera, FileText, X, Image as ImageIcon, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
@@ -36,7 +37,7 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
   const [jobId, setJobId] = useState('')
   const [vehiclePlate, setVehiclePlate] = useState('')
   const [category, setCategory] = useState('')
-  const [incidentDate, setIncidentDate] = useState(new Date().toISOString().split('T')[0])
+  const [incidentDate, setIncidentDate] = useState(todayTH())
   const [desc, setDesc] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)

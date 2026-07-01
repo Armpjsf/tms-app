@@ -2,6 +2,7 @@ import { AccountingProvider, AccountingInvoice, AccountingBill } from "@/types/a
 import { AkauntingProvider } from "./akaunting-provider";
 import { getServerSetting } from "@/lib/supabase/system_settings_server";
 import { Billing_Note, Job, Driver_Payment } from "@/types/database";
+import { todayTH } from "@/lib/utils/date-th";
 
 class AccountingServiceManager {
     private provider: AccountingProvider | null = null;
@@ -102,7 +103,7 @@ class AccountingServiceManager {
 
         return {
             referenceId: note.Billing_Note_ID,
-            issueDate: note.Billing_Date || new Date().toISOString().split('T')[0],
+            issueDate: note.Billing_Date || todayTH(),
             dueDate: note.Due_Date || undefined,
             customer: {
                 id: note.Customer_Name || "unknown",
@@ -132,7 +133,7 @@ class AccountingServiceManager {
 
         return {
             referenceId: payment.Driver_Payment_ID,
-            issueDate: payment.Payment_Date || new Date().toISOString().split('T')[0],
+            issueDate: payment.Payment_Date || todayTH(),
             contactName: payment.Driver_Name || "Unknown Driver",
             items: items,
             subtotal: totalAmount,
@@ -146,7 +147,7 @@ class AccountingServiceManager {
 
         return {
             referenceId: job.Job_ID,
-            issueDate: new Date().toISOString().split('T')[0],
+            issueDate: todayTH(),
             customer: {
                 id: job.Customer_Name || "unknown",
                 name: job.Customer_Name || "Unknown Customer",

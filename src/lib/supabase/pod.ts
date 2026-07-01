@@ -1,5 +1,6 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions"
+import { todayTH } from "@/lib/utils/date-th"
 
 export type PODRecord = {
   Job_ID: string
@@ -25,7 +26,7 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
     const isRegularAdmin = await isAdmin()
     const customerId = await getCustomerId()
     const supabase = (isSuper || isRegularAdmin || customerId) ? createAdminClient() : await createClient()
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayTH()
     
     const branchId = await getUserBranchId()
 

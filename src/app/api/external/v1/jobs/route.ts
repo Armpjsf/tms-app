@@ -1,6 +1,7 @@
 import { validateApiKey } from '@/lib/security/api-security'
 import { createAdminClient } from '@/utils/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { todayTH } from '@/lib/utils/date-th'
 
 /**
  * Enterprise Integration API (v1)
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
                 Delivery_Address: delivery_address,
                 Job_Details: items,
                 Vehicle_Type: vehicle_type,
-                Plan_Date: plan_date || new Date().toISOString().split('T')[0],
+                Plan_Date: plan_date || todayTH(),
                 Job_Status: 'New',
                 Source: 'Enterprise_API'
             }])

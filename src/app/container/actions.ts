@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { Job, JobContainer } from '@/types/database'
+import { todayTH } from "@/lib/utils/date-th"
 
 export type ContainerJob = Job & {
     container: JobContainer
@@ -44,7 +45,7 @@ export async function getContainerJobs() {
 
 export async function getContainerStats() {
     const supabase = await createClient()
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayTH()
     const threeDaysLater = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
     const { data, error } = await supabase

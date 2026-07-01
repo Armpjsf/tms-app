@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { logActivity } from '@/lib/supabase/logs'
 import { getDriverSession } from '@/lib/auth-utils'
 import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions"
+import { todayTH } from "@/lib/utils/date-th"
  
 export type JobAssignment = {
   Vehicle_Type: string
@@ -443,7 +444,7 @@ export async function getTodayFinancials(branchId?: string) {
     const userBranchId = await getUserBranchId()
     const customerId = await getCustomerId()
     const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayTH()
 
     let dbQuery = supabase
       .from('Jobs_Main')

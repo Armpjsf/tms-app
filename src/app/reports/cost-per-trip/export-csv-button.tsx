@@ -3,6 +3,7 @@
 import { FileDown, Loader2 } from "lucide-react"
 import { useState } from "react"
 import type { TripCost } from "./actions"
+import { todayTH } from "@/lib/utils/date-th"
 
 interface ExportCSVButtonProps {
     data: TripCost[]
@@ -93,7 +94,7 @@ export function ExportCSVButton({ data }: ExportCSVButtonProps) {
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
             const url = URL.createObjectURL(blob)
             const link = document.createElement("a")
-            const fileName = `Trip_Performance_${new Date().toISOString().split('T')[0]}.csv`
+            const fileName = `Trip_Performance_${todayTH()}.csv`
             
             link.setAttribute("href", url)
             link.setAttribute("download", fileName)

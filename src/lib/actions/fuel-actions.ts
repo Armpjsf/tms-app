@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/utils/supabase/server"
 import { logActivity } from "@/lib/supabase/logs"
 import { requireAdmin, requireCustomerAccess } from "@/services/permission-guards"
+import { todayTH } from "@/lib/utils/date-th"
 
 export type DailyFuelPrice = {
     Date: string
@@ -152,7 +153,7 @@ export async function syncDailyFuelPrices() {
     log('Starting multi-source fuel synchronization...')
     
     try {
-        const syncDate = new Date().toISOString().split('T')[0]
+        const syncDate = todayTH()
         
         // TRY SOURCE 1: BANGCHAK
         let result: { today: number; tomorrow: number | null } | null = await fetchFromBangchak()
@@ -231,7 +232,7 @@ export async function syncDailyFuelPrices() {
  * Returns null if no price is available
  */
 export async function getFuelPrice(date?: string) {
-    const targetDate = date || new Date().toISOString().split('T')[0]
+    const targetDate = date || todayTH()
     const now = Date.now()
 
     // 0. Try Memory Cache first
@@ -276,7 +277,7 @@ export async function getFuelPrice(date?: string) {
     // via calculateJobPrice -> getSuggestedRate. A missing daily fuel price must
     // never break downstream flows, so swallow the error and fall through to the
     // historical fallback below instead of propagating it.
-    const todayStr = new Date().toISOString().split('T')[0]
+    const todayStr = todayTH()
     if (targetDate === todayStr) {
         try {
             console.log(`[FUEL_ACTION] No price in DB for today (${targetDate}), triggering sync...`)

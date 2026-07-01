@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { todayTH } from "@/lib/utils/date-th"
 
 export type FuelLog = {
   Log_ID: string
@@ -27,7 +28,7 @@ export type FuelLog = {
 export async function getTodayFuelLogs(): Promise<FuelLog[]> {
   try {
     const supabase = await createClient()
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayTH()
     
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
@@ -179,7 +180,7 @@ export async function getAllFuelLogs(
 export async function getTodayFuelStats() {
   try {
     const supabase = await createClient()
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayTH()
     
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()

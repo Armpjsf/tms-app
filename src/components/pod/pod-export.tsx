@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
 import { exportToCSV } from "@/lib/utils/export"
 import { PODRecord } from "@/lib/supabase/pod"
+import { todayTH } from "@/lib/utils/date-th"
 
 interface PODExportProps {
   data: PODRecord[]
@@ -26,7 +27,7 @@ export function PODExport({ data }: PODExportProps) {
       'ลายเซ็น': pod.Signature_Url ? 'มี' : 'ไม่มี'
     }))
 
-    exportToCSV(exportData, `POD_Report_${new Date().toISOString().split('T')[0]}`)
+    exportToCSV(exportData, `POD_Report_${todayTH()}`)
   }
 
   return (

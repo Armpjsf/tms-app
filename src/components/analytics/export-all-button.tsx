@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
 import { exportToCSV } from "@/lib/utils/export"
+import { todayTH } from "@/lib/utils/date-th"
 
 interface Financials {
     revenue: number;
@@ -58,7 +59,7 @@ interface ExportAllButtonProps {
 
 export function ExportAllButton({ data }: ExportAllButtonProps) {
     const handleExportAll = () => {
-        const timestamp = new Date().toISOString().split('T')[0];
+        const timestamp = todayTH();
 
         // 1. Summary Report (KPIs)
         const summary = [{

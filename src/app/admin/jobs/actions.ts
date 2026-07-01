@@ -6,6 +6,7 @@ import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { getSession } from '@/lib/session'
 
 import { type JobStatus, transitionJobStatus } from "@/services/job-status-machine"
+import { timeTH, dateKeyTH } from "@/lib/utils/date-th"
 
 const JOB_STATUSES: readonly JobStatus[] = [
   'Draft',
@@ -74,8 +75,8 @@ export async function adminUpdateJobStatus(jobId: string, newStatus: string, not
   // 3. Handle additional timestamp updates if needed
   const updateData: Record<string, unknown> = {}
   const now = new Date()
-  const timeString = now.toTimeString().split(' ')[0] 
-  const dateString = now.toISOString().split('T')[0]  
+  const timeString = timeTH(now)
+  const dateString = dateKeyTH(now)
   
   if (newStatus === 'Picked Up') {
       updateData.Actual_Pickup_Time = timeString

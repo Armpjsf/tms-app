@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin, isAdmin } from "@/lib/permissions"
+import { todayTH } from "@/lib/utils/date-th"
 
 // Type matching actual Supabase schema
 export type Driver = {
@@ -260,7 +261,7 @@ export async function getDriverStats(providedBranchId?: string, customerId?: str
     if (error) return { total: 0, active: 0, onJob: 0 }
     
     // Get drivers currently on job (assigned to jobs with Plan_Date = today)
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayTH()
     let onJobQuery = supabase
       .from('Jobs_Main')
       .select('Driver_ID')

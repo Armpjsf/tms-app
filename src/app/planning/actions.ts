@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 import { getAllDriversFromTable } from '@/lib/supabase/drivers'
+import { todayTH } from '@/lib/utils/date-th'
 import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
 import { logActivity } from '@/lib/supabase/logs'
 import { getUserBranchId, getFixedUserBranchId } from '@/lib/permissions'
@@ -539,7 +540,7 @@ export async function createBulkJobs(
     const sanitized = sanitizeJobData({
       Job_ID: cleanId(data.Job_ID) || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
       Branch_ID: (data.Branch_ID as string) || effectiveBranchId,
-      Plan_Date: normalizeDate(data.Plan_Date) || new Date().toISOString().split('T')[0],
+      Plan_Date: normalizeDate(data.Plan_Date) || todayTH(),
       Customer_ID: (data.Customer_ID as string) || customerMap.get((data.Customer_Name as string)?.toLowerCase().trim()) || null,
       Customer_Name: data.Customer_Name as string,
       Route_Name: route?.Route_Name || (data.Route_Name as string) || 'Direct',

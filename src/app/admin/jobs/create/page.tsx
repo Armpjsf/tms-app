@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { todayTH } from "@/lib/utils/date-th"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { createJob, getJobCreationData } from "@/app/planning/actions"
@@ -125,7 +126,7 @@ export default function CreateJobPage() {
   // Form State
   const [formData, setFormData] = useState<JobForm>({
     Job_ID: `JOB-${new Date().getTime().toString().slice(-6)}`,
-    Plan_Date: new Date().toISOString().split('T')[0],
+    Plan_Date: todayTH(),
     Plan_Time: '08:00',
     Customer_ID: '',
     Customer_Name: '',

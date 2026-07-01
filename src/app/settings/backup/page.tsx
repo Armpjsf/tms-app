@@ -6,6 +6,7 @@ import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Database, ArrowLeft, Download, FileJson, ShieldCheck, Zap, HardDrive, Share2, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { todayTH } from "@/lib/utils/date-th"
 import { toast } from "sonner"
 import { createClient } from "@/utils/supabase/client"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -25,7 +26,7 @@ export default function BackupSettingsPage() {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `${table}_backup_${new Date().toISOString().split('T')[0]}.json`
+        a.download = `${table}_backup_${todayTH()}.json`
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)

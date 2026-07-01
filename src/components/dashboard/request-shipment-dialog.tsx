@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useLanguage } from "@/components/providers/language-provider"
+import { todayTH } from "@/lib/utils/date-th"
 import { Calendar, MapPin, Package, StickyNote, Send, CheckCircle2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { PremiumButton } from "@/components/ui/premium-button"
@@ -29,7 +30,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
     const [loading, setLoading] = useState(false)
     const [success, setSuccess] = useState(false)
     const [formData, setFormData] = useState({
-        Plan_Date: new Date().toISOString().split('T')[0],
+        Plan_Date: todayTH(),
         Origin_Location: "",
         Dest_Location: "",
         Cargo_Type: "",
@@ -48,7 +49,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                     onOpenChange(false)
                     setSuccess(false)
                     setFormData({
-                        Plan_Date: new Date().toISOString().split('T')[0],
+                        Plan_Date: todayTH(),
                         Origin_Location: "",
                         Dest_Location: "",
                         Cargo_Type: "",

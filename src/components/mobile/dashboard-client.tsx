@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { hourTH } from "@/lib/utils/date-th"
 import { Button } from "@/components/ui/button"
 import { 
     Truck, MapPin, 
@@ -84,7 +85,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
     }, [])
 
     const greeting = useMemo(() => {
-        const hour = new Date().getHours()
+        const hour = hourTH()
         if (hour >= 5 && hour < 12) return "สวัสดีตอนเช้า"
         if (hour >= 12 && hour < 17) return "สวัสดีตอนบ่าย"
         return "สวัสดีตอนเย็น"
