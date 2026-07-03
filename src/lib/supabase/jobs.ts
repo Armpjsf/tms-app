@@ -1363,7 +1363,6 @@ export async function getRequestedJobs(providedBranchId?: string): Promise<Job[]
         }))
 
         if (mappedData.length > 0) {
-            console.log('[DEBUG] getRequestedJobs sample job (first item):', JSON.stringify(mappedData[0], null, 2))
         }
 
         return mappedData as Job[]

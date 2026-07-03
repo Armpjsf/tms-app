@@ -19,7 +19,6 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     const supabase = await createAdminClient()
     const customerId = await getCustomerId()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
-    console.log(`[DEBUG] getExecutiveDashboardUnified: branchId=${branchId}, effectiveBranchId=${effectiveBranchId}, customerId=${providedCustomerId}`)
 
     const { start: currentStart, end: currentEnd } = getThaiMonthBoundaries()
     
@@ -98,12 +97,10 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             
             if (finalCustomerId) query = query.eq('Customer_ID', finalCustomerId)
             if (effectiveBranchId) {
-                console.log(`[DEBUG] fetchRange applying branch filter: "${effectiveBranchId}"`)
                 query = query.ilike('Branch_ID', effectiveBranchId)
             }
             if (customerNames && customerNames.length > 0) query = query.in('Customer_Name', customerNames)
             
-            console.log(`[DEBUG] fetchRange: start=${start}, end=${end}, branch=${effectiveBranchId}`)
             const { data, error } = await query
             if (error) console.error('[DEBUG] fetchRange Error:', error)
             return data || []
@@ -297,7 +294,6 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             .lte('Date_Finish', `${eDateCurrent}T23:59:59`)
 
         if (effectiveBranchId) {
-            console.log(`[DEBUG] fetchPipeline/Fuel/Maint applying branch filter: "${effectiveBranchId}"`)
             fetchPipeline.eq('Branch_ID', effectiveBranchId)
             fetchFuel.eq('Branch_ID', effectiveBranchId)
             fetchMaint.eq('Branch_ID', effectiveBranchId)

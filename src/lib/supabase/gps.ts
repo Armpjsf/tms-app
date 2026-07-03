@@ -143,7 +143,6 @@ export async function saveGPSLog(data: {
     }
     // -------------------------
 
-    console.log('[DEBUG] saveGPSLog success for:', data.driverId)
 
     return { success: true };
   } catch (e) {

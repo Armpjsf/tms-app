@@ -486,16 +486,8 @@ export function JobDialog({
     // Use mode prop as the primary driver to avoid internal state lag
     const syncMode = job ? 'edit' : mode;
 
-    console.log('[JobDialog DEBUG] Sync Triggered', { 
-        syncMode, 
-        propMode: mode, 
-        internalMode, 
-        jobId: job?.Job_ID, 
-        show 
-    });
 
     if (job) {
-      console.log('[JobDialog DEBUG] Syncing Data from Job:', job.Job_ID);
       
       const masterRoute = routes.find(r => r.Route_Name === job.Route_Name)
 
@@ -602,7 +594,6 @@ export function JobDialog({
       setFormData(newFormData);
 
     } else {
-      console.log('[JobDialog DEBUG] Resetting to empty CREATE state');
       setFormData({
         Job_ID: generateJobId(),
         Plan_Date: defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),

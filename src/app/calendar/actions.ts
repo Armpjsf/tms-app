@@ -29,7 +29,6 @@ export async function getJobsForMonth(year: number, month: number, providedBranc
   const lastDay = new Date(year, month, 0)
   const lastDayStr = `${year}-${String(month).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`
 
-  console.log(`[DEBUG] getJobsForMonth params:`, { year, month, firstDay, lastDayStr, customerId, branchId })
 
   let query = supabase
     .from('Jobs_Main')

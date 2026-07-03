@@ -42,14 +42,12 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   const cookieCustomerId = cookieStore.get('selectedCustomer')?.value
   const selectedCustomerId = (searchParams.customer !== undefined) ? searchParams.customer : cookieCustomerId
   
-  console.log(`[DEBUG] DashboardContent - branch: ${branch}, searchParams.customer: ${searchParams.customer}, cookie.customer: ${cookieCustomerId}, selectedCustomerId: ${selectedCustomerId}`)
   
   const customers = searchParams.customers ? searchParams.customers.split(',') : []
   
   if (selectedCustomerId && selectedCustomerId !== 'All') {
       const custName = await getCustomerName(selectedCustomerId)
       if (custName) {
-          console.log(`[DEBUG] DashboardContent - resolved customer name: ${custName} for ID: ${selectedCustomerId}`)
           // Override dashboard-specific multi-select to prioritize global header selection
           customers.length = 0
           customers.push(custName)
