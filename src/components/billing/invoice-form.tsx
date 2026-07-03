@@ -102,19 +102,23 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
   }
 
   const selectedJobs = availableJobs.filter(j => selectedJobIds.includes(j.Job_ID))
-  const subtotal = selectedJobs.reduce((sum, job) => {
+
+  // Single source for the effective billing price of a job — used by the
+  // subtotal, the invoice snapshot, and the zero-price pre-check so the
+  // warning always matches what actually gets billed.
+  const resolveJobPrice = (job: (typeof availableJobs)[number]) => {
       const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 0)
       const unitPrice = Number(job.Price_Per_Unit || 0)
       const storedPrice = parsePrice(job.Price_Cust_Total)
-      
+
       // Force use of calculated price if it differs from stored price (handling rate changes)
       const calculatedPrice = Number((unitPrice * qty).toFixed(2))
-      const finalPrice = (unitPrice > 0 && qty > 0 && Math.abs(storedPrice - calculatedPrice) > 0.5) 
-        ? calculatedPrice 
+      return (unitPrice > 0 && qty > 0 && Math.abs(storedPrice - calculatedPrice) > 0.5)
+        ? calculatedPrice
         : (storedPrice > 0 ? storedPrice : calculatedPrice)
-        
-      return sum + finalPrice
-  }, 0)
+  }
+
+  const subtotal = selectedJobs.reduce((sum, job) => sum + resolveJobPrice(job), 0)
   
   const discountAmount = subtotal * (Number(discountRate || 0) / 100)
   const totalAfterDiscount = subtotal - discountAmount
@@ -125,6 +129,19 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
 
   const handleSubmit = async () => {
     if (!customerId || selectedJobs.length === 0) return
+
+    // Warn BEFORE billing if any selected job still has no price — otherwise
+    // it only surfaces afterwards as a CRITICAL issue on Operations Health.
+    const zeroPriceJobs = selectedJobs.filter(job => resolveJobPrice(job) <= 0)
+    if (zeroPriceJobs.length > 0) {
+        const list = zeroPriceJobs.slice(0, 5).map(j => `• ${j.Job_ID}`).join('\n')
+        const more = zeroPriceJobs.length > 5 ? `\n...และอีก ${zeroPriceJobs.length - 5} งาน` : ''
+        const ok = confirm(
+            `⚠️ มีงาน ${zeroPriceJobs.length} รายการที่ราคายังเป็น 0:\n${list}${more}\n\n` +
+            `แนะนำให้กด "ยิงค์ราคา" หรือใส่ราคาก่อนวางบิล\nยืนยันวางบิลทั้งที่ราคาเป็น 0 หรือไม่?`
+        )
+        if (!ok) return
+    }
 
     setLoading(true)
     try {
@@ -143,21 +160,10 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
             Net_Total: netTotal,
             Status: 'Draft',
             Notes: notes,
-            Items_JSON: selectedJobs.map(job => {
-                const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 0)
-                const unitPrice = Number(job.Price_Per_Unit || 0)
-                const storedPrice = parsePrice(job.Price_Cust_Total)
-                
-                const calculatedPrice = Number((unitPrice * qty).toFixed(2))
-                const finalPrice = (unitPrice > 0 && qty > 0 && Math.abs(storedPrice - calculatedPrice) > 0.5) 
-                    ? calculatedPrice 
-                    : (storedPrice > 0 ? storedPrice : calculatedPrice)
-
-                return {
-                    ...job,
-                    Price_Cust_Total: finalPrice
-                }
-            }), // Enhanced Snapshot
+            Items_JSON: selectedJobs.map(job => ({
+                ...job,
+                Price_Cust_Total: resolveJobPrice(job)
+            })), // Enhanced Snapshot
         })
 
         if (!result || !result.success) {
