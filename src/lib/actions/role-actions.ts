@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { Role, RolePermissions } from "@/types/role"
 import { revalidatePath } from "next/cache"
+import { requireAdmin } from "@/services/permission-guards"
 
 export async function getRoles() {
     const supabase = await createClient()
@@ -32,6 +33,7 @@ export async function getRoleById(id: number) {
 }
 
 export async function createRole(role: Omit<Role, "Role_ID">) {
+    await requireAdmin()
     const supabase = await createClient()
     try {
         const { data, error } = await supabase
@@ -51,6 +53,7 @@ export async function createRole(role: Omit<Role, "Role_ID">) {
 }
 
 export async function updateRole(id: number, role: Partial<Role>) {
+    await requireAdmin()
     const supabase = await createClient()
     const { error } = await supabase
         .from("Master_Roles")
@@ -66,6 +69,7 @@ export async function updateRole(id: number, role: Partial<Role>) {
 }
 
 export async function deleteRole(id: number) {
+    await requireAdmin()
     const supabase = await createClient()
     const { error } = await supabase
         .from("Master_Roles")

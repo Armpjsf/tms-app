@@ -2,11 +2,13 @@
 
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
+import { requireAdmin } from "@/services/permission-guards"
 
 /**
  * Update the status of a driver's leave request
  */
 export async function updateLeaveStatus(leaveId: string, status: 'Approved' | 'Rejected') {
+    await requireAdmin()
     const supabase = await createClient()
     
     const { data, error } = await supabase
