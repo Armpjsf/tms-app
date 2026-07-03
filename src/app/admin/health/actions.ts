@@ -45,10 +45,12 @@ export async function syncHealthJobPrice(jobId: string) {
   return res
 }
 
-export async function bypassHealthIssueAction(jobId: string) {
+export async function bypassHealthIssueAction(jobId: string, reason?: string) {
   await requireAdmin()
-  // Use 'Verified' status to effectively bypass and dismiss from health checks
-  const res = await verifyJob(jobId, 'Verified', 'Bypassed from Health Dashboard')
+  // Use 'Verified' status to effectively bypass and dismiss from health checks.
+  // The reason is recorded on the job + audit log.
+  const note = reason ? `ปล่อยผ่านจากหน้าสุขภาพ: ${reason}` : 'Bypassed from Health Dashboard'
+  const res = await verifyJob(jobId, 'Verified', note)
   if (res.success) revalidatePath('/admin/health')
   return res
 }

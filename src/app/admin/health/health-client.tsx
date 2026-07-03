@@ -76,10 +76,16 @@ export function HealthClient({ initialData }: { initialData: HealthData }) {
   }
 
   const handleBypass = async (jobId: string) => {
-    if (!confirm(t('common.confirm_action') || "คุณยืนยันที่จะปล่อยผ่านงานนี้ใช่หรือไม่?")) return
+    // Capture WHY the job is being bypassed so the audit log is meaningful
+    // (e.g. "งานแถม") instead of a generic "Bypassed" for every case.
+    const reason = prompt(
+      "ระบุเหตุผลที่ปล่อยผ่านงานนี้ (บันทึกลง audit)\nเช่น: งานแถม / งานทดสอบ / ราคา 0 โดยตั้งใจ",
+      "งานแถม"
+    )
+    if (reason === null) return // cancelled
     setBypassing(jobId)
     try {
-      const res = await bypassHealthIssueAction(jobId)
+      const res = await bypassHealthIssueAction(jobId, reason.trim() || "ปล่อยผ่าน (ไม่ระบุเหตุผล)")
       if (res.success) {
         toast.success(t('common.toast.success_edit'))
         // Surface the MASTER Google Sheet write outcome (was previously silent here)
@@ -245,39 +251,44 @@ export function HealthClient({ initialData }: { initialData: HealthData }) {
                         ) : null}
                       </div>
                     </div>
-                    <div>
-                      {issue.issueType === "PRICE_MISMATCH" || issue.issueType === "MISSING_PRICE" ? (
-                        <Button 
+                    <div className="flex gap-2">
+                      {/* Price issues: offer to sync the rate */}
+                      {(issue.issueType === "PRICE_MISMATCH" || issue.issueType === "MISSING_PRICE") && (
+                        <Button
                           type="button"
-                          size="sm" 
-                          variant="outline" 
-                          onClick={(e) => { e.stopPropagation(); handleSyncPrice(issue.jobId); }} 
-                          disabled={fixing === issue.jobId} 
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => { e.stopPropagation(); handleSyncPrice(issue.jobId); }}
+                          disabled={fixing === issue.jobId}
                           className="text-[10px] font-black uppercase h-8"
                         >
                           {fixing === issue.jobId ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCcw className="w-3 h-3 mr-1" />}
                           {t('dashboard.health.sync_price')}
                         </Button>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Button 
-                            type="button"
-                            size="sm" 
-                            variant="outline" 
-                            onClick={(e) => { e.stopPropagation(); handleBypass(issue.jobId); }} 
-                            disabled={bypassing === issue.jobId} 
-                            className="text-[10px] font-black uppercase h-8 border-green-500/50 text-green-600 hover:bg-green-50"
-                          >
-                            {bypassing === issue.jobId ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />}
-                            {t('dashboard.health.bypass')}
-                          </Button>
-                          <Button size="sm" variant="ghost" asChild className="text-[10px] font-black uppercase h-8">
-                            <Link href={`/planning?date=${issue.planDate || ""}&query=${issue.jobId}`} onClick={(e) => e.stopPropagation()}>
-                              {t('dashboard.health.inspect')}
-                            </Link>
-                          </Button>
-                        </div>
                       )}
+
+                      {/* Bypass is available for everything except a pure price
+                          mismatch (which should be reconciled, not dismissed).
+                          For MISSING_PRICE this is the "งานแถม" escape hatch. */}
+                      {issue.issueType !== "PRICE_MISMATCH" && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => { e.stopPropagation(); handleBypass(issue.jobId); }}
+                          disabled={bypassing === issue.jobId}
+                          className="text-[10px] font-black uppercase h-8 border-green-500/50 text-green-600 hover:bg-green-50"
+                        >
+                          {bypassing === issue.jobId ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />}
+                          {t('dashboard.health.bypass')}
+                        </Button>
+                      )}
+
+                      <Button size="sm" variant="ghost" asChild className="text-[10px] font-black uppercase h-8">
+                        <Link href={`/planning?date=${issue.planDate || ""}&query=${issue.jobId}`} onClick={(e) => e.stopPropagation()}>
+                          {t('dashboard.health.inspect')}
+                        </Link>
+                      </Button>
                     </div>
                   </div>
                 ))}
