@@ -72,6 +72,23 @@ export async function getOperationsHealth(branchId?: string, customerId?: string
       });
     }
 
+    // ISSUE (PRE-BILLING): Ready-to-bill job still has no price.
+    // Surfaces BEFORE invoicing so admin can sync the price first, or press
+    // "ปล่อยผ่าน" (Verified) for intentionally free jobs to silence it.
+    if (
+      ['Completed', 'Delivered', 'Verified'].includes(status) &&
+      (!job.Price_Cust_Total || Number(job.Price_Cust_Total) <= 0)
+    ) {
+      issues.push({
+        jobId: job.Job_ID,
+        planDate: job.Plan_Date,
+        customerName: job.Customer_Name,
+        issueType: 'MISSING_PRICE',
+        severity: 'WARNING',
+        description: "งานพร้อมวางบิลแต่ราคายังเป็น 0 — ยิงค์ราคาก่อนวางบิล หรือกดปล่อยผ่านหากเป็นงานแถม"
+      });
+    }
+
     // ISSUE: Missing Mandatory Master Data
     if (!job.Customer_ID || !job.Branch_ID) {
       issues.push({
