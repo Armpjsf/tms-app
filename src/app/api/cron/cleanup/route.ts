@@ -94,7 +94,7 @@ export async function GET(req: Request) {
                     .list(folder, {
                         limit,
                         offset,
-                        sortBy: { column: 'created_at', order: 'asc' }
+                        sortBy: { column: 'created_at', order: 'asc' } // oldest first
                     })
 
                 if (error) {
@@ -105,6 +105,20 @@ export async function GET(req: Request) {
                 if (!files || files.length === 0) {
                     hasMore = false
                     break
+                }
+
+                // OPTIMIZATION:
+                // Since files are sorted by created_at ASC (oldest first), if the very first (oldest) file
+                // is newer than our cutoff time, it means ALL files in this folder are newer than the cutoff.
+                // We can safely break the loop immediately, saving many paginated API calls!
+                const oldestFile = files.find(f => f.name !== '.emptyFolderPlaceholder')
+                if (oldestFile) {
+                    const oldestFileTime = new Date(oldestFile.created_at).getTime()
+                    if (oldestFileTime >= cutoffTime) {
+                        console.log(`[CRON Cleanup] Optimization: Oldest file in "${folder}" is newer than 45 days. Skipping rest of folder.`)
+                        hasMore = false
+                        break
+                    }
                 }
 
                 const filesToDelete: string[] = []
