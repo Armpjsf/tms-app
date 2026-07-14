@@ -9,10 +9,16 @@ const ASSETS_BUCKET = 'company-assets'
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// 30 days ago
-const cutoffDate = new Date()
-cutoffDate.setDate(cutoffDate.getDate() - 30)
-const cutoffTime = cutoffDate.getTime()
+// Database logs cutoff (45 days)
+const dbCutoffDate = new Date()
+dbCutoffDate.setDate(dbCutoffDate.getDate() - 45)
+const dbCutoffStr = dbCutoffDate.toISOString()
+
+// Storage files & job image links cutoff (20 days)
+const storageCutoffDate = new Date()
+storageCutoffDate.setDate(storageCutoffDate.getDate() - 20)
+const storageCutoffStr = storageCutoffDate.toISOString()
+const storageCutoffTime = storageCutoffDate.getTime()
 
 const FOLDERS_TO_CLEAN = [
     'Job_Photos',
@@ -52,20 +58,34 @@ async function cleanupStorageFolder(folder: string) {
             break
         }
 
+        // OPTIMIZATION:
+        // Since files are sorted by created_at ASC (oldest first), if the very first (oldest) file
+        // is newer than our cutoff time, it means ALL files in this folder are newer than the cutoff.
+        // We can safely break the loop immediately, saving many paginated API calls!
+        const oldestFile = files.find(f => f.name !== '.emptyFolderPlaceholder')
+        if (oldestFile) {
+            const oldestFileTime = new Date(oldestFile.created_at).getTime()
+            if (oldestFileTime >= storageCutoffTime) {
+                console.log(`Optimization: Oldest file in "${folder}" is newer than 20 days. Skipping rest of folder.`)
+                hasMore = false
+                break
+            }
+        }
+
         const filesToDelete: string[] = []
 
         files.forEach(file => {
             if (file.name === '.emptyFolderPlaceholder') return
 
             const fileCreatedAt = new Date(file.created_at).getTime()
-            if (fileCreatedAt < cutoffTime) {
+            if (fileCreatedAt < storageCutoffTime) {
                 // Construct the full path inside the bucket (e.g. "Job_Photos/filename.jpg")
                 filesToDelete.push(`${folder}/${file.name}`)
             }
         })
 
         if (filesToDelete.length > 0) {
-            console.log(`Found ${filesToDelete.length} files older than 30 days. Deleting...`)
+            console.log(`Found ${filesToDelete.length} files older than 20 days. Deleting...`)
             const { error: deleteErr } = await supabase.storage
                 .from(ASSETS_BUCKET)
                 .remove(filesToDelete)
@@ -94,10 +114,33 @@ async function cleanupStorageFolder(folder: string) {
 
 async function run() {
     console.log('🚀 Starting Storage Folder API Cleanup Script...')
-    console.log(`Cutoff Date: ${cutoffDate.toISOString()} (Keeping only last 30 days)`)
+    console.log(`DB Cutoff: ${dbCutoffStr} (45d), Storage Cutoff: ${storageCutoffStr} (20d)`)
+
+    // Clean up database tables directly
+    console.log('\n--- Cleaning database tables ---')
+    const tablesToDelete = [
+        { name: 'gps_logs', dateCol: 'timestamp' },
+        { name: 'System_Logs', dateCol: 'created_at' },
+        { name: 'Notifications', dateCol: 'Created_At' },
+        { name: 'Chat_Messages', dateCol: 'Created_At' }
+    ]
+
+    for (const table of tablesToDelete) {
+        console.log(`Cleaning table ${table.name}...`)
+        const { error, count } = await supabase
+            .from(table.name)
+            .delete({ count: 'exact' })
+            .lt(table.dateCol, dbCutoffStr)
+        
+        if (error) {
+            console.error(`❌ Error cleaning table ${table.name}: ${error.message}`)
+        } else {
+            console.log(`✅ Deleted ${count || 0} records from ${table.name}.`)
+        }
+    }
 
     // Clean up database links first to be safe
-    console.log('\n--- Nullifying image links in Jobs_Main older than 30 days ---')
+    console.log('\n--- Nullifying image links in Jobs_Main older than 20 days ---')
     const { error: dbErr } = await supabase
         .from('Jobs_Main')
         .update({
@@ -106,7 +149,7 @@ async function run() {
             Pickup_Photo_Url: null,
             Pickup_Signature_Url: null
         })
-        .lt('Created_At', cutoffDate.toISOString())
+        .lt('Created_At', storageCutoffStr)
 
     if (dbErr) {
         console.error(`❌ Error updating Jobs_Main: ${dbErr.message}`)

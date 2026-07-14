@@ -26,15 +26,21 @@ export async function GET(req: Request) {
 
         const supabase = createClient(supabaseUrl, supabaseKey)
 
-        // 45 days ago cutoff date
-        const cutoffDate = new Date()
-        cutoffDate.setDate(cutoffDate.getDate() - 45)
-        const cutoffStr = cutoffDate.toISOString()
-        const cutoffTime = cutoffDate.getTime()
+        // Database logs cutoff (45 days)
+        const dbCutoffDate = new Date()
+        dbCutoffDate.setDate(dbCutoffDate.getDate() - 45)
+        const dbCutoffStr = dbCutoffDate.toISOString()
 
-        console.log(`[CRON Cleanup] Starting cleanup. Keeping data from last 45 days. Cutoff: ${cutoffStr}`)
+        // Storage files & job image links cutoff (20 days)
+        const storageCutoffDate = new Date()
+        storageCutoffDate.setDate(storageCutoffDate.getDate() - 20)
+        const storageCutoffStr = storageCutoffDate.toISOString()
+        const storageCutoffTime = storageCutoffDate.getTime()
+
+        console.log(`[CRON Cleanup] Starting cleanup. DB Cutoff: ${dbCutoffStr} (45d), Storage Cutoff: ${storageCutoffStr} (20d)`)
         const reportLog: Record<string, any> = {
-            cutoffDate: cutoffStr,
+            dbCutoffDate: dbCutoffStr,
+            storageCutoffDate: storageCutoffStr,
             database: {},
             storage: {}
         }
@@ -51,7 +57,7 @@ export async function GET(req: Request) {
             const { error, count } = await supabase
                 .from(table.name)
                 .delete({ count: 'exact' })
-                .lt(table.dateCol, cutoffStr)
+                .lt(table.dateCol, dbCutoffStr)
             
             if (error) {
                 console.error(`[CRON Cleanup] Error cleaning table ${table.name}:`, error.message)
@@ -62,7 +68,7 @@ export async function GET(req: Request) {
             }
         }
 
-        // 3. Nullify image links in Jobs_Main older than 45 days
+        // 3. Nullify image links in Jobs_Main older than 20 days
         const { error: dbErr } = await supabase
             .from('Jobs_Main')
             .update({
@@ -71,7 +77,7 @@ export async function GET(req: Request) {
                 Pickup_Photo_Url: null,
                 Pickup_Signature_Url: null
             })
-            .lt('Created_At', cutoffStr)
+            .lt('Created_At', storageCutoffStr)
 
         if (dbErr) {
             console.error('[CRON Cleanup] Error nullifying database links:', dbErr.message)
@@ -114,8 +120,8 @@ export async function GET(req: Request) {
                 const oldestFile = files.find(f => f.name !== '.emptyFolderPlaceholder')
                 if (oldestFile) {
                     const oldestFileTime = new Date(oldestFile.created_at).getTime()
-                    if (oldestFileTime >= cutoffTime) {
-                        console.log(`[CRON Cleanup] Optimization: Oldest file in "${folder}" is newer than 45 days. Skipping rest of folder.`)
+                    if (oldestFileTime >= storageCutoffTime) {
+                        console.log(`[CRON Cleanup] Optimization: Oldest file in "${folder}" is newer than 20 days. Skipping rest of folder.`)
                         hasMore = false
                         break
                     }
@@ -125,10 +131,11 @@ export async function GET(req: Request) {
                 files.forEach(file => {
                     if (file.name === '.emptyFolderPlaceholder') return
                     const fileCreatedAt = new Date(file.created_at).getTime()
-                    if (fileCreatedAt < cutoffTime) {
+                    if (fileCreatedAt < storageCutoffTime) {
                         filesToDelete.push(`${folder}/${file.name}`)
                     }
                 })
+
 
                 if (filesToDelete.length > 0) {
                     const { error: deleteErr } = await supabase.storage
