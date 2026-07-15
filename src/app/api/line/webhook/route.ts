@@ -407,20 +407,22 @@ export async function POST(req: NextRequest) {
         for (const event of events) {
             const replyToken = event.replyToken
             const userId = event.source?.userId
-            if (!replyToken || !userId) continue
+            const groupId = event.source?.groupId
+            const targetId = groupId || userId
+            if (!replyToken || !targetId) continue
 
             // ── Identify user ──────────────────────────────────────────────
             const [custRes, drivRes, userRes] = await Promise.all([
-                supabase.from('Master_Customers').select('Customer_ID, Customer_Name').eq('Line_User_ID', userId).limit(1),
-                supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate, Branch_ID').eq('Line_User_ID', userId).limit(1),
-                supabase.from('Master_Users').select('Username, Name, Role, Role_ID, Branch_ID').eq('Line_User_ID', userId).limit(1),
+                supabase.from('Master_Customers').select('Customer_ID, Customer_Name').eq('Line_User_ID', targetId).limit(1),
+                supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate, Branch_ID').eq('Line_User_ID', targetId).limit(1),
+                supabase.from('Master_Users').select('Username, Name, Role, Role_ID, Branch_ID').eq('Line_User_ID', targetId).limit(1),
             ])
 
             const boundCustomer = custRes.data?.[0] || null
             const boundDriver = drivRes.data?.[0] || null
             const boundAdmin = userRes.data?.[0] || null
 
-            const userName = boundAdmin?.Name || boundDriver?.Driver_Name || boundCustomer?.Customer_Name || 'ผู้ใช้'
+            const userName = boundAdmin?.Name || boundDriver?.Driver_Name || boundCustomer?.Customer_Name || (groupId ? 'ไลน์กลุ่ม' : 'ผู้ใช้')
             const branchId = boundAdmin?.Branch_ID || undefined
 
             // ─────────────────────────────────────────────────────────────
@@ -551,14 +553,14 @@ export async function POST(req: NextRequest) {
                         .eq('Phone', normalizedPhone)
                         .maybeSingle()
                     if (customer) {
-                        // Enforce unique binding: clear this Line_User_ID from other records first
+                        // Enforce unique binding: clear this targetId from other records first
                         await Promise.all([
-                            supabase.from('Master_Customers').update({ Line_User_ID: null }).eq('Line_User_ID', userId),
-                            supabase.from('Master_Drivers').update({ Line_User_ID: null }).eq('Line_User_ID', userId),
-                            supabase.from('Master_Users').update({ Line_User_ID: null }).eq('Line_User_ID', userId),
+                            supabase.from('Master_Customers').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
+                            supabase.from('Master_Drivers').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
+                            supabase.from('Master_Users').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
                         ])
-                        await supabase.from('Master_Customers').update({ Line_User_ID: userId }).eq('Customer_ID', customer.Customer_ID)
-                        await replyToUser(replyToken, `✅ คุณ ${customer.Customer_Name} ผูกบัญชีสำเร็จแล้วครับ!\nพิมพ์ HELP เพื่อดูเมนูได้เลย`)
+                        await supabase.from('Master_Customers').update({ Line_User_ID: targetId }).eq('Customer_ID', customer.Customer_ID)
+                        await replyToUser(replyToken, `✅ ${groupId ? 'ไลน์กลุ่มนี้' : 'คุณ ' + customer.Customer_Name} ผูกบัญชีสำเร็จแล้วครับ!\nพิมพ์ HELP เพื่อดูเมนูได้เลย`)
                         continue
                     }
 
@@ -569,14 +571,14 @@ export async function POST(req: NextRequest) {
                         .eq('Mobile_No', normalizedPhone)
                         .maybeSingle()
                     if (driver) {
-                        // Enforce unique binding: clear this Line_User_ID from other records first
+                        // Enforce unique binding: clear this targetId from other records first
                         await Promise.all([
-                            supabase.from('Master_Customers').update({ Line_User_ID: null }).eq('Line_User_ID', userId),
-                            supabase.from('Master_Drivers').update({ Line_User_ID: null }).eq('Line_User_ID', userId),
-                            supabase.from('Master_Users').update({ Line_User_ID: null }).eq('Line_User_ID', userId),
+                            supabase.from('Master_Customers').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
+                            supabase.from('Master_Drivers').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
+                            supabase.from('Master_Users').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
                         ])
-                        await supabase.from('Master_Drivers').update({ Line_User_ID: userId }).eq('Driver_ID', driver.Driver_ID)
-                        await replyToUser(replyToken, `✅ คุณ ${driver.Driver_Name} (คนขับ) ผูกบัญชีสำเร็จแล้วครับ!\nพิมพ์ "งาน" เพื่อดูงานของคุณ`)
+                        await supabase.from('Master_Drivers').update({ Line_User_ID: targetId }).eq('Driver_ID', driver.Driver_ID)
+                        await replyToUser(replyToken, `✅ ${groupId ? 'ไลน์กลุ่มนี้' : 'คุณ ' + driver.Driver_Name + ' (คนขับ)'} ผูกบัญชีสำเร็จแล้วครับ!\nพิมพ์ "งาน" เพื่อดูงานของคุณ`)
                         continue
                     }
 
@@ -591,14 +593,14 @@ export async function POST(req: NextRequest) {
                     const adminUser = allAdminMatches?.[0] ?? null
 
                     if (adminUser && phone.toUpperCase() === 'ADMIN') {
-                        // Enforce unique binding: clear this Line_User_ID from other records first
+                        // Enforce unique binding: clear this targetId from other records first
                         await Promise.all([
-                            supabase.from('Master_Customers').update({ Line_User_ID: null }).eq('Line_User_ID', userId),
-                            supabase.from('Master_Drivers').update({ Line_User_ID: null }).eq('Line_User_ID', userId),
-                            supabase.from('Master_Users').update({ Line_User_ID: null }).eq('Line_User_ID', userId),
+                            supabase.from('Master_Customers').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
+                            supabase.from('Master_Drivers').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
+                            supabase.from('Master_Users').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
                         ])
-                        await supabase.from('Master_Users').update({ Line_User_ID: userId }).eq('Username', adminUser.Username)
-                        await replyToUser(replyToken, `✅ ยินดีต้อนรับคุณ ${adminUser.Name}!\nRole: ${adminUser.Role}\nผูกบัญชีสำเร็จแล้วครับ 🎉`)
+                        await supabase.from('Master_Users').update({ Line_User_ID: targetId }).eq('Username', adminUser.Username)
+                        await replyToUser(replyToken, `✅ ยินดีต้อนรับ${groupId ? 'ไลน์กลุ่มนี้' : 'คุณ ' + adminUser.Name}!\nRole: ${adminUser.Role}\nผูกบัญชีสำเร็จแล้วครับ 🎉`)
                         continue
                     }
 

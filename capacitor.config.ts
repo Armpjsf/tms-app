@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'LOGIS Driver',
   webDir: 'public',
   server: {
-    url: 'https://tms-app-five.vercel.app',
+    url: 'https://tms-e-pod.vercel.app',
     cleartext: true,
     androidScheme: 'https',
     allowNavigation: [
