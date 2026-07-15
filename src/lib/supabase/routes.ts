@@ -310,24 +310,35 @@ export async function createBulkRoutes(routes: Record<string, unknown>[]) {
              }
         })
 
+        // De-duplicate preparedRoutes by Route_Name within the uploaded batch (and trim spaces)
+        const uniqueRoutesMap = new Map<string, Route>()
+        preparedRoutes.forEach(r => {
+            const trimmedName = r.Route_Name.trim()
+            r.Route_Name = trimmedName
+            uniqueRoutesMap.set(trimmedName, r)
+        })
+        const uniquePreparedRoutes = Array.from(uniqueRoutesMap.values())
+
         // Check for existing routes
-        const namesToCheck = preparedRoutes.map(r => r.Route_Name)
+        const namesToCheck = uniquePreparedRoutes.map(r => r.Route_Name)
         
         const { data: existingRoutes } = await supabase
             .from('Master_Routes')
             .select('Route_Name')
             .in('Route_Name', namesToCheck)
 
-        const existingNames = new Set(existingRoutes?.map((r: { Route_Name: string }) => r.Route_Name) || [])
+        const existingNames = new Set(existingRoutes?.map((r: { Route_Name: string }) => r.Route_Name.trim()) || [])
         
         const toInsert: Route[] = []
         const toUpdate: Route[] = []
 
-        preparedRoutes.forEach(r => {
+        uniquePreparedRoutes.forEach(r => {
             if (existingNames.has(r.Route_Name)) {
                 toUpdate.push(r)
             } else {
                 toInsert.push(r)
+                // Add to existingNames to prevent duplicate inserts if the Excel had internal duplicates
+                existingNames.add(r.Route_Name)
             }
         })
 
