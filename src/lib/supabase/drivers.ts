@@ -416,7 +416,9 @@ export async function createBulkDrivers(drivers: Partial<Driver>[]) {
     normalized.Driver_Name = getValue(['Driver_Name', 'name', 'ชื่อคนขับ', 'ชื่อ-นามสกุล'])
     normalized.Mobile_No = getValue(['Mobile_No', 'phone', 'mobile', 'เบอร์โทรศัพท์', 'เบอร์โทร'])
     normalized.Password = getValue(['Password', 'pass', 'รหัสผ่าน'])
-    normalized.Vehicle_Plate = getValue(['Vehicle_Plate', 'plate', 'ทะเบียนรถ', 'ทะเบียน'])
+    const plateVal = getValue(['Vehicle_Plate', 'plate', 'ทะเบียนรถ', 'ทะเบียน'])
+    const provinceVal = getValue(['province', 'จังหวัด'])
+    normalized.Vehicle_Plate = (plateVal && provinceVal) ? `${String(plateVal).trim()} ${String(provinceVal).trim()}` : (plateVal || undefined)
     normalized.Vehicle_Type = getValue(['Vehicle_Type', 'type', 'ประเภทรถ'])
     normalized.Active_Status = getValue(['Active_Status', 'status', 'สถานะ']) || 'Active'
     normalized.Branch_ID = getValue(['Branch_ID', 'branch', 'สาขา']) || effectiveBranchId

@@ -10,6 +10,7 @@ import { deleteDriver } from "@/app/drivers/actions"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { DriverDialog } from "./driver-dialog"
+import { ImportDriversDialog } from "./import-drivers-dialog"
 import { Pagination } from "@/components/ui/pagination"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -140,6 +141,16 @@ export function DriversContent({
         <div className="flex items-center gap-3 w-full md:w-auto justify-end">
             {isAdminUser && (
               <>
+                <ImportDriversDialog 
+                    createBulkDrivers={createBulkDrivers}
+                    branches={branches}
+                    trigger={
+                        <button className="h-10 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-600/90 text-white font-medium gap-2 text-xs flex items-center justify-center transition-colors shadow-sm">
+                            <FileSpreadsheet size={16} />
+                            นำเข้า Excel
+                        </button>
+                    }
+                />
                 <DriverDialog 
                     mode="create"
                     vehicles={vehicles}
