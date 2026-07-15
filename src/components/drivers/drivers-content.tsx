@@ -144,6 +144,7 @@ export function DriversContent({
                 <ImportDriversDialog 
                     createBulkDrivers={createBulkDrivers}
                     branches={branches}
+                    subcontractors={subcontractors}
                     trigger={
                         <button className="h-10 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-600/90 text-white font-medium gap-2 text-xs flex items-center justify-center transition-colors shadow-sm">
                             <FileSpreadsheet size={16} />

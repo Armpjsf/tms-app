@@ -422,7 +422,7 @@ export async function createBulkDrivers(drivers: Partial<Driver>[]) {
     normalized.Vehicle_Type = getValue(['Vehicle_Type', 'type', 'ประเภทรถ'])
     normalized.Active_Status = getValue(['Active_Status', 'status', 'สถานะ']) || 'Active'
     normalized.Branch_ID = getValue(['Branch_ID', 'branch', 'สาขา']) || effectiveBranchId
-    normalized.Sub_ID = getValue(['Sub_ID', 'subcontractor', 'รหัสผู้รับเหมาช่วง'])
+    normalized.Sub_ID = getValue(['Sub_ID', 'subcontractor', 'รหัสผู้รับเหมาช่วง', 'สังกัด (รหัสผู้รับเหมาช่วง)', 'สังกัด'])
     normalized.Expire_Date = getValue(['Expire_Date', 'licence_expiry', 'วันหมดอายุใบขับขี่'])
     normalized.Bank_Name = getValue(['Bank_Name', 'bank', 'ธนาคาร'])
     normalized.Bank_Account_No = getValue(['Bank_Account_No', 'account_no', 'เลขบัญชี'])

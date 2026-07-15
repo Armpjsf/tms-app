@@ -13,12 +13,14 @@ import { Driver } from "@/lib/supabase/drivers"
 type ImportDriversDialogProps = {
   createBulkDrivers?: (data: Partial<Driver>[]) => Promise<{ success: boolean; message: string }>
   branches?: { Branch_ID: string; Branch_Name: string }[]
+  subcontractors?: { Sub_ID: string; Sub_Name: string }[]
   trigger?: React.ReactNode
 }
 
 export function ImportDriversDialog({
   createBulkDrivers,
   branches = [],
+  subcontractors = [],
   trigger
 }: ImportDriversDialogProps) {
   const router = useRouter()
@@ -45,6 +47,7 @@ export function ImportDriversDialog({
           "ธนาคาร": "กสิกรไทย",
           "เลขบัญชี": "1234567890",
           "ชื่อบัญชี": "สมชาย ตั้งมั่น",
+          "สังกัด (รหัสผู้รับเหมาช่วง)": subcontractors[0]?.Sub_ID || "SUB-001",
           "สาขา": branches[0]?.Branch_ID || "HQ"
         }
       ]
