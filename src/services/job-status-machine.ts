@@ -160,13 +160,20 @@ export async function transitionJobStatus(
         Job_Status: nextStatus
       })
       .eq('Job_ID', jobId);
-
+ 
     if (updateError) {
       throw updateError;
     }
-
+ 
+    // Trigger LINE notification if job is completed or delivered
+    if (['Completed', 'Complete', 'Delivered'].includes(nextStatus)) {
+      sendDeliveryCompletionNotification(jobId).catch(err => {
+        console.error('[JobStatusMachine] Notification trigger failed:', err);
+      });
+    }
+ 
     // 5. Log the transition
-
+ 
     await logActivity({
       module: 'Jobs',
       action_type: 'UPDATE',
@@ -182,7 +189,7 @@ export async function transitionJobStatus(
       user_id: metadata?.userId,
       username: metadata?.username
     });
-
+ 
     // 5. Revalidate relevant paths
     revalidatePath('/planning');
     revalidatePath('/jobs/history');
@@ -193,7 +200,7 @@ export async function transitionJobStatus(
       previousStatus: currentStatus, 
       newStatus: nextStatus 
     };
-
+ 
   } catch (error: any) {
     console.error(`[JobStatusMachine] Error transitioning ${jobId}:`, error);
     const msg = error instanceof Error 
@@ -207,7 +214,7 @@ export async function transitionJobStatus(
     };
   }
 }
-
+ 
 export async function transitionBulkJobStatus(
   jobIds: string[],
   nextStatus: JobStatus,
@@ -221,7 +228,7 @@ export async function transitionBulkJobStatus(
   try {
     let count = 0;
     const errors: string[] = [];
-
+ 
     for (const jobId of jobIds) {
       const result = await transitionJobStatus(jobId, nextStatus, metadata);
       if (result.success) {
@@ -230,11 +237,11 @@ export async function transitionBulkJobStatus(
         errors.push(`${jobId}: ${result.message || 'Transition failed'}`);
       }
     }
-
+ 
     if (errors.length > 0) {
       return { success: false, count, error: errors.join('; ') };
     }
-
+ 
     return { success: true, count };
   } catch (error) {
     console.error(`[JobStatusMachine] Bulk Error:`, error);
@@ -245,7 +252,117 @@ export async function transitionBulkJobStatus(
     };
   }
 }
-
+ 
 export async function isTransitionAllowed(current: JobStatus, next: JobStatus): Promise<boolean> {
   return ALLOWED_TRANSITIONS[current]?.includes(next) || false;
+}
+
+/**
+ * Helper to fetch job details and push a completion LINE notification
+ * to Super Admins, Admins, and the bound Customer.
+ */
+async function sendDeliveryCompletionNotification(jobId: string) {
+  try {
+    const supabase = createAdminClient();
+    
+    // Fetch job details
+    const { data: job, error: jobErr } = await supabase
+      .from('Jobs_Main')
+      .select('Job_ID, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Photo_Proof_Url, Signature_Url, Customer_ID, Actual_Delivery_Time')
+      .eq('Job_ID', jobId)
+      .single();
+      
+    if (jobErr || !job) {
+      console.error(`[Notification] Job ${jobId} not found for completion notification.`);
+      return;
+    }
+    
+    // Format delivery time
+    let deliveryTime = 'ไม่ระบุ';
+    if (job.Actual_Delivery_Time) {
+      deliveryTime = new Date(job.Actual_Delivery_Time).toLocaleString('th-TH', {
+        timeZone: 'Asia/Bangkok',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }) + ' น.';
+    } else {
+      deliveryTime = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + ' น. (เวลาอ้างอิงของเซิร์ฟเวอร์)';
+    }
+    
+    // Format Photos and Signatures
+    const photoText = job.Photo_Proof_Url ? job.Photo_Proof_Url.split(',').map((url: string, index: number) => `🔗 รูปที่ ${index + 1}: ${url.trim()}`).join('\n') : '❌ ไม่มีรูปถ่าย';
+    const signatureText = job.Signature_Url ? `🔗 ลายเซ็น: ${job.Signature_Url}` : '❌ ไม่มีลายเซ็น';
+    
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tms-app-five.vercel.app';
+    
+    const message = [
+      `📦 [ยืนยันการส่งมอบสินค้าสำเร็จ]`,
+      `--------------------------------`,
+      `📄 เลขที่งาน: ${job.Job_ID}`,
+      `👤 ลูกค้า: ${job.Customer_Name || 'ไม่ระบุ'}`,
+      `🗺️ เส้นทาง: ${job.Route_Name || 'ไม่ระบุ'}`,
+      `🚛 พนักงานขับรถ: ${job.Driver_Name || 'ไม่ระบุ'} (${job.Vehicle_Plate || 'ไม่ระบุ'})`,
+      `⏰ เวลาส่งสำเร็จ: ${deliveryTime}`,
+      ``,
+      `📸 หลักฐานการจัดส่ง (POD):`,
+      `${photoText}`,
+      `${signatureText}`,
+      ``,
+      `🌐 ติดตามสถานะและเอกสารเพิ่มเติม:`,
+      `🔗 ${appUrl}/tracking`
+    ].join('\n');
+    
+    // Find recipients (Line User IDs)
+    const lineUserIds: string[] = [];
+    
+    // 1. Get Admins and Super Admins (Role_ID in [1, 2])
+    const { data: admins } = await supabase
+      .from('Master_Users')
+      .select('Line_User_ID')
+      .in('Role_ID', [1, 2])
+      .not('Line_User_ID', 'is', null);
+      
+    if (admins) {
+      admins.forEach(admin => {
+        if (admin.Line_User_ID) lineUserIds.push(admin.Line_User_ID);
+      });
+    }
+    
+    // 2. Get the bound customer
+    if (job.Customer_ID) {
+      const { data: customer } = await supabase
+        .from('Master_Customers')
+        .select('Line_User_ID')
+        .eq('Customer_ID', job.Customer_ID)
+        .not('Line_User_ID', 'is', null)
+        .single();
+        
+      if (customer?.Line_User_ID) {
+        lineUserIds.push(customer.Line_User_ID);
+      }
+    }
+    
+    // Deduplicate Line User IDs
+    const uniqueIds = Array.from(new Set(lineUserIds));
+    
+    if (uniqueIds.length === 0) {
+      console.log(`[Notification] No bound Line users to notify for job completion.`);
+      return;
+    }
+    
+    console.log(`[Notification] Sending completion notification for job ${jobId} to ${uniqueIds.length} users...`);
+    
+    // Dynamically import pushToUser to prevent circular dependencies
+    const { pushToUser } = await import('@/lib/integrations/line');
+    
+    for (const userId of uniqueIds) {
+      await pushToUser(userId, message);
+    }
+    
+  } catch (err) {
+    console.error('[Notification] Error sending completion notification:', err);
+  }
 }
