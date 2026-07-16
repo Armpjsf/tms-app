@@ -410,11 +410,10 @@ export function HistoryClient({
                                     <div className="flex items-center gap-1">
                                         {job.Pickup_Photo_Url ? (
                                             <div className="relative w-7 h-7 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-muted/50 group/img ring-2 ring-indigo-500/0 hover:ring-indigo-500/40 transition-all duration-500">
-                                                <NextImage 
+                                                <img 
                                                     src={job.Pickup_Photo_Url.split(',')[0]} 
                                                     alt="Pickup Photo" 
-                                                    fill 
-                                                    className="object-cover group-hover/img:scale-125 transition-transform duration-1000" 
+                                                    className="w-full h-full object-cover group-hover/img:scale-125 transition-transform duration-1000" 
                                                 />
                                                 <a href={job.Pickup_Photo_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-indigo-500/40 opacity-0 group-hover/img:opacity-100 transition-opacity">
                                                     <Eye size={10} className="text-foreground" />
@@ -427,11 +426,10 @@ export function HistoryClient({
                                         )}
                                         {job.Pickup_Signature_Url ? (
                                             <div className="relative w-9 h-7 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-white p-1 group/sig ring-2 ring-indigo-500/0 hover:ring-indigo-500/40 transition-all duration-500">
-                                                <NextImage 
+                                                <img 
                                                     src={job.Pickup_Signature_Url} 
                                                     alt="Pickup Sig" 
-                                                    fill 
-                                                    className="object-contain p-0.5" 
+                                                    className="w-full h-full object-contain p-0.5" 
                                                 />
                                                 <a href={job.Pickup_Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-indigo-500/40 opacity-0 group-hover/img:opacity-100 transition-opacity" />
                                             </div>
@@ -449,11 +447,10 @@ export function HistoryClient({
                                     <div className="flex items-center gap-1">
                                         {job.Photo_Proof_Url ? (
                                             <div className="relative w-7 h-7 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-muted/50 group/img ring-2 ring-primary/0 hover:ring-primary/40 transition-all duration-500">
-                                                <NextImage 
+                                                <img 
                                                     src={job.Photo_Proof_Url.split(',')[0]} 
                                                     alt="POD Photo" 
-                                                    fill 
-                                                    className="object-cover group-hover/img:scale-125 transition-transform duration-1000" 
+                                                    className="w-full h-full object-cover group-hover/img:scale-125 transition-transform duration-1000" 
                                                 />
                                                 <a href={job.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-primary/40 opacity-0 group-hover/img:opacity-100 transition-opacity">
                                                     <Eye size={10} className="text-foreground" />
@@ -466,11 +463,10 @@ export function HistoryClient({
                                         )}
                                         {job.Signature_Url ? (
                                             <div className="relative w-9 h-7 rounded-lg border border-border/10 shadow-lg overflow-hidden bg-white p-1 group/sig ring-2 ring-accent/0 hover:ring-accent/40 transition-all duration-500">
-                                                <NextImage 
+                                                <img 
                                                     src={job.Signature_Url} 
                                                     alt="Signature" 
-                                                    fill 
-                                                    className="object-contain p-0.5 group-hover/sig:scale-110 transition-transform duration-700" 
+                                                    className="w-full h-full object-contain p-0.5 group-hover/sig:scale-110 transition-transform duration-700" 
                                                 />
                                                 <a href={job.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-accent/40 opacity-0 group-hover/sig:opacity-100 transition-opacity" />
                                             </div>

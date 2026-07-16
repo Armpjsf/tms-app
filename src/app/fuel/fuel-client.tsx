@@ -224,11 +224,10 @@ export function FuelClient({
                     <td className="px-4 py-3 text-center">
                       {log.Photo_Url ? (
                           <div className="relative w-8 h-8 mx-auto rounded-lg overflow-hidden border border-border/10 bg-card group cursor-pointer shadow-lg hover:border-primary/50 transition-all">
-                              <NextImage 
+                              <img 
                                   src={log.Photo_Url} 
                                   alt="Receipt" 
-                                  fill 
-                                  className="object-cover group-hover:scale-110 transition-transform duration-500" 
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                               />
                               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                   <a href={log.Photo_Url} target="_blank" rel="noreferrer">
