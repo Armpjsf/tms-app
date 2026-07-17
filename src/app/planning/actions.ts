@@ -315,13 +315,13 @@ export async function createBulkJobs(
   // Fetch Master Data for lookups
   const [{ data: allDrivers }, { data: allVehicles }, { data: allCustomers }, { data: allRoutes }] = await Promise.all([
     supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Sub_ID'),
-    supabase.from('Master_Vehicles').select('Vehicle_Plate, Sub_ID'),
+    supabase.from('Master_Vehicles').select('Vehicle_Plate, Vehicle_Type, Sub_ID'),
     supabase.from('Master_Customers').select('Customer_ID, Customer_Name'),
     supabase.from('Master_Routes').select('*')
   ])
 
   const driverMap = new Map<string, { Driver_ID: string; Driver_Name: string; Sub_ID?: string | null }>(allDrivers?.map((d: { Driver_ID: string; Driver_Name: string; Sub_ID?: string | null }) => [d.Driver_ID, d]) || [])
-  const vehicleMap = new Map<string, { Vehicle_Plate: string; Sub_ID?: string | null }>(allVehicles?.map((v: { Vehicle_Plate: string; Sub_ID?: string | null }) => [v.Vehicle_Plate, v]) || [])
+  const vehicleMap = new Map<string, { Vehicle_Plate: string; Vehicle_Type?: string | null; Sub_ID?: string | null }>(allVehicles?.map((v: { Vehicle_Plate: string; Vehicle_Type?: string | null; Sub_ID?: string | null }) => [v.Vehicle_Plate, v]) || [])
   const customerMap = new Map<string, string>(
     (allCustomers || [])
       .map((c: { Customer_ID: string; Customer_Name?: string | null }) => [c.Customer_Name?.toLowerCase().trim(), c.Customer_ID] as const)
@@ -355,6 +355,7 @@ export async function createBulkJobs(
     normalized.Route_Name = getValue(['Route_Name', 'route', 'เส้นทาง'])
     normalized.Driver_ID = getValue(['Driver_ID', 'driver', 'รหัสคนขับ'])
     normalized.Vehicle_Plate = getValue(['Vehicle_Plate', 'plate', 'ทะเบียนรถ', 'ทะเบียน'])
+    normalized.Vehicle_Type = getValue(['Vehicle_Type', 'vehicle_type', 'ประเภทรถ', 'ชนิดรถ'])
     normalized.Weight_Kg = getValue(['Weight_Kg', 'weight', 'น้ำหนัก', 'น้ำหนักสินค้า'])
     normalized.Volume_Cbm = getValue(['Volume_Cbm', 'volume', 'ปริมาตร', 'คิว'])
     normalized.Price_Cust_Total = getValue(['Price_Cust_Total', 'price', 'รายได้', 'ราคาขาย', 'ราคาลูกค้า'])
@@ -567,6 +568,7 @@ export async function createBulkJobs(
       Driver_ID: driverId || null,
       Driver_Name: driver?.Driver_Name || null,
       Vehicle_Plate: vehiclePlate || null,
+      Vehicle_Type: vehicle?.Vehicle_Type || (data.Vehicle_Type as string) || '4-Wheel',
       Job_Status: (data.Job_Status as string) || 'New',
       Notes: data.Notes as string || null,
       Price_Cust_Total: Number(data.Price_Cust_Total) || 0,
