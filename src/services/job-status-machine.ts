@@ -331,7 +331,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       `${signatureText}`,
       ``,
       `🌐 ติดตามสถานะและเอกสารเพิ่มเติม:`,
-      `🔗 ${appUrl}/tracking`
+      `🔗 ${appUrl}/track/${job.Job_ID}`
     ].join('\n');
     
     // Find recipients (Line User IDs)
