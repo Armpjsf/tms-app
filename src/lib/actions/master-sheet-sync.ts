@@ -337,16 +337,16 @@ function buildRowValues(job: any, fuel: number | ''): Record<string, string | nu
     // adding or reordering columns later keeps working — matching is by name.
     // (Renaming a header is the only thing that would need a code update.)
     let custId = 20
-    if (job.Customer_ID) {
+    const idStr = String(job.Customer_ID || '').toLowerCase()
+    const nameStr = String(job.Customer_Name || '').toLowerCase()
+
+    if (idStr.includes('unicord') || idStr.includes('ยูนิคอร์ด') || nameStr.includes('unicord') || nameStr.includes('ยูนิคอร์ด')) {
+      custId = 2
+    } else if (idStr.includes('siam') || idStr.includes('สยามรุ่งเรือง') || nameStr.includes('siam') || nameStr.includes('สยามรุ่งเรือง')) {
+      custId = 20
+    } else if (job.Customer_ID) {
       const parsedId = Number(job.Customer_ID)
       if (!isNaN(parsedId)) custId = parsedId
-    } else if (job.Customer_Name) {
-      const name = String(job.Customer_Name).toLowerCase()
-      if (name.includes('ยูนิคอร์ด') || name.includes('unicord')) {
-        custId = 2
-      } else if (name.includes('สยามรุ่งเรือง') || name.includes('siam')) {
-        custId = 20
-      }
     }
 
     const byName: Record<string, string | number> = {
