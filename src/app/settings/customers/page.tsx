@@ -165,7 +165,11 @@ export default function CustomersSettingsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm(t('common.toast.confirm_delete'))) return
     try {
-      await deleteCustomer(id)
+      const res = await deleteCustomer(id)
+      if (res && !res.success) {
+        toast.error(res.message || t('common.toast.error_delete'))
+        return
+      }
       toast.success(t('common.toast.success_delete'))
       loadCustomers()
     } catch {

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Driver } from "@/lib/supabase/drivers"
 import { 
     Search, Plus, Filter, Edit, Trash2, FileSpreadsheet,
@@ -39,8 +40,32 @@ export function DriversContent({
     isAdminUser = false 
 }: DriversContentProps) {
   const { t } = useLanguage()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("query") || searchParams.get("q") || "")
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      const currentQuery = params.get("query") || params.get("q") || ""
+      if (currentQuery === searchQuery) return
+
+      if (searchQuery.trim()) {
+        params.set("query", searchQuery.trim())
+        params.set("q", searchQuery.trim())
+      } else {
+        params.delete("query")
+        params.delete("q")
+      }
+      params.set("page", "1")
+      router.push(`${pathname}?${params.toString()}`)
+    }, 400)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery, router, pathname, searchParams])
 
   const filteredDrivers = (drivers || []).filter(driver => {
     if (!searchQuery.trim()) return true

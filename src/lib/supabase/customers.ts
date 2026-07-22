@@ -163,11 +163,16 @@ export async function deleteCustomer(id: string) {
       .eq('Customer_ID', id)
     
     if (error) {
-      return { success: false, error }
+      console.error('[deleteCustomer] error:', error)
+      const msg = error.code === '23503'
+        ? 'ไม่สามารถลบได้ เนื่องจากมีข้อมูลงาน เอกสาร หรือราคาที่เชื่อมโยงกับลูกค้ารายนี้อยู่'
+        : error.message
+      return { success: false, message: msg }
     }
     return { success: true }
-  } catch (e) {
-    return { success: false, error: e }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Unknown error'
+    return { success: false, message: msg }
   }
 }
 
