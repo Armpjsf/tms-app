@@ -218,7 +218,7 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
     }
     
     if (query) {
-      queryBuilder = queryBuilder.or(`Driver_Name.ilike.%${query}%,Mobile_No.ilike.%${query}%,Driver_ID.ilike.%${query}%`)
+      queryBuilder = queryBuilder.or(`Driver_Name.ilike.%${query}%,Mobile_No.ilike.%${query}%,Driver_ID.ilike.%${query}%,Vehicle_Plate.ilike.%${query}%`)
     }
     
     if (page && limit) {
