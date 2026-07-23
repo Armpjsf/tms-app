@@ -523,8 +523,7 @@ export function JobDialog({
         let lng = d.lng !== null && d.lng !== undefined ? String(d.lng) : ''
         if ((!lat || !lng) && d.name) {
           const matchedCust = customers.find(c => 
-            c.Customer_Name?.trim().toLowerCase() === d.name?.trim().toLowerCase() || 
-            c.Branch_Name?.trim().toLowerCase() === d.name?.trim().toLowerCase()
+            c.Customer_Name?.trim().toLowerCase() === d.name?.trim().toLowerCase()
           )
           if (matchedCust?.Lat && matchedCust?.Lng) {
             lat = String(matchedCust.Lat)
