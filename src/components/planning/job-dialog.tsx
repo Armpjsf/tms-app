@@ -683,7 +683,7 @@ export function JobDialog({
     return () => {
       isSubscribed = false
     }
-  }, [show, mode, job?.Job_ID, defaultDate])
+  }, [show, mode, job, defaultDate])
 
 
 
