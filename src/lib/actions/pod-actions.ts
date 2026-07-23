@@ -94,7 +94,7 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
         try {
             const fcName = `${jobId}_${timestamp}_FLOOR_CLIMB.jpg`
             const buffer = Buffer.from(await floorClimbReportFile.arrayBuffer())
-            const res = await uploadFileToSupabase(buffer, fcName, floorClimbReportFile.type || 'image/jpeg', 'POD_Documents')
+            const res = await uploadFileToSupabase(buffer, fcName, floorClimbReportFile.type || 'image/jpeg', 'Job_Photos')
             floorClimbReportUrl = res.directLink
         } catch (fcErr) {
             console.warn('[FloorClimbReport upload warning]', fcErr)
