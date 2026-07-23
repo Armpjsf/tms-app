@@ -103,6 +103,21 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     // overwriting it with 0 (which used to zero out the price).
     const enteredQty = Number(formData.get("loaded_qty") || 0)
     const pickupQty = Number(jobData?.Loaded_Qty || 0)
+    const loadedQty = enteredQty > 0 ? enteredQty : pickupQty
+
+    // Use Centralized Pricing Engine
+    const pricing = await calculateJobPrice({
+        ...jobData,
+        Loaded_Qty: loadedQty
+    })
+
+    const adminPrice = Number(jobData?.Price_Cust_Total || 0)
+    const currentNotes = jobData?.Notes || ""
+
+    const clientTimestamp = formData.get("actualCompletionTime") as string
+    const now = clientTimestamp ? new Date(clientTimestamp) : new Date()
+    const timeString = timeTH(now)
+
     // Check multi-drop / multi-pickup total count
     const totalDrop = (jobData?.original_destinations_json && Array.isArray(jobData.original_destinations_json) && jobData.original_destinations_json.length > 0)
         ? jobData.original_destinations_json.length
