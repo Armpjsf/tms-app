@@ -55,11 +55,11 @@ export function ESGSettingsClient({ initialList }: { initialList: TGOEmissionFac
         startTransition(async () => {
             const res = await upsertEmissionFactor({
                 id: editingItem.id,
-                fuel_code: editingItem.fuel_code,
-                fuel_name: editingItem.fuel_name || editingItem.fuel_code,
+                fuel_code: editingItem.fuel_code!,
+                fuel_name: editingItem.fuel_name || editingItem.fuel_code!,
                 ef_value: Number(editingItem.ef_value),
                 unit: editingItem.unit || 'kgCO2e/L',
-                effective_date: editingItem.effective_date,
+                effective_date: editingItem.effective_date!,
                 notes: editingItem.notes || '',
                 is_active: editingItem.is_active ?? true
             })
