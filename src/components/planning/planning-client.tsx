@@ -292,12 +292,30 @@ export function PlanningClient({
         }
         if (searchQuery) {
             const q = searchQuery.toLowerCase()
-            base = base.filter(j => 
-                j.Job_ID.toLowerCase().includes(q) || 
-                j.Customer_Name?.toLowerCase().includes(q) ||
-                j.Driver_Name?.toLowerCase().includes(q) ||
-                j.Vehicle_Plate?.toLowerCase().includes(q)
-            )
+            base = base.filter(j => {
+                const matchMain = j.Job_ID.toLowerCase().includes(q) || 
+                    j.Customer_Name?.toLowerCase().includes(q) ||
+                    j.Driver_Name?.toLowerCase().includes(q) ||
+                    j.Vehicle_Plate?.toLowerCase().includes(q)
+                
+                if (matchMain) return true
+
+                // Check deep into original_destinations_json SO numbers
+                if (j.original_destinations_json) {
+                    try {
+                        const dests = typeof j.original_destinations_json === 'string'
+                            ? JSON.parse(j.original_destinations_json)
+                            : j.original_destinations_json
+                        if (Array.isArray(dests)) {
+                            return dests.some((d: { so_no?: string; name?: string }) => 
+                                (d.so_no && String(d.so_no).toLowerCase().includes(q)) ||
+                                (d.name && String(d.name).toLowerCase().includes(q))
+                            )
+                        }
+                    } catch {}
+                }
+                return false
+            })
         }
         return base
     }, [todayJobs, selectedCustomer, searchQuery])
