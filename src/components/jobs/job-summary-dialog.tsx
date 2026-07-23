@@ -342,7 +342,8 @@ export function JobSummaryDialog({ open, onOpenChange, job, routes }: JobSummary
 
                 <div className="grid grid-cols-2 gap-3">
                   {podPhotos.map((url: string, i: number) => {
-                    const isReport = url.toUpperCase().includes('REPORT');
+                    const isReport = url.toUpperCase().includes('REPORT') || url.toUpperCase().includes('FLOOR_CLIMB');
+                    const isFloorClimb = url.toUpperCase().includes('FLOOR_CLIMB');
                     return (
                       <div key={i} className={cn(
                         "relative aspect-[4/3] rounded-xl overflow-hidden border border-border bg-muted group cursor-pointer",
@@ -355,9 +356,9 @@ export function JobSummaryDialog({ open, onOpenChange, job, routes }: JobSummary
                           className="object-cover transition-transform duration-500 hover:scale-110"
                         />
                         {isReport && (
-                          <div className="absolute top-3 left-3 bg-indigo-500 text-white font-bold font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider flex items-center gap-1">
-                            <FileText size={10} />
-                            {t('reports.digital_report')}
+                          <div className={cn("absolute top-3 left-3 text-white font-bold font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider flex items-center gap-1 text-xs", isFloorClimb ? "bg-amber-600" : "bg-indigo-500")}>
+                            <FileText size={12} />
+                            {isFloorClimb ? "ใบรายงานขึ้นชั้น" : t('reports.digital_report')}
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

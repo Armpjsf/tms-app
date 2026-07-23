@@ -49,10 +49,11 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     const uploadWithRename = async (file: File, name: string, folder: string) => {
         try {
             const buffer = Buffer.from(await file.arrayBuffer())
-            const res = await uploadFileToSupabase(buffer, name, file.type, folder)
+            const res = await uploadFileToSupabase(buffer, name, file.type || 'image/jpeg', folder)
             return res.directLink
         } catch (e) {
-            throw e
+            console.warn(`[Upload warning] Failed to upload ${name} to ${folder}:`, e)
+            return null
         }
     }
 
@@ -64,7 +65,7 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     if (podReportFile && podReportFile.size > 0) {
         try {
             const reportName = `${jobId}_${timestamp}_REPORT.jpg`
-            podReportUrl = await uploadWithRename(podReportFile, reportName, 'POD_Documents')
+            podReportUrl = await uploadWithRename(podReportFile, reportName, 'Reports')
         } catch {
             // Failed
         }
@@ -83,10 +84,12 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
         uploadPromises.push(uploadWithRename(photoFile, `${jobId}_${timestamp}_pod.jpg`, 'Job_Photos'))
     }
 
-    const [signatureUrl, ...photoUrls] = await Promise.all([
+    const [signatureUrl, ...rawPhotoUrls] = await Promise.all([
       uploadWithRename(signatureFile, `${jobId}_${timestamp}_sig.png`, 'Signatures'),
       ...uploadPromises
     ])
+
+    const photoUrls = rawPhotoUrls.filter((u): u is string => Boolean(u))
 
     const floorClimbReportFile = formData.get("floor_climb_report") as File
     let floorClimbReportUrl = null
