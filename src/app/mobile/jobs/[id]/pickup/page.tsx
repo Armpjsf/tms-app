@@ -222,17 +222,27 @@ export default function JobPickupPage() {
             </div>
             <h1 className="text-2xl font-black text-foreground italic">รับสินค้าเรียบร้อยแล้ว</h1>
             <p className="text-muted-foreground text-sm font-medium max-w-xs">
-                งานนี้ได้รับการบันทึกข้อมูลการรับสินค้าแล้ว สามารถไปยังขั้นตอนจัดส่งต่อไปได้เลย
+                งานนี้ได้รับการบันทึกข้อมูลการรับสินค้าแล้ว เลือกขั้นตอนถัดไปได้เลยครับ
             </p>
-            <div className="pt-4 space-y-2 w-full max-w-xs">
+            <div className="pt-4 space-y-3 w-full max-w-xs">
                 <Button 
+                    onClick={() => {
+                        router.refresh()
+                        router.push(`/mobile/jobs/${params.id}/complete`)
+                    }} 
+                    className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base rounded-2xl shadow-lg shadow-emerald-600/20"
+                >
+                    ไปยังหน้าบันทึกส่งสินค้า (POD)
+                </Button>
+                <Button 
+                    variant="outline"
                     onClick={() => {
                         router.refresh()
                         router.push(`/mobile/jobs/${params.id}`)
                     }} 
-                    className="w-full h-12 bg-primary font-bold rounded-2xl"
+                    className="w-full h-12 border-border font-bold rounded-2xl"
                 >
-                    ไปยังหน้ารายละเอียดงาน
+                    กลับหน้ารายละเอียดงาน
                 </Button>
             </div>
         </div>

@@ -77,8 +77,8 @@ export function JobActionButton({ job }: JobActionButtonProps) {
         }
     }
 
-    // 2. Block Early Arrival at Dropoff
-    if (newStatus === 'Arrived Dropoff' && job.Delivery_Date) {
+    // 2. Block Early Arrival at Dropoff (Only for jobs that haven't picked up goods yet)
+    if (newStatus === 'Arrived Dropoff' && job.Delivery_Date && ['New', 'Assigned', 'Draft'].includes(job.Job_Status)) {
         const deliveryDate = startOfDay(parseISO(job.Delivery_Date))
         if (isAfter(deliveryDate, today)) {
             toast.error("ยังไม่ถึงกำหนดส่งงาน", {
