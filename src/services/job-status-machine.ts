@@ -269,7 +269,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     // Fetch job details
     const { data: job, error: jobErr } = await supabase
       .from('Jobs_Main')
-      .select('Job_ID, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Photo_Proof_Url, Signature_Url, Customer_ID, Actual_Delivery_Time, Delivery_Date, Delivery_Notified_At')
+      .select('Job_ID, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Photo_Proof_Url, Signature_Url, Customer_ID, Actual_Delivery_Time, Delivery_Date, Delivery_Notified_At, original_destinations_json, POD_Drops_Json')
       .eq('Job_ID', jobId)
       .single();
 
@@ -320,24 +320,75 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       deliveryTime = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + ' น. (เวลาอ้างอิงของเซิร์ฟเวอร์)';
     }
     
-    // Format Photos and Signatures
-    const photoText = job.Photo_Proof_Url ? job.Photo_Proof_Url.split(',').map((url: string, index: number) => `🔗 รูปที่ ${index + 1}: ${url.trim()}`).join('\n') : '❌ ไม่มีรูปถ่าย';
-    const signatureText = job.Signature_Url ? `🔗 ลายเซ็น: ${job.Signature_Url}` : '❌ ไม่มีลายเซ็น';
-    
+    // Per-drop evidence log (photos + signature + SO per drop) captured at POD time.
+    type DropLog = { drop?: number; so_no?: string; destination?: string; photos?: string[]; signature?: string | null };
+    let drops: DropLog[] = [];
+    try {
+      const raw = job.POD_Drops_Json;
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (Array.isArray(parsed)) drops = parsed.filter(Boolean);
+    } catch { /* ignore */ }
+
+    // Fallback: destinations (name + so_no) + index-matched signatures, when the
+    // per-drop log isn't available (older jobs before POD_Drops_Json).
+    let destsFallback: Array<{ name?: string; so_no?: string }> = [];
+    try {
+      const parsed = typeof job.original_destinations_json === 'string' ? JSON.parse(job.original_destinations_json) : job.original_destinations_json;
+      if (Array.isArray(parsed)) destsFallback = parsed;
+    } catch { /* ignore */ }
+    const sigFallback = job.Signature_Url ? job.Signature_Url.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tms-app-five.vercel.app';
-    
+
+    // Build a per-drop section: SO + destination + that drop's OWN photos + signature.
+    let dropCount: number;
+    let dropText: string;
+    if (drops.length > 0) {
+      dropCount = drops.length;
+      dropText = drops.map((d, i) => {
+        const so = String(d?.so_no || '').trim();
+        const name = String(d?.destination || '').trim() || `จุดส่งที่ ${i + 1}`;
+        const photos = Array.isArray(d?.photos) ? d.photos.filter(Boolean) : [];
+        const lines = [
+          `📍 ดรอปที่ ${d?.drop || i + 1}${so ? ` — SO: ${so}` : ''}`,
+          `   ปลายทาง: ${name}`,
+        ];
+        photos.forEach((u, k) => lines.push(`   📸 รูปที่ ${k + 1}: ${String(u).trim()}`));
+        lines.push(d?.signature ? `   ✍️ ลายเซ็น: ${d.signature}` : `   ✍️ ลายเซ็น: —`);
+        return lines.join('\n');
+      }).join('\n\n');
+    } else if (destsFallback.length > 0) {
+      dropCount = destsFallback.length;
+      dropText = destsFallback.map((d, i) => {
+        const so = String(d?.so_no || '').trim();
+        const name = String(d?.name || '').trim() || `จุดส่งที่ ${i + 1}`;
+        return [
+          `📍 ดรอปที่ ${i + 1}${so ? ` — SO: ${so}` : ''}`,
+          `   ปลายทาง: ${name}`,
+          sigFallback[i] ? `   ✍️ ลายเซ็น: ${sigFallback[i]}` : `   ✍️ ลายเซ็น: —`,
+        ].join('\n');
+      }).join('\n\n');
+    } else {
+      dropCount = 1;
+      dropText = `📍 ปลายทาง: ${job.Route_Name || 'ไม่ระบุ'}` + (sigFallback[0] ? `\n   ✍️ ลายเซ็น: ${sigFallback[0]}` : '');
+    }
+
+    // Photos not attributable to a drop are only shown in the fallback path;
+    // when POD_Drops_Json exists, photos are already listed under each drop.
+    const flatPhotoText = drops.length === 0 && job.Photo_Proof_Url
+      ? '\n\n📸 หลักฐานการจัดส่ง (POD):\n' + job.Photo_Proof_Url.split(',').map((url: string, index: number) => `🔗 รูปที่ ${index + 1}: ${url.trim()}`).join('\n')
+      : '';
+
     const message = [
       `📦 [ยืนยันการส่งมอบสินค้าสำเร็จ]`,
       `--------------------------------`,
       `📄 เลขที่งาน: ${job.Job_ID}`,
       `👤 ลูกค้า: ${job.Customer_Name || 'ไม่ระบุ'}`,
-      `🗺️ เส้นทาง: ${job.Route_Name || 'ไม่ระบุ'}`,
       `🚛 พนักงานขับรถ: ${job.Driver_Name || 'ไม่ระบุ'} (${job.Vehicle_Plate || 'ไม่ระบุ'})`,
       `⏰ เวลาส่งสำเร็จ: ${deliveryTime}`,
       ``,
-      `📸 หลักฐานการจัดส่ง (POD):`,
-      `${photoText}`,
-      `${signatureText}`,
+      `📦 รายการจุดส่ง (${dropCount} ดรอป):`,
+      dropText + flatPhotoText,
       ``,
       `🌐 ติดตามสถานะและเอกสารเพิ่มเติม:`,
       `🔗 ${appUrl}/track/${job.Job_ID}`

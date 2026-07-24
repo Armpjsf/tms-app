@@ -19,6 +19,7 @@ export interface PublicJobDetails {
   pickupPhotos: string[];
   podPhotos: string[];
   floorClimbUrls?: string[];
+  podDrops?: Array<{ drop?: number; so_no?: string; destination?: string; photos?: string[]; signature?: string | null }>;
   signature: string | null;
   pickupSignature: string | null;
   lastLocation?: {
@@ -71,6 +72,7 @@ type PublicJobRow = {
   Pickup_Photo_Url?: string | null
   Photo_Proof_Url?: string | null
   Floor_Climb_Url?: string | null
+  POD_Drops_Json?: string | null
   Signature_Proof_Url?: string | null
   Signature_Url?: string | null
   Signature_Pickup_Url?: string | null
@@ -325,6 +327,12 @@ function mapJobToPublicDetails(job: PublicJobRow): PublicJobDetails {
         floorClimbUrls: (job.Floor_Climb_Url
           ? job.Floor_Climb_Url.split(",").filter(Boolean)
           : (job.Photo_Proof_Url ? job.Photo_Proof_Url.split(",").filter((u: string) => u.includes("FLOOR_CLIMB")) : [])),
+        podDrops: (() => {
+          try {
+            const parsed = typeof job.POD_Drops_Json === "string" ? JSON.parse(job.POD_Drops_Json) : job.POD_Drops_Json
+            return Array.isArray(parsed) ? parsed.filter(Boolean) : []
+          } catch { return [] }
+        })(),
         signature: job.Signature_Proof_Url || job.Signature_Url || null,
         pickupSignature: job.Signature_Pickup_Url || job.Pickup_Signature_Url || null,
         notes: job.Notes || null,

@@ -446,8 +446,51 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
                              {/* Evidence */}
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <EvidenceBox label="Pickup proof" photos={selectedJob.pickupPhotos} signature={selectedJob.pickupSignature} phase="P-01" />
-                                <EvidenceBox label="Delivery proof" photos={selectedJob.podPhotos} signature={selectedJob.signature} phase="P-02" />
+                                {!(selectedJob.podDrops && selectedJob.podDrops.length > 0) && (
+                                    <EvidenceBox label="Delivery proof" photos={selectedJob.podPhotos} signature={selectedJob.signature} phase="P-02" />
+                                )}
                              </div>
+
+                             {/* Per-drop delivery evidence (SO + destination + own photos + signature) */}
+                             {selectedJob.podDrops && selectedJob.podDrops.length > 0 && (
+                                <PremiumCard className="rounded-2xl border border-border/40 shadow-sm overflow-hidden bg-card">
+                                    <div className="p-6 border-b border-border/40 bg-muted/10">
+                                        <h3 className="text-sm font-semibold flex items-center gap-3 text-emerald-600">
+                                            <Package size={18} /> หลักฐานการส่งรายดรอป
+                                            <span className="text-xs font-bold text-muted-foreground">({selectedJob.podDrops.length} ดรอป)</span>
+                                        </h3>
+                                    </div>
+                                    <div className="p-6 space-y-6">
+                                        {selectedJob.podDrops.map((d, i) => {
+                                            const photos = Array.isArray(d.photos) ? d.photos.filter(Boolean) : []
+                                            return (
+                                                <div key={i} className="rounded-2xl border border-border/40 bg-muted/10 p-4 space-y-3">
+                                                    <p className="text-xs font-black text-foreground">📍 ดรอปที่ {d.drop || i + 1}{d.so_no ? ` — SO: ${d.so_no}` : ''}</p>
+                                                    {d.destination && <p className="text-[11px] text-muted-foreground -mt-1">ปลายทาง: {d.destination}</p>}
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {photos.map((url, k) => (
+                                                            <a key={k} href={url} target="_blank" rel="noreferrer" className="w-24 h-24 rounded-xl border border-border/40 overflow-hidden bg-black relative group">
+                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                <img src={url} alt={`drop ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                                <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Eye size={16} className="text-white" /></div>
+                                                            </a>
+                                                        ))}
+                                                        {d.signature && (
+                                                            <a href={d.signature} target="_blank" rel="noreferrer" className="w-24 h-24 rounded-xl border border-border/40 overflow-hidden bg-white p-1.5 relative">
+                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                <img src={d.signature} alt={`sig ${i + 1}`} className="w-full h-full object-contain" />
+                                                            </a>
+                                                        )}
+                                                        {photos.length === 0 && !d.signature && (
+                                                            <span className="text-xs text-muted-foreground italic">ไม่มีหลักฐาน</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </PremiumCard>
+                             )}
 
                              {/* Floor Climb official slips (one per drop) */}
                              {selectedJob.floorClimbUrls && selectedJob.floorClimbUrls.length > 0 && (

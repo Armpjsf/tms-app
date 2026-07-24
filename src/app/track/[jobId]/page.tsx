@@ -245,35 +245,71 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                         )}
 
                         {/* Delivery Evidence Section */}
-                        {(job.podPhotos.length > 0 || job.signature) && (
+                        {((job.podDrops && job.podDrops.length > 0) || job.podPhotos.length > 0 || job.signature) && (
                             <div className="space-y-6">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-emerald-500" />
                                     <p className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">หลักฐานการส่งสินค้า (Delivery)</p>
                                 </div>
 
-                                {job.podPhotos.length > 0 && (
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {job.podPhotos.map((url, i) => (
-                                            <div key={i} className="aspect-video relative rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shadow-inner group cursor-pointer">
-                                                <Image src={url} alt="POD" fill sizes="(max-width: 768px) 50vw, 300px" className="object-cover transition-transform group-hover:scale-105" />
-                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                    <ExternalLink size={20} className="text-white" />
+                                {job.podDrops && job.podDrops.length > 0 ? (
+                                    /* Per-drop evidence: each drop shows its SO + destination + own photos + signature */
+                                    <div className="space-y-5">
+                                        {job.podDrops.map((d, i) => {
+                                            const photos = Array.isArray(d.photos) ? d.photos.filter(Boolean) : []
+                                            return (
+                                                <div key={i} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 space-y-3">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <p className="text-xs font-black text-slate-700">📍 ดรอปที่ {d.drop || i + 1}{d.so_no ? ` — SO: ${d.so_no}` : ''}</p>
+                                                    </div>
+                                                    {d.destination && <p className="text-[11px] text-slate-500 -mt-1">ปลายทาง: {d.destination}</p>}
+                                                    {photos.length > 0 && (
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            {photos.map((url, k) => (
+                                                                <a key={k} href={url} target="_blank" rel="noreferrer" className="aspect-video relative rounded-xl overflow-hidden border border-slate-100 bg-white shadow-inner group">
+                                                                    <Image src={url} alt={`POD drop ${i + 1}`} fill sizes="(max-width: 768px) 50vw, 300px" className="object-cover transition-transform group-hover:scale-105" />
+                                                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                        <ExternalLink size={18} className="text-white" />
+                                                                    </div>
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    {d.signature && (
+                                                        <div className="h-24 bg-white rounded-xl overflow-hidden relative border border-slate-100">
+                                                            <Image src={d.signature} alt="POD Sig" fill sizes="(max-width: 768px) 100vw, 400px" className="object-contain p-3" />
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
-                                )}
-                                
-                                {job.signature && (
-                                    <div className="space-y-3">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">ลายเซ็นผู้รับสินค้า</p>
-                                        {job.signature.split(',').map(s => s.trim()).filter(Boolean).map((sig, i) => (
-                                            <div key={i} className="h-24 bg-slate-50 rounded-xl overflow-hidden relative border border-slate-100">
-                                                <Image src={sig} alt="POD Sig" fill sizes="(max-width: 768px) 100vw, 400px" className="object-contain p-4" />
+                                ) : (
+                                    <>
+                                        {job.podPhotos.length > 0 && (
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {job.podPhotos.map((url, i) => (
+                                                    <div key={i} className="aspect-video relative rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shadow-inner group cursor-pointer">
+                                                        <Image src={url} alt="POD" fill sizes="(max-width: 768px) 50vw, 300px" className="object-cover transition-transform group-hover:scale-105" />
+                                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <ExternalLink size={20} className="text-white" />
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
+                                        )}
+
+                                        {job.signature && (
+                                            <div className="space-y-3">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">ลายเซ็นผู้รับสินค้า</p>
+                                                {job.signature.split(',').map(s => s.trim()).filter(Boolean).map((sig, i) => (
+                                                    <div key={i} className="h-24 bg-slate-50 rounded-xl overflow-hidden relative border border-slate-100">
+                                                        <Image src={sig} alt="POD Sig" fill sizes="(max-width: 768px) 100vw, 400px" className="object-contain p-4" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         )}

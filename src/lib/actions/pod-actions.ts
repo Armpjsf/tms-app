@@ -164,9 +164,34 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     const completedDrops = Math.min(newSignatures.length, maxAllowedSignatures)
     const isFinishedAllDrops = completedDrops >= totalDrop
 
+    // Per-drop evidence log: each POD submission is exactly one drop, so the
+    // photos + signature uploaded in THIS call belong to this drop only. Persist
+    // them keyed by drop index so the completion notification (and tracking) can
+    // show evidence grouped per SO/destination instead of one flat pile.
+    const dropIndex = Math.max(0, completedDrops - 1)
+    const thisDest = (Array.isArray(parsedDests) ? parsedDests[dropIndex] : null) as { name?: string; so_no?: string } | null
+    const dropLog: (Record<string, unknown> | null)[] = (() => {
+        try {
+            const raw = jobData?.POD_Drops_Json
+            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+            return Array.isArray(parsed) ? parsed : []
+        } catch { return [] }
+    })()
+    while (dropLog.length < dropIndex) dropLog.push(null)
+    dropLog[dropIndex] = {
+        drop: completedDrops,
+        so_no: thisDest?.so_no || '',
+        destination: thisDest?.name || '',
+        photos: photoUrls,                 // this drop's POD report + delivery photos
+        signature: signatureUrl || null,
+        floorClimb: floorClimbReportUrl || null,
+        deliveredAt: now.toISOString(),
+    }
+
     const updatePayload: Record<string, unknown> = {
       Photo_Proof_Url: newPhotos.join(','),
       Signature_Url: newSignatures.join(','),
+      POD_Drops_Json: JSON.stringify(dropLog),
       Delivery_Date: new Date().toISOString(),
       Actual_Delivery_Time: timeString,
       Loaded_Qty: loadedQty
