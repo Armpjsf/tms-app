@@ -21,6 +21,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { Job } from "@/lib/supabase/jobs"
+import { useCustomerColor } from "@/components/providers/customer-color-provider"
 import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Customer } from "@/lib/supabase/customers"
@@ -391,6 +392,7 @@ function KanbanCard({
 }
 
 function JobCard({ job, isOverlay }: { job: Job; isOverlay?: boolean }) {
+    const colorFor = useCustomerColor()
     return (
         <PremiumCard className={cn(
             "p-6 rounded-[2.5rem] bg-background/60 border-border/5 shadow-2xl transition-all duration-500 transform group-hover/card:-translate-y-1 group-hover/card:border-primary/30 relative overflow-hidden",
@@ -420,7 +422,8 @@ function JobCard({ job, isOverlay }: { job: Job; isOverlay?: boolean }) {
                 </Badge>
             </div>
 
-            <h4 className="text-[13px] font-black text-foreground mb-4 line-clamp-1 group-hover/card:text-primary transition-colors uppercase italic tracking-tight">
+            <h4 className="text-[13px] font-black text-foreground mb-4 line-clamp-1 group-hover/card:text-primary transition-colors uppercase italic tracking-tight flex items-center gap-1.5">
+                <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-background not-italic" style={{ backgroundColor: colorFor(job.Customer_Name) }} />
                 {job.Customer_Name || 'Partner Pending'}
             </h4>
 

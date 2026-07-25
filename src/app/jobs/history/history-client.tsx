@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { todayTH } from "@/lib/utils/date-th"
+import { useCustomerColor } from "@/components/providers/customer-color-provider"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { 
   History, 
@@ -84,6 +85,7 @@ export function HistoryClient({
   limit
 }: HistoryClientProps) {
   const { t } = useLanguage()
+  const colorFor = useCustomerColor()
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
@@ -348,11 +350,15 @@ export function HistoryClient({
 
               {/* Cards List */}
               <div className="flex flex-col gap-3">
-                {(jobs || []).map((job: Job) => (
-                    <div 
-                        key={job.Job_ID} 
+                {(jobs || []).map((job: Job) => {
+                    const custColor = colorFor(job.Customer_Name)
+                    return (
+                    <div
+                        key={job.Job_ID}
                         className="group/row transition-all duration-500 bg-background/40 hover:bg-primary/[0.03] border border-white/5 hover:border-primary/20 rounded-2xl p-4 lg:p-0 relative overflow-hidden shadow-sm"
                     >
+                        {/* Per-customer colour stripe (stable per customer) */}
+                        <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl" style={{ backgroundColor: custColor }} />
                         {/* Hover Highlight Accent */}
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary opacity-0 group-hover/row:opacity-100 transition-opacity shadow-[0_0_15px_rgba(255,30,133,0.5)]" />
                         
@@ -380,7 +386,10 @@ export function HistoryClient({
 
                             {/* Section 2: Customer & Route */}
                             <div className="flex flex-col gap-0.5 min-w-0">
-                                <p className="text-foreground font-black text-sm tracking-tight uppercase group-hover/row:text-primary transition-colors leading-tight truncate">{job.Customer_Name || "-"}</p>
+                                <p className="text-foreground font-black text-sm tracking-tight uppercase group-hover/row:text-primary transition-colors leading-tight truncate flex items-center gap-1.5">
+                                    <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-background" style={{ backgroundColor: custColor }} />
+                                    {job.Customer_Name || "-"}
+                                </p>
                                 <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                                     <MapPin size={10} className="text-primary/60 shrink-0" />
                                     <span className="truncate">{job.Route_Name || "DIRECT VECTOR"}</span>
@@ -553,7 +562,8 @@ export function HistoryClient({
                             </div>
                         </div>
                     </div>
-                ))}
+                    )
+                })}
               </div>
             </div>
           )}

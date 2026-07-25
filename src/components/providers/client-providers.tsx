@@ -6,6 +6,7 @@ import { ErrorBoundary } from "@/components/error-boundary"
 import { LanguageProvider } from "@/components/providers/language-provider"
 import { BranchProvider } from "@/components/providers/branch-provider"
 import { CustomerProvider } from "@/components/providers/customer-provider"
+import { CustomerColorProvider } from "@/components/providers/customer-color-provider"
 import { GlobalClientComponents } from "@/components/providers/global-client-components"
 import { UserPresenceFetcher } from "@/components/providers/user-presence-fetcher"
 import { NotificationSoundProvider } from "@/components/providers/notification-sound-provider"
@@ -46,9 +47,11 @@ export function ClientProviders({ children }: ClientProvidersProps) {
           <LanguageProvider>
             <BranchProvider>
               <CustomerProvider>
-                <UserPresenceFetcher>
-                  {children}
-                </UserPresenceFetcher>
+                <CustomerColorProvider>
+                  <UserPresenceFetcher>
+                    {children}
+                  </UserPresenceFetcher>
+                </CustomerColorProvider>
               </CustomerProvider>
             </BranchProvider>
             <GlobalClientComponents />

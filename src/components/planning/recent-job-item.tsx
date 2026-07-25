@@ -5,6 +5,7 @@ import { Package, Truck } from "lucide-react"
 import { JobDialog } from "./job-dialog"
 import { RequestPreviewDialog } from "./request-preview-dialog"
 import { cn } from "@/lib/utils"
+import { useCustomerColor } from "@/components/providers/customer-color-provider"
 import { Job } from "@/lib/supabase/jobs"
 import { Route } from "@/lib/supabase/routes"
 import { Driver } from "@/lib/supabase/drivers"
@@ -31,6 +32,7 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
   const [open, setOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const { t } = useLanguage()
+  const colorFor = useCustomerColor()
 
   const handleOpen = () => {
     if (job.Job_Status === 'Requested') {
@@ -68,10 +70,12 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
     <>
       <div 
         onClick={handleOpen}
-        className="p-5 transition-all cursor-pointer group relative overflow-hidden border border-border rounded-2xl bg-card hover:bg-muted/30 hover:border-primary/30 hover:scale-[1.01] active:scale-[0.99] shadow-sm flex flex-col gap-4"
+        className="p-5 pl-6 transition-all cursor-pointer group relative overflow-hidden border border-border rounded-2xl bg-card hover:bg-muted/30 hover:border-primary/30 hover:scale-[1.01] active:scale-[0.99] shadow-sm flex flex-col gap-4"
       >
+        {/* Per-customer colour stripe */}
+        <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: colorFor(job.Customer_Name) }} />
         {/* Hover Highlight Accent */}
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute left-1.5 top-0 bottom-0 w-1 bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
 
         {/* Top Header: ID & Status */}
         <div className="flex items-center justify-between gap-3 relative z-10">
@@ -121,7 +125,8 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
         <div className="flex items-center justify-between gap-3 relative z-10">
             <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-muted-foreground mb-0.5">{t('jobs.dialog.customer')}</p>
-                <p className="text-sm font-bold text-foreground truncate">
+                <p className="text-sm font-bold text-foreground truncate flex items-center gap-1.5">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-background" style={{ backgroundColor: colorFor(job.Customer_Name) }} />
                     {job.Customer_Name || t('jobs.unassigned_client')}
                 </p>
             </div>

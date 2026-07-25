@@ -24,6 +24,7 @@ function printFloorClimbSlip(url: string) {
   w.document.close()
 }
 import { Input } from "@/components/ui/input"
+import { useCustomerColor } from "@/components/providers/customer-color-provider"
 import { Badge } from "@/components/ui/badge"
 import { CardContent } from "@/components/ui/card"
 import { PremiumCard } from "@/components/ui/premium-card"
@@ -47,6 +48,7 @@ interface TrackingHubClientProps {
 export function TrackingHubClient({ initialActiveJobs, customerMode = false }: TrackingHubClientProps) {
   const router = useRouter()
   const { t } = useLanguage()
+  const colorFor = useCustomerColor()
   const searchParams = useSearchParams()
   const [activeJobs, setActiveJobs] = useState<PublicJobDetails[]>(initialActiveJobs)
   const [selectedJob, setSelectedJob] = useState<PublicJobDetails | null>(null)
@@ -217,18 +219,22 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
              <button onClick={() => router.refresh()} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><RefreshCw size={12} /></button>
           </div>
 
-          {(activeTab === 'ACTIVE' ? categorizedJobs.ACTIVE : categorizedJobs.NEW).map((job) => (
-            <div 
+          {(activeTab === 'ACTIVE' ? categorizedJobs.ACTIVE : categorizedJobs.NEW).map((job) => {
+            const custColor = colorFor(job.customerName)
+            return (
+            <div
               key={job.jobId}
               onClick={() => selectJobFromRadar(job)}
               className={cn(
-                "group cursor-pointer p-4 rounded-2xl border transition-all duration-200 relative",
-                selectedJob?.jobId === job.jobId 
-                ? "bg-primary/5 border-primary/40 shadow-md" 
+                "group cursor-pointer p-4 pl-5 rounded-2xl border transition-all duration-200 relative overflow-hidden",
+                selectedJob?.jobId === job.jobId
+                ? "bg-primary/5 border-primary/40 shadow-md"
                 : "bg-card border-border/40 hover:border-primary/20 hover:bg-muted/50"
               )}
             >
-              {selectedJob?.jobId === job.jobId && <div className="absolute left-0 top-3 bottom-3 w-1 bg-primary rounded-r-full" />}
+              {/* Per-customer colour stripe */}
+              <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: custColor }} />
+              {selectedJob?.jobId === job.jobId && <div className="absolute left-1.5 top-3 bottom-3 w-1 bg-primary rounded-r-full" />}
               <div className="flex justify-between items-start mb-2">
                 <span className={cn("text-sm font-semibold", selectedJob?.jobId === job.jobId ? "text-primary" : "text-foreground")}>
                   {job.jobId.split(',')[0]}
@@ -238,6 +244,10 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
                 </Badge>
               </div>
               <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-xs font-bold text-foreground/80 truncate">
+                  <span className="inline-block w-2 h-2 rounded-full shrink-0 ring-1 ring-background" style={{ backgroundColor: custColor }} />
+                  <span className="truncate">{job.customerName}</span>
+                </div>
                 <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground truncate">
                   <MapPin size={10} className="text-primary/50" />
                   <span className="truncate">{job.destination}</span>
@@ -250,7 +260,8 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
                 </div>
               </div>
             </div>
-          ))}
+            )
+          })}
 
           {(activeTab === 'ACTIVE' ? categorizedJobs.ACTIVE : categorizedJobs.NEW).length === 0 && (
             <div className="py-20 text-center opacity-30">
