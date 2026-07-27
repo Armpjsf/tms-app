@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function JobsLoading() {
   return (
-    <div className="min-h-screen bg-background pb-24 pt-16 px-4">
+    <div className="min-h-full bg-background pb-24 pt-16 px-4">
       <MobileHeader title="กำลังโหลด..." />
       
       <div className="space-y-4">

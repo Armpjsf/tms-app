@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardLoading() {
   return (
-    <div className="relative min-h-screen bg-transparent pb-24 pt-16 px-4">
+    <div className="relative min-h-full bg-transparent pb-24 pt-16 px-4">
       <div className="space-y-8">
         {/* Header Skeleton */}
         <div className="flex items-center justify-between px-2">

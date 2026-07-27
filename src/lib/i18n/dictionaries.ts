@@ -214,6 +214,8 @@ export const dictionaries = {
       billing_automation: 'ระบบวางบิลอัตโนมัติ',
       customer_tracking_hub: 'ศูนย์ติดตามงานลูกค้า',
       container: 'ระบบงานตู้คอนเทนเนอร์',
+      damage_reports: 'รายงานความเสียหาย',
+      logs: 'บันทึกระบบ (Logs)',
     },
     container: {
       title: 'จัดการงานตู้คอนเทนเนอร์',
@@ -2201,6 +2203,8 @@ export const dictionaries = {
       billing_automation: 'Billing Automation',
       customer_tracking_hub: 'Customer Tracking Hub',
       container: 'Container Logistics',
+      damage_reports: 'Damage Reports',
+      logs: 'System Logs',
     },
     container: {
       title: 'Container Management',

@@ -54,7 +54,7 @@ export function MobileLeaveClient({ driverId, driverName, initialLeaves }: Props
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-28 pt-16 px-4">
+    <div className="min-h-full bg-slate-50 pb-28 pt-16 px-4">
       <MobileHeader title="แจ้งลา" showBack />
 
       <div className="space-y-5 mt-2">

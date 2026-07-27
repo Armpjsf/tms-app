@@ -22,7 +22,7 @@ export default async function JobDetailPage(props: Props) {
 
   if (!job) {
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-4 p-6 text-center">
+        <div className="min-h-full bg-background flex flex-col items-center justify-center text-muted-foreground gap-4 p-6 text-center">
             <p className="text-lg font-bold">ไม่พบข้อมูลงาน</p>
             <a href="/mobile/dashboard" className="text-primary font-black uppercase tracking-widest text-lg font-bold">กลับหน้าหลัก</a>
         </div>

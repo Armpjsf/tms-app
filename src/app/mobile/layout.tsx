@@ -27,7 +27,9 @@ export default async function MobileLayout({
       {session?.driverId && <PresenceManager driverId={session.driverId} />}
       {session?.driverId && <RealtimeJobsTrigger driverId={session.driverId} />}
       
-      <main className="flex-1 overflow-y-auto custom-scrollbar relative z-0">
+      {/* pt เผื่อ safe-area (รอยบาก) จุดเดียว → เนื้อหาทุกหน้าเคลียร์ fixed MobileHeader
+          บนเครื่องไม่มีรอยบาก safe-area=0 จึงไม่กระทบ layout เดิม */}
+      <main className="flex-1 overflow-y-auto custom-scrollbar relative z-0 pt-[env(safe-area-inset-top)]">
         {children}
       </main>
 

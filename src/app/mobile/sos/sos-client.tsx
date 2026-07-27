@@ -116,7 +116,7 @@ export function SOSPageClient({ driverId, driverName, driverPhone, branchId }: P
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 pt-16 px-4">
+    <div className="min-h-full bg-background pb-24 pt-16 px-4">
       <MobileHeader title="แจ้งเหตุฉุกเฉิน" showBack />
 
       <div className="space-y-6 text-center">

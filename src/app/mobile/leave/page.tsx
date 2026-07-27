@@ -30,7 +30,7 @@ async function LeavePageContent() {
 export default function MobileLeavePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-background pt-20 px-4">
+      <div className="min-h-full bg-background pt-20 px-4">
         <MobileHeader title="แจ้งลางาน" showBack />
         <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
           <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />

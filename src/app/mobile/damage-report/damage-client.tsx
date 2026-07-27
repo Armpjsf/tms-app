@@ -108,7 +108,7 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
   }
 
   return (
-    <div className="min-h-screen bg-background pb-32 pt-20 px-6 relative overflow-hidden">
+    <div className="min-h-full bg-background pb-32 pt-20 px-6 relative overflow-hidden">
       {/* Background Decor */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-red-500/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
       

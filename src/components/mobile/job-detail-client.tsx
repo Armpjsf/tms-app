@@ -63,7 +63,7 @@ export function JobDetailClient({ job, success, initialTab = 'mission' }: JobDet
         : job?.original_destinations_json || [];
 
     return (
-        <div className="min-h-screen bg-background pb-40 pt-[calc(56px+env(safe-area-inset-top))] relative overflow-hidden flex flex-col">
+        <div className="min-h-full bg-background pb-40 pt-[calc(56px+env(safe-area-inset-top))] relative overflow-hidden flex flex-col">
             <MobileHeader title="รายละเอียดงาน" showBack />
 
             <div className="flex-1 px-5 overflow-y-auto pb-10 pt-4 space-y-8">

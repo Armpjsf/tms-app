@@ -78,7 +78,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
     // Check if missing driver details
     if (!driverId) {
         return (
-            <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="min-h-full bg-gray-50 pb-20">
                 <MobileHeader title="Marketplace" />
                 <div className="pt-20 px-4 text-center">
                     <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -122,7 +122,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-24">
+        <div className="min-h-full bg-gray-50 pb-24">
             <MobileHeader title="หาเที่ยวงาน (Marketplace)" />
 
             <div className="pt-20 px-4 space-y-4">

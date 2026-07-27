@@ -35,7 +35,7 @@ export default function MobileSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 pt-16 px-4">
+    <div className="min-h-full bg-background pb-24 pt-16 px-4">
       <MobileHeader title="ตั้งค่า" showBack />
       
       <div className="space-y-6">

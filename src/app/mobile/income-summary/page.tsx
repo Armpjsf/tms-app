@@ -35,7 +35,7 @@ export default async function IncomeSummaryPage() {
   const totalJobs = jobs?.length || 0
 
   return (
-    <div className="min-h-screen bg-background pb-24 pt-16 px-4">
+    <div className="min-h-full bg-background pb-24 pt-16 px-4">
       <MobileHeader 
         title="สรุปรายได้" 
       />

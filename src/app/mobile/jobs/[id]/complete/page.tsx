@@ -306,7 +306,7 @@ export default function JobCompletePage() {
 
   if (loading) {
       return (
-          <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center space-y-6 animate-in fade-in duration-500">
+          <div className="min-h-full bg-slate-950 flex flex-col items-center justify-center p-6 text-center space-y-6 animate-in fade-in duration-500">
               <div className="relative">
                   <div className="w-24 h-24 rounded-full border-4 border-blue-500/10 border-t-blue-500 animate-spin" />
                   <div className="absolute inset-0 flex items-center justify-center text-blue-500">
@@ -325,7 +325,7 @@ export default function JobCompletePage() {
 
   if (completed) {
       return (
-          <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center space-y-4 animate-in zoom-in duration-300">
+          <div className="min-h-full bg-slate-950 flex flex-col items-center justify-center p-6 text-center space-y-4 animate-in zoom-in duration-300">
               <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500">
                   <CheckCircle size={48} />
               </div>
@@ -342,7 +342,7 @@ export default function JobCompletePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24 pt-20 px-4">
+    <div className="min-h-full bg-slate-950 pb-24 pt-20 px-4">
       <MobileHeader title={isContainer ? "คืนตู้ (Gate-In EIR)" : "ส่งงาน (POD)"} showBack />
 
       {/* Hidden Report Container for html2canvas rendering */}

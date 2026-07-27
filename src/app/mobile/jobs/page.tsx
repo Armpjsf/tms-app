@@ -67,7 +67,7 @@ export default async function DriverJobsPage(props: Props) {
   if (!session) redirect("/mobile/login")
 
   return (
-    <div className="min-h-screen bg-background pb-32 pt-24 px-6 relative overflow-hidden">
+    <div className="min-h-full bg-background pb-32 pt-24 px-6 relative overflow-hidden">
        {/* High-end Background Decor */}
       <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 pointer-events-none" />
       <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />

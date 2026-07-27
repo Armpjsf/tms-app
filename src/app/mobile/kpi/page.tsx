@@ -27,7 +27,7 @@ export default async function MobileKPIPage() {
   const earnedCount = kpi.achievements.filter(a => a.earned).length
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-28 pt-16 px-4">
+    <div className="min-h-full bg-slate-50 pb-28 pt-16 px-4">
       <MobileHeader title="ผลงานของฉัน" showBack />
 
       <div className="space-y-5 mt-2">

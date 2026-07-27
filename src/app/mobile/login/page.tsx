@@ -61,7 +61,7 @@ export default function DriverLoginPage() {
 
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-full bg-background flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Corporate CI Background (Navy #001E4C) */}
       <div className="absolute inset-0 z-0 bg-background">
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/40 via-transparent to-background" />

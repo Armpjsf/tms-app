@@ -188,7 +188,7 @@ export default function JobPickupPage() {
 
   if (completed) {
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+        <div className="min-h-full bg-background flex flex-col items-center justify-center p-6 text-center">
             <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-6 animate-bounce">
                 <ShieldCheck size={48} className="text-white" />
             </div>
@@ -201,7 +201,7 @@ export default function JobPickupPage() {
   // Loading / not-found guards — avoid flashing an empty form before data arrives.
   if (!jobLoaded) {
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+        <div className="min-h-full bg-background flex flex-col items-center justify-center p-6 text-center">
             <Loader2 className="animate-spin text-primary mb-4" size={40} />
             <p className="text-muted-foreground font-bold">กำลังโหลดข้อมูลงาน...</p>
         </div>
@@ -216,7 +216,7 @@ export default function JobPickupPage() {
 
   if (isAlreadyPickedUp) {
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="min-h-full bg-background flex flex-col items-center justify-center p-6 text-center space-y-4">
             <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center text-emerald-500 mb-2">
                 <ShieldCheck size={48} />
             </div>
@@ -251,7 +251,7 @@ export default function JobPickupPage() {
 
   if (!job) {
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="min-h-full bg-background flex flex-col items-center justify-center p-6 text-center space-y-4">
             <Info className="text-muted-foreground/40" size={48} />
             <p className="text-foreground font-bold">ไม่พบข้อมูลงานนี้</p>
             <Button variant="outline" onClick={() => router.back()} className="rounded-xl">ย้อนกลับ</Button>
@@ -260,7 +260,7 @@ export default function JobPickupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="min-h-full bg-background pb-32">
         <MobileHeader title={isContainer ? "บันทึกข้อมูลตู้ (EIR)" : "บันทึกการรับสินค้า"} showBack />
 
         <div className="px-5 pt-20 space-y-8">
