@@ -66,6 +66,11 @@ export async function createBulkVehicles(vehicles: Record<string, unknown>[]) {
   const supabase = createAdminClient()
   const branchId = await getUserBranchId()
 
+  // ตรวจ Sub_ID กับ Master_Subcontractors กัน orphan (ให้ตรงกับ import คนขับ)
+  // ค่าที่ไม่มีใน master → เก็บเป็น null (รถบริษัทเอง) ไม่ยอมให้ค้างชื่อหลุด
+  const { data: validSubs } = await supabase.from('Master_Subcontractors').select('Sub_ID')
+  const validSubSet = new Set((validSubs || []).map((s: { Sub_ID: string }) => String(s.Sub_ID).trim()))
+
   // Helper to normalize keys
   const normalizeData = (row: Record<string, unknown>) => {
     const normalized: Partial<Vehicle> = {}
@@ -131,7 +136,7 @@ export async function createBulkVehicles(vehicles: Record<string, unknown>[]) {
       Act_Expiry: data.Act_Expiry || null,
       Max_Weight_kg: Number(data.Max_Weight_kg) || null,
       Max_Volume_cbm: Number(data.Max_Volume_cbm) || null,
-      Sub_ID: data.Sub_ID || null,
+      Sub_ID: (data.Sub_ID && validSubSet.has(String(data.Sub_ID).trim())) ? String(data.Sub_ID).trim() : null,
       is_chassis: data.is_chassis === true || String(data.is_chassis).toLowerCase() === 'true' || String(data.is_chassis).toLowerCase() === 'yes',
       Branch_ID: branchId
     }
