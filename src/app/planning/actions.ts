@@ -370,6 +370,7 @@ export async function createBulkJobs(
 
     normalized.Job_ID = getValue(['Job_ID', 'id', 'รหัสงาน'])
     normalized.Plan_Date = getValue(['Plan_Date', 'date', 'วันที่แผน', 'วันที่'])
+    normalized.Delivery_Date = getValue(['Delivery_Date', 'delivery_date', 'วันจัดส่ง', 'วันที่จัดส่ง', 'วันส่ง'])
     normalized.Customer_ID = getValue(['Customer_ID', 'cust_id', 'รหัสลูกค้า'])
     normalized.Customer_Name = getValue(['Customer_Name', 'customer', 'ลูกค้า', 'ชื่อลูกค้า'])
     normalized.Route_Name = getValue(['Route_Name', 'route', 'เส้นทาง'])
@@ -580,6 +581,9 @@ export async function createBulkJobs(
       Job_ID: cleanId(data.Job_ID) || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
       Branch_ID: (data.Branch_ID as string) || effectiveBranchId,
       Plan_Date: normalizeDate(data.Plan_Date) || todayTH(),
+      // เดิม Delivery_Date ตกหล่น (ไม่ถูกบันทึก) → งานที่สร้างจากหน้าวางแผนวันจัดส่งหาย
+      // ถ้าไม่ได้ระบุ ให้ default = วันวางแผน (ไม่ปล่อย null จนโชว์เป็นวันนี้ตอนเปิดแก้)
+      Delivery_Date: normalizeDate(data.Delivery_Date) || normalizeDate(data.Plan_Date) || todayTH(),
       Customer_ID: (data.Customer_ID as string) || customerMap.get((data.Customer_Name as string)?.toLowerCase().trim()) || null,
       Customer_Name: data.Customer_Name as string,
       // Match the dialog's behaviour: when no master route resolves, name the
