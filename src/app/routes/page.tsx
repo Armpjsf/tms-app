@@ -16,7 +16,6 @@ import {
   Navigation,
   Globe,
   FileSpreadsheet,
-  Ruler,
   ShieldCheck,
   Activity,
   Target
@@ -34,118 +33,96 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { 
-  getAllRoutes, 
-  createRoute, 
-  updateRoute, 
-  deleteRoute, 
-  createBulkRoutes,
-  getUniqueLocations,
-  Route,
-} from "@/lib/supabase/routes"
+import {
+  getAllLocations,
+  createLocation,
+  updateLocation,
+  deleteLocation,
+  createBulkLocations,
+  getBranches,
+  Location,
+} from "@/lib/supabase/locations"
 import { extractCoordsFromUrl } from "@/lib/utils"
 import { geocodeAddress } from "@/lib/ai/geocoding"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { ExcelExport } from "@/components/ui/excel-export"
-import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { useBranch } from "@/components/providers/branch-provider"
 import { isAdmin } from "@/lib/permissions"
 import { useLanguage } from "@/components/providers/language-provider"
 import { toast } from "sonner"
 
+type Branch = { Branch_ID: string; Branch_Name: string }
+
 export default function RoutesPage() {
   const { t } = useLanguage()
-  const { selectedBranch, branches } = useBranch()
-  
-  const [routes, setRoutes] = useState<Route[]>([])
-  const [locations, setLocations] = useState<string[]>([])
+  const { selectedBranch } = useBranch()
+
+  const [locations, setLocations] = useState<Location[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingRoute, setEditingRoute] = useState<Route | null>(null)
+  const [editingLocation, setEditingLocation] = useState<Location | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isAdminUser, setIsAdminUser] = useState(false)
-  
-  const [formData, setFormData] = useState<Partial<Route>>({
-    Route_Name: "",
-    Origin: "",
-    Origin_Lat: null,
-    Origin_Lon: null,
-    Map_Link_Origin: "",
-    Destination: "",
-    Dest_Lat: null,
-    Dest_Lon: null,
-    Map_Link_Destination: "",
-    Distance_KM: null,
-    Branch_ID: ""
-  })
+
+  const emptyForm: Partial<Location> = {
+    Name: "",
+    Lat: null,
+    Lon: null,
+    Phone: "",
+    Map_Link: "",
+    Branch_ID: "",
+  }
+  const [formData, setFormData] = useState<Partial<Location>>(emptyForm)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    const [routesData, locationsData, adminStatus] = await Promise.all([
-      getAllRoutes(1, 100, searchQuery, selectedBranch),
-      getUniqueLocations(),
+    const [locData, branchData, adminStatus] = await Promise.all([
+      getAllLocations(1, 100, searchQuery, selectedBranch),
+      getBranches(),
       isAdmin()
     ])
-    
-    setRoutes(routesData.data)
-    setLocations(locationsData)
+    setLocations(locData.data)
+    setBranches(branchData)
     setIsAdminUser(adminStatus)
     setLoading(false)
-  }, [searchQuery, selectedBranch]) 
+  }, [searchQuery, selectedBranch])
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchData()
-    }, 500)
+    const timer = setTimeout(() => { fetchData() }, 400)
     return () => clearTimeout(timer)
   }, [searchQuery, selectedBranch, fetchData])
 
-  const updateForm = (field: keyof Route, data: string | number | null) => {
+  const updateForm = (field: keyof Location, data: string | number | null) => {
     setFormData(prev => {
-        const newData = { ...prev, [field]: data };
-        
-        // AUTO-EXTRACT: If pasting into a Map_Link field, try to extract coords
-        if (typeof data === 'string' && (field === 'Map_Link_Origin' || field === 'Map_Link_Destination')) {
-            const coords = extractCoordsFromUrl(data);
-            if (coords) {
-                newData.Origin_Lat = coords.lat;
-                newData.Origin_Lon = coords.lng;
-                newData.Dest_Lat = coords.lat;
-                newData.Dest_Lon = coords.lng;
-                toast.success("ดึงพิกัดจากลิงก์แผนที่สำเร็จ");
-            }
+      const newData = { ...prev, [field]: data }
+      // AUTO-EXTRACT: วางลิงก์แผนที่แล้วดึงพิกัดให้อัตโนมัติ
+      if (typeof data === 'string' && field === 'Map_Link') {
+        const coords = extractCoordsFromUrl(data)
+        if (coords) {
+          newData.Lat = coords.lat
+          newData.Lon = coords.lng
+          toast.success("ดึงพิกัดจากลิงก์แผนที่สำเร็จ")
         }
-        return newData;
-    });
+      }
+      return newData
+    })
   }
 
   const resetForm = () => {
     setFormData({
-        Route_Name: "",
-        Origin: "",
-        Origin_Lat: null,
-        Origin_Lon: null,
-        Map_Link_Origin: "",
-        Destination: "",
-        Dest_Lat: null,
-        Dest_Lon: null,
-        Map_Link_Destination: "",
-        Distance_KM: null,
-        Branch_ID: (selectedBranch && selectedBranch !== "All") ? selectedBranch : ""
+      ...emptyForm,
+      Branch_ID: (selectedBranch && selectedBranch !== "All") ? selectedBranch : ""
     })
-    setEditingRoute(null)
+    setEditingLocation(null)
   }
 
-  const handleOpenDialog = (route?: Route) => {
-    if (route) {
-      setEditingRoute(route)
-      setFormData(route)
+  const handleOpenDialog = (loc?: Location) => {
+    if (loc) {
+      setEditingLocation(loc)
+      setFormData(loc)
     } else {
       resetForm()
     }
@@ -153,43 +130,34 @@ export default function RoutesPage() {
   }
 
   const handleSave = async () => {
-    if (!formData.Route_Name) {
+    if (!formData.Name || !formData.Name.trim()) {
       toast.warning(t('routes.toasts.name_required'))
       return
     }
-
     setSaving(true)
     try {
-      const name = formData.Route_Name.trim()
-      const payload: Partial<Route> = {
-        Route_Name: name,
-        Origin: name,
-        Destination: name,
-        Origin_Lat: formData.Origin_Lat ?? null,
-        Dest_Lat: formData.Origin_Lat ?? null,
-        Origin_Lon: formData.Origin_Lon ?? null,
-        Dest_Lon: formData.Origin_Lon ?? null,
-        Origin_Phone: formData.Origin_Phone ?? null,
-        Dest_Phone: formData.Origin_Phone ?? null,
-        Map_Link_Origin: formData.Map_Link_Origin ?? null,
-        Map_Link_Destination: formData.Map_Link_Origin ?? null,
-        Distance_KM: 0,
-        Branch_ID: formData.Branch_ID || null
+      const payload: Partial<Location> = {
+        Name: formData.Name.trim(),
+        Lat: formData.Lat ?? null,
+        Lon: formData.Lon ?? null,
+        Phone: formData.Phone ?? null,
+        Map_Link: formData.Map_Link ?? null,
+        Branch_ID: formData.Branch_ID || null,
       }
 
-      if (editingRoute) {
-        const result = await updateRoute(editingRoute.Route_Name, payload)
+      if (editingLocation?.Location_ID) {
+        const result = await updateLocation(editingLocation.Location_ID, payload)
         if (!result.success) throw result.error
       } else {
-        const result = await createRoute(payload)
+        const result = await createLocation(payload)
         if (!result.success) throw result.error
       }
-      
+
       setIsDialogOpen(false)
       resetForm()
       fetchData()
       toast.success(t('routes.toasts.save_success'))
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e)
       toast.error(t('routes.toasts.save_error'))
     } finally {
@@ -197,64 +165,14 @@ export default function RoutesPage() {
     }
   }
 
-  const handleImport = async (data: any[]) => {
-    const normalizeData = (row: any) => {
-        const getValue = (keys: string[]) => {
-            const rowKeys = Object.keys(row)
-            for (const key of keys) {
-                const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '_') === key.toLowerCase().replace(/\s+/g, '_'))
-                if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
-                    return row[foundKey]
-                }
-            }
-            return undefined
-        }
-
-        const name = (getValue(['location_name', 'name', 'ชื่อสถานที่', 'สถานที่', 'route_name', 'origin']) || '') as string
-        const phone = getValue(['phone', 'เบอร์ติดต่อ', 'เบอร์โทร', 'origin_phone']) as string
-        const mapLink = getValue(['map_link', 'ลิงก์แผนที่', 'แผนที่', 'map_link_origin']) as string
-        const lat = getValue(['latitude', 'ละติจูด', 'lat', 'origin_lat'])
-        const lon = getValue(['longitude', 'ลองจิจูด', 'lon', 'lng', 'origin_lon'])
-        const branchId = getValue(['branch_id', 'branch', 'สาขา']) as string
-
-        return {
-            name: name.trim(),
-            phone: phone ? String(phone).trim() : null,
-            mapLink: mapLink ? String(mapLink).trim() : null,
-            lat: lat ? parseFloat(String(lat)) : null,
-            lon: lon ? parseFloat(String(lon)) : null,
-            branchId: branchId ? String(branchId).trim() : null
-        }
-    }
-
-    const cleaned = data.map(r => normalizeData(r)).filter(r => r.name)
-
-    if (cleaned.length === 0) {
-        return { success: false, message: "ไม่พบข้อมูลที่ถูกต้อง (ต้องมีชื่อสถานที่)" }
-    }
-
-    const payloadList = cleaned.map(c => ({
-        Route_Name: c.name,
-        Origin: c.name,
-        Destination: c.name,
-        Origin_Lat: c.lat,
-        Dest_Lat: c.lat,
-        Origin_Lon: c.lon,
-        Dest_Lon: c.lon,
-        Origin_Phone: c.phone,
-        Dest_Phone: c.phone,
-        Map_Link_Origin: c.mapLink,
-        Map_Link_Destination: c.mapLink,
-        Distance_KM: 0,
-        Branch_ID: c.branchId
-    }))
-
-    return createBulkRoutes(payloadList)
+  const handleImport = async (data: Record<string, unknown>[]) => {
+    return createBulkLocations(data)
   }
 
-  const handleDelete = async (routeName: string) => {
-    if (confirm(t('routes.toasts.confirm_delete').replace('{{name}}', routeName))) {
-      await deleteRoute(routeName)
+  const handleDelete = async (loc: Location) => {
+    if (!loc.Location_ID) return
+    if (confirm(t('routes.toasts.confirm_delete').replace('{{name}}', loc.Name))) {
+      await deleteLocation(loc.Location_ID)
       fetchData()
       toast.success(t('routes.toasts.delete_success'))
     }
@@ -262,10 +180,10 @@ export default function RoutesPage() {
 
   return (
     <DashboardLayout>
-      {/* Tactical Route Header */}
+      {/* Tactical Location Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 bg-background/60 backdrop-blur-3xl p-8 rounded-3xl border border-border/5 shadow-xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
-        
+
         <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-primary/20 rounded-lg shadow-lg">
@@ -284,8 +202,8 @@ export default function RoutesPage() {
         <div className="flex flex-wrap gap-3 relative z-10">
             {isAdminUser && (
               <>
-                <ExcelExport 
-                    data={routes}
+                <ExcelExport
+                    data={locations}
                     filename="logispro_locations_export"
                     trigger={
                         <PremiumButton variant="outline" className="h-11 px-5 rounded-xl border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest" >
@@ -294,10 +212,10 @@ export default function RoutesPage() {
                         </PremiumButton>
                     }
                 />
-                <ExcelImport 
+                <ExcelImport
                     trigger={
                         <PremiumButton variant="outline" className="h-11 px-5 rounded-xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-all text-[10px] font-black uppercase tracking-widest">
-                            <FileSpreadsheet size={16} className="mr-2 opacity-50" /> 
+                            <FileSpreadsheet size={16} className="mr-2 opacity-50" />
                             {t('routes.spatial_import')}
                         </PremiumButton>
                     }
@@ -322,7 +240,7 @@ export default function RoutesPage() {
         </div>
       </div>
 
-      {/* Navigation Command Grid */}
+      {/* Search */}
       <div className="mb-8 relative group max-w-xl">
         <div className="absolute inset-x-0 bottom-0 h-1 bg-primary blur-3xl opacity-20 pointer-events-none" />
         <div className="relative glass-panel rounded-2xl p-0.5 border-border/5">
@@ -347,28 +265,28 @@ export default function RoutesPage() {
                     <div className="p-3 bg-primary/20 rounded-2xl shadow-xl ring-1 ring-primary/30">
                         <Target size={32} className="text-primary" strokeWidth={2.5} />
                     </div>
-                    {editingRoute ? t('routes.dialog.title_edit') : t('routes.dialog.title_add')}
+                    {editingLocation ? t('routes.dialog.title_edit') : t('routes.dialog.title_add')}
                   </DialogTitle>
                 </DialogHeader>
             </div>
 
             <div className="p-12 space-y-10 custom-scrollbar max-h-[70vh] overflow-y-auto">
-              {/* Route Primary Metadata */}
+              {/* Primary Metadata */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-4">
                   <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('routes.dialog.route_name')}</Label>
                   <Input
-                    value={formData.Route_Name || ""}
-                    onChange={(e) => updateForm("Route_Name", e.target.value)}
+                    value={formData.Name || ""}
+                    onChange={(e) => updateForm("Name", e.target.value)}
                     placeholder={t('routes.dialog.placeholder_name')}
                     className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-normal focus:bg-muted/80 transition-all"
-                    disabled={!!editingRoute}
+                    disabled={!!editingLocation}
                   />
                 </div>
                 <div className="space-y-4">
                   <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('routes.dialog.branch')}</Label>
-                  <Select 
-                      value={formData.Branch_ID || ""} 
+                  <Select
+                      value={formData.Branch_ID || ""}
                       onValueChange={(value) => updateForm("Branch_ID", value)}
                   >
                       <SelectTrigger className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-normal">
@@ -395,8 +313,8 @@ export default function RoutesPage() {
                     <div className="space-y-4">
                         <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight ml-2">Phone</Label>
                         <Input
-                            value={formData.Origin_Phone || ""}
-                            onChange={(e) => updateForm("Origin_Phone", e.target.value)}
+                            value={formData.Phone || ""}
+                            onChange={(e) => updateForm("Phone", e.target.value)}
                             placeholder="081-XXXX-XXXX"
                             className="h-16 bg-muted/50 border-border/5 rounded-2xl px-8 text-lg font-bold font-black text-foreground focus:bg-muted/80 transition-all"
                         />
@@ -404,8 +322,8 @@ export default function RoutesPage() {
                     <div className="space-y-4">
                         <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight ml-2">{t('routes.dialog.geo_link')}</Label>
                         <Input
-                            value={formData.Map_Link_Origin || ""}
-                            onChange={(e) => updateForm("Map_Link_Origin", e.target.value)}
+                            value={formData.Map_Link || ""}
+                            onChange={(e) => updateForm("Map_Link", e.target.value)}
                             placeholder="HTTPS://MAPS.GOOGLE.COM/..."
                             className="h-16 bg-muted/50 border-border/5 rounded-2xl px-8 text-lg font-bold font-black text-foreground focus:bg-muted/80 transition-all"
                         />
@@ -416,24 +334,24 @@ export default function RoutesPage() {
                         <PremiumButton
                             type="button"
                             onClick={async () => {
-                                if (!formData.Route_Name) {
-                                    toast.warning("โปรดกรอกชื่อสถานที่ก่อนค้นหาพิกัด");
-                                    return;
+                                if (!formData.Name) {
+                                    toast.warning("โปรดกรอกชื่อสถานที่ก่อนค้นหาพิกัด")
+                                    return
                                 }
-                                setLoading(true);
+                                setLoading(true)
                                 try {
-                                    const res = await geocodeAddress(formData.Route_Name);
+                                    const res = await geocodeAddress(formData.Name)
                                     if (res) {
-                                        updateForm("Origin_Lat", res.lat);
-                                        updateForm("Origin_Lon", res.lng);
-                                        toast.success("ค้นหาพิกัดตามชื่อสำเร็จ");
+                                        updateForm("Lat", res.lat)
+                                        updateForm("Lon", res.lng)
+                                        toast.success("ค้นหาพิกัดตามชื่อสำเร็จ")
                                     } else {
-                                        toast.info("ไม่พบพิกัดสำหรับสถานที่นี้");
+                                        toast.info("ไม่พบพิกัดสำหรับสถานที่นี้")
                                     }
                                 } catch {
-                                    toast.error("เกิดข้อผิดพลาดในการค้นหาพิกัด");
+                                    toast.error("เกิดข้อผิดพลาดในการค้นหาพิกัด")
                                 } finally {
-                                    setLoading(false);
+                                    setLoading(false)
                                 }
                             }}
                             className="w-full h-12 bg-primary/20 text-primary border border-primary/30 rounded-xl font-bold uppercase text-xs"
@@ -446,8 +364,8 @@ export default function RoutesPage() {
                         <Input
                             type="number"
                             step="any"
-                            value={formData.Origin_Lat ?? ""}
-                            onChange={(e) => updateForm("Origin_Lat", e.target.value ? parseFloat(e.target.value) : null)}
+                            value={formData.Lat ?? ""}
+                            onChange={(e) => updateForm("Lat", e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder="13.XXXX"
                             className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-normal h-12"
                         />
@@ -457,8 +375,8 @@ export default function RoutesPage() {
                         <Input
                             type="number"
                             step="any"
-                            value={formData.Origin_Lon ?? ""}
-                            onChange={(e) => updateForm("Origin_Lon", e.target.value ? parseFloat(e.target.value) : null)}
+                            value={formData.Lon ?? ""}
+                            onChange={(e) => updateForm("Lon", e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder="100.XXXX"
                             className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-normal h-12"
                         />
@@ -489,8 +407,8 @@ export default function RoutesPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {routes.map((route) => (
-                <div key={route.Route_Name} className="p-0 overflow-hidden group border border-border/5 bg-background/40 backdrop-blur-2xl rounded-2xl shadow-lg relative hover:shadow-xl transition-all duration-700 hover:ring-1 hover:ring-primary/30">
+              {locations.map((loc) => (
+                <div key={loc.Location_ID || loc.Name} className="p-0 overflow-hidden group border border-border/5 bg-background/40 backdrop-blur-2xl rounded-2xl shadow-lg relative hover:shadow-xl transition-all duration-700 hover:ring-1 hover:ring-primary/30">
                   <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-all duration-700" />
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-6">
@@ -500,18 +418,9 @@ export default function RoutesPage() {
                           <MapPin size={20} className="relative z-10" strokeWidth={2.5} />
                         </div>
                         <div>
-                          <h3 className="text-lg font-black text-foreground tracking-tighter group-hover:text-primary transition-colors line-clamp-1 duration-500 uppercase italic font-display">{route.Route_Name}</h3>
+                          <h3 className="text-lg font-black text-foreground tracking-tighter group-hover:text-primary transition-colors line-clamp-1 duration-500 uppercase italic font-display">{loc.Name}</h3>
                           <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-muted-foreground font-black text-[9px] uppercase tracking-tight italic">{route.Branch_ID || "HQ-CENTER"}</span>
-                              {route.Distance_KM !== null && route.Distance_KM > 0 && (
-                                <>
-                                    <div className="w-1 h-1 rounded-full bg-primary/40" />
-                                    <div className="flex items-center gap-1.5">
-                                        <Ruler size={10} className="text-primary/60" />
-                                        <span className="text-primary font-black text-[10px] uppercase tracking-tight">{route.Distance_KM} {t('common.baht') === 'บาท' ? 'กม.' : 'KM'}</span>
-                                    </div>
-                                </>
-                              )}
+                              <span className="text-muted-foreground font-black text-[9px] uppercase tracking-tight italic">{loc.Branch_ID || "HQ-CENTER"}</span>
                           </div>
                         </div>
                       </div>
@@ -519,16 +428,16 @@ export default function RoutesPage() {
 
                     {/* Location Details */}
                     <div className="space-y-3 relative mb-6 text-sm text-muted-foreground">
-                        {route.Origin_Phone && (
+                        {loc.Phone && (
                             <div className="flex items-center justify-between">
                                 <span className="font-bold text-xs uppercase tracking-tight">Phone:</span>
-                                <span className="font-black text-foreground tracking-tight">{route.Origin_Phone}</span>
+                                <span className="font-black text-foreground tracking-tight">{loc.Phone}</span>
                             </div>
                         )}
-                        {(route.Origin_Lat !== null && route.Origin_Lon !== null) ? (
+                        {(loc.Lat !== null && loc.Lon !== null) ? (
                             <div className="flex items-center justify-between">
                                 <span className="font-bold text-xs uppercase tracking-tight">Coordinates:</span>
-                                <span className="font-black text-foreground text-xs font-mono">{route.Origin_Lat.toFixed(5)}, {route.Origin_Lon.toFixed(5)}</span>
+                                <span className="font-black text-foreground text-xs font-mono">{loc.Lat.toFixed(5)}, {loc.Lon.toFixed(5)}</span>
                             </div>
                         ) : (
                             <div className="flex items-center justify-between">
@@ -536,13 +445,13 @@ export default function RoutesPage() {
                                 <span className="italic text-xs">No Coordinates</span>
                             </div>
                         )}
-                        {route.Map_Link_Origin && (
+                        {loc.Map_Link && (
                             <div className="flex items-center justify-between">
                                 <span className="font-bold text-xs uppercase tracking-tight">Map Link:</span>
-                                <a 
-                                    href={route.Map_Link_Origin} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
+                                <a
+                                    href={loc.Map_Link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1.5 text-xs text-primary font-black hover:underline uppercase"
                                 >
                                     <Globe size={12} /> Open Maps
@@ -552,15 +461,15 @@ export default function RoutesPage() {
                     </div>
 
                     <div className="flex gap-2 pt-4 border-t border-border/5">
-                      <button 
+                      <button
                         className="flex-1 h-10 bg-muted/50 border border-border/5 rounded-xl text-[10px] font-black uppercase tracking-tight text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all flex items-center justify-center gap-2"
-                        onClick={() => handleOpenDialog(route)}
+                        onClick={() => handleOpenDialog(loc)}
                       >
                         <Edit size={14} /> {t('routes.card.refine')}
                       </button>
-                      <button 
+                      <button
                         className="h-10 w-10 bg-muted/50 border border-border/5 rounded-xl flex items-center justify-center text-rose-800 hover:bg-rose-500 hover:text-foreground transition-all shadow-md"
-                        onClick={() => handleDelete(route.Route_Name)}
+                        onClick={() => handleDelete(loc)}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -568,9 +477,9 @@ export default function RoutesPage() {
                   </div>
                 </div>
               ))}
-              
-              {/* Enhanced Empty State */}
-              {routes.length === 0 && (
+
+              {/* Empty State */}
+              {locations.length === 0 && (
                 <div className="col-span-full text-center py-24 glass-panel rounded-3xl border-dashed border-border/5 group">
                   <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20 group-hover:scale-110 transition-transform duration-1000" />
                   <p className="text-muted-foreground font-black uppercase tracking-wide text-xs">{t('routes.empty')}</p>
@@ -587,4 +496,3 @@ export default function RoutesPage() {
     </DashboardLayout>
   )
 }
-
