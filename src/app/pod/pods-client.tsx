@@ -254,10 +254,11 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: POD
                     </div>
                   </td>
                   <td className="px-6 py-3 text-right">
-                    <Link href={`/admin/jobs/${pod.Job_ID}?from=pod`}>
-                       <button className="p-2 rounded-lg bg-muted/50 hover:bg-primary hover:text-black text-muted-foreground transition-all border border-transparent group/btn">
-                          <ArrowRight size={16} className="transition-transform group-hover/btn:translate-x-1" />
-                       </button>
+                    <Link
+                       href={`/admin/jobs/${pod.Job_ID}?from=pod`}
+                       className="inline-flex p-2 rounded-lg bg-muted/50 hover:bg-primary hover:text-black text-muted-foreground transition-all border border-transparent group/btn"
+                    >
+                       <ArrowRight size={16} className="transition-transform group-hover/btn:translate-x-1" />
                     </Link>
                   </td>
                 </tr>

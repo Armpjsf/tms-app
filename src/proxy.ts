@@ -112,6 +112,7 @@ export async function proxy(request: NextRequest) {
                           pathname.startsWith('/routes') ||
                           pathname.startsWith('/monitoring') ||
                           pathname.startsWith('/pod') ||
+                          pathname.startsWith('/container') ||
                           pathname.startsWith('/sos')
 
       // If we are on a desktop route but it's a mobile device, redirect to mobile app ONLY if it's not an admin route

@@ -20,6 +20,7 @@ import { getContainerJobs, getContainerStats, ContainerJob } from "./actions"
 import { format, differenceInDays, parseISO } from "date-fns"
 import { th } from "date-fns/locale"
 import Link from "next/link"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export default function ContainerDashboard() {
     const { t, language } = useLanguage()
@@ -73,6 +74,7 @@ export default function ContainerDashboard() {
     }
 
     return (
+        <DashboardLayout>
         <div className="p-8 space-y-10 min-h-screen bg-slate-50/50 dark:bg-transparent">
             {/* Header */}
             <div className="flex flex-wrap items-end justify-between gap-6">
@@ -402,5 +404,6 @@ export default function ContainerDashboard() {
                 </Tabs>
             </div>
         </div>
+        </DashboardLayout>
     )
 }
