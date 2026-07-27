@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin, isAdmin } from "@/lib/permissions"
+import { getBranches as _getBranches, getCurrentUserRole as _getCurrentUserRole } from './routes'
 
 // Master_Locations = แหล่งข้อมูลสถานที่หลัก (single source)
 // การเขียนจะถูก sync ไป Master_Routes อัตโนมัติผ่าน DB trigger
@@ -17,8 +18,13 @@ export type Location = {
   Created_At?: string
 }
 
-// re-use branch loader
-export { getBranches, getCurrentUserRole } from './routes'
+// re-use branch loader (wrap: "use server" อนุญาตให้ export เฉพาะ async function)
+export async function getBranches() {
+  return _getBranches()
+}
+export async function getCurrentUserRole() {
+  return _getCurrentUserRole()
+}
 
 // Get all locations (pagination + search + branch isolation)
 export async function getAllLocations(page?: number, limit?: number, query?: string, branchId?: string) {
