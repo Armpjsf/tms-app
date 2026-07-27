@@ -39,6 +39,7 @@ import { Subcontractor } from "@/types/subcontractor"
 import { getFuelPrice, getSuggestedRate, syncDailyFuelPrices } from "@/lib/actions/fuel-actions"
 import { getVehicleTypes, VehicleType as MasterVehicleType } from "@/lib/actions/vehicle-type-actions"
 import { getExpenseTypes, ExpenseType } from "@/lib/supabase/master-data"
+import { FUEL_BASELINES } from "@/lib/constants/fuel-baselines"
 import { JobTimeline } from "./job-timeline"
 
 type LocationPoint = {
@@ -1903,6 +1904,25 @@ export function JobDialog({
                                     )
                                 })()}
                             </div>
+                            {/* 6.2 ประเมินเวลา/ค่าน้ำมัน จากระยะทาง (คร่าวๆ) */}
+                            {(() => {
+                                const km = Number(formData.Est_Distance_KM) || 0
+                                if (km <= 0) return null
+                                const base = FUEL_BASELINES[formData.Vehicle_Type || 'Default'] || FUEL_BASELINES.Default
+                                const kmPerL = (base.minKmPerLiter + base.maxKmPerLiter) / 2
+                                const fuelCost = fuelPrice && fuelPrice > 0 ? Math.round((km / kmPerL) * fuelPrice) : null
+                                const hrs = km / 45 // ความเร็วเฉลี่ยโดยประมาณ 45 กม./ชม.
+                                const h = Math.floor(hrs); const mm = Math.round((hrs - h) * 60)
+                                const timeStr = h > 0 ? `${h} ชม. ${mm} นาที` : `${mm} นาที`
+                                return (
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 text-xs font-bold">⏱️ เวลาโดยประมาณ ~{timeStr}</span>
+                                        {fuelCost != null && (
+                                            <span className="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold">⛽ ค่าน้ำมันประเมิน ~{fuelCost.toLocaleString()} บาท</span>
+                                        )}
+                                    </div>
+                                )
+                            })()}
                         </div>
                         <div className="space-y-4">
                             <Label className="text-amber-500 text-2xl font-black uppercase tracking-normal flex items-center gap-2">
