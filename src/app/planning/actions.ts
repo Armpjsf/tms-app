@@ -152,6 +152,12 @@ export async function createJob(data: JobFormData) {
           }
       }
 
+      // non-blocking: เส้นทางใหม่ที่ยังไม่มีในระบบ → บันทึกเป็น "สถานที่ค้างเติมพิกัด" (แจ้งเตือนแอดมินผ่าน getAdminAlerts)
+      try {
+        const { ensureJobLocations } = await import('@/lib/supabase/locations')
+        await ensureJobLocations([data.Origin_Location, data.Dest_Location], data.Branch_ID ?? null)
+      } catch { /* ignore */ }
+
       revalidatePath('/planning')
 
       return { success: true, message: 'Job created successfully' }
@@ -175,6 +181,11 @@ export async function createJob(data: JobFormData) {
                   try { await notifyMarketplaceNewJob(newId, data.Customer_Name || 'ไม่ระบุ') } catch (e) { console.error(e) }
               }
           }
+
+          try {
+            const { ensureJobLocations } = await import('@/lib/supabase/locations')
+            await ensureJobLocations([data.Origin_Location, data.Dest_Location], data.Branch_ID ?? null)
+          } catch { /* ignore */ }
 
           revalidatePath('/planning')
           revalidatePath('/dashboard')
@@ -718,6 +729,18 @@ export async function createBulkJobs(
      const originsJson = JSON.stringify(locationsToSave)
      autoSaveOriginDestinations(effectiveBranchId, originsJson).catch(() => {})
   }
+
+  // non-blocking: เส้นทางใหม่จากการนำเข้าที่ยังไม่มีในระบบ → บันทึกเป็น "สถานที่ค้างเติมพิกัด"
+  // (ชื่อที่มีอยู่แล้วถูกข้าม; ที่ใหม่ถูก flag Is_Incomplete ให้แอดมินตามเติมผ่าน getAdminAlerts)
+  try {
+    const importNames: string[] = []
+    finalizedData.forEach(j => {
+      if (j.Origin_Location) importNames.push(j.Origin_Location as string)
+      if (j.Dest_Location) importNames.push(j.Dest_Location as string)
+    })
+    const { ensureJobLocations } = await import('@/lib/supabase/locations')
+    await ensureJobLocations(importNames, effectiveBranchId)
+  } catch { /* ignore */ }
 
   // Audit: Log any backdated job entries
   const today = new Date()

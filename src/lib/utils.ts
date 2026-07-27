@@ -34,6 +34,42 @@ export function extractCoordsFromUrl(url: string): { lat: number; lng: number } 
     };
   }
 
+  // !3dLAT!4dLNG (embedded in place URLs)
+  const m3d = url.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  if (m3d) return { lat: parseFloat(m3d[1]), lng: parseFloat(m3d[2]) };
+
+  return null;
+}
+
+/**
+ * ดึง "ข้อความชื่อ/ที่อยู่" จากลิ้ง Google Maps แบบค้นหา (?query=... หรือ ?q=...)
+ * คืน null ถ้า param เป็นพิกัด (lat,lng) หรือไม่มีข้อความ
+ */
+export function extractQueryTextFromUrl(url: string): string | null {
+  if (!url || !url.startsWith("http")) return null;
+  const m = url.match(/[?&](?:query|q)=([^&]+)/);
+  if (!m) return null;
+  let text: string;
+  try { text = decodeURIComponent(m[1].replace(/\+/g, " ")); } catch { text = m[1]; }
+  text = text.trim();
+  if (!text) return null;
+  // ถ้าเป็นพิกัดล้วน (13.75,100.50) ไม่ใช่ชื่อ
+  if (/^-?\d+\.\d+\s*,\s*-?\d+\.\d+$/.test(text)) return null;
+  return text;
+}
+
+/**
+ * สร้างลิ้ง Google Maps (รูปแบบเดียวกับที่ระบบใช้ ?api=1&query=)
+ * ให้พิกัดก่อน (แม่นกว่า) ถ้าไม่มีใช้ชื่อ
+ */
+export function buildGoogleMapLink(opts: { name?: string | null; lat?: number | null; lng?: number | null }): string | null {
+  const { name, lat, lng } = opts;
+  if (lat != null && lng != null && !isNaN(Number(lat)) && !isNaN(Number(lng))) {
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  }
+  if (name && name.trim()) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name.trim())}`;
+  }
   return null;
 }
 

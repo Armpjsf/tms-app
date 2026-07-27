@@ -11,28 +11,28 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string; i
   Pending: { 
     bg: 'bg-amber-500/10', 
     text: 'text-amber-500', 
-    label: 'PENDING_MONITOR', 
+    label: 'รอตรวจสอบ', 
     icon: Clock,
     glow: 'shadow-[0_0_15px_rgba(245,158,11,0.2)]'
   },
   Reviewing: { 
     bg: 'bg-blue-500/10', 
     text: 'text-blue-500', 
-    label: 'ACTIVE_REVIEW', 
+    label: 'กำลังตรวจสอบ', 
     icon: Search,
     glow: 'shadow-[0_0_15px_rgba(59,130,246,0.2)]'
   },
   Resolved: { 
     bg: 'bg-emerald-500/10', 
     text: 'text-emerald-500', 
-    label: 'RESOLVED_OPS', 
+    label: 'แก้ไขแล้ว', 
     icon: CheckCircle2,
     glow: 'shadow-[0_0_15px_rgba(16,185,129,0.2)]'
   },
   Rejected: { 
     bg: 'bg-rose-500/10', 
     text: 'text-rose-500', 
-    label: 'REJECTED_VOID', 
+    label: 'ปฏิเสธ', 
     icon: XCircle,
     glow: 'shadow-[0_0_15px_rgba(244,63,94,0.2)]'
   },
@@ -72,7 +72,7 @@ export default async function DamageReportsPage() {
             <div className="relative z-10 space-y-8">
                 <Link href="/reports" className="inline-flex items-center gap-2 text-muted-foreground hover:text-rose-500 transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-                    Reporting Center
+                    ศูนย์รายงาน
                 </Link>
                 <div className="flex items-center gap-6">
                     <div className="p-4 bg-rose-500/20 rounded-[2.5rem] border-2 border-rose-500/30 shadow-[0_0_40px_rgba(244,63,94,0.3)] text-rose-500 group-hover:scale-110 transition-all duration-500">
@@ -80,9 +80,9 @@ export default async function DamageReportsPage() {
                     </div>
                     <div>
                         <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
-                            Damage Intel
+                            รายงานความเสียหาย
                         </h1>
-                        <p className="text-base font-bold font-black text-rose-500 uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Asset Integrity & Logistical Fault Management</p>
+                        <p className="text-base font-bold font-black text-rose-500 uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">จัดการความเสียหายสินค้าและทรัพย์สิน</p>
                     </div>
                 </div>
             </div>
@@ -90,21 +90,21 @@ export default async function DamageReportsPage() {
             <div className="flex flex-col items-end gap-4 relative z-10">
                 <div className="bg-rose-500/10 border border-rose-500/20 px-8 py-4 rounded-2xl flex items-center gap-4 backdrop-blur-md">
                     <div className="w-3 h-3 rounded-full bg-rose-500 animate-ping shadow-[0_0_15px_rgba(244,63,94,1)]" />
-                    <span className="text-xl font-black text-rose-500 uppercase tracking-widest italic">{pendingCount} CRITICAL INCIDENTS DETECTED</span>
+                    <span className="text-xl font-black text-rose-500 uppercase tracking-widest italic">พบเหตุวิกฤต {pendingCount} รายการ</span>
                 </div>
                 <div className="flex items-center gap-4 bg-muted/50 p-4 rounded-2xl border border-border/10">
                    <ShieldAlert className="text-rose-500" size={18} />
-                   <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">Threat Intelligence: ACTIVE</span>
+                   <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">สถานะเฝ้าระวัง: ทำงาน</span>
                 </div>
             </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {[
-              { label: "Pending Review", value: pendingCount.toString().padStart(2, '0'), icon: Clock, color: "rose" },
-              { label: "Resolved Today", value: "14", icon: ShieldCheck, color: "emerald" },
-              { label: "Damaged Assets", value: "05", icon: Truck, color: "amber" },
-              { label: "Lost Cargo", value: "01", icon: Zap, color: "primary" },
+              { label: "รอตรวจสอบ", value: pendingCount.toString().padStart(2, '0'), icon: Clock, color: "rose" },
+              { label: "แก้ไขวันนี้", value: "14", icon: ShieldCheck, color: "emerald" },
+              { label: "ทรัพย์สินเสียหาย", value: "05", icon: Truck, color: "amber" },
+              { label: "สินค้าสูญหาย", value: "01", icon: Zap, color: "primary" },
             ].map((stat, i) => (
                <PremiumCard key={i} className="p-8 group hover:border-rose-500/40 transition-all duration-500 border-border/5 bg-background/40 backdrop-blur-xl">
                    <div className="flex justify-between items-start mb-4">
@@ -126,15 +126,15 @@ export default async function DamageReportsPage() {
                     <ShieldAlert size={28} />
                 </div>
                 <div>
-                    <h2 className="text-3xl font-black text-foreground tracking-[0.2em] uppercase italic">Incident Registry</h2>
-                    <p className="text-base font-bold font-black text-rose-500/60 uppercase tracking-[0.5em] mt-2 italic italic">Zero-parity fault stream telemetry</p>
+                    <h2 className="text-3xl font-black text-foreground tracking-[0.2em] uppercase italic">ทะเบียนรายงานความเสียหาย</h2>
+                    <p className="text-base font-bold font-black text-rose-500/60 uppercase tracking-[0.5em] mt-2 italic italic">รายการรายงานความเสียหายทั้งหมด</p>
                 </div>
             </div>
 
             <div className="relative z-10 w-full md:w-96 group/search">
               <Search size={22} className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within/search:text-rose-500 transition-colors" />
               <input 
-                placeholder="SCAN_PROTOCOL_OR_ASSET..." 
+                placeholder="ค้นหาเลขงาน หรือ ทะเบียนรถ..." 
                 className="w-full h-18 bg-background border-border/5 rounded-3xl pl-16 pr-8 text-lg font-bold font-black uppercase tracking-[0.2em] focus:border-rose-500/50 transition-all text-foreground placeholder:text-muted-foreground italic shadow-inner"
               />
             </div>
@@ -144,7 +144,7 @@ export default async function DamageReportsPage() {
             {reports.length === 0 ? (
               <div className="p-40 text-center opacity-20">
                 <AlertOctagon size={80} strokeWidth={1} className="mx-auto mb-8 text-rose-500 animate-pulse" />
-                <p className="text-xl font-black text-white uppercase tracking-[0.8em]">All Channels Clear // No Intercepts</p>
+                <p className="text-xl font-black text-white uppercase tracking-[0.8em]">ยังไม่มีรายงานความเสียหาย</p>
               </div>
             ) : (
               reports.map((report) => {
@@ -192,8 +192,8 @@ export default async function DamageReportsPage() {
                                      <User size={18} strokeWidth={2.5} />
                                 </div>
                                 <div className="flex flex-col">
-                                     <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] mb-1">Signal Source</span>
-                                     <span className="text-foreground tracking-widest uppercase italic">{report.Driver_Name || "OP_ALPHA"}</span>
+                                     <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] mb-1">ผู้รายงาน</span>
+                                     <span className="text-foreground tracking-widest uppercase italic">{report.Driver_Name || "ไม่ระบุ"}</span>
                                 </div>
                            </div>
                            <div className="flex items-center gap-5 p-6 bg-muted/50 rounded-3xl border border-border/5 shadow-inner group-hover/row:border-border/10 transition-all">
@@ -201,8 +201,8 @@ export default async function DamageReportsPage() {
                                      <Truck size={18} strokeWidth={2.5} />
                                 </div>
                                 <div className="flex flex-col">
-                                     <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] mb-1">Asset Entity</span>
-                                     <span className="text-foreground tracking-widest uppercase italic font-sans">{report.Vehicle_Plate || "FIELD_UNIT"}</span>
+                                     <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] mb-1">ทะเบียนรถ</span>
+                                     <span className="text-foreground tracking-widest uppercase italic font-sans">{report.Vehicle_Plate || "ไม่ระบุ"}</span>
                                 </div>
                            </div>
                       </div>
@@ -210,23 +210,23 @@ export default async function DamageReportsPage() {
                       <div className="bg-black/40 p-10 rounded-[2.5rem] border border-border/5 shadow-inner relative group/intel">
                            <div className="absolute top-4 right-6 flex items-center gap-3 opacity-20 group-hover/intel:opacity-100 transition-opacity">
                                 <FileText size={14} className="text-rose-500" />
-                                <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.5em]">Intel Narrative</span>
+                                <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.5em]">รายละเอียด</span>
                            </div>
                            <p className="text-foreground transition-colors duration-500">
-                                {report.Description || 'Registry transmission incomplete // No narrative provided.'}
+                                {report.Description || 'ไม่มีรายละเอียดเพิ่มเติม'}
                            </p>
                       </div>
                     </div>
 
                     <div className="lg:w-72 flex flex-col items-center lg:items-end justify-between gap-10 lg:pl-12 lg:border-l border-border/5">
                          <div className="text-right">
-                              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.5em] block mb-2">INCIDENT_TS</span>
+                              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.5em] block mb-2">วันที่เกิดเหตุ</span>
                               <span className="text-foreground tracking-widest uppercase italic bg-rose-500/5 px-6 py-2 rounded-2xl border border-rose-500/10 block w-fit ml-auto">
                                 {new Date(report.Incident_Date).toLocaleDateString('th-TH')}
                               </span>
                          </div>
                          <PremiumButton className="w-full h-18 rounded-3xl gap-4 shadow-[0_20px_50px_rgba(244,63,94,0.3)] group-hover/row:scale-105 transition-all text-xl tracking-widest bg-rose-600 hover:bg-rose-700 border-0">
-                              <Target size={20} /> ANALYZE VECTOR
+                              <Target size={20} /> ดูรายละเอียด
                          </PremiumButton>
                     </div>
                   </div>

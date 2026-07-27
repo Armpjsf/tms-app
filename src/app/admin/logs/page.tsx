@@ -50,19 +50,19 @@ export default async function LogsPage(props: {
   const getActionStyle = (action: string) => {
     switch (action.toUpperCase()) {
       case 'CREATE':
-        return { bg: 'bg-emerald-500/10', text: 'text-emerald-500', border: 'border-emerald-500/20', label: 'CREATE_ops' }
+        return { bg: 'bg-emerald-500/10', text: 'text-emerald-500', border: 'border-emerald-500/20', label: 'สร้าง' }
       case 'UPDATE':
-        return { bg: 'bg-blue-500/10', text: 'text-blue-500', border: 'border-blue-500/20', label: 'SYNC_update' }
+        return { bg: 'bg-blue-500/10', text: 'text-blue-500', border: 'border-blue-500/20', label: 'แก้ไข' }
       case 'DELETE':
-        return { bg: 'bg-rose-500/10', text: 'text-rose-500', border: 'border-rose-500/20', label: 'VOID_deletion' }
+        return { bg: 'bg-rose-500/10', text: 'text-rose-500', border: 'border-rose-500/20', label: 'ลบ' }
       case 'APPROVE':
-        return { bg: 'bg-amber-500/10', text: 'text-amber-500', border: 'border-amber-500/20', label: 'AUTH_approval' }
+        return { bg: 'bg-amber-500/10', text: 'text-amber-500', border: 'border-amber-500/20', label: 'อนุมัติ' }
       case 'EXPORT':
-        return { bg: 'bg-indigo-500/10', text: 'text-indigo-500', border: 'border-indigo-500/20', label: 'EXPORT_stream' }
+        return { bg: 'bg-indigo-500/10', text: 'text-indigo-500', border: 'border-indigo-500/20', label: 'ส่งออก' }
       case 'LOGIN':
-        return { bg: 'bg-slate-500/10', text: 'text-muted-foreground', border: 'border-border/5', label: 'AUTH_uplink' }
+        return { bg: 'bg-slate-500/10', text: 'text-muted-foreground', border: 'border-border/5', label: 'เข้าสู่ระบบ' }
       case 'LOGOUT':
-        return { bg: 'bg-slate-800/20', text: 'text-muted-foreground', border: 'border-border/5', label: 'AUTH_downlink' }
+        return { bg: 'bg-slate-800/20', text: 'text-muted-foreground', border: 'border-border/5', label: 'ออกจากระบบ' }
       default:
         return { bg: 'bg-muted/50', text: 'text-muted-foreground', border: 'border-border/5', label: action }
     }
@@ -70,14 +70,14 @@ export default async function LogsPage(props: {
 
   const getModuleLabel = (module: string) => {
     switch (module) {
-      case 'Jobs': return 'MISSION_VECTOR'
-      case 'Auth': return 'ACCESS_security'
-      case 'Billing': return 'LEDGER_finance'
-      case 'Reports': return 'INTEL_reporting'
-      case 'Fuel': return 'ENERGY_telemetry'
-      case 'Maintenance': return 'ASSET_integrity'
-      case 'Settings': return 'CONFIG_terminal'
-      case 'Users': return 'PERSONNEL_registry'
+      case 'Jobs': return 'งาน'
+      case 'Auth': return 'ยืนยันตัวตน'
+      case 'Billing': return 'วางบิล'
+      case 'Reports': return 'รายงาน'
+      case 'Fuel': return 'น้ำมัน'
+      case 'Maintenance': return 'ซ่อมบำรุง'
+      case 'Settings': return 'ตั้งค่า'
+      case 'Users': return 'ผู้ใช้'
       default: return module.toUpperCase()
     }
   }
@@ -92,15 +92,15 @@ export default async function LogsPage(props: {
               <div className="space-y-6">
                 <LinkNext href="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-                    Command Central
+                    ศูนย์ควบคุม
                 </LinkNext>
                 <div className="flex items-center gap-6">
                     <div className="p-4 bg-muted/50 rounded-[2.5rem] border-2 border-border/10 shadow-[0_0_40px_rgba(255,255,255,0.05)] text-foreground group-hover:scale-110 transition-all duration-500">
                       <Terminal size={40} strokeWidth={2.5} />
                     </div>
                     <div>
-                      <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">Audit Registry</h1>
-                      <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.6em] mt-2 opacity-80 italic">Registry of all logistical & administrative transmissions // SECURE_AUDIT</p>
+                      <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">บันทึกระบบ (Audit Log)</h1>
+                      <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.6em] mt-2 opacity-80 italic">บันทึกการทำงานทั้งหมดในระบบ</p>
                     </div>
                 </div>
               </div>
@@ -108,7 +108,7 @@ export default async function LogsPage(props: {
               <div className="flex flex-col items-end gap-3 self-end lg:self-center relative z-10">
                 <div className="bg-muted/50 border border-border/5 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <Activity className="text-muted-foreground" size={16} />
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Live Audit Feed: ACTIVE</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">บันทึกสด: ทำงาน</span>
                 </div>
               </div>
           </div>
@@ -123,15 +123,15 @@ export default async function LogsPage(props: {
                 <HardDrive size={28} />
               </div>
               <div>
-                <h2 className="text-3xl font-black text-foreground tracking-[0.2em] uppercase italic">System Transmissions</h2>
-                <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.5em] mt-2 italic">100_LATEST_PACKETS_SYNCED</p>
+                <h2 className="text-3xl font-black text-foreground tracking-[0.2em] uppercase italic">บันทึกการทำงานระบบ</h2>
+                <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.5em] mt-2 italic">100 รายการล่าสุด</p>
               </div>
           </div>
 
           <div className="relative z-10 w-full md:w-96 group/search">
             <Search size={22} className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within/search:text-white transition-colors" />
             <input 
-              placeholder="SCAN_OPERATOR_OR_NODE..." 
+              placeholder="ค้นหาผู้ใช้ หรือ สาขา..." 
               className="w-full h-18 bg-background border-border/5 rounded-3xl pl-16 pr-8 text-lg font-bold font-black uppercase tracking-[0.2em] focus:border-border/20 transition-all text-foreground placeholder:text-muted-foreground italic shadow-inner"
             />
           </div>
@@ -141,12 +141,12 @@ export default async function LogsPage(props: {
           <Table>
             <TableHeader>
               <TableRow className="bg-black/40 border-b border-border/5 hover:bg-black/40">
-                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">Temporal Token</TableHead>
-                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">Operator Entity</TableHead>
-                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">Source Node</TableHead>
-                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">Module Logic</TableHead>
-                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">Transmission Type</TableHead>
-                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">Intel Narrative</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">เวลา</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">ผู้ใช้งาน</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">สาขา</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">โมดูล</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">การกระทำ</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">รายละเอียด</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-white/[0.02]">
@@ -154,7 +154,7 @@ export default async function LogsPage(props: {
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={6} className="p-40 text-center opacity-20">
                     <ShieldCheck size={80} strokeWidth={1} className="mx-auto mb-8 text-muted-foreground animate-pulse" />
-                    <p className="text-xl font-black text-white uppercase tracking-[0.8em]">Registry Quiescent // No Packets Detected</p>
+                    <p className="text-xl font-black text-white uppercase tracking-[0.8em]">ยังไม่มีบันทึก</p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -187,7 +187,7 @@ export default async function LogsPage(props: {
                       </TableCell>
                       <TableCell className="p-10">
                         <div className="px-4 py-1.5 bg-muted/50 rounded-xl border border-border/5 text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic w-fit">
-                          {log.branch_id || 'GLOBAL_ROOT'}
+                          {log.branch_id || 'ส่วนกลาง'}
                         </div>
                       </TableCell>
                       <TableCell className="p-10 font-black text-emerald-500 text-base font-bold uppercase tracking-widest italic">{getModuleLabel(log.module)}</TableCell>
@@ -220,14 +220,14 @@ export default async function LogsPage(props: {
               <Cpu size={32} />
           </div>
           <div className="space-y-4 text-center md:text-left flex-1">
-              <p className="text-xl font-black text-white italic uppercase tracking-widest">REGISTRY_INTEGRITY_ADVISORY</p>
+              <p className="text-xl font-black text-white italic uppercase tracking-widest">หมายเหตุความปลอดภัยของบันทึก</p>
               <p className="text-xl font-bold text-muted-foreground leading-relaxed uppercase tracking-wider italic">
-                  Audit streams are persistent and immutable. All field operations are logged with zero-latency synchronization. <br />
-                  Strategic deletions or unauthorized access attempts are flagged for immediate counter-intelligence review.
+                  บันทึกทั้งหมดถูกเก็บถาวรและแก้ไขไม่ได้ ทุกการทำงานถูกบันทึกแบบเรียลไทม์ <br />
+                  การลบข้อมูลหรือการเข้าถึงที่ไม่ได้รับอนุญาตจะถูกตรวจจับและแจ้งเตือนทันที
               </p>
           </div>
           <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground font-bold tracking-[0.3em] ml-auto italic">
-              <Target size={18} /> FULL_SYNC_REGISTRY
+              <Target size={18} /> ซิงค์ทั้งหมด
           </PremiumButton>
       </div>
     </div>

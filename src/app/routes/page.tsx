@@ -42,8 +42,8 @@ import {
   getBranches,
   Location,
 } from "@/lib/supabase/locations"
-import { extractCoordsFromUrl } from "@/lib/utils"
-import { geocodeAddress } from "@/lib/ai/geocoding"
+import { extractCoordsFromUrl, extractQueryTextFromUrl, buildGoogleMapLink } from "@/lib/utils"
+import { geocodeAddress, reverseGeocode } from "@/lib/ai/geocoding"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { ExcelExport } from "@/components/ui/excel-export"
 import { useBranch } from "@/components/providers/branch-provider"
@@ -129,9 +129,85 @@ export default function RoutesPage() {
     setIsDialogOpen(true)
   }
 
+  // เติมข้อมูลอัตโนมัติแบบ 2 ทาง: ใส่อะไรมาก็เติมที่เหลือให้ครบ (ชื่อ ↔ ลิงก์ ↔ พิกัด)
+  const handleSmartFill = async () => {
+    const name = (formData.Name || '').trim()
+    const link = (formData.Map_Link || '').trim()
+    const hasCoord = formData.Lat != null && formData.Lon != null
+    if (!name && !link && !hasCoord) {
+      toast.warning("กรอกชื่อ หรือวางลิงก์ Google Map ก่อน")
+      return
+    }
+    setLoading(true)
+    try {
+      let lat: number | null = formData.Lat ?? null
+      let lon: number | null = formData.Lon ?? null
+      let newName = name
+      let newLink = link
+
+      // 1) มีลิงก์ → ดึงพิกัด + ชื่อจากลิงก์
+      if (link) {
+        const c = extractCoordsFromUrl(link)
+        if (c) { lat = c.lat; lon = c.lng }
+        if (!newName) {
+          const qText = extractQueryTextFromUrl(link)
+          if (qText) newName = qText
+          else if (c) { const rn = await reverseGeocode(c.lat, c.lng); if (rn) newName = rn }
+        }
+        // ลิงก์ไม่มีพิกัดฝัง แต่มีข้อความ → geocode ข้อความ
+        if (lat == null || lon == null) {
+          const q = extractQueryTextFromUrl(link) || newName
+          if (q) { const g = await geocodeAddress(q); if (g) { lat = g.lat; lon = g.lng } }
+        }
+      }
+      // 2) ยังไม่มีพิกัด แต่มีชื่อ → geocode ชื่อ
+      if ((lat == null || lon == null) && newName) {
+        const g = await geocodeAddress(newName)
+        if (g) { lat = g.lat; lon = g.lng }
+      }
+      // 3) มีพิกัดแต่ยังไม่มีชื่อ → reverse geocode
+      if (!newName && lat != null && lon != null) {
+        const rn = await reverseGeocode(lat, lon); if (rn) newName = rn
+      }
+      // 4) ยังไม่มีลิงก์ → สร้างจากพิกัด/ชื่อ
+      if (!newLink) {
+        const bl = buildGoogleMapLink({ name: newName, lat, lng: lon })
+        if (bl) newLink = bl
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        Name: newName || prev.Name,
+        Lat: lat,
+        Lon: lon,
+        Map_Link: newLink || prev.Map_Link,
+      }))
+
+      const filled: string[] = []
+      if (lat != null && !hasCoord) filled.push('พิกัด')
+      if (newName && !name) filled.push('ชื่อ')
+      if (newLink && !link) filled.push('ลิงก์')
+      if (filled.length) toast.success('เติม ' + filled.join(' + ') + ' สำเร็จ')
+      else if (lat == null) toast.info('ไม่พบพิกัดอัตโนมัติ — กรอกเองได้')
+      else toast.success('ข้อมูลครบแล้ว')
+    } catch {
+      toast.error('เกิดข้อผิดพลาดในการค้นหา')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSave = async () => {
     if (!formData.Name || !formData.Name.trim()) {
       toast.warning(t('routes.toasts.name_required'))
+      return
+    }
+    // บังคับให้ครบ: พิกัด + ลิงก์แผนที่ (กดปุ่มค้นหาเพื่อเติมอัตโนมัติได้)
+    const missing: string[] = []
+    if (formData.Lat == null || formData.Lon == null) missing.push('พิกัด (Lat/Lon)')
+    if (!formData.Map_Link || !formData.Map_Link.trim()) missing.push('ลิงก์แผนที่')
+    if (missing.length) {
+      toast.warning('กรุณากรอกให้ครบ: ' + missing.join(', ') + ' — กดปุ่ม "ค้นหา/เติมอัตโนมัติ" ช่วยได้')
       return
     }
     setSaving(true)
@@ -333,30 +409,10 @@ export default function RoutesPage() {
                     <div className="space-y-3 col-span-1 md:col-span-1 flex flex-col justify-end">
                         <PremiumButton
                             type="button"
-                            onClick={async () => {
-                                if (!formData.Name) {
-                                    toast.warning("โปรดกรอกชื่อสถานที่ก่อนค้นหาพิกัด")
-                                    return
-                                }
-                                setLoading(true)
-                                try {
-                                    const res = await geocodeAddress(formData.Name)
-                                    if (res) {
-                                        updateForm("Lat", res.lat)
-                                        updateForm("Lon", res.lng)
-                                        toast.success("ค้นหาพิกัดตามชื่อสำเร็จ")
-                                    } else {
-                                        toast.info("ไม่พบพิกัดสำหรับสถานที่นี้")
-                                    }
-                                } catch {
-                                    toast.error("เกิดข้อผิดพลาดในการค้นหาพิกัด")
-                                } finally {
-                                    setLoading(false)
-                                }
-                            }}
+                            onClick={handleSmartFill}
                             className="w-full h-12 bg-primary/20 text-primary border border-primary/30 rounded-xl font-bold uppercase text-xs"
                         >
-                            <Search className="w-4 h-4 mr-2" /> ค้นหาพิกัด
+                            <Search className="w-4 h-4 mr-2" /> ค้นหา/เติมอัตโนมัติ
                         </PremiumButton>
                     </div>
                     <div className="space-y-3">
@@ -421,6 +477,9 @@ export default function RoutesPage() {
                           <h3 className="text-lg font-black text-foreground tracking-tighter group-hover:text-primary transition-colors line-clamp-1 duration-500 uppercase italic font-display">{loc.Name}</h3>
                           <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-muted-foreground font-black text-[9px] uppercase tracking-tight italic">{loc.Branch_ID || "HQ-CENTER"}</span>
+                              {loc.Is_Incomplete && (
+                                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-500 border border-amber-500/30 text-[9px] font-black uppercase tracking-tight">ค้างเติมพิกัด</span>
+                              )}
                           </div>
                         </div>
                       </div>

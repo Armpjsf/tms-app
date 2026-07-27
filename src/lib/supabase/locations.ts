@@ -15,6 +15,7 @@ export type Location = {
   Map_Link: string | null
   Address?: string | null
   Branch_ID: string | null
+  Is_Incomplete?: boolean
   Created_At?: string
 }
 
@@ -217,6 +218,38 @@ export async function createBulkLocations(rows: Record<string, unknown>[]) {
     return { success: true, message: `นำเข้าสำเร็จ ${list.length} สถานที่` }
   } catch (e: unknown) {
     return { success: false, message: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+// สร้าง Master_Locations แบบ "ค้างเติมพิกัด" ให้ชื่อสถานที่ที่ยังไม่มีในระบบ
+// ใช้ตอนสร้างงาน/นำเข้างานเส้นทางใหม่เร่งด่วน — อนุโลมให้ผ่าน แล้ว flag ไว้ให้แอดมินตามเติม
+// non-blocking: จับ error ภายใน ไม่ throw ออกไปกระทบการสร้างงาน
+// คืนรายชื่อที่เพิ่งสร้างใหม่ (incomplete)
+export async function ensureJobLocations(
+  names: (string | null | undefined)[],
+  branchId: string | null
+): Promise<string[]> {
+  try {
+    const supabase = createAdminClient()
+    const clean = Array.from(new Set(names.map(n => (n || '').trim()).filter(Boolean)))
+    if (clean.length === 0) return []
+
+    const { data: existing } = await supabase.from('Master_Locations').select('Name')
+    const existLower = (existing || []).map((l: { Name: string | null }) => (l.Name || '').trim().toLowerCase())
+
+    const created: string[] = []
+    for (const name of clean) {
+      const lower = name.toLowerCase()
+      // มีชื่อตรงอยู่แล้ว (ไม่สนสาขา เพื่อเลี่ยง unique conflict + ใช้ข้อมูลเดิมได้)
+      if (existLower.includes(lower)) continue
+      const { error } = await supabase
+        .from('Master_Locations')
+        .insert({ Name: name, Branch_ID: branchId || 'HQ' })
+      if (!error) { created.push(name); existLower.push(lower) }
+    }
+    return created
+  } catch {
+    return []
   }
 }
 

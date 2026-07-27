@@ -141,3 +141,24 @@ export async function geocodeAddress(address: string, context?: string): Promise
   return null;
 }
 
+
+/**
+ * Reverse geocode: พิกัด → ชื่อสถานที่/ที่อยู่ (Nominatim, best-effort)
+ * ใช้เติมชื่อให้อัตโนมัติเมื่อผู้ใช้วางลิ้งที่มีพิกัดฝัง
+ */
+export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  if (lat == null || lng == null || isNaN(Number(lat)) || isNaN(Number(lng))) return null;
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=th`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'TMS-Logistics-Platform-v2 (contact@logispro-epod.app)' }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    // เลือกชื่อที่สั้น/เจาะจงสุดที่มี: name → ชื่อสถานที่, ไม่งั้น display_name
+    const name = (data?.name && String(data.name).trim()) || (data?.display_name && String(data.display_name).trim()) || null;
+    return name || null;
+  } catch {
+    return null;
+  }
+}
