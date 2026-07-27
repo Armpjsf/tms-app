@@ -3,32 +3,29 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logActivity } from "@/lib/supabase/logs";
 import { revalidatePath } from "next/cache";
+import { isCompleted } from "@/lib/constants/job-status";
 
-export type JobStatus = 
-  | 'Draft' 
-  | 'Requested' 
-  | 'New' 
-  | 'Pending'
-  | 'Assigned' 
+// ชุดสถานะที่ใช้งานจริง (operational) — ตัด alias ที่ไม่เคยถูกเขียน/ไม่มีในข้อมูลออก
+// (เดิมมี Pending, En Route, En-Route, Arrived เดี่ยว, Complete, Failed ที่ไม่ถูกใช้จริง)
+export type JobStatus =
+  | 'Draft'
+  | 'Requested'
+  | 'New'
+  | 'Assigned'
   | 'Confirmed'
   | 'Accepted'
-  | 'Picked Up' 
-  | 'En Route'
-  | 'En-Route'
-  | 'In Transit' 
+  | 'Picked Up'
+  | 'In Transit'
   | 'In Progress'
-  | 'Arrived'
   | 'Arrived Pickup'
   | 'Arrived Dropoff'
-  | 'Completed' 
-  | 'Complete'
+  | 'Completed'
   | 'Delivered'
-  | 'Verified' 
-  | 'Rejected' 
-  | 'Billed' 
-  | 'Paid' 
+  | 'Verified'
+  | 'Rejected'
+  | 'Billed'
+  | 'Paid'
   | 'Cancelled'
-  | 'Failed'
   | 'SOS';
 
 /**
@@ -38,28 +35,22 @@ export type JobStatus =
 const ALLOWED_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
   'Draft': ['New', 'Assigned', 'Cancelled', 'Verified'],
   'Requested': ['New', 'Assigned', 'Cancelled', 'Verified'],
-  'New': ['Pending', 'Assigned', 'Confirmed', 'Accepted', 'Picked Up', 'In Transit', 'In Progress', 'Completed', 'Cancelled', 'SOS', 'Verified'],
-  'Pending': ['New', 'Assigned', 'Confirmed', 'Accepted', 'Picked Up', 'In Transit', 'In Progress', 'Completed', 'Cancelled', 'SOS', 'Verified'],
+  'New': ['Assigned', 'Confirmed', 'Accepted', 'Picked Up', 'In Transit', 'In Progress', 'Completed', 'Cancelled', 'SOS', 'Verified'],
   'Assigned': ['Accepted', 'Picked Up', 'In Transit', 'In Progress', 'Completed', 'New', 'Cancelled', 'SOS', 'Verified'],
   'Confirmed': ['Assigned', 'Accepted', 'Picked Up', 'In Transit', 'In Progress', 'Completed', 'Cancelled', 'SOS', 'Verified'],
-  'Accepted': ['Arrived Pickup', 'Arrived', 'In Transit', 'In Progress', 'Completed', 'Cancelled', 'SOS', 'Verified'],
-  'Picked Up': ['In Transit', 'In Progress', 'Arrived', 'Arrived Dropoff', 'Completed', 'Delivered', 'Cancelled', 'SOS', 'Verified'],
-  'En Route': ['Picked Up', 'In Transit', 'In Progress', 'Completed', 'Cancelled', 'SOS', 'Verified'],
-  'En-Route': ['Picked Up', 'In Transit', 'In Progress', 'Completed', 'Cancelled', 'SOS', 'Verified'],
-  'In Transit': ['Arrived', 'Arrived Pickup', 'Arrived Dropoff', 'In Progress', 'Completed', 'Delivered', 'Cancelled', 'SOS', 'Verified'],
-  'In Progress': ['Arrived', 'Completed', 'Delivered', 'Cancelled', 'SOS', 'Verified'],
-  'Arrived': ['In Transit', 'Completed', 'Delivered', 'Cancelled', 'SOS', 'Verified'],
+  'Accepted': ['Arrived Pickup', 'In Transit', 'In Progress', 'Completed', 'Cancelled', 'SOS', 'Verified'],
+  'Picked Up': ['In Transit', 'In Progress', 'Arrived Dropoff', 'Completed', 'Delivered', 'Cancelled', 'SOS', 'Verified'],
+  'In Transit': ['Arrived Pickup', 'Arrived Dropoff', 'In Progress', 'Completed', 'Delivered', 'Cancelled', 'SOS', 'Verified'],
+  'In Progress': ['Arrived Dropoff', 'Completed', 'Delivered', 'Cancelled', 'SOS', 'Verified'],
   'Arrived Pickup': ['Picked Up', 'In Transit', 'Completed', 'Cancelled', 'SOS', 'Verified'],
   'Arrived Dropoff': ['In Transit', 'Completed', 'Delivered', 'Cancelled', 'SOS', 'Verified'],
   'Completed': ['Verified', 'Rejected', 'Billed', 'Cancelled'],
-  'Complete': ['Verified', 'Rejected', 'Billed', 'Cancelled'],
   'Delivered': ['Verified', 'Rejected', 'Billed', 'Cancelled'],
   'Verified': ['Billed', 'Paid', 'Cancelled', 'Completed', 'Delivered', 'Rejected'],
   'Rejected': ['Completed', 'Delivered', 'Cancelled'], // Can go back if driver re-uploads or admin fixes
   'Billed': ['Paid', 'Cancelled', 'Verified', 'Completed', 'Delivered', 'Rejected'],
   'Paid': [], // Final state
   'Cancelled': [], // Final state
-  'Failed': ['Cancelled'],
   'SOS': ['In Transit', 'In Progress', 'Completed', 'Cancelled']
 };
 
@@ -138,7 +129,7 @@ export async function transitionJobStatus(
             }
 
             // Guard: Cannot close delivery without proof (unless explicitly allowed)
-            if (['Completed', 'Complete', 'Delivered'].includes(nextStatus)) {
+            if (isCompleted(nextStatus)) {
                 if (!fullJob.Photo_Proof_Url && !fullJob.Signature_Url) {
                     return { success: false, message: "Missing POD proof (Photo or Signature)" };
                 }
@@ -166,7 +157,7 @@ export async function transitionJobStatus(
     }
  
     // Trigger LINE notification if job is completed or delivered
-    if (['Completed', 'Complete', 'Delivered'].includes(nextStatus)) {
+    if (isCompleted(nextStatus)) {
       sendDeliveryCompletionNotification(jobId).catch(err => {
         console.error('[JobStatusMachine] Notification trigger failed:', err);
       });
