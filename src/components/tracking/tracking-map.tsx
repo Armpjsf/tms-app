@@ -54,10 +54,16 @@ export function TrackingMap({ lastLocation, driverName, status, pickup, dropoff,
   const centerLat = lastLocation?.lat ?? dropoff?.lat ?? pickup?.lat ?? defaultCenter[0]
   const centerLng = lastLocation?.lng ?? dropoff?.lng ?? pickup?.lng ?? defaultCenter[1]
 
-  if (!lastLocation) {
+  // งานที่เสร็จแล้ว/ไม่มี GPS สด lastLocation อาจเป็น object ที่ lat/lng = null
+  // → ต้องเข้า fallback path (ไม่งั้นส่ง [null,null] ให้ Leaflet แล้ว crash)
+  const hasLiveLocation = !!lastLocation
+    && lastLocation.lat != null && lastLocation.lng != null
+    && Number.isFinite(Number(lastLocation.lat)) && Number.isFinite(Number(lastLocation.lng))
+
+  if (!hasLiveLocation) {
     return (
         <div className="relative h-full w-full">
-            <LeafletMap 
+            <LeafletMap
                 center={[centerLat, centerLng]}
                 zoom={12}
                 jobMissions={jobMissions}
@@ -78,19 +84,20 @@ export function TrackingMap({ lastLocation, driverName, status, pickup, dropoff,
     )
   }
 
+  const loc = lastLocation!
   return (
-    <LeafletMap 
-        center={[lastLocation.lat, lastLocation.lng]}
+    <LeafletMap
+        center={[loc.lat, loc.lng]}
         zoom={15}
-        focusPosition={[lastLocation.lat, lastLocation.lng]}
+        focusPosition={[loc.lat, loc.lng]}
         jobMissions={jobMissions}
         drivers={[{
             id: driverName,
             name: driverName,
-            lat: lastLocation.lat,
-            lng: lastLocation.lng,
+            lat: loc.lat,
+            lng: loc.lng,
             status: status,
-            lastUpdate: new Date(lastLocation.timestamp).toLocaleTimeString('th-TH'),
+            lastUpdate: loc.timestamp ? new Date(loc.timestamp).toLocaleTimeString('th-TH') : '',
             vehiclePlate: vehiclePlate || "N/A"
         }]}
     />
