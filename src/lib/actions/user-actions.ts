@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import { getSession } from "@/lib/session"
-import argon2 from "argon2"
+import { hashPassword } from "@/lib/password"
 import { logActivity } from "@/lib/supabase/logs"
 
 import { StandardRole } from "@/types/role"
@@ -93,7 +93,7 @@ export async function createUser(user: UserData) {
         return { success: false, error: "คุณไม่มีสิทธิ์สร้างผู้ใช้งานระดับ Super Admin" }
     }
 
-    const hashedPassword = await argon2.hash(user.Password || "123456")
+    const hashedPassword = await hashPassword(user.Password || "123456")
 
     const roleId = ROLE_MAP[user.Role] || 5 // Default to Staff
 
@@ -156,7 +156,7 @@ export async function updateUser(username: string, updates: Partial<UserData>) {
     }
 
     if (updates.Password) {
-        updatePayload.Password = await argon2.hash(updates.Password)
+        updatePayload.Password = await hashPassword(updates.Password)
         
         // Log password change for security
         await logActivity({
@@ -297,7 +297,7 @@ export async function createBulkUsers(users: Record<string, unknown>[]) {
     // Hash passwords efficiently
     const hashedData = await Promise.all(uniqueData.map(async (u) => ({
         Username: u.Username,
-        Password: await argon2.hash(String(u.Password)),
+        Password: await hashPassword(String(u.Password)),
         Name: u.Name,
         Branch_ID: u.Branch_ID || 'HQ', 
         Role: u.Role,

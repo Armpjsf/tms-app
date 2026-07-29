@@ -37,6 +37,7 @@ import {
   Siren,
   Container,
   ClipboardList,
+  Bot,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
@@ -107,6 +108,7 @@ const navigation: NavGroup[] = [
     titleFallback: { th: "รายงานและวิเคราะห์", en: "Reports & Analytics" },
     items: [
       { titleKey: "navigation.analytics", href: "/admin/analytics", icon: <BarChart3 size={20} />, badgeColor: "blue" },
+      { titleKey: "navigation.ai", href: "/ai", icon: <Bot size={20} />, badge: "common.new", badgeColor: "green" },
       { titleKey: "navigation.reports", href: "/reports", icon: <BarChart3 size={20} /> },
     ],
   },

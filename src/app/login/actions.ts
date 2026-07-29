@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { createAdminClient } from '@/utils/supabase/server'
-import argon2 from 'argon2'
+import { hashPassword, verifyPassword, isHashed } from '@/lib/password'
 import { createSession, deleteSession, getSession } from '@/lib/session'
 import { logActivity } from '@/lib/supabase/logs'
 import { headers, cookies } from 'next/headers'
@@ -39,24 +39,21 @@ export async function login(prevState: LoginFormState | undefined, formData: For
     const dbPassword = users.Password || ""
 
     try {
-      if (dbPassword.startsWith('$argon2')) {
-         isValid = await argon2.verify(dbPassword, data.password)
-      } else {
-         // Plain-text password fallback
-         isValid = data.password === dbPassword
-         
-         // Auto-migrate to Argon2
-         if (isValid && data.password) {
-           const hashedPassword = await argon2.hash(data.password)
-           await supabase
-             .from('Master_Users')
-             .update({ Password: hashedPassword })
-             .eq('Username', users.Username)
-         }
+      isValid = await verifyPassword(dbPassword, data.password)
+
+      // Auto-migrate plain-text passwords to Argon2 on first successful login
+      if (isValid && data.password && !isHashed(dbPassword)) {
+        const hashedPassword = await hashPassword(data.password)
+        await supabase
+          .from('Master_Users')
+          .update({ Password: hashedPassword })
+          .eq('Username', users.Username)
       }
     } catch (err) {
+      // A thrown error here means the hashing runtime failed — NOT a wrong
+      // password. Surface it distinctly so users aren't told "รหัสผิด" wrongly.
       console.error(`[AUTH] Password Verification Error:`, err)
-      isValid = false
+      return { error: 'ระบบตรวจสอบรหัสผ่านขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง' }
     }
 
     if (!isValid) {

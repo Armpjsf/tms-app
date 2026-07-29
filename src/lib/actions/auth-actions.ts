@@ -3,7 +3,7 @@
 import { createAdminClient } from "@/utils/supabase/server"
 import { getSession } from "@/lib/session"
 import { redirect } from "next/navigation"
-import argon2 from "argon2"
+import { hashPassword, verifyPassword, isHashed } from "@/lib/password"
 
 import { getDriverSession } from "@/lib/auth-utils"
 export { getDriverSession }
@@ -99,25 +99,22 @@ export async function loginDriver(formData: FormData) {
   const dbPassword = driver.Password || ""
 
   try {
-    if (dbPassword.startsWith("$argon2")) {
-      // Hashed password check
-      isValid = await argon2.verify(dbPassword, password)
-    }
+    // Hashed / plain-text password check
+    isValid = await verifyPassword(dbPassword, password)
 
-    // Fallback plain-text checks if Argon2 failed or dbPassword is plain text
+    // Fallback plain-text checks if primary check failed
     if (!isValid) {
       const cleanPhone = (driver.Mobile_No || "").replace(/\D/g, "")
       const driverIdStr = String(driver.Driver_ID || "").trim()
 
       isValid = (
-        password === dbPassword ||
         password === "123456" ||
         (cleanPhone.length > 0 && password === cleanPhone) ||
         (driverIdStr.length > 0 && password === driverIdStr)
       )
 
-      if (isValid && !dbPassword.startsWith("$argon2")) {
-        const hashedPassword = await argon2.hash(password)
+      if (isValid && !isHashed(dbPassword)) {
+        const hashedPassword = await hashPassword(password)
         await supabase
           .from("Master_Drivers")
           .update({ Password: hashedPassword })
@@ -125,8 +122,9 @@ export async function loginDriver(formData: FormData) {
       }
     }
   } catch (error) {
+    // Runtime failure (not a wrong password) — surface distinctly
     console.error("Driver Auth Error:", error)
-    isValid = false
+    return { error: "ระบบตรวจสอบรหัสผ่านขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง" }
   }
 
   if (!isValid) {
