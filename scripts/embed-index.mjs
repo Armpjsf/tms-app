@@ -91,8 +91,19 @@ function locationContent(l) {
 }
 
 async function indexRows(rows, sourceType, idKey, branchKey, contentFn) {
+    // Skip rows already fully embedded (both spaces) so re-runs only fill gaps
+    // — avoids re-hitting the Gemini rate limit on every full pass.
+    const { data: done } = await supabase
+        .from('ai_embeddings')
+        .select('source_id')
+        .eq('source_type', sourceType)
+        .not('embedding_gemini', 'is', null)
+        .not('embedding_nomic', 'is', null)
+    const doneSet = new Set((done ?? []).map(d => String(d.source_id)))
+
     let ok = 0, skip = 0
     for (const row of rows) {
+        if (doneSet.has(String(row[idKey]))) { skip++; continue }
         const content = contentFn(row)
         if (!content || content.length < 5) { skip++; continue }
         const [g, n] = await Promise.all([embedGemini(content), embedNomic(content)])
