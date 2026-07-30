@@ -47,11 +47,6 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
     setTimeout(() => setOpen(true), 100) 
   }
 
-  // Display a shortened version of the UUID for better UI
-  const displayId = job.Job_ID.length > 15 
-    ? `${job.Job_ID.substring(0, 8)}...` 
-    : job.Job_ID;
-
   // Localize Status
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -83,8 +78,8 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors">
                     <Package size={14} className="text-primary" />
                 </div>
-                <p className="text-primary font-semibold text-sm truncate max-w-[160px]">
-                    {displayId}
+                <p className="text-primary font-semibold text-sm break-all">
+                    {job.Job_ID}
                 </p>
             </div>
             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>

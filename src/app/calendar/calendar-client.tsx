@@ -342,7 +342,7 @@ export function CalendarClient({
                                  <div className={cn("w-2 h-2 rounded-full", STATUS_COLORS[job.Job_Status] || "bg-muted-foreground")} />
                                  <span className="text-foreground">{STATUS_LABELS[job.Job_Status] || job.Job_Status}</span>
                                </div>
-                               <span className="text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors">{job.Job_ID.slice(-8)}</span>
+                               <span className="text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors">{job.Job_ID}</span>
                             </div>
 
                             <h4 className="text-lg font-semibold text-foreground mb-6 truncate leading-tight">

@@ -218,7 +218,7 @@ export default function ContainerDashboard() {
                                                 </td>
                                                 <td className="px-8 py-6">
                                                     <div className="space-y-1.5">
-                                                        <p className="text-sm font-black text-primary italic uppercase tracking-tight">#{job.Job_ID.slice(-8)}</p>
+                                                        <p className="text-sm font-black text-primary italic uppercase tracking-tight">#{job.Job_ID}</p>
                                                         <p className="text-base font-bold line-clamp-1">{job.Customer_Name}</p>
                                                         <div className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
                                                             <Ship size={12} /> {job.container?.shipping_line || '-'}
@@ -315,7 +315,7 @@ export default function ContainerDashboard() {
                                             </td>
                                             <td className="px-8 py-6">
                                                 <div>
-                                                    <p className="text-sm font-black text-primary italic">#{job.Job_ID.slice(-8)}</p>
+                                                    <p className="text-sm font-black text-primary italic">#{job.Job_ID}</p>
                                                     <p className="text-xs text-muted-foreground line-clamp-1 font-bold">{job.Customer_Name}</p>
                                                 </div>
                                             </td>

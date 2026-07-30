@@ -227,7 +227,7 @@ export const PaymentVoucher = ({
                                     <tr className="group transition-colors hover:bg-slate-50/50">
                                         <td className="py-6 px-8 font-black text-muted-foreground group-hover:text-primary transition-colors align-top">{index + 1}</td>
                                         <td className="py-6 px-8 align-top">
-                                            <div className="font-black text-foreground uppercase tracking-tight text-xl">ID: {item.Job_ID.slice(-8)}</div>
+                                            <div className="font-black text-foreground uppercase tracking-tight text-xl">ID: {item.Job_ID}</div>
                                             <div className="text-base font-bold text-muted-foreground font-bold mt-1 uppercase tracking-widest flex items-center gap-2">
                                                 <MapPin className="w-2.5 h-3 text-muted-foreground" />
                                                 {item.Route_Name || t('billing_driver.standard_route')}

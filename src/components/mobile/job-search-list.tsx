@@ -78,7 +78,7 @@ export function MobileJobSearchList({ jobs }: { jobs: MobileJobListItem[] }) {
               {/* Customer */}
               <div className="space-y-1">
                 <h3 className="text-xl font-bold text-foreground leading-tight">{job.Customer_Name}</h3>
-                <p className="text-xs font-medium text-muted-foreground">#{job.Job_ID.slice(-8).toUpperCase()}</p>
+                <p className="text-xs font-medium text-muted-foreground">#{job.Job_ID.toUpperCase()}</p>
               </div>
 
               {/* Route */}

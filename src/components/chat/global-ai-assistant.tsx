@@ -6,6 +6,76 @@ import { Bot, X, Send, Loader2, Minimize2, Maximize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { Fragment, type ReactNode } from "react"
+
+// ── Lightweight markdown renderer (no dependency) ──────────────────
+// Handles: **bold**, *italic*/_italic_, `code`, - / * bullets, 1. numbered
+// lists, ### headings, and line breaks. Good enough for AI chat replies.
+function renderInline(text: string, keyPrefix: string): ReactNode[] {
+    const nodes: ReactNode[] = []
+    // Split on bold, italic, and inline code while keeping delimiters
+    const regex = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_)/g
+    const parts = text.split(regex)
+    parts.forEach((part, i) => {
+        const key = `${keyPrefix}-${i}`
+        if (/^\*\*[^*]+\*\*$/.test(part)) {
+            nodes.push(<strong key={key} className="font-bold">{part.slice(2, -2)}</strong>)
+        } else if (/^`[^`]+`$/.test(part)) {
+            nodes.push(<code key={key} className="px-1.5 py-0.5 rounded bg-muted/60 text-[0.9em] font-mono">{part.slice(1, -1)}</code>)
+        } else if (/^\*[^*]+\*$/.test(part) || /^_[^_]+_$/.test(part)) {
+            nodes.push(<em key={key} className="italic">{part.slice(1, -1)}</em>)
+        } else if (part) {
+            nodes.push(<Fragment key={key}>{part}</Fragment>)
+        }
+    })
+    return nodes
+}
+
+function MarkdownLite({ text }: { text: string }) {
+    const lines = text.split('\n')
+    const blocks: ReactNode[] = []
+    let list: { ordered: boolean; items: string[] } | null = null
+
+    const flushList = (key: string) => {
+        if (!list) return
+        const items = list.items.map((it, i) => (
+            <li key={`${key}-li-${i}`} className="ml-1">{renderInline(it, `${key}-li-${i}`)}</li>
+        ))
+        blocks.push(list.ordered
+            ? <ol key={key} className="list-decimal pl-5 space-y-1 my-1">{items}</ol>
+            : <ul key={key} className="list-disc pl-5 space-y-1 my-1">{items}</ul>)
+        list = null
+    }
+
+    lines.forEach((raw, idx) => {
+        const line = raw.trimEnd()
+        const key = `blk-${idx}`
+        const bullet = line.match(/^\s*[-*]\s+(.*)$/)
+        const numbered = line.match(/^\s*\d+\.\s+(.*)$/)
+        const heading = line.match(/^\s*(#{1,3})\s+(.*)$/)
+
+        if (bullet) {
+            if (!list || list.ordered) flushList(`${key}-pre`)
+            list = list && !list.ordered ? list : { ordered: false, items: [] }
+            list.items.push(bullet[1])
+        } else if (numbered) {
+            if (!list || !list.ordered) flushList(`${key}-pre`)
+            list = list && list.ordered ? list : { ordered: true, items: [] }
+            list.items.push(numbered[1])
+        } else if (heading) {
+            flushList(`${key}-pre`)
+            blocks.push(<div key={key} className="font-bold text-[1.05em] mt-2 mb-1">{renderInline(heading[2], key)}</div>)
+        } else if (line.trim() === '') {
+            flushList(`${key}-pre`)
+        } else {
+            flushList(`${key}-pre`)
+            blocks.push(<p key={key} className="leading-relaxed">{renderInline(line, key)}</p>)
+        }
+    })
+    flushList('blk-final')
+
+    return <div className="space-y-1.5">{blocks}</div>
+}
 
 export function GlobalAIAssistant() {
     const [isOpen, setIsOpen] = useState(false)
@@ -31,17 +101,53 @@ export function GlobalAIAssistant() {
         if (!input.trim() || loading) return
         const userMsg = input.trim()
         setInput("")
+        // Snapshot prior conversation (excluding the greeting) to send as context
+        const history = messages
+            .filter(m => m.content)
+            .slice(-8)
+            .map(m => ({ role: m.role, content: m.content }))
         setMessages(prev => [...prev, { role: 'user', content: userMsg }])
         setLoading(true)
 
         try {
             const res = await fetch('/api/chat', {
                 method: 'POST',
-                body: JSON.stringify({ message: userMsg }),
+                body: JSON.stringify({ message: userMsg, history }),
                 headers: { 'Content-Type': 'application/json' }
             })
-            const data = await res.json()
-            setMessages(prev => [...prev, { role: 'bot', content: data.response || "ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล" }])
+
+            const contentType = res.headers.get('Content-Type') || ''
+
+            // Streamed text/plain response
+            if (res.body && contentType.includes('text/plain')) {
+                const reader = res.body.getReader()
+                const decoder = new TextDecoder()
+                let acc = ""
+                let started = false
+                while (true) {
+                    const { done, value } = await reader.read()
+                    if (done) break
+                    acc += decoder.decode(value, { stream: true })
+                    if (!started) {
+                        started = true
+                        setLoading(false)
+                        setMessages(prev => [...prev, { role: 'bot', content: acc }])
+                    } else {
+                        setMessages(prev => {
+                            const copy = [...prev]
+                            copy[copy.length - 1] = { role: 'bot', content: acc }
+                            return copy
+                        })
+                    }
+                }
+                if (!started) {
+                    setMessages(prev => [...prev, { role: 'bot', content: "ขออภัยครับ ไม่ได้รับข้อมูลตอบกลับ" }])
+                }
+            } else {
+                // JSON fallback (SafeMode / errors)
+                const data = await res.json()
+                setMessages(prev => [...prev, { role: 'bot', content: data.response || "ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล" }])
+            }
         } catch {
             setMessages(prev => [...prev, { role: 'bot', content: "การเชื่อมต่อขัดข้อง กรุณาลองใหม่ครู่เดียวครับ" }])
         } finally {
@@ -130,7 +236,9 @@ export function GlobalAIAssistant() {
                                                         ? 'bg-gradient-to-br from-primary to-primary/90 text-white rounded-tr-none shadow-md' 
                                                         : 'bg-white border border-border/20 text-foreground rounded-tl-none shadow-sm'
                                                 )}>
-                                                    {msg.content}
+                                                    {msg.role === 'bot'
+                                                        ? <MarkdownLite text={msg.content} />
+                                                        : msg.content}
                                                 </div>
                                             </div>
                                         ))}

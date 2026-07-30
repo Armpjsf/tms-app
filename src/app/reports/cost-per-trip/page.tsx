@@ -159,7 +159,7 @@ export default async function CostPerTripPage(props: PageProps) {
                               </p>
                               <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20 shadow-sm transition-colors">
-                                  #{trip.Job_ID.slice(-8).toUpperCase()}
+                                  #{trip.Job_ID.toUpperCase()}
                                 </span>
                                 {trip.Vehicle_Plate && (
                                   <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-lg border border-border">
