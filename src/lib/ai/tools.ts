@@ -331,12 +331,13 @@ export const aiToolExecutors = {
     price?: number,
     notes?: string,
     vehicleType?: string,
+    driverName?: string,
+    driverId?: string,
+    vehiclePlate?: string,
     status?: 'Draft' | 'New' | 'Assigned',
     branchId?: string,
   }) => {
     const supabase = createAdminClient()
-    // Default to 'New' if not specified, which sends it to the app
-    const finalStatus = args.status || 'New'
     const planDate = args.planDate || todayTH()
 
     // Resolve Customer_ID by name (best-effort) so the job links to the master
@@ -350,6 +351,39 @@ export const aiToolExecutors = {
             .maybeSingle()
         customerId = c?.Customer_ID ?? null
     }
+
+    // Resolve driver by id or name → carries their default plate/type/Sub_ID
+    let driverId: string | null = null
+    let driverName: string | null = null
+    let plate: string | null = args.vehiclePlate || null
+    let vehicleType: string | null = args.vehicleType || null
+    let subId: string | null = null
+    if (args.driverId || args.driverName) {
+        let q = supabase.from('Master_Drivers')
+            .select('Driver_ID, Driver_Name, Vehicle_Plate, Vehicle_Type, Sub_ID').limit(1)
+        q = args.driverId ? q.eq('Driver_ID', args.driverId) : q.ilike('Driver_Name', `%${args.driverName}%`)
+        const { data: d } = await q.maybeSingle()
+        if (d) {
+            driverId = d.Driver_ID
+            driverName = d.Driver_Name
+            plate = plate || d.Vehicle_Plate || null
+            vehicleType = vehicleType || d.Vehicle_Type || null
+            subId = d.Sub_ID || null
+        }
+    }
+
+    // If a plate was given explicitly, pull its type/Sub_ID from the master
+    if (args.vehiclePlate) {
+        const { data: v } = await supabase.from('Master_Vehicles')
+            .select('Vehicle_Type, Sub_ID').eq('Vehicle_Plate', args.vehiclePlate).limit(1).maybeSingle()
+        if (v) {
+            vehicleType = args.vehicleType || v.Vehicle_Type || vehicleType
+            subId = subId || v.Sub_ID || null
+        }
+    }
+
+    // A job with a driver defaults to "Assigned"; otherwise "New"
+    const finalStatus = args.status || (driverId ? 'Assigned' : 'New')
 
     const routeName = args.routeName
         || (args.origin && args.destination ? `${args.origin} - ${args.destination}` : null)
@@ -369,7 +403,11 @@ export const aiToolExecutors = {
         Dest_Location: args.destination || null,
         Price_Cust_Total: args.price ?? 0,
         Notes: args.notes || null,
-        Vehicle_Type: args.vehicleType || '4-Wheel',
+        Driver_ID: driverId,
+        Driver_Name: driverName,
+        Vehicle_Plate: plate,
+        Vehicle_Type: vehicleType || '4-Wheel',
+        Sub_ID: subId,
         Job_Status: finalStatus,
         Created_At: new Date().toISOString(),
     }).select().single()

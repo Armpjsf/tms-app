@@ -42,6 +42,8 @@ const CREATE_JOB_DECLARATION = {
             routeName: { type: 'string', description: 'ชื่อเส้นทาง (ถ้ามี)' },
             price: { type: 'number', description: 'ราคาลูกค้า (บาท)' },
             vehicleType: { type: 'string', description: 'ประเภทรถ เช่น 4-Wheel, 6-Wheel' },
+            driverName: { type: 'string', description: 'ชื่อคนขับที่จะมอบหมาย (ถ้ามีจะตั้งสถานะ Assigned และดึงทะเบียนรถของคนขับมาให้)' },
+            vehiclePlate: { type: 'string', description: 'ทะเบียนรถ เช่น บบ6522' },
             notes: { type: 'string', description: 'หมายเหตุ' },
         },
         required: ['customerName'],
@@ -534,7 +536,9 @@ function summarizeCreateJob(a: Record<string, unknown>): string {
         `• วันวางแผน: ${s(a.planDate) ?? 'วันนี้'}`,
         (s(a.origin) || s(a.destination)) ? `• เส้นทาง: ${s(a.origin) ?? '?'} → ${s(a.destination) ?? '?'}` : (s(a.routeName) ? `• เส้นทาง: ${s(a.routeName)}` : null),
         a.price != null ? `• ราคา: ฿${Number(a.price).toLocaleString()}` : null,
-        s(a.vehicleType) ? `• รถ: ${s(a.vehicleType)}` : null,
+        s(a.driverName) ? `• คนขับ: ${s(a.driverName)}` : null,
+        s(a.vehiclePlate) ? `• ทะเบียน: ${s(a.vehiclePlate)}` : null,
+        s(a.vehicleType) ? `• ประเภทรถ: ${s(a.vehicleType)}` : null,
         s(a.notes) ? `• หมายเหตุ: ${s(a.notes)}` : null,
     ].filter(Boolean)
     return lines.join('\n')
@@ -575,8 +579,13 @@ export async function POST(req: NextRequest) {
             if (confirm.name === 'create_job') {
                 const result = await aiToolExecutors.create_job({ ...(confirm.args || {}), branchId })
                 if (result?.success) {
-                    const d = result.data as { Job_ID?: string; Customer_Name?: string; Plan_Date?: string }
-                    return NextResponse.json({ response: `✅ สร้างงานสำเร็จ\nรหัสงาน: ${d?.Job_ID}\nลูกค้า: ${d?.Customer_Name}\nวันวางแผน: ${d?.Plan_Date}` })
+                    const d = result.data as { Job_ID?: string; Customer_Name?: string; Plan_Date?: string; Driver_Name?: string; Vehicle_Plate?: string; Job_Status?: string }
+                    const extra = [
+                        d?.Driver_Name ? `คนขับ: ${d.Driver_Name}` : null,
+                        d?.Vehicle_Plate ? `ทะเบียน: ${d.Vehicle_Plate}` : null,
+                        d?.Job_Status ? `สถานะ: ${d.Job_Status}` : null,
+                    ].filter(Boolean).join('\n')
+                    return NextResponse.json({ response: `✅ สร้างงานสำเร็จ\nรหัสงาน: ${d?.Job_ID}\nลูกค้า: ${d?.Customer_Name}\nวันวางแผน: ${d?.Plan_Date}${extra ? '\n' + extra : ''}` })
                 }
                 return NextResponse.json({ response: `❌ สร้างงานไม่สำเร็จ: ${result?.error || 'unknown error'}` })
             }
