@@ -31,6 +31,10 @@ export default function AiAssistantPage() {
     const message = text.trim()
     if (!message || loading) return
 
+    const history = messages
+      .filter((m) => m.content)
+      .slice(-8)
+      .map((m) => ({ role: m.role, content: m.content }))
     setMessages((prev) => [...prev, { role: "user", content: message }])
     setInput("")
     setLoading(true)
@@ -39,11 +43,42 @@ export default function AiAssistantPage() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, history, stream: true }),
       })
-      const data = await res.json().catch(() => ({}))
-      const reply = data?.response || data?.error || "ระบบ AI ไม่ตอบกลับ กรุณาลองใหม่อีกครั้ง"
-      setMessages((prev) => [...prev, { role: "assistant", content: String(reply) }])
+
+      const contentType = res.headers.get("Content-Type") || ""
+
+      // Streamed text/plain response (successful Gemini call)
+      if (res.body && contentType.includes("text/plain")) {
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let acc = ""
+        let started = false
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          acc += decoder.decode(value, { stream: true })
+          if (!started) {
+            started = true
+            setLoading(false)
+            setMessages((prev) => [...prev, { role: "assistant", content: acc }])
+          } else {
+            setMessages((prev) => {
+              const copy = [...prev]
+              copy[copy.length - 1] = { role: "assistant", content: acc }
+              return copy
+            })
+          }
+        }
+        if (!started) {
+          setMessages((prev) => [...prev, { role: "assistant", content: "ระบบ AI ไม่ตอบกลับ กรุณาลองใหม่อีกครั้ง" }])
+        }
+      } else {
+        // JSON fallback (SafeMode / errors)
+        const data = await res.json().catch(() => ({}))
+        const reply = data?.response || data?.error || "ระบบ AI ไม่ตอบกลับ กรุณาลองใหม่อีกครั้ง"
+        setMessages((prev) => [...prev, { role: "assistant", content: String(reply) }])
+      }
     } catch {
       setMessages((prev) => [
         ...prev,

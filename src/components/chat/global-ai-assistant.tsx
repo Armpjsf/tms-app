@@ -112,7 +112,7 @@ export function GlobalAIAssistant() {
         try {
             const res = await fetch('/api/chat', {
                 method: 'POST',
-                body: JSON.stringify({ message: userMsg, history }),
+                body: JSON.stringify({ message: userMsg, history, stream: true }),
                 headers: { 'Content-Type': 'application/json' }
             })
 

@@ -59,6 +59,32 @@ async function callGeminiStream(
     })
 }
 
+// Parse Gemini SSE body into a stream of text chunks (shared by the
+// streaming and non-streaming response paths).
+async function* parseGeminiSSE(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
+    const reader = body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+        for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed.startsWith('data:')) continue
+            const payload = trimmed.slice(5).trim()
+            if (!payload || payload === '[DONE]') continue
+            try {
+                const json = JSON.parse(payload)
+                const text = json?.candidates?.[0]?.content?.parts?.[0]?.text
+                if (text) yield text
+            } catch { /* partial JSON, ignore */ }
+        }
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Helper: fetch data with silent error handling
 // ─────────────────────────────────────────────────────────────────
@@ -467,6 +493,9 @@ export async function POST(req: NextRequest) {
         const body = await req.json().catch(() => ({}))
         const { message } = body
         const history: ChatMsg[] = Array.isArray(body.history) ? body.history : []
+        // Streaming is opt-in: chat UIs pass stream:true; server-to-server
+        // callers (LINE webhook, etc.) get plain JSON { response }.
+        const wantStream = body.stream === true
         if (!message) return NextResponse.json({ error: 'Message is required' }, { status: 400 })
 
         const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
@@ -496,39 +525,25 @@ export async function POST(req: NextRequest) {
                     continue
                 }
 
-                // Transform Gemini SSE -> plain text stream for the client
+                // Non-streaming callers: accumulate full text -> JSON
+                if (!wantStream) {
+                    let full = ''
+                    try { for await (const text of parseGeminiSSE(res.body)) full += text } catch { /* ignore */ }
+                    if (!full) full = buildSafeResponse(message, kb, '')
+                    return NextResponse.json({ response: full })
+                }
+
+                // Streaming callers: transform Gemini SSE -> plain text stream
+                const encoder = new TextEncoder()
                 const stream = new ReadableStream<Uint8Array>({
                     async start(controller) {
-                        const reader = res.body!.getReader()
-                        const decoder = new TextDecoder()
-                        const encoder = new TextEncoder()
-                        let buffer = ''
                         let emitted = false
                         try {
-                            while (true) {
-                                const { done, value } = await reader.read()
-                                if (done) break
-                                buffer += decoder.decode(value, { stream: true })
-                                const lines = buffer.split('\n')
-                                buffer = lines.pop() || ''
-                                for (const line of lines) {
-                                    const trimmed = line.trim()
-                                    if (!trimmed.startsWith('data:')) continue
-                                    const payload = trimmed.slice(5).trim()
-                                    if (!payload || payload === '[DONE]') continue
-                                    try {
-                                        const json = JSON.parse(payload)
-                                        const text = json?.candidates?.[0]?.content?.parts?.[0]?.text
-                                        if (text) {
-                                            emitted = true
-                                            controller.enqueue(encoder.encode(text))
-                                        }
-                                    } catch { /* partial JSON, ignore */ }
-                                }
+                            for await (const text of parseGeminiSSE(res.body!)) {
+                                emitted = true
+                                controller.enqueue(encoder.encode(text))
                             }
-                            if (!emitted) {
-                                controller.enqueue(encoder.encode(buildSafeResponse(message, kb, '')))
-                            }
+                            if (!emitted) controller.enqueue(encoder.encode(buildSafeResponse(message, kb, '')))
                         } catch {
                             if (!emitted) controller.enqueue(encoder.encode(buildSafeResponse(message, kb, '')))
                         } finally {
