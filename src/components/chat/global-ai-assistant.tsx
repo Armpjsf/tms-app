@@ -77,12 +77,16 @@ function MarkdownLite({ text }: { text: string }) {
     return <div className="space-y-1.5">{blocks}</div>
 }
 
+type PendingAction = { name: string; args: Record<string, unknown>; summary: string }
+const ACTION_SENTINEL = "@@ACTION@@"
+
 export function GlobalAIAssistant() {
     const [isOpen, setIsOpen] = useState(false)
     const [isMinimized, setIsMinimized] = useState(false)
     const [messages, setMessages] = useState<{role: 'bot'|'user', content: string}[]>([])
     const [input, setInput] = useState("")
     const [loading, setLoading] = useState(false)
+    const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
     const scrollRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -124,10 +128,15 @@ export function GlobalAIAssistant() {
                 const decoder = new TextDecoder()
                 let acc = ""
                 let started = false
+                let isAction = false
                 while (true) {
                     const { done, value } = await reader.read()
                     if (done) break
                     acc += decoder.decode(value, { stream: true })
+                    // Function-call turn: hold the "@@ACTION@@{json}" chunk and
+                    // show a confirm card instead of rendering it as text.
+                    if (!isAction && acc.startsWith(ACTION_SENTINEL)) isAction = true
+                    if (isAction || acc.length < ACTION_SENTINEL.length) continue
                     if (!started) {
                         started = true
                         setLoading(false)
@@ -140,19 +149,54 @@ export function GlobalAIAssistant() {
                         })
                     }
                 }
-                if (!started) {
-                    setMessages(prev => [...prev, { role: 'bot', content: "ขออภัยครับ ไม่ได้รับข้อมูลตอบกลับ" }])
+                if (isAction) {
+                    try {
+                        setPendingAction(JSON.parse(acc.slice(ACTION_SENTINEL.length)) as PendingAction)
+                    } catch {
+                        setMessages(prev => [...prev, { role: 'bot', content: "ไม่สามารถอ่านคำสั่งได้ กรุณาลองใหม่" }])
+                    }
+                } else if (!started) {
+                    setMessages(prev => [...prev, { role: 'bot', content: acc || "ขออภัยครับ ไม่ได้รับข้อมูลตอบกลับ" }])
                 }
             } else {
-                // JSON fallback (SafeMode / errors)
+                // JSON fallback (SafeMode / errors / pendingAction)
                 const data = await res.json()
-                setMessages(prev => [...prev, { role: 'bot', content: data.response || "ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล" }])
+                if (data?.pendingAction) {
+                    setPendingAction(data.pendingAction as PendingAction)
+                } else {
+                    setMessages(prev => [...prev, { role: 'bot', content: data.response || "ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล" }])
+                }
             }
         } catch {
             setMessages(prev => [...prev, { role: 'bot', content: "การเชื่อมต่อขัดข้อง กรุณาลองใหม่ครู่เดียวครับ" }])
         } finally {
             setLoading(false)
         }
+    }
+
+    const confirmAction = async () => {
+        if (!pendingAction || loading) return
+        const action = pendingAction
+        setPendingAction(null)
+        setLoading(true)
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'confirm', confirm: { name: action.name, args: action.args } })
+            })
+            const data = await res.json().catch(() => ({}))
+            setMessages(prev => [...prev, { role: 'bot', content: String(data?.response || "ดำเนินการเสร็จสิ้น") }])
+        } catch {
+            setMessages(prev => [...prev, { role: 'bot', content: "การเชื่อมต่อขัดข้อง กรุณาลองใหม่ครู่เดียวครับ" }])
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const cancelAction = () => {
+        setPendingAction(null)
+        setMessages(prev => [...prev, { role: 'bot', content: "ยกเลิกแล้วครับ ไม่ได้สร้างงาน" }])
     }
 
     return (
@@ -250,6 +294,21 @@ export function GlobalAIAssistant() {
                                                 <div className="bg-white border border-border/20 p-4 lg:p-5 rounded-2xl rounded-tl-none flex gap-3 items-center shadow-sm">
                                                     <Loader2 className="w-4 h-4 animate-spin text-primary" />
                                                     <span className="text-sm font-bold text-muted-foreground italic">กำลังค้นหาข้อมูลพรีเมียมให้คุณ...</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {pendingAction && (
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                                                    <Bot size={16} />
+                                                </div>
+                                                <div className="max-w-[85%] bg-primary/5 border border-primary/30 p-4 rounded-2xl rounded-tl-none space-y-3 shadow-sm">
+                                                    <p className="text-sm font-black text-primary">ยืนยันการสร้างงานใหม่?</p>
+                                                    <pre className="text-sm font-medium whitespace-pre-wrap leading-relaxed text-foreground font-sans">{pendingAction.summary}</pre>
+                                                    <div className="flex gap-2 pt-1">
+                                                        <button onClick={confirmAction} disabled={loading} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50">✅ ยืนยัน</button>
+                                                        <button onClick={cancelAction} disabled={loading} className="px-4 py-2 rounded-xl border border-border bg-background text-sm font-bold hover:bg-muted/60 active:scale-95 transition-all disabled:opacity-50">ยกเลิก</button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}

@@ -10,6 +10,9 @@ interface ChatMessage {
   content: string
 }
 
+type PendingAction = { name: string; args: Record<string, unknown>; summary: string }
+const ACTION_SENTINEL = "@@ACTION@@"
+
 const SUGGESTIONS = [
   "วันนี้เป็นยังไงบ้าง",
   "กำไรเดือนนี้เท่าไหร่",
@@ -21,6 +24,7 @@ export default function AiAssistantPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -54,10 +58,15 @@ export default function AiAssistantPage() {
         const decoder = new TextDecoder()
         let acc = ""
         let started = false
+        let isAction = false
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
           acc += decoder.decode(value, { stream: true })
+          // A function-call turn arrives as a single "@@ACTION@@{json}" chunk —
+          // don't render it as text; hold until done then show a confirm card.
+          if (!isAction && acc.startsWith(ACTION_SENTINEL)) isAction = true
+          if (isAction || acc.length < ACTION_SENTINEL.length) continue
           if (!started) {
             started = true
             setLoading(false)
@@ -70,14 +79,24 @@ export default function AiAssistantPage() {
             })
           }
         }
-        if (!started) {
-          setMessages((prev) => [...prev, { role: "assistant", content: "ระบบ AI ไม่ตอบกลับ กรุณาลองใหม่อีกครั้ง" }])
+        if (isAction) {
+          try {
+            setPendingAction(JSON.parse(acc.slice(ACTION_SENTINEL.length)) as PendingAction)
+          } catch {
+            setMessages((prev) => [...prev, { role: "assistant", content: "ไม่สามารถอ่านคำสั่งได้ กรุณาลองใหม่" }])
+          }
+        } else if (!started) {
+          setMessages((prev) => [...prev, { role: "assistant", content: acc || "ระบบ AI ไม่ตอบกลับ กรุณาลองใหม่อีกครั้ง" }])
         }
       } else {
-        // JSON fallback (SafeMode / errors)
+        // JSON fallback (SafeMode / errors / pendingAction)
         const data = await res.json().catch(() => ({}))
-        const reply = data?.response || data?.error || "ระบบ AI ไม่ตอบกลับ กรุณาลองใหม่อีกครั้ง"
-        setMessages((prev) => [...prev, { role: "assistant", content: String(reply) }])
+        if (data?.pendingAction) {
+          setPendingAction(data.pendingAction as PendingAction)
+        } else {
+          const reply = data?.response || data?.error || "ระบบ AI ไม่ตอบกลับ กรุณาลองใหม่อีกครั้ง"
+          setMessages((prev) => [...prev, { role: "assistant", content: String(reply) }])
+        }
       }
     } catch {
       setMessages((prev) => [
@@ -87,6 +106,31 @@ export default function AiAssistantPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const confirmAction = async () => {
+    if (!pendingAction || loading) return
+    const action = pendingAction
+    setPendingAction(null)
+    setLoading(true)
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "confirm", confirm: { name: action.name, args: action.args } }),
+      })
+      const data = await res.json().catch(() => ({}))
+      setMessages((prev) => [...prev, { role: "assistant", content: String(data?.response || "ดำเนินการเสร็จสิ้น") }])
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", content: "เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่" }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const cancelAction = () => {
+    setPendingAction(null)
+    setMessages((prev) => [...prev, { role: "assistant", content: "ยกเลิกแล้วครับ ไม่ได้สร้างงาน" }])
   }
 
   return (
@@ -167,6 +211,34 @@ export default function AiAssistantPage() {
               </div>
               <div className="bg-muted/60 border border-border rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-2 text-sm text-muted-foreground font-bold">
                 <Loader2 size={16} className="animate-spin" /> กำลังคิด...
+              </div>
+            </div>
+          )}
+
+          {pendingAction && (
+            <div className="flex gap-3">
+              <div className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center border bg-primary/10 text-primary border-primary/30">
+                <Sparkles size={18} />
+              </div>
+              <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-primary/30 bg-primary/5 px-4 py-3 space-y-3">
+                <p className="text-sm font-black text-primary">ยืนยันการสร้างงานใหม่?</p>
+                <pre className="text-sm font-medium whitespace-pre-wrap leading-relaxed text-foreground font-sans">{pendingAction.summary}</pre>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={confirmAction}
+                    disabled={loading}
+                    className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    ✅ ยืนยันสร้างงาน
+                  </button>
+                  <button
+                    onClick={cancelAction}
+                    disabled={loading}
+                    className="px-4 py-2 rounded-xl border border-border bg-background text-sm font-bold hover:bg-muted/60 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    ยกเลิก
+                  </button>
+                </div>
               </div>
             </div>
           )}

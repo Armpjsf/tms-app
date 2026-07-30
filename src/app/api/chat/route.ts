@@ -27,12 +27,34 @@ type ChatMsg = { role: 'user' | 'bot' | 'model' | 'assistant', content: string }
 // Gemini streaming call (SSE). Returns the raw Response so the caller
 // can fall through to the next model on an HTTP error BEFORE piping.
 // ─────────────────────────────────────────────────────────────────
+// Function declaration exposed to Gemini so users can create jobs by chatting.
+const CREATE_JOB_DECLARATION = {
+    name: 'create_job',
+    description: 'สร้างงานขนส่งใหม่ในระบบ ใช้เมื่อผู้ใช้สั่งให้สร้าง/เพิ่ม/เปิดงานใหม่ เช่น "สร้างงานให้ลูกค้า X พรุ่งนี้ไปรังสิต ราคา 2000"',
+    parameters: {
+        type: 'object',
+        properties: {
+            customerName: { type: 'string', description: 'ชื่อลูกค้า (จำเป็น)' },
+            planDate: { type: 'string', description: 'วันวางแผน รูปแบบ YYYY-MM-DD เว้นว่าง=วันนี้' },
+            deliveryDate: { type: 'string', description: 'วันจัดส่ง รูปแบบ YYYY-MM-DD' },
+            origin: { type: 'string', description: 'สถานที่ต้นทาง' },
+            destination: { type: 'string', description: 'สถานที่ปลายทาง' },
+            routeName: { type: 'string', description: 'ชื่อเส้นทาง (ถ้ามี)' },
+            price: { type: 'number', description: 'ราคาลูกค้า (บาท)' },
+            vehicleType: { type: 'string', description: 'ประเภทรถ เช่น 4-Wheel, 6-Wheel' },
+            notes: { type: 'string', description: 'หมายเหตุ' },
+        },
+        required: ['customerName'],
+    },
+}
+
 async function callGeminiStream(
     apiKey: string,
     model: string,
     systemPrompt: string,
     history: ChatMsg[],
     userMessage: string,
+    enableTools = false,
 ): Promise<Response> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`
 
@@ -47,21 +69,30 @@ async function callGeminiStream(
 
     contents.push({ role: 'user', parts: [{ text: userMessage }] })
 
+    const body: Record<string, unknown> = {
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents,
+        generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+    }
+    if (enableTools) {
+        body.tools = [{ functionDeclarations: [CREATE_JOB_DECLARATION] }]
+    }
+
     return fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            contents,
-            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-        }),
+        body: JSON.stringify(body),
         signal: AbortSignal.timeout(30000),
     })
 }
 
-// Parse Gemini SSE body into a stream of text chunks (shared by the
-// streaming and non-streaming response paths).
-async function* parseGeminiSSE(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
+type SSEEvent =
+    | { type: 'text'; text: string }
+    | { type: 'call'; name: string; args: Record<string, unknown> }
+
+// Parse Gemini SSE body into a stream of events (text chunks or function
+// calls) — shared by the streaming and non-streaming response paths.
+async function* parseGeminiSSE(body: ReadableStream<Uint8Array>): AsyncGenerator<SSEEvent> {
     const reader = body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
@@ -78,8 +109,15 @@ async function* parseGeminiSSE(body: ReadableStream<Uint8Array>): AsyncGenerator
             if (!payload || payload === '[DONE]') continue
             try {
                 const json = JSON.parse(payload)
-                const text = json?.candidates?.[0]?.content?.parts?.[0]?.text
-                if (text) yield text
+                const parts = json?.candidates?.[0]?.content?.parts
+                if (!Array.isArray(parts)) continue
+                for (const part of parts) {
+                    if (part?.functionCall?.name) {
+                        yield { type: 'call', name: part.functionCall.name, args: part.functionCall.args || {} }
+                    } else if (part?.text) {
+                        yield { type: 'text', text: part.text }
+                    }
+                }
             } catch { /* partial JSON, ignore */ }
         }
     }
@@ -485,6 +523,23 @@ function buildSafeResponse(message: string, kb: KnowledgeBase, debugNote: string
     return `[SafeMode] ${r}`
 }
 
+// Prefix marking a pending action payload inside the plain-text stream, so the
+// chat UI can render a confirm card instead of a normal reply.
+const ACTION_SENTINEL = '@@ACTION@@'
+
+function summarizeCreateJob(a: Record<string, unknown>): string {
+    const s = (v: unknown) => (v === undefined || v === null || v === '') ? null : String(v)
+    const lines = [
+        `• ลูกค้า: ${s(a.customerName) ?? '-'}`,
+        `• วันวางแผน: ${s(a.planDate) ?? 'วันนี้'}`,
+        (s(a.origin) || s(a.destination)) ? `• เส้นทาง: ${s(a.origin) ?? '?'} → ${s(a.destination) ?? '?'}` : (s(a.routeName) ? `• เส้นทาง: ${s(a.routeName)}` : null),
+        a.price != null ? `• ราคา: ฿${Number(a.price).toLocaleString()}` : null,
+        s(a.vehicleType) ? `• รถ: ${s(a.vehicleType)}` : null,
+        s(a.notes) ? `• หมายเหตุ: ${s(a.notes)}` : null,
+    ].filter(Boolean)
+    return lines.join('\n')
+}
+
 export async function POST(req: NextRequest) {
     try {
         const session = await getSession()
@@ -506,6 +561,28 @@ export async function POST(req: NextRequest) {
         const userBranchId = await getUserBranchId()
         const branchId = (userBranchId && userBranchId !== 'All') ? userBranchId : undefined
 
+        // Only admin/staff (roleId <= 5) may execute write actions.
+        const canWrite = typeof session.roleId === 'number' && session.roleId <= 5
+
+        // ── Confirmed action execution ────────────────────────────────
+        // The UI calls back with { confirm: { name, args } } after the user
+        // approves the pending action from a previous turn.
+        const confirm = body.confirm
+        if (confirm && typeof confirm.name === 'string') {
+            if (!canWrite) {
+                return NextResponse.json({ response: '⛔ บัญชีนี้ไม่มีสิทธิ์สร้าง/แก้ไขข้อมูลครับ' })
+            }
+            if (confirm.name === 'create_job') {
+                const result = await aiToolExecutors.create_job({ ...(confirm.args || {}), branchId })
+                if (result?.success) {
+                    const d = result.data as { Job_ID?: string; Customer_Name?: string; Plan_Date?: string }
+                    return NextResponse.json({ response: `✅ สร้างงานสำเร็จ\nรหัสงาน: ${d?.Job_ID}\nลูกค้า: ${d?.Customer_Name}\nวันวางแผน: ${d?.Plan_Date}` })
+                }
+                return NextResponse.json({ response: `❌ สร้างงานไม่สำเร็จ: ${result?.error || 'unknown error'}` })
+            }
+            return NextResponse.json({ response: 'ไม่รู้จักคำสั่งนี้ครับ' })
+        }
+
         // 1. Knowledge base (cached per branch for 45s) + RAG retrieval
         const [kb, ragContext] = await Promise.all([
             getKnowledgeBase(branchId),
@@ -518,30 +595,53 @@ export async function POST(req: NextRequest) {
         const allErrors: string[] = []
         for (const modelName of GEMINI_MODELS) {
             try {
-                const res = await callGeminiStream(apiKey, modelName, systemPrompt, history, userTurn)
+                const res = await callGeminiStream(apiKey, modelName, systemPrompt, history, userTurn, canWrite)
                 if (!res.ok || !res.body) {
                     const errBody = await res.text().catch(() => '')
                     allErrors.push(`[${modelName}] HTTP ${res.status}: ${errBody.slice(0, 120)}`)
                     continue
                 }
 
-                // Non-streaming callers: accumulate full text -> JSON
+                // Build a pending-action payload from a Gemini function call
+                const pendingActionText = (name: string, args: Record<string, unknown>) =>
+                    ACTION_SENTINEL + JSON.stringify({
+                        name,
+                        args,
+                        summary: name === 'create_job' ? summarizeCreateJob(args) : JSON.stringify(args),
+                    })
+
+                // Non-streaming callers: accumulate full text (or action) -> JSON
                 if (!wantStream) {
                     let full = ''
-                    try { for await (const text of parseGeminiSSE(res.body)) full += text } catch { /* ignore */ }
+                    let action: { name: string; args: Record<string, unknown> } | null = null
+                    try {
+                        for await (const ev of parseGeminiSSE(res.body)) {
+                            if (ev.type === 'call') { action = { name: ev.name, args: ev.args }; break }
+                            full += ev.text
+                        }
+                    } catch { /* ignore */ }
+                    if (action) {
+                        return NextResponse.json({ pendingAction: { ...action, summary: action.name === 'create_job' ? summarizeCreateJob(action.args) : '' } })
+                    }
                     if (!full) full = buildSafeResponse(message, kb, '')
                     return NextResponse.json({ response: full })
                 }
 
                 // Streaming callers: transform Gemini SSE -> plain text stream
+                // (or emit an action sentinel the UI turns into a confirm card).
                 const encoder = new TextEncoder()
                 const stream = new ReadableStream<Uint8Array>({
                     async start(controller) {
                         let emitted = false
                         try {
-                            for await (const text of parseGeminiSSE(res.body!)) {
+                            for await (const ev of parseGeminiSSE(res.body!)) {
+                                if (ev.type === 'call') {
+                                    controller.enqueue(encoder.encode(pendingActionText(ev.name, ev.args)))
+                                    emitted = true
+                                    break
+                                }
                                 emitted = true
-                                controller.enqueue(encoder.encode(text))
+                                controller.enqueue(encoder.encode(ev.text))
                             }
                             if (!emitted) controller.enqueue(encoder.encode(buildSafeResponse(message, kb, '')))
                         } catch {

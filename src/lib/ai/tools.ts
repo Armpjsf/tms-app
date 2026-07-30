@@ -321,27 +321,57 @@ export const aiToolExecutors = {
     return analytics
   },
 
-  create_job: async (args: { 
-    customerName: string, 
-    planDate?: string, 
-    routeName?: string, 
-    price?: number, 
-    notes?: string, 
+  create_job: async (args: {
+    customerName: string,
+    planDate?: string,
+    deliveryDate?: string,
+    routeName?: string,
+    origin?: string,
+    destination?: string,
+    price?: number,
+    notes?: string,
     vehicleType?: string,
-    status?: 'Draft' | 'New' | 'Assigned'
+    status?: 'Draft' | 'New' | 'Assigned',
+    branchId?: string,
   }) => {
     const supabase = createAdminClient()
-    // Default to 'New' if not specified, which sends it to the app (if driver assigned, usually dashboard uses 'Assigned')
+    // Default to 'New' if not specified, which sends it to the app
     const finalStatus = args.status || 'New'
-    
+    const planDate = args.planDate || todayTH()
+
+    // Resolve Customer_ID by name (best-effort) so the job links to the master
+    let customerId: string | null = null
+    if (args.customerName) {
+        const { data: c } = await supabase
+            .from('Master_Customers')
+            .select('Customer_ID')
+            .ilike('Customer_Name', args.customerName)
+            .limit(1)
+            .maybeSingle()
+        customerId = c?.Customer_ID ?? null
+    }
+
+    const routeName = args.routeName
+        || (args.origin && args.destination ? `${args.origin} - ${args.destination}` : null)
+
+    // Match the canonical Job_ID format used by the planning flow
+    const jobId = `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`
+
     const { data, error } = await supabase.from('Jobs_Main').insert({
+        Job_ID: jobId,
+        Branch_ID: args.branchId || null,
+        Customer_ID: customerId,
         Customer_Name: args.customerName,
-        Plan_Date: args.planDate || todayTH(),
-        Route_Name: args.routeName,
-        Price_Cust_Total: args.price,
-        Notes: args.notes,
-        Vehicle_Type: args.vehicleType,
-        Job_Status: finalStatus
+        Plan_Date: planDate,
+        Delivery_Date: args.deliveryDate || planDate,
+        Route_Name: routeName,
+        Origin_Location: args.origin || null,
+        Dest_Location: args.destination || null,
+        Price_Cust_Total: args.price ?? 0,
+        Notes: args.notes || null,
+        Vehicle_Type: args.vehicleType || '4-Wheel',
+        Job_Status: finalStatus,
+        Created_At: new Date().toISOString(),
     }).select().single()
     return error ? { success: false, error: error.message } : { success: true, data }
   },
