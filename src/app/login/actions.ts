@@ -16,9 +16,12 @@ export type LoginFormState = {
 export async function login(prevState: LoginFormState | undefined, formData: FormData): Promise<LoginFormState | undefined> {
   const supabase = createAdminClient()
   
+  // Trim surrounding whitespace: password managers, mobile keyboards and
+  // autofill intermittently append a space to the username/password, which
+  // previously surfaced as a random "wrong password" error.
   const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
+    email: ((formData.get('email') as string) || '').trim(),
+    password: (formData.get('password') as string) || '',
   }
 
   try {
@@ -37,13 +40,20 @@ export async function login(prevState: LoginFormState | undefined, formData: For
     // 2. Verify Password
     let isValid = false
     const dbPassword = users.Password || ""
+    // Try the password exactly as typed first (preserves passwords that
+    // legitimately contain spaces), then fall back to a trimmed version.
+    let effectivePassword = data.password
 
     try {
       isValid = await verifyPassword(dbPassword, data.password)
+      if (!isValid && data.password !== data.password.trim()) {
+        effectivePassword = data.password.trim()
+        isValid = await verifyPassword(dbPassword, effectivePassword)
+      }
 
       // Auto-migrate plain-text passwords to Argon2 on first successful login
-      if (isValid && data.password && !isHashed(dbPassword)) {
-        const hashedPassword = await hashPassword(data.password)
+      if (isValid && effectivePassword && !isHashed(dbPassword)) {
+        const hashedPassword = await hashPassword(effectivePassword)
         await supabase
           .from('Master_Users')
           .update({ Password: hashedPassword })
