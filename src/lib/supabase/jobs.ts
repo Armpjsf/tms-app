@@ -255,7 +255,8 @@ export async function getAllJobs(
   startDate = '', // Add startDate parameter
   endDate = '', // Add endDate parameter
   providedBranchId = '',
-  providedCustomerId = ''
+  providedCustomerId = '',
+  overdueOnly = false
 ): Promise<{ data: Job[], count: number }> {
   try {
     const isSuper = await isSuperAdmin()
@@ -305,7 +306,13 @@ export async function getAllJobs(
       dbQuery = dbQuery.or(`Job_ID.ilike.%${query}%,Customer_Name.ilike.%${query}%,Route_Name.ilike.%${query}%,Notes.ilike.%${query}%`)
     }
 
-    if (status) {
+    if (overdueOnly) {
+      // Jobs past their delivery date that are still not delivered/closed.
+      const excluded = ['Completed', 'Complete', 'Delivered', 'Verified', 'Billed', 'Paid', 'Cancelled', 'Failed', 'Draft', 'Requested']
+      dbQuery = dbQuery
+        .lt('Delivery_Date', todayTH())
+        .not('Job_Status', 'in', `(${excluded.map(s => `"${s}"`).join(',')})`)
+    } else if (status) {
       dbQuery = dbQuery.eq('Job_Status', status)
     }
 

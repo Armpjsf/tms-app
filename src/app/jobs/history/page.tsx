@@ -25,6 +25,7 @@ export default async function JobHistoryPage(props: Props) {
   const dateFrom = (searchParams.from as string) || ''
   const dateTo = (searchParams.to as string) || ''
   const status = (searchParams.status as string) || ''
+  const overdueOnly = searchParams.overdue === '1' || searchParams.overdue === 'true'
 
   // Read customer from URL param first, fallback to cookie (persists across navigation)
   const cookieStore = await cookies()
@@ -37,7 +38,7 @@ export default async function JobHistoryPage(props: Props) {
   const isAdminUser = await isAdmin()
 
   const [jobsResult, stats, creationData, hasPriceView, hasDeletePermission, hasExportPermission] = await Promise.all([
-    getAllJobs(page, limit, query, status, dateFrom, dateTo, currentBranchId, customerId),
+    getAllJobs(page, limit, query, status, dateFrom, dateTo, currentBranchId, customerId, overdueOnly),
     getJobStatsSummary(query, dateFrom, dateTo, currentBranchId, customerId),
     getJobCreationData(currentBranchId),
     hasPermission('job_price_view'),

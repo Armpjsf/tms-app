@@ -29,7 +29,7 @@ export async function OverdueAlertBanner({ customer }: { customer?: string }) {
 
     return (
         <Link
-            href="/planning"
+            href="/jobs/history?overdue=1"
             className="group flex items-center gap-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-5 py-4 mb-4 transition-all hover:bg-rose-500/15 hover:border-rose-500/50"
         >
             <div className="shrink-0 w-11 h-11 rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center animate-pulse">
