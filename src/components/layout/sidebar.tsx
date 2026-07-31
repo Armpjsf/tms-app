@@ -296,14 +296,14 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
             collapsed ? "h-10 w-10 rounded-xl" : "h-14 w-14"
           )}>
             <Image
-              src="/drouteMind-mark.svg"
+              src="/drouteMind-mark.png"
               alt="DRouteMind"
               fill
               priority
               loading="eager"
               sizes="56px"
               className={cn(
-                "object-contain p-1.5 transition-transform duration-300 hover:scale-105"
+                "object-cover transition-transform duration-300 hover:scale-105"
               )}
             />
           </div>

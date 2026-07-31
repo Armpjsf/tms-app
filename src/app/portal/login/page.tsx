@@ -15,7 +15,7 @@ export default async function PortalLoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/drouteMind-mark.svg" alt="DRouteMind" width={92} height={86} className="mx-auto mb-3" />
+          <img src="/drouteMind-mark.png" alt="DRouteMind" width={92} height={86} className="mx-auto mb-3 rounded-2xl shadow-lg" />
           <h1 className="text-2xl font-black text-slate-900">
             <span className="text-[#e12228]">D</span>Route<span className="text-[#e12228]">Mind</span>
           </h1>

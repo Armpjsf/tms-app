@@ -22,8 +22,8 @@ export const metadata: Metadata = {
   description: "DRouteMind — ระบบบริหารงานขนส่งอัจฉริยะ (DD Transport)",
   manifest: "/manifest.json",
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-    shortcut: "/favicon.svg",
+    icon: [{ url: "/favicon.png", sizes: "64x64", type: "image/png" }],
+    shortcut: "/favicon.png",
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   appleWebApp: {

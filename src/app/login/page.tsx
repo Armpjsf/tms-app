@@ -84,12 +84,12 @@ function StaffLoginContent() {
             )}>
                 <div className="relative w-full h-full rounded-full overflow-hidden bg-background/20 flex items-center justify-center">
                     <Image
-                        src="/drouteMind-mark.svg"
+                        src="/drouteMind-mark.png"
                         alt="DRouteMind"
                         fill
                         sizes="(max-width: 768px) 100vw, 224px"
                         priority
-                        className="object-contain p-6 transition-all duration-700"
+                        className="object-cover transition-all duration-700"
                     />
                 </div>
             </div>

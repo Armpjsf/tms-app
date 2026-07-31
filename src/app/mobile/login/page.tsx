@@ -79,7 +79,7 @@ export default function DriverLoginPage() {
             "p-6"
           )}>
             <div className="relative w-full h-full rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
-              <Image src="/drouteMind-mark.svg" alt="DRouteMind" fill sizes="(max-width: 768px) 100vw, 400px" className="object-contain p-6" />
+              <Image src="/drouteMind-mark.png" alt="DRouteMind" fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover" />
             </div>
           </div>
           <div className="space-y-1">
