@@ -31,13 +31,17 @@ export async function GET(req: Request) {
         dbCutoffDate.setDate(dbCutoffDate.getDate() - 45)
         const dbCutoffStr = dbCutoffDate.toISOString()
 
-        // Storage files & job image links cutoff (20 days)
+        // Storage files & job image links cutoff (365 days)
+        // POD photos/signatures are delivery evidence — kept a full year for
+        // billing disputes / audits. Storage is no longer a constraint
+        // (Supabase Pro 100GB, <1% used).
+        const STORAGE_RETENTION_DAYS = 365
         const storageCutoffDate = new Date()
-        storageCutoffDate.setDate(storageCutoffDate.getDate() - 20)
+        storageCutoffDate.setDate(storageCutoffDate.getDate() - STORAGE_RETENTION_DAYS)
         const storageCutoffStr = storageCutoffDate.toISOString()
         const storageCutoffTime = storageCutoffDate.getTime()
 
-        console.log(`[CRON Cleanup] Starting cleanup. DB Cutoff: ${dbCutoffStr} (45d), Storage Cutoff: ${storageCutoffStr} (20d)`)
+        console.log(`[CRON Cleanup] Starting cleanup. DB Cutoff: ${dbCutoffStr} (45d), Storage Cutoff: ${storageCutoffStr} (${STORAGE_RETENTION_DAYS}d)`)
         const reportLog: Record<string, any> = {
             dbCutoffDate: dbCutoffStr,
             storageCutoffDate: storageCutoffStr,
@@ -68,7 +72,7 @@ export async function GET(req: Request) {
             }
         }
 
-        // 3. Nullify image links in Jobs_Main older than 20 days
+        // 3. Nullify image links in Jobs_Main older than the storage cutoff
         const { error: dbErr } = await supabase
             .from('Jobs_Main')
             .update({
@@ -121,7 +125,7 @@ export async function GET(req: Request) {
                 if (oldestFile) {
                     const oldestFileTime = new Date(oldestFile.created_at ?? 0).getTime()
                     if (oldestFileTime >= storageCutoffTime) {
-                        console.log(`[CRON Cleanup] Optimization: Oldest file in "${folder}" is newer than 20 days. Skipping rest of folder.`)
+                        console.log(`[CRON Cleanup] Optimization: Oldest file in "${folder}" is newer than the retention window. Skipping rest of folder.`)
                         hasMore = false
                         break
                     }
