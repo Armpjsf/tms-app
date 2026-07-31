@@ -25,7 +25,7 @@ const NOT_OVERDUE_STATUSES = [
  * Jobs whose Delivery_Date is before today (Asia/Bangkok) but which are not
  * yet delivered/closed. Branch-scoped when branchId is given.
  */
-export async function getOverdueJobs(branchId?: string): Promise<{ count: number; jobs: OverdueJob[] }> {
+export async function getOverdueJobs(branchId?: string, customerId?: string): Promise<{ count: number; jobs: OverdueJob[] }> {
     try {
         const supabase = await createAdminClient()
         const today = todayTH()
@@ -41,6 +41,11 @@ export async function getOverdueJobs(branchId?: string): Promise<{ count: number
 
         if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
+        }
+        // Honor the dashboard's customer filter so admins scoped to a customer
+        // aren't bothered about other customers' overdue jobs.
+        if (customerId && customerId !== 'All') {
+            query = query.eq('Customer_ID', customerId)
         }
 
         const { data, error } = await query

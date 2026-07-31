@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { cookies } from 'next/headers'
 import { AlertTriangle, ChevronRight } from 'lucide-react'
 import { getOverdueJobs } from '@/lib/actions/overdue-actions'
 import { getUserBranchId, isAdmin } from '@/lib/permissions'
@@ -6,14 +7,22 @@ import { getUserBranchId, isAdmin } from '@/lib/permissions'
 /**
  * Dashboard banner: warns admins about jobs whose delivery date has passed
  * while the job is still not delivered/closed. Renders nothing when there
- * are none, or for non-admin (customer/driver) views.
+ * are none, or for non-admin (customer/driver) views. Honors the dashboard's
+ * branch + customer filters (same precedence as DashboardContent).
  */
-export async function OverdueAlertBanner() {
+export async function OverdueAlertBanner({ customer }: { customer?: string }) {
     const admin = await isAdmin()
     if (!admin) return null
 
     const branchId = await getUserBranchId()
-    const { count, jobs } = await getOverdueJobs(branchId && branchId !== 'All' ? branchId : undefined)
+    // Match DashboardContent: searchParams.customer overrides the cookie.
+    const cookieCustomer = (await cookies()).get('selectedCustomer')?.value
+    const selectedCustomer = customer !== undefined ? customer : cookieCustomer
+
+    const { count, jobs } = await getOverdueJobs(
+        branchId && branchId !== 'All' ? branchId : undefined,
+        selectedCustomer && selectedCustomer !== 'All' ? selectedCustomer : undefined,
+    )
     if (!count) return null
 
     const preview = jobs.slice(0, 4)
