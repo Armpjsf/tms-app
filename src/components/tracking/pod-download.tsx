@@ -12,14 +12,9 @@ interface PODDownloadButtonProps {
   job: PublicJobDetails
 }
 
-export function PODDownloadButton({ job }: PODDownloadButtonProps) {
-  const [isGenerating, setIsGenerating] = useState(false)
-
-  const handleDownload = async () => {
-    setIsGenerating(true)
-    const id = toast.loading('กำลังสร้างใบ POD...')
-    
-    try {
+// Shared generator so any surface (public tracking, admin, customer history)
+// can produce the exact same POD PDF from a PublicJobDetails record.
+export async function generatePodPdf(job: PublicJobDetails) {
         // Create a temporary container for the PDF content
         const element = document.createElement('div')
         element.style.position = 'absolute'
@@ -415,10 +410,20 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
         }
 
         pdf.save(`POD_${job.jobId}.pdf`)
-        
+}
+
+export function PODDownloadButton({ job }: PODDownloadButtonProps) {
+  const [isGenerating, setIsGenerating] = useState(false)
+
+  const handleDownload = async () => {
+    setIsGenerating(true)
+    const id = toast.loading('กำลังสร้างใบ POD...')
+    try {
+        await generatePodPdf(job)
         toast.dismiss(id)
         toast.success('ดาวน์โหลดใบ POD เรียบร้อยแล้ว')
     } catch {
+        toast.dismiss(id)
         toast.error('ไม่สามารถสร้างไฟล์ PDF ได้')
     } finally {
         setIsGenerating(false)

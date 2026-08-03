@@ -51,6 +51,9 @@ interface NavItem {
   icon: React.ReactNode
   badge?: number | string
   badgeColor?: "red" | "blue" | "green" | "yellow"
+  // For customer portal: show this item by default when the customer has no
+  // explicit individual permissions configured.
+  customerDefault?: boolean
 }
 
 interface NavGroup {
@@ -135,16 +138,21 @@ const navigation: NavGroup[] = [
   },
 ]
 
+// Customer-safe menu superset. Every item here is a page that is either
+// customer-scoped or shared reference data. Items flagged customerDefault:true
+// make up the base portal shown when a customer has no individual permissions;
+// the rest only appear when an admin explicitly grants them per-user.
 const customerNavigation: NavGroup[] = [
   {
     titleKey: "nav_groups.client_portal",
     titleFallback: { th: "งานของลูกค้า", en: "Client Portal" },
     items: [
-      { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
-      { titleKey: "navigation.customer_tracking_hub", href: "/dashboard/tracking", icon: <Compass size={20} /> },
-      { titleKey: "navigation.monitoring", href: "/monitoring", icon: <MapPin size={20} /> },
-      { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
-      { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
+      { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} />, customerDefault: true },
+      { titleKey: "navigation.customer_tracking_hub", href: "/dashboard/tracking", icon: <Compass size={20} />, customerDefault: true },
+      { titleKey: "navigation.monitoring", href: "/monitoring", icon: <MapPin size={20} />, customerDefault: true },
+      { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} />, customerDefault: true },
+      { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} />, customerDefault: true },
+      { titleKey: "navigation.calendar", href: "/calendar", icon: <Calendar size={20} />, customerDefault: false },
     ],
   },
 ]
@@ -152,9 +160,10 @@ const customerNavigation: NavGroup[] = [
 interface SidebarProps {
   collapsed?: boolean
   onToggle?: () => void
+  onCustomerResolved?: (isCustomer: boolean) => void
 }
 
-export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed = false, onToggle, onCustomerResolved }: SidebarProps) {
   const pathname = usePathname()
   const { t, language } = useLanguage()
   const [sidebarState, setSidebarState] = React.useState<{
@@ -174,13 +183,17 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         const cachedCustomer = localStorage.getItem("sidebar_is_customer")
         if (cachedContent) {
             try {
-                let parsed = JSON.parse(cachedContent)
-                if (parsed && parsed.length === 0) parsed = null
-                setSidebarState({ 
-                    allowedMenus: parsed, 
+                // NOTE: Keep an empty array as an empty array. Coercing [] → null
+                // would make the filter below treat the user as a Super Admin and
+                // briefly flash the ENTIRE admin menu before the real permissions
+                // resolve. Only a genuine null (Super Admin) means "show all".
+                const parsed = JSON.parse(cachedContent)
+                setSidebarState({
+                    allowedMenus: parsed,
                     isCustomerUser: cachedCustomer === 'true',
-                    isLoaded: true 
+                    isLoaded: true
                 })
+                onCustomerResolved?.(cachedCustomer === 'true')
             } catch (e) {}
         }
 
@@ -203,6 +216,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 isCustomerUser: !!isCust,
                 isLoaded: true
             })
+            onCustomerResolved?.(!!isCust)
         } catch (error) {
             console.error("Sidebar permission error:", error)
             if (!cachedContent) {
@@ -225,7 +239,16 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
     ...group,
     items: group.items.filter(item => {
         if (!isLoaded) return false // Don't show until loaded to prevent "มาๆหายๆ"
-        
+
+        // Customer portal: menu is driven by individual grants when present,
+        // otherwise fall back to the default base portal. This guarantees a
+        // customer always sees their portal and never the admin menu.
+        if (isCustomerUser) {
+            const hasGrants = Array.isArray(allowedMenus) && allowedMenus.length > 0
+            if (hasGrants) return allowedMenus!.includes(item.titleKey)
+            return !!item.customerDefault
+        }
+
         if (!allowedMenus) {
             // Super Admin - Show all EXCEPT redundant quick link
             if (item.titleKey === 'settings.items.change_password') return false

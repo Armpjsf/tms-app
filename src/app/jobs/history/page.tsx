@@ -48,7 +48,8 @@ export default async function JobHistoryPage(props: Props) {
 
   const canViewPrice = isAdminUser || hasPriceView
   const canDelete = isAdminUser || hasDeletePermission
-  const canExport = isAdminUser || hasExportPermission
+  // Customers can always download their own mission report
+  const canExport = isAdminUser || hasExportPermission || customerMode
 
   const { data: jobs, count } = jobsResult
   const { drivers, vehicles, customers, routes, subcontractors } = creationData

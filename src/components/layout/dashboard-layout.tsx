@@ -12,21 +12,37 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
   const [isMounted, setIsMounted] = React.useState(false)
+  // Tracks whether the user has explicitly toggled the sidebar this device.
+  const hasManualPref = React.useRef(false)
 
   // Load state on mount
   React.useEffect(() => {
     const saved = localStorage.getItem("sidebar_collapsed")
     if (saved !== null) {
+      hasManualPref.current = true
       setSidebarCollapsed(saved === "true")
+    } else if (localStorage.getItem("sidebar_is_customer") === "true") {
+      // Known customer (from cache) → start collapsed to avoid the sidebar
+      // flashing open on login. No manual pref is saved, so this stays automatic.
+      setSidebarCollapsed(true)
     }
     setIsMounted(true)
   }, [])
 
   const handleToggle = () => {
+    hasManualPref.current = true
     const newState = !sidebarCollapsed
     setSidebarCollapsed(newState)
     localStorage.setItem("sidebar_collapsed", String(newState))
   }
+
+  // Called by the sidebar once it resolves whether the user is a customer.
+  // Covers the very first login, where no cached customer flag exists yet.
+  const handleCustomerResolved = React.useCallback((isCust: boolean) => {
+    if (isCust && !hasManualPref.current && localStorage.getItem("sidebar_collapsed") === null) {
+      setSidebarCollapsed(true)
+    }
+  }, [])
 
   return (
     <div className="h-screen w-full bg-background text-foreground transition-colors duration-300 selection:bg-primary/30 font-sans overflow-hidden flex flex-col">
@@ -62,9 +78,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             className="h-full shrink-0 transition-all duration-500 ease-in-out relative z-30"
             style={{ width: sidebarCollapsed ? '80px' : '240px' }}
         >
-            <Sidebar 
-                collapsed={sidebarCollapsed} 
-                onToggle={handleToggle} 
+            <Sidebar
+                collapsed={sidebarCollapsed}
+                onToggle={handleToggle}
+                onCustomerResolved={handleCustomerResolved}
             />
         </div>
 

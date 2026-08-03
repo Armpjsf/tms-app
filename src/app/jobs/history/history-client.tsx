@@ -31,6 +31,7 @@ import { ExcelExport } from "@/components/ui/excel-export"
 import { JobHistoryActions } from "@/components/jobs/job-history-actions"
 import { HistoryStatusFilter } from "@/components/jobs/history-status-filter"
 import { CustomerCancelButton } from "@/components/jobs/customer-cancel-button"
+import { PODHistoryButton } from "@/components/jobs/pod-history-button"
 import NextImage from "next/image"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -553,6 +554,10 @@ export function HistoryClient({
                                             canDelete={canDelete}
                                         />
                                     </div>
+                                )}
+                                {/* POD PDF download — available whenever delivery evidence exists */}
+                                {(job.Photo_Proof_Url || job.Signature_Url || ['Delivered', 'Completed', 'Complete'].includes(job.Job_Status || '')) && (
+                                    <PODHistoryButton jobId={job.Job_ID} />
                                 )}
                                 {customerMode && (
                                     <div className="scale-90 origin-right">
