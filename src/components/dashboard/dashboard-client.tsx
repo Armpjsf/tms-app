@@ -259,7 +259,7 @@ export function DashboardClient({
                             onClick={() => setIsRequestDialogOpen(true)}
                             className="h-12 px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-sm uppercase tracking-[0.2em] transition-all shadow-sm active:scale-95 border border-primary/30 rounded-xl"
                         >
-                            {language === 'th' ? "งานวันนี้" : "Today's Mission"}
+                            {language === 'th' ? "+ แจ้งงานใหม่" : "+ New Request"}
                         </button>
                     )}
                     <div className="h-12 px-6 glass-panel rounded-2xl flex items-center gap-4 border-border/5 shadow-sm">

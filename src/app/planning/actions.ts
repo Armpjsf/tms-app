@@ -1137,6 +1137,109 @@ export async function requestShipment(data: {
   return { success: true, message: 'Shipment request submitted successfully' }
 }
 
+/**
+ * Batch version of requestShipment: one shared header (date/origin/cargo) plus
+ * many destination "stops", each of which can request several vehicles/trips.
+ * Creates one Jobs_Main row per vehicle/trip so a customer can file a whole
+ * multi-drop plan in a single submit instead of one dialog per job.
+ */
+export async function requestShipmentBatch(data: {
+  Plan_Date: string
+  Origin_Location: string
+  Cargo_Type?: string
+  Notes?: string
+  stops: { Dest_Location: string; Cargo_Type?: string; Vehicles?: number; Notes?: string }[]
+}) {
+  const supabase = createAdminClient()
+  const customerId_Session = await getCustomerId()
+  const userId = await getUserId()
+  const isCust = await isCustomer()
+
+  let customerId = customerId_Session
+  if (!customerId && userId) {
+    const { data: userData } = await supabase
+      .from('Master_Users')
+      .select('Customer_ID')
+      .eq('Username', userId)
+      .single()
+    if (userData?.Customer_ID) customerId = userData.Customer_ID
+  }
+
+  if (!customerId && !isCust) {
+    return { success: false, message: 'Unauthorized: Access restricted to customers only' }
+  }
+  if (!customerId) {
+    return { success: false, message: 'Unauthorized: Customer ID not found' }
+  }
+
+  const validStops = (data.stops || []).filter(s => s.Dest_Location && s.Dest_Location.trim())
+  if (validStops.length === 0) {
+    return { success: false, message: 'กรุณาระบุปลายทางอย่างน้อย 1 แห่ง' }
+  }
+
+  const { data: customer } = await supabase
+    .from('Master_Customers')
+    .select('Customer_Name, Branch_ID')
+    .eq('Customer_ID', customerId)
+    .single()
+
+  const userBranchId = await getUserBranchId()
+  const branch = customer?.Branch_ID || userBranchId || 'HQ'
+  const custName = customer?.Customer_Name || userId || 'Unknown Customer'
+
+  const nowIso = new Date().toISOString()
+  const rows: Record<string, unknown>[] = []
+  let seq = 0
+  for (const stop of validStops) {
+    const vehicles = Math.min(Math.max(Number(stop.Vehicles) || 1, 1), 50) // guard 1..50
+    for (let v = 0; v < vehicles; v++) {
+      seq++
+      const jobId = `REQ-${Date.now().toString().slice(-6)}-${seq}-${Math.floor(Math.random() * 1000)}`
+      rows.push({
+        Job_ID: jobId,
+        Customer_ID: customerId,
+        Customer_Name: custName,
+        Branch_ID: branch,
+        Plan_Date: data.Plan_Date,
+        Delivery_Date: data.Plan_Date,
+        Origin_Location: data.Origin_Location,
+        Dest_Location: stop.Dest_Location.trim(),
+        Cargo_Type: stop.Cargo_Type || data.Cargo_Type || '',
+        Notes: stop.Notes || data.Notes || '',
+        Job_Status: 'Requested',
+        Weight_Kg: 0,
+        Volume_Cbm: 0,
+        Price_Cust_Total: 0,
+        Cost_Driver_Total: 0,
+        Est_Distance_KM: 0,
+        Created_At: nowIso,
+      })
+    }
+  }
+
+  const { error } = await supabase.from('Jobs_Main').insert(rows)
+  if (error) {
+    return { success: false, message: 'Failed to submit request: ' + error.message }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/planning')
+
+  await logActivity({
+    module: 'Jobs',
+    action_type: 'CREATE',
+    target_id: `BATCH-${rows.length}`,
+    details: {
+      type: 'CUSTOMER_REQUEST_BATCH',
+      customer: custName,
+      jobs: rows.length,
+      stops: validStops.length,
+    },
+  })
+
+  return { success: true, message: `ส่งคำขอ ${rows.length} งานเรียบร้อย`, count: rows.length }
+}
+
 import { transitionJobStatus } from "@/services/job-status-machine"
 
 export async function cancelJobRequest(jobId: string) {
