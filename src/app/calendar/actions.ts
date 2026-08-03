@@ -21,9 +21,11 @@ export async function getJobsForMonth(year: number, month: number, providedBranc
   const isSuper = await isSuperAdmin()
   const isRegularAdmin = await isAdmin()
   const userBranchId = await getUserBranchId()
-  const branchId = (isSuper || isRegularAdmin) ? (providedBranchId || userBranchId) : userBranchId
-  const supabase = (isSuper || isRegularAdmin) ? await createAdminClient() : await createClient()
   const customerId = await getCustomerId()
+  const branchId = (isSuper || isRegularAdmin) ? (providedBranchId || userBranchId) : userBranchId
+  // Customers must use the admin client too (their rows are reached via the
+  // Customer_ID filter below, not via RLS), otherwise the calendar comes back empty.
+  const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
 
   const firstDay = `${year}-${String(month).padStart(2, '0')}-01`
   const lastDay = new Date(year, month, 0)
