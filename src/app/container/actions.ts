@@ -1,6 +1,7 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { getUserBranchId, getCustomerId, isSuperAdmin, isAdmin } from "@/lib/permissions"
 import { Job, JobContainer } from '@/types/database'
 import { todayTH } from "@/lib/utils/date-th"
 
@@ -9,9 +10,13 @@ export type ContainerJob = Job & {
 }
 
 export async function getContainerJobs() {
-    const supabase = await createClient()
-    
-    const { data, error } = await supabase
+    const isSuper = await isSuperAdmin()
+    const isRegularAdmin = await isAdmin()
+    const userBranchId = await getUserBranchId()
+    const customerId = await getCustomerId()
+    const supabase = (isSuper || isRegularAdmin || customerId) ? await createAdminClient() : await createClient()
+
+    let query = supabase
         .from('Jobs_Main')
         .select(`
             *,
@@ -20,7 +25,20 @@ export async function getContainerJobs() {
         `)
         .eq('job_type', 'container')
         .order('Created_At', { ascending: false })
-    
+
+    // Customer isolation takes priority, then branch isolation for non-super users.
+    if (customerId) {
+        query = query.eq('Customer_ID', customerId)
+    } else if (!isSuper) {
+        if (userBranchId && userBranchId !== 'All') {
+            query = query.eq('Branch_ID', userBranchId)
+        } else {
+            return []
+        }
+    }
+
+    const { data, error } = await query
+
     if (error) {
         console.error('[CONTAINER_FETCH_ERROR]', error)
         return []
@@ -44,37 +62,23 @@ export async function getContainerJobs() {
 }
 
 export async function getContainerStats() {
-    const supabase = await createClient()
     const today = todayTH()
     const threeDaysLater = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
-    const { data, error } = await supabase
-        .from('jobs_container')
-        .select(`
-            container_id,
-            lfd_detention,
-            lfd_demurrage,
-        `)
+    // Derive from the customer/branch-scoped container jobs so the stats match
+    // exactly what the user is allowed to see (and joins to the real status).
+    const jobs = await getContainerJobs()
 
-    if (error) return { total: 0, active: 0, nearLfd: 0, overdue: 0 }
+    const lfdOf = (job: ContainerJob) => job.container?.lfd_detention || job.container?.lfd_demurrage || null
 
-    type ContainerData = { lfd_detention?: string | null; lfd_demurrage?: string | null; Jobs_Main: { Job_Status: string } | { Job_Status: string }[] | null }
-    
-    const typedData = data as unknown as ContainerData[]
-
-    const total = typedData.length
-    const active = typedData.filter((d: ContainerData) => {
-        const status = Array.isArray(d.Jobs_Main) ? d.Jobs_Main[0]?.Job_Status : d.Jobs_Main?.Job_Status
-        return status !== 'Completed'
-    }).length
-    
-    const nearLfd = typedData.filter((d: ContainerData) => {
-        const lfd = d.lfd_detention || d.lfd_demurrage
+    const total = jobs.length
+    const active = jobs.filter((j) => j.Job_Status !== 'Completed').length
+    const nearLfd = jobs.filter((j) => {
+        const lfd = lfdOf(j)
         return lfd && lfd >= today && lfd <= threeDaysLater
     }).length
-
-    const overdue = typedData.filter((d: ContainerData) => {
-        const lfd = d.lfd_detention || d.lfd_demurrage
+    const overdue = jobs.filter((j) => {
+        const lfd = lfdOf(j)
         return lfd && lfd < today
     }).length
 

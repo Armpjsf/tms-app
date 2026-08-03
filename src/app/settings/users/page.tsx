@@ -499,6 +499,13 @@ export default function UserSettingsPage() {
 
                             {useIndividualPermissions && (
                                 <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                                    {formData.Role === 'Customer' && (
+                                        <div className="px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+                                            <p className="text-[11px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest italic leading-relaxed">
+                                                ⚠️ ลูกค้าเปิดได้ทุกเมนู แต่บางหน้า (เช่น ตู้คอนเทนเนอร์/วางแผนงาน/ยานพาหนะ) ไม่ได้กรองตามลูกค้า — เปิดเฉพาะเมนูที่ตรวจแล้วว่าปลอดภัย
+                                            </p>
+                                        </div>
+                                    )}
                                     {MODULE_GROUPS.map((group) => (
                                         <div key={group.title} className="space-y-4">
                                             <div className="flex items-center gap-3 px-4">

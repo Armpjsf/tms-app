@@ -30,6 +30,17 @@ import {
     Leaf
 } from "lucide-react"
 
+// Menus shown to a customer who has NO individual permissions configured — the
+// base client portal. Once individual permissions are granted, those take over
+// entirely (see the sidebar filter), giving admins full menu-by-menu control.
+export const CUSTOMER_DEFAULT_KEYS = [
+  "navigation.dashboard",
+  "navigation.customer_tracking_hub",
+  "navigation.monitoring",
+  "navigation.routes",
+  "navigation.history",
+] as const
+
 export const MODULE_GROUPS = [
   {
     title: "Ops Command",

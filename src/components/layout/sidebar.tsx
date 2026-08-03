@@ -42,6 +42,7 @@ import {
 
 import { SidebarProfile } from "./sidebar-profile"
 import { useLanguage } from "@/components/providers/language-provider"
+import { CUSTOMER_DEFAULT_KEYS } from "@/constants/permissions"
 
 type Translate = (path: string, data?: Record<string, string | number>) => string
 
@@ -138,23 +139,23 @@ const navigation: NavGroup[] = [
   },
 ]
 
-// Customer-safe menu superset. Every item here is a page that is either
-// customer-scoped or shared reference data. Items flagged customerDefault:true
-// make up the base portal shown when a customer has no individual permissions;
-// the rest only appear when an admin explicitly grants them per-user.
+// Customers get the SAME full menu as admins, gated entirely by their
+// individual permissions — so an admin can open/close any menu per customer,
+// exactly like restricting an admin account. The only customer-specific extra
+// is their own tracking page, prepended as a Client Portal group.
+const customerTrackingItem: NavItem = {
+  titleKey: "navigation.customer_tracking_hub",
+  href: "/dashboard/tracking",
+  icon: <Compass size={20} />,
+}
+
 const customerNavigation: NavGroup[] = [
   {
     titleKey: "nav_groups.client_portal",
     titleFallback: { th: "งานของลูกค้า", en: "Client Portal" },
-    items: [
-      { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} />, customerDefault: true },
-      { titleKey: "navigation.customer_tracking_hub", href: "/dashboard/tracking", icon: <Compass size={20} />, customerDefault: true },
-      { titleKey: "navigation.monitoring", href: "/monitoring", icon: <MapPin size={20} />, customerDefault: true },
-      { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} />, customerDefault: true },
-      { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} />, customerDefault: true },
-      { titleKey: "navigation.calendar", href: "/calendar", icon: <Calendar size={20} />, customerDefault: false },
-    ],
+    items: [customerTrackingItem],
   },
+  ...navigation,
 ]
 
 interface SidebarProps {
@@ -240,13 +241,13 @@ export function Sidebar({ collapsed = false, onToggle, onCustomerResolved }: Sid
     items: group.items.filter(item => {
         if (!isLoaded) return false // Don't show until loaded to prevent "มาๆหายๆ"
 
-        // Customer portal: menu is driven by individual grants when present,
-        // otherwise fall back to the default base portal. This guarantees a
-        // customer always sees their portal and never the admin menu.
+        // Customer portal: full menu gated by individual grants (admin controls
+        // exactly which menus each customer sees). With no grants configured,
+        // fall back to the base client portal so they're never locked out.
         if (isCustomerUser) {
             const hasGrants = Array.isArray(allowedMenus) && allowedMenus.length > 0
             if (hasGrants) return allowedMenus!.includes(item.titleKey)
-            return !!item.customerDefault
+            return (CUSTOMER_DEFAULT_KEYS as readonly string[]).includes(item.titleKey)
         }
 
         if (!allowedMenus) {

@@ -293,6 +293,38 @@ export function DashboardClient({
                 />
             </div>
 
+            {/* Ongoing missions (customer) — active jobs that carry across days.
+                These won't appear in "งานวันนี้" when their Plan_Date isn't today,
+                so surface them here so the customer always sees what's on the road. */}
+            {customerMode && activeJobs && activeJobs.length > 0 && (
+                <button
+                    onClick={() => router.push('/dashboard/tracking')}
+                    className="w-full text-left group relative overflow-hidden rounded-3xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all shadow-sm p-6 flex items-center gap-5"
+                >
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 blur-[80px] pointer-events-none" />
+                    <div className="relative z-10 shrink-0 w-16 h-16 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shadow-lg">
+                        <Truck size={28} strokeWidth={2.5} />
+                    </div>
+                    <div className="relative z-10 flex-1 min-w-0">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-1 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                            {language === 'th' ? "งานที่กำลังวิ่งอยู่" : "Missions On The Road"}
+                        </p>
+                        <p className="text-foreground font-bold text-sm tracking-tight leading-snug">
+                            {language === 'th'
+                                ? `มี ${activeJobs.length} งานที่กำลังดำเนินการ (รวมงานที่ค้างข้ามวัน) — แตะเพื่อติดตามสด`
+                                : `${activeJobs.length} mission(s) in progress (including carry-over jobs) — tap to track live`}
+                        </p>
+                    </div>
+                    <div className="relative z-10 shrink-0 text-right">
+                        <p className="text-4xl font-black text-primary tracking-tighter leading-none">{activeJobs.length}</p>
+                        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">
+                            {language === 'th' ? "กำลังวิ่ง" : "Active"}
+                        </p>
+                    </div>
+                </button>
+            )}
+
             {/* Customer Summary Cards (7 Active Customers Overview) */}
             {!customerMode && allCustomers && allCustomers.length > 0 && (
                 <CustomerSummaryWidget customers={allCustomers} isAdminUser={isAdminUser} />

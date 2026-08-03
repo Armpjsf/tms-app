@@ -1,6 +1,7 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { getCustomerId } from "@/lib/permissions"
 
 export interface DamageReport {
   id: string
@@ -18,9 +19,33 @@ export interface DamageReport {
 }
 
 export async function getDamageReports(): Promise<DamageReport[]> {
-  const supabase = await createClient()
-  // Just fetch latest 100 for simplicity in admin view
+  const customerId = await getCustomerId()
+  const supabase = customerId ? await createAdminClient() : await createClient()
   try {
+    // Customer isolation: Damage_Reports has no Customer_ID column, so scope
+    // via the customer's own Job_IDs. Admin behaviour is unchanged.
+    if (customerId) {
+      const { data: jobRows } = await supabase
+        .from('Jobs_Main')
+        .select('Job_ID')
+        .eq('Customer_ID', customerId)
+        .limit(2000)
+
+      const jobIds = (jobRows || []).map((j: { Job_ID: string }) => j.Job_ID)
+      if (jobIds.length === 0) return []
+
+      const { data, error } = await supabase
+        .from('Damage_Reports')
+        .select('*')
+        .in('Job_ID', jobIds)
+        .order('Created_At', { ascending: false })
+        .limit(100)
+
+      if (error) return []
+      return (data || []) as DamageReport[]
+    }
+
+    // Admin view: latest 100 across the tenant.
     const { data, error } = await supabase
       .from('Damage_Reports')
       .select('*')
