@@ -16,6 +16,11 @@ const withPWA = nextPWA.default({
   skipWaiting: true,
   workboxOptions: {
     importScripts: ["/sw-push.js"],
+    // หลัง deploy ใหม่ chunk hash เปลี่ยน — ล้าง precache เวอร์ชันเก่าทิ้งอัตโนมัติ
+    // และให้ SW ตัวใหม่คุมทุกแท็บทันที (คู่กับ skipWaiting) กันอาการเสิร์ฟไฟล์เก่า
+    // ปนใหม่จน React hooks เพี้ยน (error #310) / navigation 404
+    cleanupOutdatedCaches: true,
+    clientsClaim: true,
     runtimeCaching: [
       {
         urlPattern: /\/_next\/static\/.*\.js$/i,
