@@ -52,6 +52,60 @@ export async function getDrivingDistance(
 }
 
 /**
+ * Straight-line (Haversine) distance across a sequence of points, in km.
+ * Used as a deterministic fallback when the OSRM routing server is
+ * unreachable or rate-limited, so a job never ends up with a blank distance.
+ */
+function haversineDistanceKm(points: { lat: number; lng: number }[]): number {
+  const R = 6371 // Earth radius in km
+  const toRad = (deg: number) => (deg * Math.PI) / 180
+  let total = 0
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1]
+    const b = points[i]
+    const dLat = toRad(b.lat - a.lat)
+    const dLng = toRad(b.lng - a.lng)
+    const s =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2
+    total += 2 * R * Math.asin(Math.sqrt(s))
+  }
+  return parseFloat(total.toFixed(2))
+}
+
+/**
+ * Resolve a driving distance for a set of ordered points, guaranteeing a
+ * value whenever there are >= 2 valid points.
+ *
+ * Order of preference:
+ *   1. OSRM driving distance (accurate, road network)
+ *   2. Haversine straight-line distance (always available)
+ *
+ * Returns null only when there are fewer than 2 points to measure.
+ * This is the single source of truth used by BOTH job creation and file
+ * import so distances are populated consistently on the server, instead of
+ * relying on a flaky client-side OSRM call or an exact Master_Routes match.
+ */
+export async function resolveDistanceKm(
+  points: { lat: number; lng: number }[]
+): Promise<number | null> {
+  const valid = points.filter(
+    p =>
+      typeof p.lat === 'number' &&
+      typeof p.lng === 'number' &&
+      !Number.isNaN(p.lat) &&
+      !Number.isNaN(p.lng)
+  )
+  if (valid.length < 2) return null
+
+  const osrm = await getDrivingDistance(valid)
+  if (osrm !== null && osrm > 0) return osrm
+
+  // Fallback: never leave the field blank when we have coordinates.
+  return haversineDistanceKm(valid)
+}
+
+/**
  * Route Optimization — TMS 2026
  * Uses OSRM Trip service to solve Traveling Salesman Problem (TSP).
  * Returns the optimized sequence of indices.

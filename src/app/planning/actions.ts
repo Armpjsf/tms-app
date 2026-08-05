@@ -15,6 +15,7 @@ import { getFuelPriceNumber, getSuggestedRate } from '@/lib/actions/fuel-actions
 import { optimizeRoute, RoutePoint } from '@/lib/ai/route-optimizer'
 import { appendJobToMaster } from '@/lib/actions/master-sheet-sync'
 import { getSession } from '@/lib/session'
+import { resolveDistanceKm } from '@/lib/ai/distance'
 
 export type JobFormData = {
   Job_ID: string
@@ -131,6 +132,10 @@ export async function createJob(data: JobFormData) {
       Driver_Name: driverName,
       Sub_ID: subId
   })
+
+  // Ensure distance is populated server-side (OSRM + Haversine fallback) so it
+  // never depends on the flaky client-side calculation completing before save.
+  data.Est_Distance_KM = await resolveJobDistance(data)
 
   // Attempt 1
   const payload = buildInsertPayload(data, driverName, subId, pricing.unitPrice)
@@ -258,6 +263,57 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
       job_type: data.job_type || 'normal',
       chassis_plate: data.chassis_plate || null
   }
+}
+
+/**
+ * Server-side distance resolver — single source of truth for BOTH manual
+ * job creation and file import.
+ *
+ * - Keeps any existing positive Est_Distance_KM (manual entry / file column /
+ *   Master route) untouched.
+ * - Otherwise collects the ordered coordinates (multi-origin + multi-dest from
+ *   the JSON fields, falling back to Pickup/Delivery lat-lon) and resolves a
+ *   distance via OSRM with a Haversine fallback, so coordinates never yield a
+ *   blank distance.
+ *
+ * Returns the km value to persist (never overrides a good existing value).
+ */
+async function resolveJobDistance(data: Partial<JobFormData>): Promise<number> {
+  const existing = Number(data.Est_Distance_KM) || 0
+  if (existing > 0) return existing
+
+  const points: { lat: number; lng: number }[] = []
+
+  const collect = (raw: unknown) => {
+    const parsed = parseIfString(raw as string)
+    if (Array.isArray(parsed)) {
+      for (const p of parsed) {
+        const lat = Number((p as { lat?: unknown })?.lat)
+        const lng = Number((p as { lng?: unknown })?.lng)
+        if (!Number.isNaN(lat) && !Number.isNaN(lng) && (lat !== 0 || lng !== 0)) {
+          points.push({ lat, lng })
+        }
+      }
+    }
+  }
+
+  collect(data.original_origins_json)
+  collect(data.original_destinations_json)
+
+  // Fallback to the single-leg Pickup/Delivery coordinates
+  if (points.length < 2) {
+    points.length = 0
+    const pLat = Number(data.Pickup_Lat)
+    const pLon = Number(data.Pickup_Lon)
+    const dLat = Number(data.Delivery_Lat)
+    const dLon = Number(data.Delivery_Lon)
+    if (![pLat, pLon, dLat, dLon].some(Number.isNaN) && (pLat || pLon) && (dLat || dLon)) {
+      points.push({ lat: pLat, lng: pLon }, { lat: dLat, lng: dLon })
+    }
+  }
+
+  const resolved = await resolveDistanceKm(points)
+  return resolved ?? existing
 }
 
 async function handleContainerData(
@@ -663,9 +719,13 @@ export async function createBulkJobs(
         }
     }
     const roundInfo = j.Round ? `[รอบ: ${j.Round}] ` : ''
-    return { 
-      ...j, 
+    // Ensure distance is populated on import too (file column / Master route
+    // may be missing) using the same OSRM + Haversine resolver as manual entry.
+    const estDistance = await resolveJobDistance(j)
+    return {
+      ...j,
       Price_Cust_Total: total,
+      Est_Distance_KM: estDistance,
       Notes: j.Notes ? (j.Notes.startsWith('[รอบ:') ? j.Notes : `${roundInfo}${j.Notes}`) : (j.Round ? `[รอบ: ${j.Round}]` : j.Notes)
     }
   }))
@@ -906,6 +966,17 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
     if (!transition.success) {
       // Do NOT block the rest of the edit on an unintended/illegal status change.
       console.warn(`[updateJob] Skipping status change for ${jobId}: ${transition.message}`)
+    } else if (
+      currentJob.Job_Status === 'Verified' &&
+      !['Verified', 'Billed', 'Paid'].includes(data.Job_Status as string)
+    ) {
+      // Reverting OUT of Verified back to an operational/rejected status (e.g. an
+      // admin who wrongly verified a job and is undoing it). Clear the verification
+      // stamps so the ledger doesn't keep a job marked "verified" once it's been
+      // sent back into the workflow. (Forward moves Verified -> Billed/Paid keep them.)
+      updateData.Verification_Status = null
+      updateData.Verified_By = null
+      updateData.Verified_At = null
     } else if (data.Job_Status === 'Verified') {
       // Changing status to 'Verified' here must mirror the verification dialog:
       // stamp the verification fields and write the MASTER Sheet row, otherwise
