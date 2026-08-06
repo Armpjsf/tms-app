@@ -18,6 +18,9 @@ export type ExtraServiceData = {
   approverSignatureUrl?: string | null
   approverSignatureBlob?: Blob | null
   notes: string
+  // จุดลงย่อยที่ลูกค้าแจ้งแบ่งหน้างาน (เช่น โกดัง) — สูงสุด 2 จุด
+  // ระบบจะนำไปสร้างเป็นจุดส่งเพิ่มในงานนั้นตอนยืนยัน POD
+  subDrops?: string[]
 }
 
 type ExtraServiceModalProps = {
@@ -44,6 +47,8 @@ export function ExtraServiceModal({
   
   const [selectedSo, setSelectedSo] = useState<string>(currentJobId)
   const [storeName, setStoreName] = useState<string>(currentCustomerName || "")
+  // index ของตัวเลือกใน dropdown — ใช้เป็นค่าที่ไม่ซ้ำ (จุดหน้าร้าน/โกดังมี SO เดียวกันได้)
+  const [selectedIdx, setSelectedIdx] = useState<number>(0)
   const [movedQty, setMovedQty] = useState<number>(0)
   const [floorClimbQty, setFloorClimbQty] = useState<number>(0)
   const [shelvedQty, setShelvedQty] = useState<number>(0)
@@ -51,6 +56,8 @@ export function ExtraServiceModal({
   const [approverSigBlob, setApproverSigBlob] = useState<Blob | null>(null)
   const [approverSigUrl, setApproverSigUrl] = useState<string | null>(null)
   const [notes, setNotes] = useState<string>("")
+  // จุดลงย่อย (เช่น โกดัง) — พิมพ์อิสระ สูงสุด 2 จุด
+  const [subDrops, setSubDrops] = useState<string[]>([])
 
   useEffect(() => {
     // Build options from current job + originalDestinations
@@ -75,25 +82,33 @@ export function ExtraServiceModal({
     setSoOptions(list)
 
     if (initialData) {
-      setSelectedSo(initialData.soNo || (list[0]?.so || currentJobId))
-      setStoreName(initialData.storeName || (list[0]?.store || currentCustomerName || ""))
+      // หา index ที่ตรงทั้ง SO และชื่อร้าน (กันกรณี SO ซ้ำ เช่น หน้าร้าน vs โกดัง)
+      const idx = list.findIndex(o => o.so === initialData.soNo && o.store === initialData.storeName)
+      const safeIdx = idx >= 0 ? idx : 0
+      setSelectedIdx(safeIdx)
+      setSelectedSo(initialData.soNo || (list[safeIdx]?.so || currentJobId))
+      setStoreName(initialData.storeName || (list[safeIdx]?.store || currentCustomerName || ""))
       setMovedQty(initialData.movedQty || 0)
       setFloorClimbQty(initialData.floorClimbQty || 0)
       setShelvedQty(initialData.shelvedQty || 0)
       setApproverPhone(initialData.approverPhone || "")
       setApproverSigUrl(initialData.approverSignatureUrl || null)
       setNotes(initialData.notes || "")
+      setSubDrops(Array.isArray(initialData.subDrops) ? initialData.subDrops : [])
     } else {
+      setSelectedIdx(0)
       setSelectedSo(list[0]?.so || currentJobId)
       setStoreName(list[0]?.store || currentCustomerName || "")
     }
   }, [currentJobId, currentCustomerName, originalDestinations, initialData, isOpen])
 
-  const handleSoChange = (so: string) => {
-    setSelectedSo(so)
-    const match = soOptions.find((o) => o.so === so)
-    if (match) {
-      setStoreName(match.store)
+  // เลือกจาก dropdown ด้วย index (ไม่ใช้ so เป็นค่า เพราะ so ซ้ำกันได้)
+  const handleSelectIdx = (idx: number) => {
+    setSelectedIdx(idx)
+    const opt = soOptions[idx]
+    if (opt) {
+      setSelectedSo(opt.so)
+      setStoreName(opt.store)
     }
   }
 
@@ -107,6 +122,12 @@ export function ExtraServiceModal({
     }
   }
 
+  // จุดลงย่อย: เพิ่ม/ลบ/แก้ (จำกัดสูงสุด 2 จุด)
+  const addSubDrop = () => setSubDrops(prev => (prev.length >= 2 ? prev : [...prev, ""]))
+  const removeSubDrop = (i: number) => setSubDrops(prev => prev.filter((_, idx) => idx !== i))
+  const updateSubDrop = (i: number, v: string) =>
+    setSubDrops(prev => prev.map((s, idx) => (idx === i ? v : s)))
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSave({
@@ -118,7 +139,8 @@ export function ExtraServiceModal({
       approverPhone,
       approverSignatureUrl: approverSigUrl,
       approverSignatureBlob: approverSigBlob,
-      notes
+      notes,
+      subDrops: subDrops.map(s => s.trim()).filter(Boolean).slice(0, 2)
     })
     onClose()
   }
@@ -148,12 +170,12 @@ export function ExtraServiceModal({
               เลือก SO / ใบงาน หรือระบุเลข SO
             </Label>
             <select
-              value={selectedSo}
-              onChange={(e) => handleSoChange(e.target.value)}
+              value={selectedIdx}
+              onChange={(e) => handleSelectIdx(Number(e.target.value))}
               className="w-full h-11 bg-slate-800 border border-slate-700 rounded-xl px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
             >
               {soOptions.map((opt, i) => (
-                <option key={i} value={opt.so} style={{ backgroundColor: "#1e293b", color: "#ffffff" }}>
+                <option key={i} value={i} style={{ backgroundColor: "#1e293b", color: "#ffffff" }}>
                   {opt.so} - {opt.store}
                 </option>
               ))}
@@ -263,6 +285,51 @@ export function ExtraServiceModal({
               </div>
             </div>
           )}
+
+          {/* จุดลงย่อย (แบ่งลงโกดัง ฯลฯ) — พบเฉพาะหน้างาน */}
+          <div className="space-y-2 bg-amber-950/30 p-3 rounded-2xl border border-amber-900/40">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-bold text-amber-200 flex items-center gap-1.5">
+                  <Package size={14} /> ลูกค้าแจ้งแบ่งลงจุดอื่น?
+                </p>
+                <p className="text-[11px] text-amber-400/90">
+                  เช่น ลงหน้าร้านบางส่วน อีกส่วนลงโกดัง — ระบบจะเพิ่มเป็นจุดส่งใหม่ในงานนี้ให้อัตโนมัติ
+                </p>
+              </div>
+              {subDrops.length < 2 && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={addSubDrop}
+                  className="h-8 shrink-0 rounded-xl border-amber-700/60 bg-amber-900/40 text-amber-200 text-xs font-bold hover:bg-amber-900/70"
+                >
+                  <Plus size={13} className="mr-1" /> เพิ่มจุด
+                </Button>
+              )}
+            </div>
+
+            {subDrops.map((sub, i) => (
+              <div key={i} className="flex items-center gap-2 animate-in fade-in duration-200">
+                <Input
+                  value={sub}
+                  onChange={(e) => updateSubDrop(i, e.target.value)}
+                  placeholder={`ชื่อจุดลงย่อยที่ ${i + 1} (เช่น โกดัง)`}
+                  className="h-11 flex-1 bg-slate-800 border-amber-800/50 rounded-xl text-sm text-white placeholder:text-slate-500 focus-visible:ring-amber-500 font-medium"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => removeSubDrop(i)}
+                  className="h-11 w-11 shrink-0 rounded-xl border-amber-800/50 bg-amber-950/40 text-amber-300"
+                >
+                  <Minus size={15} />
+                </Button>
+              </div>
+            ))}
+          </div>
 
           {/* Approver Signature Pad */}
           <div className="space-y-1.5 pt-1">

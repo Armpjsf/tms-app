@@ -16,11 +16,20 @@ export default async function AdminJobDetailPage({
 
   const { data: job } = await supabase
     .from('Jobs_Main')
-    .select('Job_ID, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Origin_Location, Dest_Location, Job_Status, Plan_Date, Est_Distance_KM')
+    .select('Job_ID, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Origin_Location, Dest_Location, Job_Status, Plan_Date, Est_Distance_KM, Total_Drop, original_destinations_json')
     .eq('Job_ID', id)
     .single()
 
   const adherence = await getJobRouteAdherence(id)
+
+  // รายการจุดส่งทั้งหมด (multi-drop + จุดย่อยที่คนขับเพิ่มหน้างาน เช่น โกดัง)
+  const allDrops: { name?: string; so_no?: string }[] = (() => {
+    try {
+      const raw = (job as { original_destinations_json?: string | unknown[] } | null)?.original_destinations_json
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+      return Array.isArray(parsed) ? parsed : []
+    } catch { return [] }
+  })()
 
   return (
     <DashboardLayout>
@@ -44,6 +53,32 @@ export default async function AdminJobDetailPage({
             <div><span className="text-muted-foreground text-xs font-bold block">เส้นทาง</span><span className="font-bold">{job?.Route_Name || `${job?.Origin_Location || '?'} → ${job?.Dest_Location || '?'}`}</span></div>
             <div><span className="text-muted-foreground text-xs font-bold block">วันที่</span><span className="font-bold">{job?.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-'}</span></div>
           </div>
+
+          {/* จุดส่งทั้งหมด (multi-drop + จุดย่อยที่คนขับเพิ่มหน้างาน) */}
+          {allDrops.length > 1 && (
+            <div className="mt-6 pt-5 border-t border-border/10">
+              <div className="flex items-center gap-2 mb-3">
+                <MapPin className="w-4 h-4 text-emerald-500" />
+                <span className="text-sm font-black text-foreground">จุดส่งทั้งหมด</span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 text-[11px] font-bold border border-emerald-500/20">
+                  {allDrops.length} จุด
+                </span>
+              </div>
+              <ol className="space-y-1.5">
+                {allDrops.map((d, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-sm">
+                    <span className="mt-0.5 w-5 h-5 shrink-0 rounded-full bg-muted text-muted-foreground text-[11px] font-black flex items-center justify-center">
+                      {i + 1}
+                    </span>
+                    <span className="font-bold text-foreground">
+                      {d.name || `จุดส่งที่ ${i + 1}`}
+                      {d.so_no && <span className="ml-2 text-[11px] font-semibold text-muted-foreground">SO: {d.so_no}</span>}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
         </div>
 
         {/* 6.4 — แผน vs วิ่งจริง (เก็บจาก GPS อัตโนมัติ) */}

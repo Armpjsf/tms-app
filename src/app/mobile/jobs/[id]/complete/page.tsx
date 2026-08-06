@@ -218,6 +218,10 @@ export default function JobCompletePage() {
         formData.append("photo_count", photos.length.toString())
         formData.append("signature", signature, "signature.png")
         if (loadedQty) formData.append("loaded_qty", loadedQty)
+        // จุดลงย่อยที่ลูกค้าแจ้งแบ่งหน้างาน (เช่น โกดัง) → server จะเพิ่มเป็นจุดส่งใหม่
+        if (extraServiceData?.subDrops && extraServiceData.subDrops.length > 0) {
+            formData.append("add_subdrop_names", JSON.stringify(extraServiceData.subDrops.slice(0, 2)))
+        }
         if (isContainer) {
             formData.append("job_type", "container")
         }
@@ -280,13 +284,17 @@ export default function JobCompletePage() {
                 } catch { /* Fail silently */ }
             }
 
-            const offlineData = {
+            const offlineData: Record<string, unknown> = {
                 photos: photoB64s,
                 signature: sigB64,
                 pod_report: reportB64,
                 floor_climb_report: floorClimbB64,
                 photo_count: photos.length,
                 actualCompletionTime: new Date().toISOString()
+            }
+            // พาจุดลงย่อยไปกับ offline queue ด้วย (replay จะ append เป็น string ปกติ)
+            if (extraServiceData?.subDrops && extraServiceData.subDrops.length > 0) {
+                offlineData.add_subdrop_names = JSON.stringify(extraServiceData.subDrops.slice(0, 2))
             }
 
             await saveJobOffline(params.id, offlineData, 'POD')

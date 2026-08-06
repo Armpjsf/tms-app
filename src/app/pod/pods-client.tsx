@@ -12,7 +12,8 @@ import {
   AlertCircle,
   Download,
   Filter,
-  ArrowRight
+  ArrowRight,
+  Layers
 } from "lucide-react"
 import { getAllPODs, getPODStats } from "@/lib/supabase/pod"
 import { PODExport } from "@/components/pod/pod-export"
@@ -146,6 +147,7 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: POD
                 <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('navigation.drivers')}</th>
                 <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic text-center">{t('pod.pickup_evidence') || 'PICKUP PROOF'}</th>
                 <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic text-center">{t('pod.visual_proof')} (POD)</th>
+                <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic text-center">ใบขึ้นชั้น</th>
                 <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic text-center">{t('common.status')}</th>
                 <th className="px-6 py-4 text-right text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('common.action')}</th>
               </tr>
@@ -242,6 +244,37 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: POD
                            <div className="w-4 h-px bg-muted/20" />
                         )}
                      </div>
+                  </td>
+                  {/* ใบขึ้นชั้น (Floor Climb slips) — ดู/โหลด รองรับหลายใบต่องาน */}
+                  <td className="px-4 py-3 text-center">
+                     {pod.Floor_Climb_Url && pod.Floor_Climb_Url.split(',').filter(Boolean).length > 0 ? (
+                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                           {pod.Floor_Climb_Url.split(',').filter(Boolean).map((url, i) => (
+                              <div key={i} className="inline-flex items-center gap-0.5">
+                                 <button
+                                    type="button"
+                                    onClick={() => window.open(url, '_blank')}
+                                    title={`ดูใบขึ้นชั้น ดรอปที่ ${i + 1}`}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500 hover:text-white text-indigo-400 border border-indigo-500/20 transition-all text-[10px] font-black"
+                                 >
+                                    <Layers size={12} /> {i + 1}
+                                 </button>
+                                 <a
+                                    href={url}
+                                    download={`ใบขึ้นชั้น_${pod.Job_ID}_ดรอป${i + 1}.jpg`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title={`โหลดใบขึ้นชั้น ดรอปที่ ${i + 1}`}
+                                    className="inline-flex p-1 rounded-lg bg-muted/50 hover:bg-indigo-500 hover:text-white text-muted-foreground transition-all"
+                                 >
+                                    <Download size={12} />
+                                 </a>
+                              </div>
+                           ))}
+                        </div>
+                     ) : (
+                        <div className="w-4 h-px bg-muted/20 mx-auto" />
+                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <div className={cn(

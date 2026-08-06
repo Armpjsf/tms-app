@@ -221,8 +221,28 @@ export async function createBulkLocations(rows: Record<string, unknown>[]) {
   }
 }
 
+// ตัวคั่นเส้นทางหลายจุด (multi-drop) ที่ระบบใช้ join เช่น "A → B → C"
+// แยกเฉพาะลูกศร ไม่แยกที่ขีดกลาง "-" เพราะชื่อจริงมี เช่น DC-LOTUS, DC-Big-C
+const ROUTE_STOP_SEPARATOR = /\s*(?:→|➔|➜|⟶|=>|->|>)\s*/g
+
+// แตกสตริงเส้นทางหลายจุดออกเป็นชื่อสถานที่รายจุด + ตัดซ้ำ (case-insensitive)
+function splitStopNames(raw: string | null | undefined): string[] {
+  if (!raw) return []
+  const parts = String(raw).split(ROUTE_STOP_SEPARATOR).map(s => s.trim()).filter(Boolean)
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const p of parts) {
+    const key = p.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(p)
+  }
+  return out
+}
+
 // สร้าง Master_Locations แบบ "ค้างเติมพิกัด" ให้ชื่อสถานที่ที่ยังไม่มีในระบบ
 // ใช้ตอนสร้างงาน/นำเข้างานเส้นทางใหม่เร่งด่วน — อนุโลมให้ผ่าน แล้ว flag ไว้ให้แอดมินตามเติม
+// รับได้ทั้งชื่อจุดเดียวและสตริงหลายจุด "A → B → C" — จะถูกแตกเป็นรายจุด + ตัดซ้ำก่อนบันทึก
 // non-blocking: จับ error ภายใน ไม่ throw ออกไปกระทบการสร้างงาน
 // คืนรายชื่อที่เพิ่งสร้างใหม่ (incomplete)
 export async function ensureJobLocations(
@@ -231,7 +251,16 @@ export async function ensureJobLocations(
 ): Promise<string[]> {
   try {
     const supabase = createAdminClient()
-    const clean = Array.from(new Set(names.map(n => (n || '').trim()).filter(Boolean)))
+    // แตกทุก input เป็นรายจุด (กันสตริงหลายจุดถูกบันทึกเป็นสถานที่เดียว) แล้ว dedupe รวม
+    const expanded = names.flatMap(n => splitStopNames(n))
+    const seen = new Set<string>()
+    const clean: string[] = []
+    for (const p of expanded) {
+      const key = p.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      clean.push(p)
+    }
     if (clean.length === 0) return []
 
     const { data: existing } = await supabase.from('Master_Locations').select('Name')

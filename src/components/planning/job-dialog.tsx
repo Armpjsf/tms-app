@@ -225,14 +225,32 @@ export function JobDialog({
     port_closing_datetime: (job as any)?.container?.port_closing_datetime ? (job as any).container.port_closing_datetime.slice(0, 16) : '',
   })
 
+  // แตกสตริงเส้นทางหลายจุดที่ถูก join ด้วยลูกศร (legacy) เป็นหลายแถว + ตัดซ้ำ
+  // เพื่อให้เปิดงานเก่าที่เก็บเป็น "A → B → C" มาเป็นจุดส่งแยกกันได้ (ไม่ติด validation)
+  const splitLegacyStops = (raw?: string | null): LocationPoint[] => {
+    const parts = String(raw || '')
+      .split(/\s*(?:→|➔|➜|⟶|=>|->|>)\s*/)
+      .map(s => s.trim())
+      .filter(Boolean)
+    const seen = new Set<string>()
+    const uniq = parts.filter(p => {
+      const k = p.toLowerCase()
+      if (seen.has(k)) return false
+      seen.add(k)
+      return true
+    })
+    return uniq.map(name => ({ name, lat: '', lng: '' }))
+  }
+
   // Multi-point origins
   const [origins, setOrigins] = useState<LocationPoint[]>(() => {
     const fromJson = parseJson((job?.origins || job?.original_origins_json) as string | unknown[], []) as LocationPoint[]
     if (fromJson && fromJson.length > 0) return fromJson
-    
-    // Fallback for requested jobs which save as plain strings
+
+    // Fallback for requested jobs which save as plain strings (แตกลูกศรเป็นหลายแถว)
     if (job?.Origin_Location) {
-        return [{ name: job.Origin_Location, lat: '', lng: '' }]
+        const rows = splitLegacyStops(job.Origin_Location)
+        if (rows.length > 0) return rows
     }
     return [{ name: '', lat: '', lng: '' }]
   })
@@ -241,10 +259,11 @@ export function JobDialog({
   const [destinations, setDestinations] = useState<LocationPoint[]>(() => {
     const fromJson = parseJson((job?.destinations || job?.original_destinations_json) as string | unknown[], []) as LocationPoint[]
     if (fromJson && fromJson.length > 0) return fromJson
-    
-    // Fallback for requested jobs which save as plain strings
+
+    // Fallback for requested jobs which save as plain strings (แตกลูกศรเป็นหลายแถว)
     if (job?.Dest_Location) {
-        return [{ name: job.Dest_Location, lat: '', lng: '' }]
+        const rows = splitLegacyStops(job.Dest_Location)
+        if (rows.length > 0) return rows
     }
     return [{ name: '', lat: '', lng: '' }]
   })
@@ -989,7 +1008,15 @@ export function JobDialog({
     if (!formData.Customer_Name) errors.push(t('jobs.dialog.customer_required'))
     if (!origins[0].name) errors.push(t('jobs.dialog.origin_required'))
     if (!destinations[0].name) errors.push(t('jobs.dialog.dest_required'))
-    
+
+    // ห้ามพิมพ์หลายจุดรวมในช่องเดียวด้วยลูกศร — ต้องกด "เพิ่มจุดส่ง" แยกแต่ละจุด
+    // (กันข้อมูลชื่อสถานที่แบบ "A → B → C" ที่ทำให้เกิดสถานที่ค้างเติมพิกัดปลอมๆ)
+    const STOP_SEPARATOR = /→|➔|➜|⟶|=>|->|(?:\s>\s)/
+    const hasArrow = (s?: string) => !!s && STOP_SEPARATOR.test(s)
+    if (origins.some(o => hasArrow(o.name)) || destinations.some(d => hasArrow(d.name))) {
+      errors.push(t('jobs.dialog.stop_single_only'))
+    }
+
     // Check assignments - Relaxed for bidding system (Optional driver/vehicle)
     return errors
   }

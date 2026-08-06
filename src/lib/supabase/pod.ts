@@ -17,6 +17,7 @@ export type PODRecord = {
   Actual_Delivery_Time: string | null
   Delivery_Lat: number | null
   Delivery_Lon: number | null
+  Floor_Climb_Url: string | null
 }
 
 // ดึงรายการ POD วันนี้
@@ -32,7 +33,7 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
 
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Pickup_Photo_Url, Pickup_Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon, Created_At')
+      .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Pickup_Photo_Url, Pickup_Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon, Floor_Climb_Url, Created_At')
       .eq('Plan_Date', today)
       .in('Job_Status', ['Delivered', 'Complete', 'Completed', 'In Transit', 'Picked Up'])
 
@@ -59,25 +60,32 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
 }
 
 // ดึงรายการ POD ทั้งหมด
-export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo?: string, query?: string): Promise<{ data: PODRecord[], count: number }> {
+export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo?: string, query?: string, customerFilter?: string): Promise<{ data: PODRecord[], count: number }> {
   try {
     const isSuper = await isSuperAdmin()
     const isRegularAdmin = await isAdmin()
     const customerId = await getCustomerId()
     const supabase = (isSuper || isRegularAdmin || customerId) ? createAdminClient() : await createClient()
     const offset = (page - 1) * limit
-    
+
     const branchId = await getUserBranchId()
+    // ลูกค้าที่บังคับกรอง: บัญชีลูกค้าจริง (customerId) มาก่อน; ถ้าเป็นแอดมิน/ซูเปอร์
+    // ให้ใช้ค่าที่เลือกจากดรอปดาวน์แถบบน (cookie selectedCustomer ที่ส่งเข้ามา)
+    const effectiveCustomer = customerId || (customerFilter && customerFilter !== 'All' ? customerFilter : null)
 
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Pickup_Photo_Url, Pickup_Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon, Created_At', { count: 'exact' })
+      .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Pickup_Photo_Url, Pickup_Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon, Floor_Climb_Url, Created_At', { count: 'exact' })
       .in('Job_Status', ['Delivered', 'Complete', 'Completed', 'In Transit', 'Picked Up', 'Assigned', 'New', 'Failed', 'In Progress', 'Pending'])
-    
+
+    if (effectiveCustomer) {
+        dbQuery = dbQuery.eq('Customer_ID', effectiveCustomer)
+    }
+
     if (customerId) {
-        dbQuery = dbQuery.eq('Customer_ID', customerId)
+        // บัญชีลูกค้า: กรองด้วย Customer_ID เท่านั้น (ทำไปแล้วด้านบน) ไม่ผูกสาขา
     } else if (isSuper && (!branchId || branchId === 'All')) {
-        // No filter
+        // No branch filter
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isSuper && !isRegularAdmin && !branchId) {
@@ -111,22 +119,27 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
 
 
 // นับสถิติ POD
-export async function getPODStats(dateFrom?: string, dateTo?: string) {
+export async function getPODStats(dateFrom?: string, dateTo?: string, customerFilter?: string) {
   try {
     const isSuper = await isSuperAdmin()
     const isRegularAdmin = await isAdmin()
     const customerId = await getCustomerId()
     const supabase = (isSuper || isRegularAdmin || customerId) ? createAdminClient() : await createClient()
-    
+
     const branchId = await getUserBranchId()
+    const effectiveCustomer = customerId || (customerFilter && customerFilter !== 'All' ? customerFilter : null)
 
     let dbQuery = supabase
       .from('Jobs_Main')
       .select('Job_Status, Photo_Proof_Url, Signature_Url')
       .neq('Job_Status', 'Cancelled')
-    
+
+    if (effectiveCustomer) {
+        dbQuery = dbQuery.eq('Customer_ID', effectiveCustomer)
+    }
+
     if (customerId) {
-        dbQuery = dbQuery.eq('Customer_ID', customerId)
+        // บัญชีลูกค้า: กรองด้วย Customer_ID เท่านั้น
     } else if (isSuper && (!branchId || branchId === 'All')) {
         // No branch filter for super admin
     } else if (branchId && branchId !== 'All') {

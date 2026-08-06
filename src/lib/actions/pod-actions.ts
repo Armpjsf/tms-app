@@ -147,6 +147,70 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
             parsedDests = []
         }
     }
+    // --- แนว A: แบ่งลงจุดย่อย (เช่น โกดัง) ที่คนขับพบเฉพาะหน้างาน ---
+    // คนขับพิมพ์ชื่อจุดย่อย (สูงสุด 2) ในโมดัลใบขึ้นชั้น เราต่อจุดย่อยเข้า
+    // original_destinations_json "ก่อนนับ totalDrop" เพื่อไม่ให้ลายเซ็นดรอปนี้
+    // ทำให้ตัวนับเต็มแล้วปิดงานก่อน (โดยเฉพาะดรอปสุดท้าย) — ไม่แตะระยะทาง
+    try {
+        const rawSub = formData.get("add_subdrop_names") as string | null
+        const subDropNames: string[] = rawSub
+            ? (JSON.parse(rawSub) as unknown[]).map(s => String(s || '').trim()).filter(Boolean).slice(0, 2)
+            : []
+        if (subDropNames.length > 0) {
+            if (!Array.isArray(parsedDests)) parsedDests = []
+            // ดรอปที่กำลังส่งอยู่ตอนนี้ = ตามจำนวนลายเซ็นที่มีอยู่ (0-based)
+            const existingSigCount = jobData?.Signature_Url
+                ? jobData.Signature_Url.split(',').filter(Boolean).length : 0
+            // งานที่ยังไม่มีรายการจุดส่ง (เช่น งานนำเข้า/งานจุดเดียว) — seed จุดเดิมก่อน
+            // เพื่อให้ totalDrop รวมจุดหน้าร้าน ไม่งั้นต่อโกดังแล้ว total ยังเท่าเดิม → ปิดงานก่อน
+            if (parsedDests.length === 0) {
+                const baseTotal = Number(jobData?.Total_Drop) > 0 ? Number(jobData.Total_Drop) : 1
+                const known = Math.max(baseTotal, existingSigCount + 1)
+                for (let k = 0; k < known; k++) {
+                    parsedDests.push({
+                        name: k === existingSigCount
+                            ? (jobData?.Dest_Location || `จุดส่งที่ ${k + 1}`)
+                            : `จุดส่งที่ ${k + 1}`,
+                        so_no: '',
+                        lat: k === existingSigCount ? (jobData?.Delivery_Lat ?? null) : null,
+                        lon: k === existingSigCount ? (jobData?.Delivery_Lon ?? null) : null,
+                    })
+                }
+            }
+            const currentDrop = (parsedDests[existingSigCount]
+                || parsedDests[parsedDests.length - 1] || {}) as { name?: string; so_no?: string }
+            const baseName = String(currentDrop.name || jobData?.Dest_Location || 'จุดส่ง').trim()
+            const baseSo = currentDrop.so_no || ''
+            const existingNames = new Set(
+                parsedDests.map(d => String((d as { name?: string })?.name || '').trim().toLowerCase())
+            )
+            const newItems: unknown[] = []
+            for (const sub of subDropNames) {
+                const newName = `${baseName} – ${sub}`
+                if (existingNames.has(newName.toLowerCase())) continue  // กันซ้ำ (offline replay)
+                newItems.push({ name: newName, so_no: baseSo, lat: null, lon: null })
+                existingNames.add(newName.toLowerCase())
+            }
+            // แทรกจุดย่อย "ต่อจากจุดหลัก" (ดรอปที่กำลังส่งอยู่ index = existingSigCount)
+            // เพื่อให้เรียงติดกัน เช่น 1) ร้าน  2) ร้าน–โกดัง  3) ร้านถัดไป ...
+            if (newItems.length > 0) {
+                parsedDests.splice(existingSigCount + 1, 0, ...newItems)
+            }
+            const appended = newItems.length
+            if (appended > 0) {
+                // persist ทันที เพื่อให้ totalDrop ด้านล่างสะท้อนจุดที่เพิ่ม → งานไม่ปิดก่อน
+                await supabase.from('Jobs_Main')
+                    .update({
+                        original_destinations_json: JSON.stringify(parsedDests),
+                        Total_Drop: parsedDests.length,
+                    })
+                    .eq('Job_ID', jobId)
+            }
+        }
+    } catch (subErr) {
+        console.warn('[POD add_subdrop] skipped:', subErr)
+    }
+
     const totalDrop = (Array.isArray(parsedDests) && parsedDests.length > 0)
         ? parsedDests.length
         : (Number(jobData?.Total_Drop) > 0 ? Number(jobData.Total_Drop) : 1)
