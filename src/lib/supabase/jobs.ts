@@ -313,7 +313,20 @@ export async function getAllJobs(
         .lt('Delivery_Date', todayTH())
         .not('Job_Status', 'in', `(${excluded.map(s => `"${s}"`).join(',')})`)
     } else if (status) {
-      dbQuery = dbQuery.eq('Job_Status', status)
+      // จับคู่ค่าจาก dropdown กับสถานะจริงใน DB (บางป้ายครอบหลายสถานะ)
+      // เดิมใช้ eq ตรงตัวเลยกรองไม่ได้ ยกเว้น 'New' ที่บังเอิญตรง
+      const STATUS_GROUPS: Record<string, string[]> = {
+        'New': ['New', 'Requested', 'Pending'],
+        'Assigned': ['Assigned', 'Confirmed'],
+        'In Progress': ['In Transit', 'In Progress', 'Picked Up', 'Arrived Pickup', 'Arrived Dropoff', 'Arrived', 'SOS'],
+        'Delivered': ['Delivered', 'Completed', 'Complete'],
+        'Verified': ['Verified'],
+        'Paid': ['Paid', 'Billed'],
+        'Failed': ['Failed'],
+        'Cancelled': ['Cancelled'],
+      }
+      const group = STATUS_GROUPS[status] || [status]
+      dbQuery = dbQuery.in('Job_Status', group)
     }
 
     const { data, count } = await dbQuery.range(offset, offset + limit - 1)

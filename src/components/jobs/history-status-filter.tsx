@@ -51,16 +51,22 @@ export function HistoryStatusFilter({ initialValue }: { initialValue: string }) 
           <SelectItem value="In Progress">
              <span>กำลังดำเนินงาน</span>
           </SelectItem>
-          <SelectItem value="Complete">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={14} className="text-emerald-400" />
-              <span>เสร็จสิ้น</span>
-            </div>
-          </SelectItem>
           <SelectItem value="Delivered">
             <div className="flex items-center gap-2">
               <CheckCircle2 size={14} className="text-emerald-400" />
-              <span>ส่งแล้ว</span>
+              <span>ส่งแล้ว / เสร็จสิ้น</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="Verified">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={14} className="text-primary" />
+              <span>ตรวจแล้ว</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="Paid">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={14} className="text-emerald-500" />
+              <span>ชำระแล้ว</span>
             </div>
           </SelectItem>
           <SelectItem value="Failed">
