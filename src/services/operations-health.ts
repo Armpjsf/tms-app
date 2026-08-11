@@ -6,6 +6,8 @@ import { calculateJobPrice } from "./pricing-engine";
 export interface HealthIssue {
   jobId: string;
   planDate?: string;
+  pickupDate?: string;
+  deliveryDate?: string;
   customerName?: string;
   issueType: 'MISSING_POD' | 'MISSING_PRICE' | 'PRICE_MISMATCH' | 'MISSING_MASTER_DATA' | 'BRANCH_MISMATCH';
   severity: 'CRITICAL' | 'WARNING' | 'INFO';
@@ -53,6 +55,8 @@ export async function getOperationsHealth(branchId?: string, customerId?: string
       issues.push({
         jobId: job.Job_ID,
         planDate: job.Plan_Date,
+        pickupDate: job.Pickup_Date,
+        deliveryDate: job.Delivery_Date,
         customerName: job.Customer_Name,
         issueType: 'MISSING_POD',
         severity: 'CRITICAL',
@@ -65,6 +69,8 @@ export async function getOperationsHealth(branchId?: string, customerId?: string
       issues.push({
         jobId: job.Job_ID,
         planDate: job.Plan_Date,
+        pickupDate: job.Pickup_Date,
+        deliveryDate: job.Delivery_Date,
         customerName: job.Customer_Name,
         issueType: 'MISSING_PRICE',
         severity: 'CRITICAL',
@@ -82,6 +88,8 @@ export async function getOperationsHealth(branchId?: string, customerId?: string
       issues.push({
         jobId: job.Job_ID,
         planDate: job.Plan_Date,
+        pickupDate: job.Pickup_Date,
+        deliveryDate: job.Delivery_Date,
         customerName: job.Customer_Name,
         issueType: 'MISSING_PRICE',
         severity: 'WARNING',
@@ -94,6 +102,8 @@ export async function getOperationsHealth(branchId?: string, customerId?: string
       issues.push({
         jobId: job.Job_ID,
         planDate: job.Plan_Date,
+        pickupDate: job.Pickup_Date,
+        deliveryDate: job.Delivery_Date,
         customerName: job.Customer_Name,
         issueType: 'MISSING_MASTER_DATA',
         severity: 'WARNING',

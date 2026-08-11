@@ -382,6 +382,16 @@ export function HistoryClient({
                                         <Clock size={10} className="text-muted-foreground" />
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{job.Plan_Date || t('common.pending')}</p>
                                     </div>
+                                    <div className="flex flex-col gap-0.5 mt-1">
+                                        <span className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-500 uppercase tracking-widest">
+                                            <MapPin size={9} className="shrink-0" />
+                                            รับ {job.Pickup_Date || job.Plan_Date || "-"}
+                                        </span>
+                                        <span className="inline-flex items-center gap-1 text-[9px] font-black text-primary uppercase tracking-widest">
+                                            <MapPin size={9} className="shrink-0" />
+                                            ส่ง {job.Delivery_Date || "-"}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 

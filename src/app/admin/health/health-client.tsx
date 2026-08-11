@@ -371,6 +371,16 @@ export function HealthClient({ initialData }: { initialData: HealthData }) {
                           <span className="text-xs text-muted-foreground">{issue.customerName}</span>
                         </div>
                         <p className="text-sm opacity-80">{issue.description}</p>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] font-bold text-muted-foreground">
+                          <span className="inline-flex items-center gap-1">
+                            <CalendarRange className="w-3 h-3 text-emerald-500" />
+                            รับ: {issue.pickupDate || issue.planDate || '-'}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <CalendarRange className="w-3 h-3 text-primary" />
+                            ส่ง: {issue.deliveryDate || '-'}
+                          </span>
+                        </div>
                         {issue.details ? (
                           <pre className="text-[10px] bg-muted p-2 rounded mt-2 font-mono opacity-70">
                             {JSON.stringify(issue.details as any, null, 2)}
