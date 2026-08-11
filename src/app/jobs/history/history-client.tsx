@@ -87,6 +87,14 @@ export function HistoryClient({
 }: HistoryClientProps) {
   const { t } = useLanguage()
   const colorFor = useCustomerColor()
+
+  // Pickup_Date may arrive as a full ISO timestamp — show only the Bangkok date.
+  const fmtDate = (v?: string | null): string => {
+    if (!v) return "-"
+    if (!v.includes("T")) return v
+    const d = new Date(v)
+    return isNaN(d.getTime()) ? v : new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok" }).format(d)
+  }
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
@@ -385,11 +393,11 @@ export function HistoryClient({
                                     <div className="flex flex-col gap-0.5 mt-1">
                                         <span className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-500 uppercase tracking-widest">
                                             <MapPin size={9} className="shrink-0" />
-                                            รับ {job.Pickup_Date || job.Plan_Date || "-"}
+                                            รับ {fmtDate(job.Pickup_Date || job.Plan_Date)}
                                         </span>
                                         <span className="inline-flex items-center gap-1 text-[9px] font-black text-primary uppercase tracking-widest">
                                             <MapPin size={9} className="shrink-0" />
-                                            ส่ง {job.Delivery_Date || "-"}
+                                            ส่ง {fmtDate(job.Delivery_Date)}
                                         </span>
                                     </div>
                                 </div>

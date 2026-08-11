@@ -30,6 +30,15 @@ type HealthData = {
 type BackfillMode = 'verified' | 'verify'
 const todayTH = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date())
 
+// Pickup_Date/Delivery_Date may be a full ISO timestamp — show only the
+// Bangkok calendar date so "2026-08-10T23:46:53.394Z" reads as "2026-08-11".
+const fmtDate = (v?: string | null): string => {
+  if (!v) return '-'
+  if (!v.includes('T')) return v
+  const d = new Date(v)
+  return isNaN(d.getTime()) ? v : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(d)
+}
+
 export function HealthClient({ initialData }: { initialData: HealthData }) {
   const { t } = useLanguage()
   const [issues, setIssues] = useState(initialData.issues)
@@ -374,11 +383,11 @@ export function HealthClient({ initialData }: { initialData: HealthData }) {
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] font-bold text-muted-foreground">
                           <span className="inline-flex items-center gap-1">
                             <CalendarRange className="w-3 h-3 text-emerald-500" />
-                            รับ: {issue.pickupDate || issue.planDate || '-'}
+                            รับ: {fmtDate(issue.pickupDate || issue.planDate)}
                           </span>
                           <span className="inline-flex items-center gap-1">
                             <CalendarRange className="w-3 h-3 text-primary" />
-                            ส่ง: {issue.deliveryDate || '-'}
+                            ส่ง: {fmtDate(issue.deliveryDate)}
                           </span>
                         </div>
                         {issue.details ? (
