@@ -13,6 +13,17 @@ import { cn } from '@/lib/utils'
 const ORIGIN_GEOFENCE_M = 150
 const DEST_GEOFENCE_M = 200
 
+// Great-circle distance in metres — used to decide whether a truck has reached
+// a geofence (any active driver inside the destination radius = "arrived").
+function distanceM(aLat: number, aLng: number, bLat: number, bLng: number): number {
+    const R = 6371000
+    const dLat = (bLat - aLat) * Math.PI / 180
+    const dLng = (bLng - aLng) * Math.PI / 180
+    const s = Math.sin(dLat / 2) ** 2 +
+        Math.cos(aLat * Math.PI / 180) * Math.cos(bLat * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+    return 2 * R * Math.asin(Math.sqrt(s))
+}
+
 // Polygon for a saved operational area / danger zone shown on the map.
 type MapDangerZone = { id?: string; name: string; coordinates: [number, number][] }
 
@@ -195,8 +206,23 @@ export default function LeafletMap({
                   "w-1.5 h-1.5 rounded-full",
                   showGeofences ? "bg-white animate-pulse" : "bg-muted-foreground/30"
               )} />
-              {showGeofences ? 'Hide Geofences' : 'Show Geofences'}
+              {showGeofences ? 'ซ่อนเขตจุดรับ-ส่ง' : 'แสดงเขตจุดรับ-ส่ง'}
           </button>
+
+          {/* Legend — explains what the circles mean */}
+          {showGeofences && (
+              <div className="bg-background/85 backdrop-blur-md border border-border rounded-xl px-3 py-2 shadow-xl space-y-1">
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-foreground">
+                      <span className="w-2.5 h-2.5 rounded-full border-2 border-dashed" style={{ borderColor: '#a855f7' }} /> จุดรับสินค้า
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-foreground">
+                      <span className="w-2.5 h-2.5 rounded-full border-2 border-dashed" style={{ borderColor: '#f43f5e' }} /> จุดส่ง — ยังไม่ถึง
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-foreground">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#10b981' }} /> จุดส่ง — รถถึงแล้ว
+                  </div>
+              </div>
+          )}
       </div>
 
       <MapContainer 
@@ -339,20 +365,36 @@ export default function LeafletMap({
                         </Popup>
                     </Marker>
                     
-                    {/* Arrival geofence — real-world radius in metres (scales with zoom) */}
-                    {showGeofences && (
-                        <Circle
-                            center={[mission.lat, mission.lng]}
-                            radius={mission.type === 'origin' ? ORIGIN_GEOFENCE_M : DEST_GEOFENCE_M}
-                            pathOptions={{
-                                color: mission.type === 'origin' ? '#a855f7' : '#f43f5e',
-                                fillColor: mission.type === 'origin' ? '#a855f7' : '#f43f5e',
-                                fillOpacity: 0.08,
-                                weight: 1,
-                                dashArray: '5, 5'
-                            }}
-                        />
-                    )}
+                    {/* Arrival geofence — real-world radius in metres (scales with zoom).
+                        Destination turns solid green once a truck is inside it. */}
+                    {showGeofences && (() => {
+                        const radius = mission.type === 'origin' ? ORIGIN_GEOFENCE_M : DEST_GEOFENCE_M
+                        const arrived = mission.type === 'destination' &&
+                            drivers.some(d => distanceM(d.lat, d.lng, mission.lat, mission.lng) <= radius)
+                        const color = mission.type === 'origin' ? '#a855f7' : arrived ? '#10b981' : '#f43f5e'
+                        return (
+                            <Circle
+                                center={[mission.lat, mission.lng]}
+                                radius={radius}
+                                pathOptions={{
+                                    color,
+                                    fillColor: color,
+                                    fillOpacity: arrived ? 0.22 : 0.08,
+                                    weight: arrived ? 2 : 1,
+                                    dashArray: arrived ? undefined : '5, 5'
+                                }}
+                            >
+                                {arrived && (
+                                    <Popup>
+                                        <div className="p-1">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-0.5">รถถึงจุดส่งแล้ว</p>
+                                            <p className="font-black text-sm text-foreground">{mission.name}</p>
+                                        </div>
+                                    </Popup>
+                                )}
+                            </Circle>
+                        )
+                    })()}
                 </Fragment>
             ))}
           </>

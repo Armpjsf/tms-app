@@ -703,7 +703,7 @@ export const dictionaries = {
       map: {
         loading: 'กำลังโหลดแผนที่...',
         live_fleet: 'ตำแหน่งรถปัจจุบัน',
-        profit_heatmap: 'แผนภูมิความร้อนกำไร',
+        profit_heatmap: 'ความหนาแน่นจุดส่ง',
       },
       top_tier_asset: 'พนักงานขับรถดีเด่น',
       operational_throughput: 'ประสิทธิภาพการขนส่งรวม',
@@ -2688,7 +2688,7 @@ export const dictionaries = {
       map: {
         loading: 'Loading Map...',
         live_fleet: 'Live Fleet Positions',
-        profit_heatmap: 'Profit Heatmap',
+        profit_heatmap: 'Delivery Density',
       },
       top_tier_asset: 'Top Drivers',
       operational_throughput: 'Operational Efficiency',

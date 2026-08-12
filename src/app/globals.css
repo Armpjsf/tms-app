@@ -249,8 +249,10 @@ body[style*="pointer-events: none"] {
     outline: none !important;
   }
   html {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    /* Let the OS renderer decide. Forcing `antialiased` disables ClearType
+       (subpixel) on Windows/Chrome and makes white-on-dark text look fuzzy;
+       `auto` restores crisp subpixel rendering. */
+    -webkit-font-smoothing: auto;
     text-rendering: optimizeLegibility;
   }
 
@@ -285,11 +287,10 @@ body[style*="pointer-events: none"] {
   }
   h1, h2, h3, h4, h5, h6 {
     font-weight: 900;
-    letter-spacing: -0.05em;
+    letter-spacing: -0.03em;
     transition-property: color;
     transition-duration: 300ms;
     font-family: var(--font-prompt), var(--font-outfit), ui-sans-serif, system-ui, sans-serif !important;
-    -webkit-font-smoothing: antialiased;
   }
   /* In dark mode, ensure headers are not too dark */
   .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {

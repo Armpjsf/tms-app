@@ -226,20 +226,21 @@ export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosi
         return missions.filter(m => m.jobId === selectedId || m.driverId === selectedId)
     }, [activeJobs, selectedId])
 
-    // Generate Profit Points for Heatmap
+    // Delivery drop points for the density heatmap — one per job destination.
+    // The heat shows WHERE deliveries concentrate (how many), not any value.
     const profitPoints = useMemo(() => {
         return allJobs
             .map(j => {
                 let lat = Number(j.Delivery_Lat)
                 let lng = Number(j.Delivery_Lon)
-                
+
                 // Fallback to JSON if root columns are empty
                 if (!lat || !lng) {
                     try {
-                        const json = typeof j.original_destinations_json === 'string' 
-                            ? JSON.parse(j.original_destinations_json) 
+                        const json = typeof j.original_destinations_json === 'string'
+                            ? JSON.parse(j.original_destinations_json)
                             : j.original_destinations_json
-                        
+
                         if (Array.isArray(json) && json.length > 0) {
                             const lastPoint = json[json.length - 1]
                             lat = Number(lastPoint.lat)
@@ -252,13 +253,9 @@ export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosi
 
                 if (!lat || !lng || isNaN(lat) || isNaN(lng)) return null
 
-                return {
-                    lat,
-                    lng,
-                    profit: (Number(j.Price_Cust_Total) || 0) - (Number(j.Cost_Driver_Total) || 0)
-                }
+                return { lat, lng, weight: 1 }
             })
-            .filter((p): p is { lat: number, lng: number, profit: number } => p !== null)
+            .filter((p): p is { lat: number, lng: number, weight: number } => p !== null)
     }, [allJobs])
 
     const fetchHistory = async (plate: string, s: string, e: string) => {
@@ -354,6 +351,20 @@ export function DashboardMap({ drivers, allJobs = [], activeJobs = [], focusPosi
                     {showHistory ? "CLOSE HISTORY" : "ROUTE HISTORY"}
                 </Button>
             </div>
+
+            {/* Delivery-density legend — only while the heatmap is shown */}
+            {showHeatmap && (
+                <div className="absolute bottom-6 right-6 z-10 bg-background/90 backdrop-blur-xl border border-border/20 rounded-2xl p-3 shadow-2xl">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-foreground mb-2">
+                        ความหนาแน่นจุดส่ง · {profitPoints.length} จุด
+                    </p>
+                    <div className="h-2 w-40 rounded-full mb-1" style={{ background: 'linear-gradient(to right, #3b82f6, #22d3ee, #84cc16, #f59e0b, #ef4444)' }} />
+                    <div className="flex justify-between text-[9px] font-bold text-muted-foreground">
+                        <span>น้อย</span>
+                        <span>มาก</span>
+                    </div>
+                </div>
+            )}
 
             {/* History Selector Panel */}
             {showHistory && (
