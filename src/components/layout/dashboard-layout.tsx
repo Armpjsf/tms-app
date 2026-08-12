@@ -48,9 +48,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="h-screen w-full bg-background text-foreground transition-colors duration-300 selection:bg-primary/30 font-sans overflow-hidden flex flex-col">
       {/* Elite Background Infrastructure (Fixed behind everything) */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        {/* Elite Ambient Glows - BRAND BLUE/NAVY THEME */}
-        <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[60%] bg-primary/10 dark:bg-primary/10 rounded-full blur-[120px] animate-pulse pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-secondary/20 dark:bg-secondary/20 rounded-full blur-[100px] animate-pulse delay-700 pointer-events-none" />
+        {/* Elite Ambient Glows - BRAND BLUE/NAVY THEME.
+            Kept very faint in dark mode (and no pulse) — a stronger/animated glow
+            reads as a hazy "film" over the whole screen and drops text contrast. */}
+        <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[60%] bg-primary/10 dark:bg-primary/[0.04] rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-secondary/20 dark:bg-secondary/[0.05] rounded-full blur-[100px] pointer-events-none" />
         
         {/* Subtle Static Noise Overlay (Hidden due to external asset failure) */}
         {/* <div className="absolute inset-0 opacity-[0.01] dark:opacity-[0.01] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" /> */}
