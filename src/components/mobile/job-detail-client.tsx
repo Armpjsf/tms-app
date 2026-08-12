@@ -15,6 +15,7 @@ import { NavigationButton } from "@/components/mobile/navigation-button"
 import { RouteStrip } from "@/components/mobile/route-strip"
 import { Job } from "@/lib/supabase/jobs"
 import { cn } from "@/lib/utils"
+import { fmtDateTH } from "@/lib/utils/date-th"
 import { toast } from "sonner"
 import { parseISO, isAfter, startOfDay } from "date-fns"
 import { ContainerTempForm } from "@/components/mobile/container-temp-form"
@@ -93,6 +94,24 @@ export function JobDetailClient({ job, success, initialTab = 'mission' }: JobDet
                                     <Copy size={12} />
                                 </button>
                              </div>
+                        </div>
+                    </div>
+
+                    {/* Pickup / Delivery dates */}
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="flex-1 flex items-center gap-2 p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
+                            <MapPin size={16} className="text-emerald-600 shrink-0" />
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-emerald-700/70 uppercase tracking-widest">วันรับ</p>
+                                <p className="text-sm font-bold text-foreground truncate">{fmtDateTH(job?.Pickup_Date || job?.Plan_Date)}</p>
+                            </div>
+                        </div>
+                        <div className="flex-1 flex items-center gap-2 p-3 bg-primary/10 rounded-2xl border border-primary/20">
+                            <MapPin size={16} className="text-primary shrink-0" />
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-primary/70 uppercase tracking-widest">วันส่ง</p>
+                                <p className="text-sm font-bold text-foreground truncate">{fmtDateTH(job?.Delivery_Date)}</p>
+                            </div>
                         </div>
                     </div>
 

@@ -21,6 +21,7 @@ import { SafetyScoreBadge } from "./safety-score-badge"
 import { useLanguage } from "@/components/providers/language-provider"
 import { useCustomer } from "@/components/providers/customer-provider"
 import { useRealtime } from "@/hooks/useRealtime"
+import { getActiveFleetStatus } from "@/lib/supabase/gps"
 import { RealtimeIndicator } from "@/components/ui/realtime-indicator"
 import { toast } from "sonner"
 import { calculateSafetyScore } from "@/services/safety-scoring"
@@ -136,6 +137,29 @@ export function MonitoringCommandCenter({
         })
         return map
     }, [jobs])
+
+    // Polling fallback for live positions. gps_logs realtime is gated by RLS
+    // (anon can't SELECT it), so we also pull the latest fleet positions from the
+    // server (service role) every 20s. This is what keeps the map fresh now that
+    // the driver app writes GPS straight into Supabase.
+    useEffect(() => {
+        let alive = true
+        const poll = async () => {
+            try {
+                const fleet = await getActiveFleetStatus()
+                if (!alive || !Array.isArray(fleet)) return
+                setDrivers(prev => prev.map(d => {
+                    const f = fleet.find((x: { Driver_ID?: string }) => x.Driver_ID === d.Driver_ID)
+                    if (f && f.Latitude != null && f.Longitude != null) {
+                        return { ...d, Latitude: f.Latitude as number, Longitude: f.Longitude as number, Last_Update: (f.Last_Update ?? d.Last_Update) as string | null }
+                    }
+                    return d
+                }))
+            } catch { /* ignore transient poll errors */ }
+        }
+        const id = setInterval(poll, 20000)
+        return () => { alive = false; clearInterval(id) }
+    }, [])
 
     // Real-time: gps_logs
     useRealtime('gps_logs', (payload) => {

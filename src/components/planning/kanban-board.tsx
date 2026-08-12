@@ -40,6 +40,7 @@ import {
   Target
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { fmtDateTH } from "@/lib/utils/date-th"
 import { updateJob } from "@/app/planning/actions"
 import { toast } from "sonner"
 import { JobDialog } from "./job-dialog"
@@ -442,9 +443,17 @@ function JobCard({ job, isOverlay }: { job: Job; isOverlay?: boolean }) {
             </div>
 
             <div className="flex items-center justify-between pt-5 border-t border-border/5">
-                <div className="flex items-center gap-2 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em] italic">
-                    <Calendar size={12} className="text-muted-foreground" />
-                    {job.Plan_Date || 'TBD'}
+                <div className="flex flex-col gap-0.5 text-base font-bold font-black uppercase tracking-[0.2em] italic">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar size={12} className="text-muted-foreground" />
+                        {job.Plan_Date || 'TBD'}
+                    </div>
+                    {job.Delivery_Date && (
+                        <div className="flex items-center gap-2 text-primary/70">
+                            <MapPin size={12} className="text-primary/40" />
+                            ส่ง {fmtDateTH(job.Delivery_Date)}
+                        </div>
+                    )}
                 </div>
                 {job.Weight_Kg && job.Weight_Kg > 0 ? (
                     <div className="flex items-center gap-1.5 px-3 py-1 bg-muted/50 rounded-lg border border-border/5">

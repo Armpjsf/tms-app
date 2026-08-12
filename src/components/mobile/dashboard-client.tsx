@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { hourTH } from "@/lib/utils/date-th"
+import { hourTH, fmtDateTH } from "@/lib/utils/date-th"
 import { Button } from "@/components/ui/button"
 import { 
     Truck, MapPin, 
@@ -49,6 +49,8 @@ interface DashboardClientProps {
         Origin_Location?: string
         Dest_Location?: string
         Route_Name?: string
+        Pickup_Date?: string | null
+        Delivery_Date?: string | null
     } | null
     activeJobs?: MobileDashboardJob[]
     gamification: {
@@ -245,6 +247,17 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                                 {currentJob.Dest_Location || currentJob.Route_Name}
                             </p>
                         </div>
+
+                        {currentJob.Delivery_Date && (
+                            <div className="flex items-center gap-2 px-1">
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+                                    <MapPin size={12} /> รับ {fmtDateTH(currentJob.Pickup_Date || null)}
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary">
+                                    <MapPin size={12} /> ส่ง {fmtDateTH(currentJob.Delivery_Date)}
+                                </span>
+                            </div>
+                        )}
 
                         <Link href={`/mobile/jobs/${currentJob.Job_ID}`} className="block">
                             <Button className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-semibold text-sm shadow-sm active:scale-95 transition-all gap-1.5 flex items-center justify-center">

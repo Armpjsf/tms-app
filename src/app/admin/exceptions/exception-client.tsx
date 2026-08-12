@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { getUserBranchId } from "@/lib/permissions"
 import Link from "next/link"
 import { useLanguage } from "@/components/providers/language-provider"
+import { fmtDateTH } from "@/lib/utils/date-th"
 
 export function ExceptionClient({ initialData }: { initialData: OperationalException[] }) {
     const { t } = useLanguage()
@@ -168,6 +169,9 @@ export function ExceptionClient({ initialData }: { initialData: OperationalExcep
                                         <div className="flex gap-4 text-xs text-muted-foreground font-mono bg-background p-2 rounded w-fit border">
                                             <span><strong className="uppercase">{t('dashboard.exceptions.ref')}:</strong> {exception.entityId}</span>
                                             <span><strong className="uppercase">{t('dashboard.exceptions.entity')}:</strong> {exception.entityName}</span>
+                                            {exception.deliveryDate && (
+                                                <span className="text-primary"><strong className="uppercase">ส่ง:</strong> {fmtDateTH(exception.deliveryDate)}</span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

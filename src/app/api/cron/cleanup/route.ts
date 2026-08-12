@@ -41,7 +41,13 @@ export async function GET(req: Request) {
         const storageCutoffStr = storageCutoffDate.toISOString()
         const storageCutoffTime = storageCutoffDate.getTime()
 
-        console.log(`[CRON Cleanup] Starting cleanup. DB Cutoff: ${dbCutoffStr} (45d), Storage Cutoff: ${storageCutoffStr} (${STORAGE_RETENTION_DAYS}d)`)
+        // GPS trail is high-volume and only needed short-term (live map + recent
+        // route replay), so it gets a tighter 15-day window than other logs.
+        const gpsCutoffDate = new Date()
+        gpsCutoffDate.setDate(gpsCutoffDate.getDate() - 15)
+        const gpsCutoffStr = gpsCutoffDate.toISOString()
+
+        console.log(`[CRON Cleanup] Starting cleanup. DB Cutoff: ${dbCutoffStr} (45d), GPS Cutoff: ${gpsCutoffStr} (15d), Storage Cutoff: ${storageCutoffStr} (${STORAGE_RETENTION_DAYS}d)`)
         const reportLog: Record<string, any> = {
             dbCutoffDate: dbCutoffStr,
             storageCutoffDate: storageCutoffStr,
@@ -49,19 +55,19 @@ export async function GET(req: Request) {
             storage: {}
         }
 
-        // 2. Clear Database Logs & Notifications older than 45 days
+        // 2. Clear Database Logs & Notifications (gps_logs uses its own 15d cutoff)
         const tablesToDelete = [
-            { name: 'gps_logs', dateCol: 'timestamp' },
-            { name: 'System_Logs', dateCol: 'created_at' },
-            { name: 'Notifications', dateCol: 'Created_At' },
-            { name: 'Chat_Messages', dateCol: 'Created_At' }
+            { name: 'gps_logs', dateCol: 'timestamp', cutoff: gpsCutoffStr },
+            { name: 'System_Logs', dateCol: 'created_at', cutoff: dbCutoffStr },
+            { name: 'Notifications', dateCol: 'Created_At', cutoff: dbCutoffStr },
+            { name: 'Chat_Messages', dateCol: 'Created_At', cutoff: dbCutoffStr }
         ]
 
         for (const table of tablesToDelete) {
             const { error, count } = await supabase
                 .from(table.name)
                 .delete({ count: 'exact' })
-                .lt(table.dateCol, dbCutoffStr)
+                .lt(table.dateCol, table.cutoff)
             
             if (error) {
                 console.error(`[CRON Cleanup] Error cleaning table ${table.name}:`, error.message)

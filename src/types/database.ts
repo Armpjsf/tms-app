@@ -4,6 +4,8 @@ export interface Job {
     job_type?: 'normal' | 'container' | null;
     chassis_plate?: string | null;
     Plan_Date?: string | null;
+    Pickup_Date?: string | null;
+    Delivery_Date?: string | null;
     Route_Name?: string | null;
     Price_Cust_Total?: string | number | null;
     Cost_Driver_Total?: string | number | null;

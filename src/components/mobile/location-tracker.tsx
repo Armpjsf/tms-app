@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { saveGPSLog } from "@/lib/supabase/gps"
+import { checkDangerZones } from "@/lib/supabase/gps"
+import { flushGpsBatch, type GpsPoint } from "@/lib/supabase/gps-direct"
 import { getDriverActiveJob } from "@/lib/actions/gps-actions"
 import { Geolocation } from '@capacitor/geolocation'
 import { registerPlugin, Capacitor } from '@capacitor/core'
@@ -12,10 +13,13 @@ import { TRACKING_EVENT, readCachedActiveJob, writeCachedActiveJob } from "@/lib
 
 const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>('BackgroundGeolocation')
 
-const UPDATE_INTERVAL = 300000 // Update every 5 minutes
-const MIN_DISTANCE = 0.0005 // Approx 50 meters — each move past this writes a GPS
-                            // log (a server action). 50m keeps a usable trail
-                            // while roughly halving writes vs the old ~20-30m.
+// Box-like sampling: points are buffered on the device and flushed straight into
+// Supabase every FLUSH_INTERVAL (never touching Vercel), so we can sample densely
+// without exploding serverless invocations.
+const FLUSH_INTERVAL = 30000  // flush the buffer (and refresh live position) every 30s
+const FLUSH_MAX_POINTS = 50   // ...or sooner once the buffer reaches this many points
+const DISTANCE_FILTER_M = 22  // native watcher emits a fix roughly every 22 meters
+const MIN_DISTANCE = 0.00015  // ~15m — de-dupe threshold before buffering a moving fix
 
 export function LocationTracker({ driverId }: { driverId?: string, branchId?: string }) {
   const [status, setStatus] = useState<"idle" | "tracking" | "error">("idle")
@@ -23,9 +27,13 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
   // paused — we only record location between "เริ่มงาน" and delivery confirm.
   // Starts null to match SSR; the cache is read post-mount in Effect 1.
   const [activeJobId, setActiveJobId] = useState<string | null>(null)
+  // True when the app can't get location permission (warn-only — never blocks work).
+  const [locBlocked, setLocBlocked] = useState(false)
 
-  const lastUpdateRef = useRef<number>(0)
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null)
+  const lastKnownRef = useRef<{ lat: number; lng: number; speed: number } | null>(null)
+  const bufferRef = useRef<GpsPoint[]>([])
+  const flushingRef = useRef(false)
   const wakeLockRef = useRef<WakeLockSentinel | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const watchIdRef = useRef<string | null>(null)
@@ -72,43 +80,62 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
   useEffect(() => {
     if (!driverId || !activeJobId) return
 
-    const processLocationUpdate = async (lat: number, lng: number, speed: number) => {
-      const now = Date.now()
-      const timeDiff = now - lastUpdateRef.current
-      const isTime = timeDiff > UPDATE_INTERVAL
-      const isDistance = lastPosRef.current
+    // Push a fix into the buffer (deduped by distance). The buffer is drained by
+    // the flush timer below, or immediately once it grows past FLUSH_MAX_POINTS.
+    const enqueue = (lat: number, lng: number, speed: number) => {
+      lastKnownRef.current = { lat, lng, speed }
+      const moved = lastPosRef.current
         ? Math.abs(lat - lastPosRef.current.lat) + Math.abs(lng - lastPosRef.current.lng) > MIN_DISTANCE
         : true
+      if (!moved) return
+      lastPosRef.current = { lat, lng }
+      bufferRef.current.push({ lat, lng, speed, ts: new Date().toISOString() })
+      if (bufferRef.current.length >= FLUSH_MAX_POINTS) flush()
+    }
 
-      if (isTime || isDistance) {
-        lastUpdateRef.current = now
-        lastPosRef.current = { lat, lng }
-
-        try {
-          const res = await saveGPSLog({
-            driverId: driverId!,
-            lat,
-            lng,
-            speed,
-            jobId: activeJobId,
-          })
-
-          if (res.success) setStatus("tracking")
-          else setStatus("error")
-        } catch {
-          setStatus("error")
-        }
+    // Drain the buffer straight into Supabase (bypasses Vercel). Danger-zone
+    // evaluation runs once per flush on the newest point instead of per fix.
+    const flush = async () => {
+      if (flushingRef.current || bufferRef.current.length === 0) return
+      flushingRef.current = true
+      const batch = bufferRef.current
+      bufferRef.current = []
+      try {
+        const ok = await flushGpsBatch(driverId!, activeJobId, batch)
+        setStatus(ok ? "tracking" : "error")
+        const last = batch[batch.length - 1]
+        if (ok && last) checkDangerZones(driverId!, last.lat, last.lng).catch(() => {})
+      } catch {
+        setStatus("error")
+      } finally {
+        flushingRef.current = false
       }
+    }
+
+    // Time-based heartbeat: re-enqueue the last known position even when the
+    // truck is parked, so the live map keeps showing the driver as online and
+    // doesn't go stale at red lights / loading bays. Also drives the flush.
+    const heartbeat = setInterval(() => {
+      const lk = lastKnownRef.current
+      if (lk) bufferRef.current.push({ lat: lk.lat, lng: lk.lng, speed: 0, ts: new Date().toISOString() })
+      flush()
+    }, FLUSH_INTERVAL)
+
+    const processLocationUpdate = (lat: number, lng: number, speed: number) => {
+      enqueue(lat, lng, speed)
     }
 
     // 1. Setup Tracking
     const startTracking = async () => {
       if (isNative) {
         try {
-          const permissions = await Geolocation.checkPermissions()
+          let permissions = await Geolocation.checkPermissions()
           if (permissions.location !== 'granted') {
-            await Geolocation.requestPermissions()
+            permissions = await Geolocation.requestPermissions()
           }
+          // Warn-only: if the driver still hasn't granted location, surface a
+          // banner (with a shortcut to Settings) but never block the job.
+          setLocBlocked(permissions.location !== 'granted')
 
           // Native foreground service — keeps tracking even when the app is
           // backgrounded, the screen is off, or the OS kills the WebView.
@@ -118,7 +145,7 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
               backgroundMessage: "กำลังบันทึกตำแหน่งสำหรับการส่งงานของคุณในเบื้องหลัง",
               requestPermissions: true,
               stale: false,
-              distanceFilter: 50 // Update position every 50 meters (fewer GPS-log writes)
+              distanceFilter: DISTANCE_FILTER_M // dense trail; writes are batched so this is cheap
             },
             (position: any, err: any) => {
               if (err) {
@@ -208,6 +235,14 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
     setupPersistence()
 
     return () => {
+      // Send whatever is still buffered before we tear down (job ended / unmount).
+      clearInterval(heartbeat)
+      if (bufferRef.current.length > 0) {
+        const remaining = bufferRef.current
+        bufferRef.current = []
+        flushGpsBatch(driverId!, activeJobId, remaining).catch(() => {})
+      }
+
       if (watchIdRef.current) {
         if (isNative) {
           BackgroundGeolocation.removeWatcher({ id: watchIdRef.current }).catch(err => {
@@ -251,6 +286,23 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
           <span className="h-2 w-2 rounded-full bg-red-500 shadow-sm shadow-red-500/50"></span>
         )}
       </div>
+
+      {/* Warn-only: location permission missing on APK. Work is NOT blocked. */}
+      {activeJobId && isNative && locBlocked && (
+        <div className="fixed top-0 inset-x-0 z-40 flex justify-center px-3 pt-[env(safe-area-inset-top)]">
+          <button
+            type="button"
+            onClick={() => {
+              const bg = BackgroundGeolocation as unknown as { openSettings?: () => Promise<void> }
+              if (typeof bg.openSettings === 'function') bg.openSettings().catch(() => {})
+            }}
+            className="mt-1 flex items-center gap-1.5 rounded-full bg-red-500/10 px-3 py-1 text-[11px] font-bold text-red-600 border border-red-500/30"
+          >
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span>ยังไม่ได้เปิดสิทธิ์ตำแหน่ง — แตะเพื่อตั้งค่า &quot;อนุญาตตลอดเวลา&quot;</span>
+          </button>
+        </div>
+      )}
 
       {/* On PWA, the browser can't track once the app is closed — tell the driver. */}
       {activeJobId && !isNative && (

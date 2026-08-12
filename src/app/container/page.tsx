@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
+import { fmtDateTH } from "@/lib/utils/date-th"
 import { getContainerJobs, getContainerStats, ContainerJob } from "./actions"
 import { format, differenceInDays, parseISO } from "date-fns"
 import { th } from "date-fns/locale"
@@ -224,6 +225,12 @@ export default function ContainerDashboard() {
                                                             <Ship size={12} /> {job.container?.shipping_line || '-'}
                                                             <span className="opacity-20">|</span>
                                                             <MapPin size={12} /> {job.Dest_Location || '-'}
+                                                        </div>
+                                                        <div className="flex items-center gap-3 text-[11px] font-black">
+                                                            <span className="inline-flex items-center gap-1 text-emerald-500"><Calendar size={11} /> รับ {fmtDateTH(job.Pickup_Date || job.Plan_Date)}</span>
+                                                            {job.Delivery_Date && (
+                                                                <span className="inline-flex items-center gap-1 text-primary"><Calendar size={11} /> ส่ง {fmtDateTH(job.Delivery_Date)}</span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>

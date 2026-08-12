@@ -13,7 +13,10 @@ const outfit = Outfit({
 const prompt = Prompt({
   variable: "--font-prompt",
   subsets: ["thai", "latin"],
-  weight: ["400", "600", "700"],
+  // Load the real heavy weights too. The UI uses font-black / font-weight:900
+  // everywhere; without 500/800/900 faces the browser fakes bold for Thai
+  // glyphs (faux-bold), which renders blurry/smeared — most visible on dark bg.
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 

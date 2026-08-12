@@ -386,10 +386,6 @@ export function HistoryClient({
                                             {job.Job_ID}
                                         </Link>
                                     </div>
-                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                        <Clock size={10} className="text-muted-foreground" />
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{job.Plan_Date || t('common.pending')}</p>
-                                    </div>
                                     <div className="flex flex-col gap-0.5 mt-1">
                                         <span className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-500 uppercase tracking-widest">
                                             <MapPin size={9} className="shrink-0" />

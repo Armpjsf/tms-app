@@ -13,6 +13,7 @@ export interface OperationalException {
     entityId: string // Job_ID, Alert_ID, or Ticket_ID
     entityName: string // Driver Name, Vehicle Plate, etc.
     branchId: string
+    deliveryDate?: string | null // for job exceptions: when the load was due to arrive
     meta?: any
 }
 
@@ -25,7 +26,7 @@ export async function getActiveExceptions(branchId?: string): Promise<Operationa
     // 1. Fetch SOS and Failed Jobs
     let jobsQuery = supabase
         .from('Jobs_Main')
-        .select('Job_ID, Job_Status, Driver_Name, Vehicle_Plate, Failed_Reason, Failed_Time, Notes, Branch_ID')
+        .select('Job_ID, Job_Status, Driver_Name, Vehicle_Plate, Failed_Reason, Failed_Time, Notes, Branch_ID, Delivery_Date')
         .in('Job_Status', ['SOS', 'Failed'])
 
     if (targetBranchId && targetBranchId !== 'All') {
@@ -45,6 +46,7 @@ export async function getActiveExceptions(branchId?: string): Promise<Operationa
             entityId: job.Job_ID,
             entityName: `${job.Driver_Name || 'Unknown'} (${job.Vehicle_Plate || 'No Vehicle'})`,
             branchId: job.Branch_ID || 'HQ',
+            deliveryDate: job.Delivery_Date,
             meta: { status: job.Job_Status }
         })
     })

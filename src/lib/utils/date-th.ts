@@ -24,6 +24,18 @@ export function dateKeyTH(d: Date | string | number): string {
   return new Date(d).toLocaleDateString("en-CA", { timeZone: TH_TZ })
 }
 
+/**
+ * Display helper for date fields that may be a plain 'YYYY-MM-DD' (Plan_Date) or
+ * a full ISO timestamp (Pickup_Date/Delivery_Date). Returns the Thai calendar
+ * date; falls back to '-' when empty. Use anywhere a รับ/ส่ง date is shown.
+ */
+export function fmtDateTH(v?: string | null): string {
+  if (!v) return "-"
+  if (!v.includes("T")) return v
+  const d = new Date(v)
+  return isNaN(d.getTime()) ? v : new Intl.DateTimeFormat("en-CA", { timeZone: TH_TZ }).format(d)
+}
+
 /** Wall-clock time in Thailand as 'HH:MM:SS' (24h). Defaults to now. */
 export function timeTH(d: Date | string | number = new Date()): string {
   return new Date(d).toLocaleTimeString("en-GB", { timeZone: TH_TZ, hour12: false })

@@ -1107,7 +1107,7 @@ export async function getDriverDashboardStats(driverId: string) {
       // 1. Jobs query (Active or Today)
       supabase
         .from('Jobs_Main')
-        .select('Job_ID, Customer_Name, Job_Status, Origin_Location, Dest_Location, Route_Name, Plan_Date, Cost_Driver_Total, Show_Price_To_Driver, Total_Drop, Signature_Url, Photo_Proof_Url')
+        .select('Job_ID, Customer_Name, Job_Status, Origin_Location, Dest_Location, Route_Name, Plan_Date, Pickup_Date, Delivery_Date, Cost_Driver_Total, Show_Price_To_Driver, Total_Drop, Signature_Url, Photo_Proof_Url')
         .eq('Driver_ID', driverId)
         .neq('Job_Status', 'Cancelled')
         .neq('Job_Status', 'Draft')

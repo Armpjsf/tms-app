@@ -6,6 +6,8 @@ export type PODRecord = {
   Job_ID: string
   Job_Status: string
   Plan_Date: string | null
+  Pickup_Date: string | null
+  Delivery_Date: string | null
   Customer_Name: string | null
   Driver_Name: string | null
   Vehicle_Plate: string | null
@@ -33,7 +35,7 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
 
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Pickup_Photo_Url, Pickup_Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon, Floor_Climb_Url, Created_At')
+      .select('Job_ID, Job_Status, Plan_Date, Pickup_Date, Delivery_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Pickup_Photo_Url, Pickup_Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon, Floor_Climb_Url, Created_At')
       .eq('Plan_Date', today)
       .in('Job_Status', ['Delivered', 'Complete', 'Completed', 'In Transit', 'Picked Up'])
 
@@ -75,7 +77,7 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
 
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Pickup_Photo_Url, Pickup_Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon, Floor_Climb_Url, Created_At', { count: 'exact' })
+      .select('Job_ID, Job_Status, Plan_Date, Pickup_Date, Delivery_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Pickup_Photo_Url, Pickup_Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon, Floor_Climb_Url, Created_At', { count: 'exact' })
       .in('Job_Status', ['Delivered', 'Complete', 'Completed', 'In Transit', 'Picked Up', 'Assigned', 'New', 'Failed', 'In Progress', 'Pending'])
 
     if (effectiveCustomer) {

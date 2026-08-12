@@ -8,7 +8,11 @@ import type { Job } from "@/types/database"
 
 type MobileJobListItem = Pick<Job, "Job_ID" | "Customer_Name" | "Dest_Location" | "Route_Name" | "Job_Status"> & {
   Pickup_Date?: string | null
+  Delivery_Date?: string | null
 }
+
+const fmtDayMonth = (v?: string | null) =>
+  v ? new Date(v).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : null
 
 export function MobileJobSearchList({ jobs }: { jobs: MobileJobListItem[] }) {
   const [searchQuery, setSearchQuery] = useState("")
@@ -54,11 +58,17 @@ export function MobileJobSearchList({ jobs }: { jobs: MobileJobListItem[] }) {
             <div className="bg-card p-6 rounded-3xl border border-border shadow-sm space-y-4">
               {/* Status & Date */}
               <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Calendar size={14} className="text-primary" />
-                  <span className="text-xs font-bold text-foreground">
-                    {job.Pickup_Date ? new Date(job.Pickup_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "ไม่ระบุวันที่"}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
+                    <Calendar size={14} />
+                    รับ {fmtDayMonth(job.Pickup_Date) || "ไม่ระบุ"}
                   </span>
+                  {job.Delivery_Date && (
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-primary">
+                      <MapPin size={13} />
+                      ส่ง {fmtDayMonth(job.Delivery_Date)}
+                    </span>
+                  )}
                 </div>
                 <div className={cn(
                   "px-3 py-1 rounded-lg text-[10px] font-bold uppercase",
