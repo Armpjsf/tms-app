@@ -284,8 +284,8 @@ body[style*="pointer-events: none"] {
     user-select: auto;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 900;
-    letter-spacing: -0.05em;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     transition-property: color;
     transition-duration: 300ms;
     font-family: var(--font-prompt), var(--font-outfit), ui-sans-serif, system-ui, sans-serif !important;
@@ -458,3 +458,15 @@ body[style*="pointer-events: none"] {
   [role="dialog"] { position: static !important; border: none !important; box-shadow: none !important; background: white !important; }
   p, span, h1, h2, h3, h4, h5, h6 { color: black !important; }
 }
+
+/* ============================================================
+   DARK-MODE TEXT CRISPNESS
+   Heavy (900) light-on-dark text blooms/irradiates and reads fuzzy.
+   These UNLAYERED rules win over Tailwind utilities and shave the
+   extreme weights + the tightest negative tracking in dark mode only,
+   so light mode is untouched. Verified to noticeably sharpen the UI.
+   ============================================================ */
+.dark .font-black,
+.dark .font-extrabold,
+.dark .font-bold { font-weight: 600; }
+.dark .tracking-tighter { letter-spacing: -0.01em; }

@@ -347,14 +347,14 @@ export function HistoryClient({
             <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
               {/* Header Row (Hidden on small screens) */}
               <div className="hidden lg:grid lg:grid-cols-[1.5fr_1.5fr_1.2fr_1fr_0.8fr_1fr_1fr_0.8fr] gap-4 px-6 py-4 bg-muted/40 rounded-xl mb-4 border border-white/5 items-center">
-                <div className="text-2xl font-black text-accent uppercase tracking-wider">{t('jobs.col_id')}</div>
-                <div className="text-2xl font-black text-accent uppercase tracking-wider">รายละเอียด</div>
-                <div className="text-2xl font-black text-accent uppercase tracking-wider">ทะเบียน</div>
-                <div className="text-center text-2xl font-black text-accent uppercase tracking-wider">ตรวจสอบ</div>
-                <div className="text-center text-2xl font-black text-accent uppercase tracking-wider">POD</div>
-                {canViewPrice && <div className="text-right text-2xl font-black text-accent uppercase tracking-wider">{t('history.price_matrix')}</div>}
-                <div className="text-center text-2xl font-black text-accent uppercase tracking-wider">{t('common.status')}</div>
-                <div className="text-right text-2xl font-black text-accent uppercase tracking-wider">{t('common.action')}</div>
+                <div className="text-2xl font-bold text-foreground/70 uppercase tracking-wide">{t('jobs.col_id')}</div>
+                <div className="text-2xl font-bold text-foreground/70 uppercase tracking-wide">รายละเอียด</div>
+                <div className="text-2xl font-bold text-foreground/70 uppercase tracking-wide">ทะเบียน</div>
+                <div className="text-center text-2xl font-bold text-foreground/70 uppercase tracking-wide">ตรวจสอบ</div>
+                <div className="text-center text-2xl font-bold text-foreground/70 uppercase tracking-wide">POD</div>
+                {canViewPrice && <div className="text-right text-2xl font-bold text-foreground/70 uppercase tracking-wide">{t('history.price_matrix')}</div>}
+                <div className="text-center text-2xl font-bold text-foreground/70 uppercase tracking-wide">{t('common.status')}</div>
+                <div className="text-right text-2xl font-bold text-foreground/70 uppercase tracking-wide">{t('common.action')}</div>
               </div>
 
               {/* Cards List */}
@@ -381,7 +381,7 @@ export function HistoryClient({
                                     <div className="flex items-center gap-1.5">
                                         <Link 
                                             href={customerMode ? `/dashboard/tracking?q=${job.Job_ID}` : `/admin/tracking?q=${job.Job_ID}`}
-                                            className="text-foreground font-black text-sm tracking-tighter hover:text-primary transition-colors font-display uppercase truncate hover:underline"
+                                            className="text-foreground font-semibold text-sm tracking-tight hover:text-primary transition-colors font-display uppercase truncate hover:underline"
                                         >
                                             {job.Job_ID}
                                         </Link>
@@ -401,7 +401,7 @@ export function HistoryClient({
 
                             {/* Section 2: Customer & Route */}
                             <div className="flex flex-col gap-0.5 min-w-0">
-                                <p className="text-foreground font-black text-sm tracking-tight uppercase group-hover/row:text-primary transition-colors leading-tight truncate flex items-center gap-1.5">
+                                <p className="text-foreground font-semibold text-sm tracking-tight uppercase group-hover/row:text-primary transition-colors leading-tight truncate flex items-center gap-1.5">
                                     <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-background" style={{ backgroundColor: custColor }} />
                                     {job.Customer_Name || "-"}
                                 </p>
@@ -417,7 +417,7 @@ export function HistoryClient({
                                     <div className="p-1 bg-muted/50 rounded-md text-muted-foreground group-hover/row:text-primary transition-colors shrink-0">
                                         <Truck size={10} strokeWidth={2.5} />
                                     </div>
-                                    <p className="text-foreground font-black text-sm tracking-tight uppercase leading-tight truncate">{job.Vehicle_Plate || "-"}</p>
+                                    <p className="text-foreground font-semibold text-sm tracking-tight uppercase leading-tight truncate">{job.Vehicle_Plate || "-"}</p>
                                 </div>
                                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1 truncate">
                                     {job.Driver_Name || (job.Driver_ID ? (drivers.find(d => d.Driver_ID === job.Driver_ID)?.Driver_Name || t('common.pending')) : t('common.pending'))}
