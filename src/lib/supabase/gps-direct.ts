@@ -52,24 +52,8 @@ export async function flushGpsBatch(
     return false
   }
 
-  // Keep the live-map's "latest position" table current (newest point wins).
-  const last = points[points.length - 1]
-  const nowIso = new Date().toISOString()
-  const { error: latestErr } = await sb()
-    .from("driver_latest_locations")
-    .upsert(
-      {
-        driver_id: driverId,
-        latitude: last.lat,
-        longitude: last.lng,
-        speed: last.speed ?? 0,
-        job_id: jobId,
-        timestamp: last.ts,
-        updated_at: nowIso,
-      },
-      { onConflict: "driver_id" },
-    )
-  if (latestErr) console.error("[GPS direct] latest upsert failed:", latestErr.message)
-
+  // The live map derives each driver's latest position from gps_logs directly
+  // (server-side, service role), so there's no separate "latest location" table
+  // to keep in sync from the device — the trail rows above are the source.
   return true
 }

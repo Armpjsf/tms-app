@@ -13,10 +13,11 @@ const outfit = Outfit({
 const prompt = Prompt({
   variable: "--font-prompt",
   subsets: ["thai", "latin"],
-  // Load the real heavy weights too. The UI uses font-black / font-weight:900
-  // everywhere; without 500/800/900 faces the browser fakes bold for Thai
-  // glyphs (faux-bold), which renders blurry/smeared — most visible on dark bg.
+  // Load the real heavy weights AND real italics. The UI leans on font-black
+  // (900) and `italic` everywhere; without these faces the browser synthesises
+  // fake bold/italic for Thai glyphs, which renders blurry/smeared.
   weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -51,7 +52,7 @@ export default function RootLayout({
   return (
     <html lang="th" suppressHydrationWarning tabIndex={-1}>
       <body
-        className={`${outfit.variable} ${prompt.variable} font-sans`}
+        className={`${outfit.variable} ${prompt.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <ClientProviders>
