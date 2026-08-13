@@ -1404,6 +1404,7 @@ export const dictionaries = {
         synchronized: 'ซิงค์ข้อมูลแล้ว',
         direct_vector: 'ส่งสินค้าตรง',
         visual_proof: 'รูปถ่ายหลักฐาน',
+        pickup_evidence: 'หลักฐานรับสินค้า',
         auth_sig: 'ลายเซ็นยืนยัน',
     },
     sos: {
@@ -3385,6 +3386,7 @@ export const dictionaries = {
         synchronized: 'Synced',
         direct_vector: 'Direct',
         visual_proof: 'Photo Proof',
+        pickup_evidence: 'Pickup Proof',
         auth_sig: 'Signature Proof',
     },
     sos: {

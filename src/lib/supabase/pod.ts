@@ -78,7 +78,10 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
     let dbQuery = supabase
       .from('Jobs_Main')
       .select('Job_ID, Job_Status, Plan_Date, Pickup_Date, Delivery_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Pickup_Photo_Url, Pickup_Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon, Floor_Climb_Url, Created_At', { count: 'exact' })
-      .in('Job_Status', ['Delivered', 'Complete', 'Completed', 'In Transit', 'Picked Up', 'Assigned', 'New', 'Failed', 'In Progress', 'Pending'])
+      // Match the stats card (neq Cancelled). The old IN-list dropped
+      // Verified/Billed/Paid jobs — exactly the delivered-and-confirmed ones a
+      // POD page should show — so the count and the list disagreed.
+      .neq('Job_Status', 'Cancelled')
 
     if (effectiveCustomer) {
         dbQuery = dbQuery.eq('Customer_ID', effectiveCustomer)
