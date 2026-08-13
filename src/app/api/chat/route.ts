@@ -10,6 +10,7 @@ import {
     formatDateSafe,
 } from '@/lib/supabase/analytics-helpers'
 import { embedGemini } from '@/lib/ai/embeddings'
+import { getOpsSummary, getRevenueSummary, getOverdueDeliveries, getLossMakingJobs, getDailyTrend, type PeriodKey } from '@/lib/ai/metrics'
 
 // Gemini models to try in order. First the latest, then verified-stable fallbacks
 // so the assistant keeps working even if a preview model is renamed/retired.
@@ -47,6 +48,25 @@ const CREATE_JOB_DECLARATION = {
             notes: { type: 'string', description: 'หมายเหตุ' },
         },
         required: ['customerName'],
+    },
+}
+
+// Read-only metric query the planner can request for ANY period/customer, so
+// the assistant answers "รายได้สัปดาห์ที่แล้ว" or "งานลูกค้า X เดือนก่อน"
+// with deterministic numbers instead of guessing from the fixed snapshot.
+const METRIC_QUERY_DECLARATION = {
+    name: 'query_metrics',
+    description: 'ดึงตัวเลขสรุปเชิงธุรกิจตามช่วงเวลาที่ผู้ใช้ถาม (งาน/รายได้/กำไร/งานค้างส่ง) เรียกเมื่อคำถามต้องการตัวเลขของช่วงเวลาหรือลูกค้าที่เจาะจง',
+    parameters: {
+        type: 'object',
+        properties: {
+            metric: { type: 'string', enum: ['ops', 'revenue', 'overdue', 'loss', 'trend'], description: 'ops=จำนวนงานตามสถานะ(รวม), revenue=รายได้/กำไร, overdue=งานค้างส่งเลยกำหนด, loss=งานที่ขาดทุน, trend=งานรายวัน(แยกแต่ละวัน ใช้เมื่อถาม "รายวัน/แต่ละวัน/ย้อนหลังกี่วัน")' },
+            period: { type: 'string', enum: ['today', 'yesterday', 'this_week', 'last_week', 'this_month', 'last_month', 'last_7_days', 'last_30_days'], description: 'ช่วงเวลา (ไม่ต้องใส่สำหรับ overdue)' },
+            from: { type: 'string', description: 'วันเริ่ม YYYY-MM-DD (ถ้าถามช่วงกำหนดเอง)' },
+            to: { type: 'string', description: 'วันสิ้นสุด YYYY-MM-DD (ถ้าถามช่วงกำหนดเอง)' },
+            groupBy: { type: 'string', enum: ['customer', 'branch'], description: 'แยกรายได้ตามลูกค้า/สาขา (ใช้กับ revenue)' },
+        },
+        required: ['metric'],
     },
 }
 
@@ -332,6 +352,7 @@ async function buildKnowledgeBase(branchId?: string) {
         todayData, financialData, allDrivers, allVehicles, maintenanceStats,
         pendingRepairs, fuelAnalytics, fleetHealth, damageReports, driverLeaves,
         customers, jobTrend, billing, workforceAnalytics,
+        opsWeek, opsMonth, revMonth, revLastMonth, overdue,
     ] = await Promise.allSettled([
         getTodayDirect(branchId),
         getFinancialDirect(branchId),
@@ -347,6 +368,12 @@ async function buildKnowledgeBase(branchId?: string) {
         getRecentJobTrend(branchId),
         getBillingSummary(),
         aiToolExecutors.get_workforce_analytics(),
+        // Deterministic metrics layer (authoritative numbers + provenance)
+        getOpsSummary('this_week', branchId),
+        getOpsSummary('this_month', branchId),
+        getRevenueSummary('this_month', branchId, 'customer'),
+        getRevenueSummary('last_month', branchId),
+        getOverdueDeliveries(branchId),
     ])
 
     return {
@@ -364,6 +391,13 @@ async function buildKnowledgeBase(branchId?: string) {
         trend: safe(jobTrend) as { date: string; total: number; completed: number; revenue: number }[] | null,
         bill: safe(billing),
         workforce: safe(workforceAnalytics),
+        metrics: {
+            opsWeek: safe(opsWeek),
+            opsMonth: safe(opsMonth),
+            revMonth: safe(revMonth),
+            revLastMonth: safe(revLastMonth),
+            overdue: safe(overdue),
+        },
     }
 }
 
@@ -402,8 +436,128 @@ async function getRagContext(message: string, branchId?: string): Promise<string
     }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Metric planner: a fast, tool-only Gemini pass that decides whether the
+// question needs a specific metric/period and, if so, runs the deterministic
+// metrics-layer function and returns a ready-to-cite Thai block. Degrades to
+// '' on any error, so the pre-computed snapshot still covers common asks.
+// ─────────────────────────────────────────────────────────────────
+const METRIC_INTENT = /(รายได้|กำไร|ยอด|ต้นทุน|งาน|ค้างส่ง|เลยกำหนด|สรุป|กี่|จำนวน|เท่าไหร่|สัปดาห์|เดือน|วันนี้|เมื่อวาน|รายวัน|แต่ละวัน|ย้อนหลัง|ลูกค้า|revenue|profit|จ่าย|ออเดอร์)/i
+const _money = (v: unknown) => `฿${(Number(v) || 0).toLocaleString()}`
+
+// A visual the chat UI renders below the text answer. Data is deterministic
+// (straight from the metrics layer), so the chart never lies.
+export type VizSpec =
+    | { kind: 'bar'; title: string; items: { label: string; value: number }[]; unit?: string }
+    | { kind: 'table'; title: string; columns: string[]; rows: (string | number)[][] }
+
+// Run one metric the planner asked for → citable Thai line + optional visual.
+async function runOneMetric(a: Record<string, unknown>, branchId?: string): Promise<{ text: string; viz?: VizSpec }> {
+    const period = (a.from && a.to) ? { from: String(a.from), to: String(a.to) } : ((a.period as PeriodKey) || 'this_month')
+    if (a.metric === 'ops') {
+        const r = await getOpsSummary(period, branchId)
+        return {
+            text: `📦 งาน (${r._provenance.period.label}, ${r._provenance.branch}): ทั้งหมด ${r.total} | วิ่งอยู่ ${r.active} | เสร็จ ${r.completed} | รอ ${r.pending} | ยกเลิก ${r.cancelled}`,
+            viz: { kind: 'bar', title: `งานตามสถานะ (${r._provenance.period.label})`, unit: 'งาน', items: [
+                { label: 'วิ่งอยู่', value: r.active }, { label: 'เสร็จ', value: r.completed },
+                { label: 'รอ', value: r.pending }, { label: 'ยกเลิก', value: r.cancelled },
+            ] },
+        }
+    }
+    if (a.metric === 'revenue') {
+        const r = await getRevenueSummary(period, branchId, a.groupBy as 'customer' | 'branch' | undefined)
+        const hasBreak = 'breakdown' in r && r.breakdown?.length
+        const extra = hasBreak ? '\n  แยกตาม' + (r.topBy === 'branch' ? 'สาขา' : 'ลูกค้า') + ': ' +
+            r.breakdown!.slice(0, 8).map(b => `${b.key} ${_money(b.revenue)} (${b.jobs})`).join(' · ') : ''
+        const viz: VizSpec = hasBreak
+            ? { kind: 'bar', title: `รายได้ตาม${r.topBy === 'branch' ? 'สาขา' : 'ลูกค้า'} (${r._provenance.period.label})`, unit: '฿', items: r.breakdown!.slice(0, 8).map(b => ({ label: b.key, value: b.revenue })) }
+            : { kind: 'table', title: `การเงิน (${r._provenance.period.label})`, columns: ['รายการ', 'จำนวน'], rows: [['รายได้', _money(r.revenue)], ['ต้นทุน', _money(r.cost)], ['กำไร', _money(r.netProfit)], ['อัตรากำไร', `${r.margin.toFixed(1)}%`], ['จำนวนงาน', r.jobCount]] }
+        return { text: `💰 การเงิน (${r._provenance.period.label}, ${r._provenance.branch}): รายได้ ${_money(r.revenue)} | ต้นทุน ${_money(r.cost)} | กำไร ${_money(r.netProfit)} (${r.margin.toFixed(1)}%) | นับ ${r.jobCount} งาน${extra}`, viz }
+    }
+    if (a.metric === 'overdue') {
+        const r = await getOverdueDeliveries(branchId)
+        const sample = (r.sample || []).slice(0, 8).map(s => `${s.jobId}(${s.customer}, กำหนด ${s.dueDate})`).join(', ')
+        return {
+            text: `⏰ งานค้างส่งเลยกำหนด (${r._provenance.branch}): ${r.count} รายการ${sample ? ' — ' + sample : ''}`,
+            viz: r.count ? { kind: 'table', title: `งานค้างส่งเลยกำหนด (${r.count} รายการ)`, columns: ['รหัสงาน', 'ลูกค้า', 'กำหนดส่ง', 'สถานะ'], rows: (r.sample || []).map(s => [s.jobId || '-', s.customer || '-', s.dueDate || '-', s.status || '-']) } : undefined,
+        }
+    }
+    if (a.metric === 'trend') {
+        const r = await getDailyTrend(period, branchId)
+        const days = r.days.slice(-45) // bound context/chart size for very long ranges
+        // Full per-day detail so the assistant can list every day in the range
+        // (not just the fixed 7-day snapshot).
+        const daily = days.map(d => `  ${d.date}: ${d.total} งาน (เสร็จ ${d.completed}, ${_money(d.revenue)})`).join('\n')
+        return {
+            text: `📈 งานรายวัน (${r._provenance.period.label}, ${r._provenance.branch}): ${r.days.length} วัน รวม ${r.totalJobs} งาน\n${daily}`,
+            viz: r.days.length ? { kind: 'bar', title: `งานรายวัน (${r._provenance.period.label})`, unit: 'งาน', items: days.map(d => ({ label: d.date.slice(5), value: d.total })) } : undefined,
+        }
+    }
+    if (a.metric === 'loss') {
+        const r = await getLossMakingJobs(period, branchId)
+        const sample = (r.sample || []).slice(0, 8).map(s => `${s.jobId}(${s.customer}, ขาดทุน ${_money(s.loss)}: ราคา ${_money(s.price)} < ต้นทุน ${_money(s.cost)})`).join(', ')
+        return {
+            text: `📉 งานขาดทุน (${r._provenance.period.label}, ${r._provenance.branch}): ${r.count} งาน รวมขาดทุน ${_money(r.totalLoss)}${sample ? ' — ' + sample : ''}`,
+            viz: r.count ? { kind: 'table', title: `งานขาดทุน (${r._provenance.period.label}) — รวม ${_money(r.totalLoss)}`, columns: ['รหัสงาน', 'ลูกค้า', 'ราคา', 'ต้นทุน', 'ขาดทุน'], rows: (r.sample || []).map(s => [s.jobId || '-', s.customer || '-', _money(s.price), _money(s.cost), _money(s.loss)]) } : undefined,
+        }
+    }
+    return { text: '' }
+}
+
+async function runMetricPlanner(apiKey: string, message: string, branchId?: string): Promise<{ text: string; viz: VizSpec[] }> {
+    const empty = { text: '', viz: [] as VizSpec[] }
+    if (!METRIC_INTENT.test(message)) return empty
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                systemInstruction: { parts: [{ text: `วันนี้คือ ${new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })} (โซนเวลาไทย). ถ้าคำถามต้องใช้ตัวเลขสรุป (งาน/รายได้/กำไร/งานค้างส่ง) ให้เรียก query_metrics โดยเลือก metric และช่วงเวลาที่ตรงคำถาม. ถ้าช่วงเวลาไม่ตรงกับ period ที่กำหนด (เช่น "15 วันที่ผ่านมา", "ตั้งแต่วันที่ 1", "3 เดือนก่อน") ให้คำนวณและส่ง from/to เป็น YYYY-MM-DD แทน period. ถ้าคำถามพูดถึงหลายอย่าง เช่น "รายได้และจำนวนงาน" ให้เรียกหลายครั้ง. ถ้าไม่ต้องใช้ตัวเลขไม่ต้องเรียกเครื่องมือ` }] },
+                contents: [{ role: 'user', parts: [{ text: message }] }],
+                tools: [{ functionDeclarations: [METRIC_QUERY_DECLARATION] }],
+                // Force a tool call: the METRIC_INTENT regex already gated this to
+                // number-ish questions, so AUTO sometimes skipping the call just
+                // loses data. ANY guarantees the metric is fetched.
+                toolConfig: { functionCallingConfig: { mode: 'ANY' } },
+                generationConfig: { temperature: 0 },
+            }),
+            signal: AbortSignal.timeout(15000),
+        })
+        if (!res.ok) return empty
+        const data = await res.json()
+        const parts = data?.candidates?.[0]?.content?.parts || []
+        const calls = parts
+            .map((p: { functionCall?: { name?: string; args?: Record<string, unknown> } }) => p.functionCall)
+            .filter((c: { name?: string } | undefined): c is { name: string; args?: Record<string, unknown> } => c?.name === 'query_metrics')
+        if (calls.length === 0) return empty
+
+        // De-dupe identical calls, cap at 4 to bound latency.
+        const seen = new Set<string>()
+        const lines: string[] = []
+        const viz: VizSpec[] = []
+        for (const c of calls.slice(0, 4)) {
+            const key = JSON.stringify(c.args || {})
+            if (seen.has(key)) continue
+            seen.add(key)
+            const r = await runOneMetric(c.args || {}, branchId)
+            if (r.text) lines.push(r.text)
+            if (r.viz) viz.push(r.viz)
+        }
+        if (lines.length === 0) return empty
+        return { text: `\n\n═══ 🔎 ตัวเลขที่ดึงตามคำถามนี้ (ใช้ตามนี้ ห้ามคำนวณเอง) ═══\n${lines.join('\n')}`, viz }
+    } catch {
+        return empty
+    }
+}
+
 function buildSystemPrompt(kb: KnowledgeBase, username: string, branchId?: string, ragContext = ''): string {
-    const { today, fin, drivers, vehicles, maintStats, repairs, fuel, health, damage, leaves, custList, trend, bill, workforce } = kb
+    const { today, fin, drivers, vehicles, maintStats, repairs, fuel, health, damage, leaves, custList, trend, bill, workforce, metrics } = kb
+    const m = metrics as KnowledgeBase['metrics'] | undefined
+    const money = (v: unknown) => `฿${(Number(v) || 0).toLocaleString()}`
+    const ow = m?.opsWeek, om = m?.opsMonth, rm = m?.revMonth, rl = m?.revLastMonth, od = m?.overdue
+    const topCust = (rm && 'breakdown' in rm ? rm.breakdown : [])?.slice(0, 5)
+        .map((b: { key: string; revenue: number; jobs: number }) => `${b.key} ${money(b.revenue)} (${b.jobs} งาน)`).join(' · ') || '—'
     const now = getThaiNow().toLocaleDateString('th-TH', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
         hour: '2-digit', minute: '2-digit'
@@ -413,6 +567,14 @@ function buildSystemPrompt(kb: KnowledgeBase, username: string, branchId?: strin
 คุณคือ "LogisPro AI" ผู้ช่วยอัจฉริยะของระบบบริหารการขนส่ง สามารถตอบคำถามได้อย่างยืดหยุ่น ไม่จำเป็นต้องพิมพ์คำถามเป๊ะๆ
 วันที่และเวลาปัจจุบัน: ${now}
 ผู้ใช้งาน: ${username || 'Admin'} | สาขา: ${branchId || 'ทุกสาขา'}
+
+═══ 📊 ตัวเลขสรุป (คำนวณจากฐานข้อมูลแล้ว — ใช้ค่าตามนี้เท่านั้น ห้ามคำนวณเอง) ═══
+[สัปดาห์นี้] งาน ${ow?.total ?? '—'} | วิ่งอยู่ ${ow?.active ?? 0} | เสร็จ ${ow?.completed ?? 0} | รอ ${ow?.pending ?? 0} | ยกเลิก ${ow?.cancelled ?? 0}
+[เดือนนี้] งาน ${om?.total ?? '—'} | เสร็จ ${om?.completed ?? 0} | รายได้ ${money(rm?.revenue)} | ต้นทุน ${money(rm?.cost)} | กำไร ${money(rm?.netProfit)} (${(rm?.margin ?? 0).toFixed(1)}%)
+[เดือนที่แล้ว] รายได้ ${money(rl?.revenue)} | กำไร ${money(rl?.netProfit)} (${(rl?.margin ?? 0).toFixed(1)}%)
+[Top ลูกค้าเดือนนี้] ${topCust}
+[งานค้างส่ง (เลยกำหนด)] ${od?.count ?? 0} รายการ${od?.count ? ' — เช่น ' + (od.sample || []).slice(0, 3).map((s: { jobId?: string; customer?: string; dueDate?: string }) => `${s.jobId}(${s.customer}, กำหนด ${s.dueDate})`).join(', ') : ''}
+※ ทุกตัวเลขคิดตามวันนัดงาน (Plan_Date) โซนเวลาไทย; รายได้นับเฉพาะงานสถานะ Completed/Delivered/Verified/Billed/Paid
 
 ═══ 📦 งานวันนี้ ═══
 - จำนวนงานทั้งหมดวันนี้: ${today?.total ?? 'ไม่มีข้อมูล'} รายการ
@@ -483,6 +645,8 @@ ${ragContext}
 ═══ 📌 แนวทางตอบคำถาม ═══
 - ตอบเป็นภาษาไทยอย่างเป็นธรรมชาติ กระชับ และมืออาชีพ
 - เข้าใจคำถามที่หลากหลาย เช่น "วันนี้เป็นยังไงบ้าง", "มีปัญหาอะไรมั้ย", "กำไรเดือนนี้เท่าไหร่", "รถคันไหนส่งแล้ว"
+- 🔢 ตัวเลขสรุป/ยอดรวม/กำไร/จำนวนงาน ให้ยึด "ตัวเลขสรุป" ที่คำนวณมาให้ด้านบน **ห้ามบวกลบหรือประมาณเอง** ถ้าไม่มีช่วงเวลาที่ถามในบล็อกนั้น ให้บอกว่ายังไม่มีข้อมูลช่วงนั้น (อย่าเดา)
+- 🧾 เมื่อรายงานตัวเลข ให้ระบุช่วงเวลาที่อ้างอิงเสมอ (เช่น "เดือนนี้", "สัปดาห์นี้") เพื่อให้ผู้ใช้ตรวจสอบได้
 - สามารถวิเคราะห์แนวโน้ม เปรียบเทียบ หรือเสนอคำแนะนำได้ และอ้างอิงบทสนทนาก่อนหน้าได้
 - ถ้าข้อมูลบางส่วนเป็น 0 หรือน้อยมาก ให้บอกผู้ใช้ว่าอาจยังไม่มีงานในช่วงนั้น หรือข้อมูลยังไม่ถูก update
 - ถ้าถามเรื่องที่ไม่มีในฐานข้อมูล ให้บอกตรงๆ ว่าไม่มีข้อมูล
@@ -528,6 +692,8 @@ function buildSafeResponse(message: string, kb: KnowledgeBase, debugNote: string
 // Prefix marking a pending action payload inside the plain-text stream, so the
 // chat UI can render a confirm card instead of a normal reply.
 const ACTION_SENTINEL = '@@ACTION@@'
+// Marks a deterministic visual payload (charts/tables) appended after the text.
+const VIZ_SENTINEL = '@@VIZ@@'
 
 function summarizeCreateJob(a: Record<string, unknown>): string {
     const s = (v: unknown) => (v === undefined || v === null || v === '') ? null : String(v)
@@ -592,12 +758,15 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ response: 'ไม่รู้จักคำสั่งนี้ครับ' })
         }
 
-        // 1. Knowledge base (cached per branch for 45s) + RAG retrieval
-        const [kb, ragContext] = await Promise.all([
+        // 1. Knowledge base (cached per branch for 45s) + RAG + on-demand metric
+        //    query for the specific period/customer the question asks about.
+        const [kb, ragContext, metricContext] = await Promise.all([
             getKnowledgeBase(branchId),
             getRagContext(message, branchId),
+            runMetricPlanner(apiKey, message, branchId),
         ])
-        const systemPrompt = buildSystemPrompt(kb, session.username, branchId, ragContext)
+        const systemPrompt = buildSystemPrompt(kb, session.username, branchId, ragContext) + (metricContext.text || '')
+        const metricViz = metricContext.viz
         const userTurn = `คำถาม: ${message}`
 
         // 2. Stream from Gemini, falling through models on HTTP errors
@@ -642,17 +811,24 @@ export async function POST(req: NextRequest) {
                 const stream = new ReadableStream<Uint8Array>({
                     async start(controller) {
                         let emitted = false
+                        let actionEmitted = false
                         try {
                             for await (const ev of parseGeminiSSE(res.body!)) {
                                 if (ev.type === 'call') {
                                     controller.enqueue(encoder.encode(pendingActionText(ev.name, ev.args)))
                                     emitted = true
+                                    actionEmitted = true
                                     break
                                 }
                                 emitted = true
                                 controller.enqueue(encoder.encode(ev.text))
                             }
                             if (!emitted) controller.enqueue(encoder.encode(buildSafeResponse(message, kb, '')))
+                            // Append deterministic visuals (charts/tables) after the
+                            // text answer, unless this turn was a confirm-action.
+                            if (!actionEmitted && metricViz.length > 0) {
+                                controller.enqueue(encoder.encode(VIZ_SENTINEL + JSON.stringify(metricViz)))
+                            }
                         } catch {
                             if (!emitted) controller.enqueue(encoder.encode(buildSafeResponse(message, kb, '')))
                         } finally {

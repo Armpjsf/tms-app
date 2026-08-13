@@ -5,13 +5,32 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Bot, User, Send, Loader2, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+type VizSpec =
+  | { kind: "bar"; title: string; items: { label: string; value: number }[]; unit?: string }
+  | { kind: "table"; title: string; columns: string[]; rows: (string | number)[][] }
+
 interface ChatMessage {
   role: "user" | "assistant"
   content: string
+  viz?: VizSpec[]
 }
 
 type PendingAction = { name: string; args: Record<string, unknown>; summary: string }
 const ACTION_SENTINEL = "@@ACTION@@"
+const VIZ_SENTINEL = "@@VIZ@@"
+
+// Split a streamed assistant chunk into display text + any deterministic
+// visuals the server appended after the @@VIZ@@ marker.
+function splitViz(acc: string): { text: string; viz?: VizSpec[] } {
+  const i = acc.indexOf(VIZ_SENTINEL)
+  if (i === -1) return { text: acc }
+  const text = acc.slice(0, i)
+  try {
+    return { text, viz: JSON.parse(acc.slice(i + VIZ_SENTINEL.length)) as VizSpec[] }
+  } catch {
+    return { text } // JSON not fully streamed yet
+  }
+}
 
 const SUGGESTIONS = [
   "วันนี้เป็นยังไงบ้าง",
@@ -19,6 +38,55 @@ const SUGGESTIONS = [
   "มีรถรอซ่อมกี่คัน",
   "สรุปภาพรวมให้หน่อย",
 ]
+
+// Renders the deterministic charts/tables the assistant attached to an answer.
+function VizBlock({ viz }: { viz: VizSpec[] }) {
+  const fmt = (n: number) => n.toLocaleString()
+  return (
+    <div className="mt-2 space-y-3">
+      {viz.map((v, i) => {
+        if (v.kind === "bar") {
+          const max = Math.max(1, ...v.items.map((it) => it.value))
+          return (
+            <div key={i} className="rounded-2xl border border-border bg-background/60 p-3">
+              <p className="text-xs font-black text-primary mb-2">{v.title}</p>
+              <div className="space-y-1.5">
+                {v.items.map((it, j) => (
+                  <div key={j} className="flex items-center gap-2">
+                    <span className="w-28 shrink-0 truncate text-[11px] font-bold text-muted-foreground" title={it.label}>{it.label}</span>
+                    <div className="flex-1 h-4 rounded-md bg-muted/50 overflow-hidden">
+                      <div className="h-full rounded-md bg-primary/70" style={{ width: `${(it.value / max) * 100}%` }} />
+                    </div>
+                    <span className="w-24 shrink-0 text-right text-[11px] font-black tabular-nums">{v.unit === "฿" ? "฿" : ""}{fmt(it.value)}{v.unit && v.unit !== "฿" ? " " + v.unit : ""}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        }
+        return (
+          <div key={i} className="rounded-2xl border border-border bg-background/60 p-3 overflow-x-auto">
+            <p className="text-xs font-black text-primary mb-2">{v.title}</p>
+            <table className="w-full text-[11px] border-collapse">
+              <thead>
+                <tr className="text-left text-muted-foreground">
+                  {v.columns.map((c, j) => <th key={j} className="font-bold px-2 py-1 border-b border-border whitespace-nowrap">{c}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {v.rows.map((row, r) => (
+                  <tr key={r} className="hover:bg-muted/30">
+                    {row.map((cell, c) => <td key={c} className="px-2 py-1 border-b border-border/50 font-semibold whitespace-nowrap">{String(cell)}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 export default function AiAssistantPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -67,14 +135,15 @@ export default function AiAssistantPage() {
           // don't render it as text; hold until done then show a confirm card.
           if (!isAction && acc.startsWith(ACTION_SENTINEL)) isAction = true
           if (isAction || acc.length < ACTION_SENTINEL.length) continue
+          const { text, viz } = splitViz(acc)
           if (!started) {
             started = true
             setLoading(false)
-            setMessages((prev) => [...prev, { role: "assistant", content: acc }])
+            setMessages((prev) => [...prev, { role: "assistant", content: text, viz }])
           } else {
             setMessages((prev) => {
               const copy = [...prev]
-              copy[copy.length - 1] = { role: "assistant", content: acc }
+              copy[copy.length - 1] = { role: "assistant", content: text, viz }
               return copy
             })
           }
@@ -191,15 +260,18 @@ export default function AiAssistantPage() {
               >
                 {m.role === "user" ? <User size={18} /> : <Bot size={18} />}
               </div>
-              <div
-                className={cn(
-                  "max-w-[80%] rounded-2xl px-4 py-3 text-sm font-medium whitespace-pre-wrap leading-relaxed",
-                  m.role === "user"
-                    ? "bg-primary text-white rounded-tr-sm"
-                    : "bg-muted/60 text-foreground rounded-tl-sm border border-border"
-                )}
-              >
-                {m.content}
+              <div className={cn("max-w-[80%] min-w-0", m.role === "user" ? "" : "flex flex-col")}>
+                <div
+                  className={cn(
+                    "rounded-2xl px-4 py-3 text-sm font-medium whitespace-pre-wrap leading-relaxed",
+                    m.role === "user"
+                      ? "bg-primary text-white rounded-tr-sm"
+                      : "bg-muted/60 text-foreground rounded-tl-sm border border-border"
+                  )}
+                >
+                  {m.content}
+                </div>
+                {m.role === "assistant" && m.viz && m.viz.length > 0 && <VizBlock viz={m.viz} />}
               </div>
             </div>
           ))}
