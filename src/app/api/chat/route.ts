@@ -22,6 +22,13 @@ const GEMINI_MODELS = [
     "gemini-2.0-flash",
 ]
 
+// LLM provider is env-switchable. Default 'gemini' so cloud/Vercel is unchanged.
+// Set LLM_PROVIDER=ollama (with the app running where it can reach OLLAMA_BASE_URL)
+// to keep the answering model — and the data it sees — fully local.
+const LLM_PROVIDER = (process.env.LLM_PROVIDER || 'gemini').toLowerCase()
+const OLLAMA_BASE_URL = (process.env.OLLAMA_BASE_URL || 'http://localhost:11434').replace(/\/$/, '')
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:7b'
+
 type ChatMsg = { role: 'user' | 'bot' | 'model' | 'assistant', content: string }
 
 // ─────────────────────────────────────────────────────────────────
@@ -262,55 +269,6 @@ async function getCustomersDirect(branchId?: string) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Helper: Fetch recent job history for trend analysis (Thai timezone)
-// ─────────────────────────────────────────────────────────────────
-async function getRecentJobTrend(branchId?: string) {
-    try {
-        const supabase = await createAdminClient()
-        const now = getThaiNow()
-        const sevenDaysAgo = new Date(now)
-        sevenDaysAgo.setDate(now.getDate() - 6)
-        const startDate = formatDateSafe(sevenDaysAgo)!
-
-        let query = supabase
-            .from('Jobs_Main')
-            .select('Plan_Date, Job_Status, Price_Cust_Total, Customer_Name, Route_Name')
-            .gte('Plan_Date', startDate)
-
-        if (branchId && branchId !== 'All') {
-            query = query.eq('Branch_ID', branchId)
-        }
-
-        const { data } = await query.order('Plan_Date', { ascending: true }).limit(300)
-        if (!data) return []
-
-        // Group by date
-        const byDate: Record<string, { date: string, total: number, completed: number, revenue: number }> = {}
-        for (let i = 0; i < 7; i++) {
-            const d = new Date(sevenDaysAgo)
-            d.setDate(sevenDaysAgo.getDate() + i)
-            const ds = formatDateSafe(d)!
-            byDate[ds] = { date: ds, total: 0, completed: 0, revenue: 0 }
-        }
-
-        data.forEach((j: { Plan_Date?: string | null, Job_Status?: string | null, Price_Cust_Total?: number | null }) => {
-            const ds = String(j.Plan_Date).split('T')[0]
-            if (byDate[ds]) {
-                byDate[ds].total++
-                if (isRevenueStatus(j.Job_Status)) {
-                    byDate[ds].completed++
-                    byDate[ds].revenue += Number(j.Price_Cust_Total) || 0
-                }
-            }
-        })
-
-        return Object.values(byDate)
-    } catch {
-        return []
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────
 // Helper: Fetch billing/invoice summary
 // ─────────────────────────────────────────────────────────────────
 async function getBillingSummary() {
@@ -351,7 +309,7 @@ async function buildKnowledgeBase(branchId?: string) {
     const [
         todayData, financialData, allDrivers, allVehicles, maintenanceStats,
         pendingRepairs, fuelAnalytics, fleetHealth, damageReports, driverLeaves,
-        customers, jobTrend, billing, workforceAnalytics,
+        customers, billing, workforceAnalytics,
         opsWeek, opsMonth, revMonth, revLastMonth, overdue,
     ] = await Promise.allSettled([
         getTodayDirect(branchId),
@@ -365,7 +323,6 @@ async function buildKnowledgeBase(branchId?: string) {
         aiToolExecutors.get_damage_reports(),
         aiToolExecutors.get_driver_leaves({}),
         getCustomersDirect(branchId),
-        getRecentJobTrend(branchId),
         getBillingSummary(),
         aiToolExecutors.get_workforce_analytics(),
         // Deterministic metrics layer (authoritative numbers + provenance)
@@ -388,7 +345,6 @@ async function buildKnowledgeBase(branchId?: string) {
         damage: safe(damageReports) as { driver?: string; description?: string; amount?: number; status?: string }[] | null,
         leaves: safe(driverLeaves) as { driver?: string; type?: string; from?: string; to?: string; status?: string }[] | null,
         custList: safe(customers) as { id?: string; Customer_ID?: string; name?: string; Customer_Name?: string }[] | null,
-        trend: safe(jobTrend) as { date: string; total: number; completed: number; revenue: number }[] | null,
         bill: safe(billing),
         workforce: safe(workforceAnalytics),
         metrics: {
@@ -506,7 +462,7 @@ async function runOneMetric(a: Record<string, unknown>, branchId?: string): Prom
 
 async function runMetricPlanner(apiKey: string, message: string, branchId?: string): Promise<{ text: string; viz: VizSpec[] }> {
     const empty = { text: '', viz: [] as VizSpec[] }
-    if (!METRIC_INTENT.test(message)) return empty
+    if (!apiKey || !METRIC_INTENT.test(message)) return empty
     try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
         const res = await fetch(url, {
@@ -552,7 +508,7 @@ async function runMetricPlanner(apiKey: string, message: string, branchId?: stri
 }
 
 function buildSystemPrompt(kb: KnowledgeBase, username: string, branchId?: string, ragContext = ''): string {
-    const { today, fin, drivers, vehicles, maintStats, repairs, fuel, health, damage, leaves, custList, trend, bill, workforce, metrics } = kb
+    const { today, fin, drivers, vehicles, maintStats, repairs, fuel, health, damage, leaves, custList, bill, workforce, metrics } = kb
     const m = metrics as KnowledgeBase['metrics'] | undefined
     const money = (v: unknown) => `฿${(Number(v) || 0).toLocaleString()}`
     const ow = m?.opsWeek, om = m?.opsMonth, rm = m?.revMonth, rl = m?.revLastMonth, od = m?.overdue
@@ -583,9 +539,6 @@ function buildSystemPrompt(kb: KnowledgeBase, username: string, branchId?: strin
 - รอดำเนินการ: ${today?.pending ?? 0} รายการ
 - SOS/ฉุกเฉิน: ${today?.sos ?? 0} คัน
 - รายการงานวันนี้: ${JSON.stringify(today?.jobs ?? [])}
-
-═══ 📈 แนวโน้ม 7 วันที่ผ่านมา ═══
-${(trend || []).map((t) => `  ${t.date}: งาน ${t.total} รายการ, เสร็จ ${t.completed}, รายได้ ฿${t.revenue?.toLocaleString()}`).join('\n') || 'ไม่มีข้อมูล'}
 
 ═══ 💰 การเงินเดือนนี้ (นับงานสถานะ Completed/Delivered/Verified/Billed/Paid) ═══
 - รายได้จากงานที่ส่ง/ยืนยันแล้ว: ฿${fin?.revenue?.toLocaleString() ?? 'ไม่มีข้อมูล'}
@@ -710,6 +663,84 @@ function summarizeCreateJob(a: Record<string, unknown>): string {
     return lines.join('\n')
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Local LLM (Ollama) answer path. Streams a plain-text reply from a local
+// model and appends the same @@VIZ@@ visuals. No function-calling here, so
+// create_job via chat stays on the Gemini path. Falls back to SafeMode text
+// if Ollama is unreachable.
+// ─────────────────────────────────────────────────────────────────
+async function answerWithOllama(
+    systemPrompt: string, history: ChatMsg[], userTurn: string,
+    wantStream: boolean, metricViz: VizSpec[], kb: KnowledgeBase, message: string,
+): Promise<Response> {
+    const messages = [
+        { role: 'system', content: systemPrompt },
+        ...history.filter(m => m?.content?.trim()).slice(-8).map(m => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.content,
+        })),
+        { role: 'user', content: userTurn },
+    ]
+    let res: Response
+    try {
+        res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: OLLAMA_MODEL, messages, stream: wantStream }),
+            signal: AbortSignal.timeout(120000),
+        })
+    } catch (e) {
+        return NextResponse.json({ response: buildSafeResponse(message, kb, `\n\n⚠️ ต่อ Ollama ไม่ได้ (${OLLAMA_BASE_URL}): ${(e as Error).message}`) })
+    }
+    if (!res.ok || !res.body) {
+        return NextResponse.json({ response: buildSafeResponse(message, kb, `\n\n⚠️ Ollama HTTP ${res.status}`) })
+    }
+
+    // Non-streaming (LINE webhook etc.): accumulate the NDJSON content.
+    if (!wantStream) {
+        const raw = await res.text()
+        let full = ''
+        for (const line of raw.split('\n')) {
+            const t = line.trim(); if (!t) continue
+            try { full += JSON.parse(t)?.message?.content || '' } catch { /* skip */ }
+        }
+        return NextResponse.json({ response: full || buildSafeResponse(message, kb, '') })
+    }
+
+    // Streaming: Ollama emits NDJSON {message:{content}} lines → plain text.
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream<Uint8Array>({
+        async start(controller) {
+            const reader = res.body!.getReader()
+            const decoder = new TextDecoder()
+            let buf = '', emitted = false
+            try {
+                for (;;) {
+                    const { done, value } = await reader.read()
+                    if (done) break
+                    buf += decoder.decode(value, { stream: true })
+                    let nl: number
+                    while ((nl = buf.indexOf('\n')) >= 0) {
+                        const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1)
+                        if (!line) continue
+                        try {
+                            const t = JSON.parse(line)?.message?.content
+                            if (t) { controller.enqueue(encoder.encode(t)); emitted = true }
+                        } catch { /* partial line */ }
+                    }
+                }
+                if (!emitted) controller.enqueue(encoder.encode(buildSafeResponse(message, kb, '')))
+                if (metricViz.length > 0) controller.enqueue(encoder.encode(VIZ_SENTINEL + JSON.stringify(metricViz)))
+            } catch {
+                if (!emitted) controller.enqueue(encoder.encode(buildSafeResponse(message, kb, '')))
+            } finally {
+                controller.close()
+            }
+        },
+    })
+    return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no' } })
+}
+
 export async function POST(req: NextRequest) {
     try {
         const session = await getSession()
@@ -723,8 +754,11 @@ export async function POST(req: NextRequest) {
         const wantStream = body.stream === true
         if (!message) return NextResponse.json({ error: 'Message is required' }, { status: 400 })
 
-        const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
-        if (!apiKey) {
+        const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || ''
+        // Gemini key is required only for the cloud provider. In local (ollama)
+        // mode the assistant runs without it (the planner just degrades to the
+        // pre-computed metric snapshot).
+        if (LLM_PROVIDER !== 'ollama' && !apiKey) {
             return NextResponse.json({ response: "AI System: ไม่พบ API Key ในการตั้งค่าระบบ" })
         }
 
@@ -768,6 +802,11 @@ export async function POST(req: NextRequest) {
         const systemPrompt = buildSystemPrompt(kb, session.username, branchId, ragContext) + (metricContext.text || '')
         const metricViz = metricContext.viz
         const userTurn = `คำถาม: ${message}`
+
+        // 1b. Local LLM path (keeps data on-prem) — bypasses the Gemini loop.
+        if (LLM_PROVIDER === 'ollama') {
+            return await answerWithOllama(systemPrompt, history, userTurn, wantStream, metricViz, kb, message)
+        }
 
         // 2. Stream from Gemini, falling through models on HTTP errors
         const allErrors: string[] = []
