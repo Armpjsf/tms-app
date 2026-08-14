@@ -159,6 +159,72 @@ export interface TireSummary {
     positions: TirePositionSummary[]
 }
 
+export interface VehicleCostSummary {
+    fuelCost: number
+    fuelLiters: number
+    repairCost: number
+    tireCost: number
+    totalCost: number
+    kmPerLiter: number | null
+    /** Last 12 months, oldest→newest. */
+    monthlyFuel: { month: string; cost: number; liters: number }[]
+}
+
+/**
+ * Combined running-cost view for one vehicle: fuel (Fuel_Logs) + repairs
+ * (Repair_Tickets) + tires (Tire_Logs) in a single place, so tire cost — which
+ * lives in its own table — is finally counted alongside the rest.
+ */
+export async function getVehicleCostSummary(plate: string): Promise<VehicleCostSummary> {
+    const supabase = createAdminClient()
+
+    const [fuelRes, repairRes, tireRes] = await Promise.all([
+        supabase.from('Fuel_Logs').select('Price_Total, Liters, Odometer, Date_Time').eq('Vehicle_Plate', plate),
+        supabase.from('Repair_Tickets').select('Cost_Total, Date_Report, Status').eq('Vehicle_Plate', plate),
+        supabase.from('Tire_Logs').select('cost').eq('Vehicle_Plate', plate),
+    ])
+
+    const fuelLogs = (fuelRes.data || []) as Array<Record<string, unknown>>
+    const repairs = (repairRes.data || []) as Array<Record<string, unknown>>
+    const tires = (tireRes.data || []) as Array<Record<string, unknown>>
+
+    const fuelCost = fuelLogs.reduce((s, f) => s + (Number(f.Price_Total) || 0), 0)
+    const fuelLiters = fuelLogs.reduce((s, f) => s + (Number(f.Liters) || 0), 0)
+    const repairCost = repairs
+        .filter(r => String(r.Status) !== 'Cancelled')
+        .reduce((s, r) => s + (Number(r.Cost_Total) || 0), 0)
+    const tireCost = tires.reduce((s, t) => s + (Number(t.cost) || 0), 0)
+
+    // km/L from the odometer span across fuel logs ÷ total litres (approximation).
+    const odos = fuelLogs.map(f => Number(f.Odometer)).filter(n => Number.isFinite(n) && n > 0)
+    const kmSpan = odos.length >= 2 ? Math.max(...odos) - Math.min(...odos) : 0
+    const kmPerLiter = kmSpan > 0 && fuelLiters > 0 ? kmSpan / fuelLiters : null
+
+    // Monthly fuel for the last 12 months.
+    const months: string[] = []
+    const now = new Date()
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+    }
+    const monthMap: Record<string, { cost: number; liters: number }> = {}
+    months.forEach(m => (monthMap[m] = { cost: 0, liters: 0 }))
+    for (const f of fuelLogs) {
+        const dt = f.Date_Time ? String(f.Date_Time).slice(0, 7) : ''
+        if (monthMap[dt]) {
+            monthMap[dt].cost += Number(f.Price_Total) || 0
+            monthMap[dt].liters += Number(f.Liters) || 0
+        }
+    }
+    const monthlyFuel = months.map(m => ({ month: m, cost: monthMap[m].cost, liters: monthMap[m].liters }))
+
+    return {
+        fuelCost, fuelLiters, repairCost, tireCost,
+        totalCost: fuelCost + repairCost + tireCost,
+        kmPerLiter, monthlyFuel,
+    }
+}
+
 /** Aggregates a vehicle's Tire_Logs into per-vehicle and per-position stats. */
 export async function getTireSummary(plate: string): Promise<TireSummary> {
     const logs = (await getTireLogs(plate)) as Array<Record<string, unknown>>

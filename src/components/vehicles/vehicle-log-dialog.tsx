@@ -9,12 +9,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { FileText, Paperclip, Loader2, History } from "lucide-react"
+import { FileText, Paperclip, Loader2, History, Download } from "lucide-react"
+import * as XLSX from "xlsx"
 import type { Vehicle } from "@/lib/supabase/vehicles"
 import {
     renewVehicleDocument, getVehicleRenewals,
-    addTireLog, getTireLogs, getTireSummary,
-    type TireSummary,
+    addTireLog, getTireLogs, getTireSummary, getVehicleCostSummary,
+    type TireSummary, type VehicleCostSummary,
 } from "@/app/vehicles/fleet-log-actions"
 
 const DOC_LABELS: Record<string, string> = {
@@ -36,13 +37,37 @@ export function VehicleLogDialog({ vehicle, open, onOpenChange }: {
     const [renewals, setRenewals] = useState<Record<string, unknown>[]>([])
     const [tires, setTires] = useState<Record<string, unknown>[]>([])
     const [tireSummary, setTireSummary] = useState<TireSummary | null>(null)
+    const [cost, setCost] = useState<VehicleCostSummary | null>(null)
 
     const refreshHistory = useCallback(async () => {
-        const [r, t, s] = await Promise.all([getVehicleRenewals(plate), getTireLogs(plate), getTireSummary(plate)])
+        const [r, t, s, c] = await Promise.all([
+            getVehicleRenewals(plate), getTireLogs(plate), getTireSummary(plate), getVehicleCostSummary(plate),
+        ])
         setRenewals(r as Record<string, unknown>[])
         setTires(t as Record<string, unknown>[])
         setTireSummary(s)
+        setCost(c)
     }, [plate])
+
+    const exportExcel = () => {
+        const wb = XLSX.utils.book_new()
+        // Sheet 1: cost summary
+        if (cost) {
+            const summaryRows = [
+                { รายการ: 'ค่าน้ำมันสะสม', จำนวน: cost.fuelCost },
+                { รายการ: 'ลิตรสะสม', จำนวน: cost.fuelLiters },
+                { รายการ: 'อัตราน้ำมัน (กม./ลิตร)', จำนวน: cost.kmPerLiter ?? '-' },
+                { รายการ: 'ค่าซ่อมสะสม', จำนวน: cost.repairCost },
+                { รายการ: 'ค่ายางสะสม', จำนวน: cost.tireCost },
+                { รายการ: 'ต้นทุนรวม', จำนวน: cost.totalCost },
+            ]
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'ต้นทุนรวม')
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cost.monthlyFuel.map(m => ({ เดือน: m.month, ค่าน้ำมัน: m.cost, ลิตร: m.liters }))), 'น้ำมันรายเดือน')
+        }
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(renewals), 'ประวัติการต่อเอกสาร')
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tires), 'ประวัติยาง')
+        XLSX.writeFile(wb, `vehicle_${plate}_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    }
 
     useEffect(() => { if (open) refreshHistory() }, [open, refreshHistory])
 
@@ -78,10 +103,11 @@ export function VehicleLogDialog({ vehicle, open, onOpenChange }: {
 
                 <div className="flex-1 min-h-0 overflow-y-auto p-6">
                     <Tabs defaultValue="doc" className="w-full">
-                        <TabsList className="grid grid-cols-3 w-full mb-4">
+                        <TabsList className="grid grid-cols-4 w-full mb-4">
                             <TabsTrigger value="doc">ต่อเอกสาร</TabsTrigger>
                             <TabsTrigger value="tire">ยาง</TabsTrigger>
                             <TabsTrigger value="summary">สรุปยาง</TabsTrigger>
+                            <TabsTrigger value="cost">ต้นทุน</TabsTrigger>
                         </TabsList>
 
                         {/* ── Document renewal ── */}
@@ -232,10 +258,61 @@ export function VehicleLogDialog({ vehicle, open, onOpenChange }: {
                                 </>
                             )}
                         </TabsContent>
+
+                        {/* ── Combined cost (fuel + repair + tire) ── */}
+                        <TabsContent value="cost" className="space-y-4">
+                            <div className="flex justify-end">
+                                <Button type="button" variant="outline" size="sm" onClick={exportExcel} className="gap-2">
+                                    <Download size={14} /> Export Excel
+                                </Button>
+                            </div>
+                            {!cost ? (
+                                <p className="text-sm text-muted-foreground italic py-8 text-center">กำลังโหลด...</p>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <SummaryStat label="ค่าน้ำมันสะสม" value={`${cost.fuelCost.toLocaleString()} ฿`} />
+                                        <SummaryStat label="อัตราน้ำมัน" value={cost.kmPerLiter != null ? `${cost.kmPerLiter.toFixed(2)} กม./ล.` : '-'} />
+                                        <SummaryStat label="ค่าซ่อมสะสม" value={`${cost.repairCost.toLocaleString()} ฿`} />
+                                        <SummaryStat label="ค่ายางสะสม" value={`${cost.tireCost.toLocaleString()} ฿`} />
+                                    </div>
+                                    <div className="p-4 rounded-xl border-2 border-primary/30 bg-primary/5 flex items-center justify-between">
+                                        <span className="text-sm font-bold text-muted-foreground uppercase tracking-wide">ต้นทุนรวม (น้ำมัน+ซ่อม+ยาง)</span>
+                                        <span className="text-2xl font-black text-primary">{cost.totalCost.toLocaleString()} ฿</span>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                                            <History size={14} /> น้ำมันรายเดือน (12 เดือนล่าสุด)
+                                        </div>
+                                        <MonthlyFuelChart data={cost.monthlyFuel} />
+                                    </div>
+                                </>
+                            )}
+                        </TabsContent>
                     </Tabs>
                 </div>
             </DialogContent>
         </Dialog>
+    )
+}
+
+function MonthlyFuelChart({ data }: { data: { month: string; cost: number; liters: number }[] }) {
+    const max = Math.max(1, ...data.map(d => d.cost))
+    return (
+        <div className="flex items-end justify-between gap-1 h-32 p-3 rounded-lg bg-muted/20 border border-border">
+            {data.map((d) => (
+                <div key={d.month} className="flex-1 flex flex-col items-center gap-1 group" title={`${d.month}: ${d.cost.toLocaleString()} ฿ • ${d.liters.toLocaleString()} ล.`}>
+                    <div className="w-full flex items-end justify-center h-full">
+                        <div
+                            className="w-full max-w-[18px] rounded-t bg-primary/70 group-hover:bg-primary transition-colors"
+                            style={{ height: `${Math.round((d.cost / max) * 100)}%`, minHeight: d.cost > 0 ? 2 : 0 }}
+                        />
+                    </div>
+                    <span className="text-[8px] text-muted-foreground">{d.month.slice(5)}</span>
+                </div>
+            ))}
+        </div>
     )
 }
 
