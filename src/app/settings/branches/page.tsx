@@ -374,7 +374,7 @@ export default function BranchSettingsPage() {
       </div>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogContent className="bg-background border-border text-foreground max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-[3rem] sm:rounded-[4rem] backdrop-blur-3xl relative">
+                <DialogContent className="bg-background border-border text-foreground max-w-2xl max-h-[90dvh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-[3rem] sm:rounded-[4rem] backdrop-blur-3xl relative">
                     <div className="absolute top-0 left-0 w-full h-1 bg-primary animate-pulse shadow-[0_0_20px_rgba(255,30,133,1)]" />
                     
                     <div className="flex-1 min-h-0 overflow-y-auto p-6 sm:p-10 space-y-6 custom-scrollbar">
