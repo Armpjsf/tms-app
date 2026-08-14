@@ -2,53 +2,115 @@ import { messagingApi, validateSignature } from '@line/bot-sdk';
 
 const { MessagingApiClient, MessagingApiBlobClient } = messagingApi;
 
-// Lazy client instantiation helpers to ensure process.env variables are accessed at runtime (vital for serverless cold-start HMR)
-let _lineClient: InstanceType<typeof MessagingApiClient> | null = null;
-let _lineBlobClient: InstanceType<typeof MessagingApiBlobClient> | null = null;
+// ─────────────────────────────────────────────────────────────────
+// Dual-bot support
+// ─────────────────────────────────────────────────────────────────
+// The LINE free plan caps push messages at 300/month PER Official Account.
+// To roughly double the free capacity for customer notifications we run TWO
+// bots and alternate which one sends customer pushes, switching on the 16th of
+// each month at 05:00 Asia/Bangkok (see getActiveCustomerBot). Both bots point
+// their webhook at the same /api/line/webhook endpoint; the webhook figures out
+// which bot an event came from by matching the request signature.
+//
+// Bot 2 is OPTIONAL: if LINE_CHANNEL_ACCESS_TOKEN_2 / LINE_CHANNEL_SECRET_2 are
+// not set, everything transparently falls back to bot 1, so this code is safe to
+// deploy before the second Official Account is provisioned.
 
-export function getLineClient() {
-  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN || '';
-  if (!token) {
-    console.error('LINE_CHANNEL_ACCESS_TOKEN is not set');
-    throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not set');
+export type BotIndex = 1 | 2;
+
+function botCreds(botIndex: BotIndex): { token: string; secret: string } {
+  if (botIndex === 2) {
+    return {
+      token: process.env.LINE_CHANNEL_ACCESS_TOKEN_2 || '',
+      secret: process.env.LINE_CHANNEL_SECRET_2 || '',
+    };
   }
-  if (!_lineClient) {
-    _lineClient = new MessagingApiClient({ channelAccessToken: token });
-  }
-  return _lineClient;
+  return {
+    token: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
+    secret: process.env.LINE_CHANNEL_SECRET || '',
+  };
 }
 
-export function getLineBlobClient() {
-  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN || '';
-  if (!token) {
-    console.error('LINE_CHANNEL_ACCESS_TOKEN is not set');
-    throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not set');
-  }
-  if (!_lineBlobClient) {
-    _lineBlobClient = new MessagingApiBlobClient({ channelAccessToken: token });
-  }
-  return _lineBlobClient;
+/** True when the optional second bot is fully configured. */
+export function isBot2Configured(): boolean {
+  return !!(process.env.LINE_CHANNEL_ACCESS_TOKEN_2 && process.env.LINE_CHANNEL_SECRET_2);
 }
 
 /**
- * Validates the signature of an incoming LINE webhook request.
+ * Which bot should send customer-facing pushes right now.
+ * Days 1–15 → bot 1, days 16–end → bot 2, with the switch happening at
+ * 05:00 Asia/Bangkok (the pre-dawn lull when almost no jobs complete).
+ *
+ * Implementation: Bangkok is UTC+7. Shifting the instant by +2h of UTC is the
+ * same as (Bangkok time − 5h); taking the UTC calendar day of that shifted
+ * instant makes the day boundary land at 05:00 Bangkok.
+ */
+export function getActiveCustomerBot(): BotIndex {
+  if (!isBot2Configured()) return 1;
+  const shifted = new Date(Date.now() + 2 * 60 * 60 * 1000);
+  const dayOfMonth = shifted.getUTCDate();
+  return dayOfMonth <= 15 ? 1 : 2;
+}
+
+// Lazy, per-bot client cache. Instantiated at runtime so env vars are read on
+// first use (important for serverless cold-start / HMR).
+const _clients: Partial<Record<BotIndex, InstanceType<typeof MessagingApiClient>>> = {};
+const _blobClients: Partial<Record<BotIndex, InstanceType<typeof MessagingApiBlobClient>>> = {};
+
+export function getLineClient(botIndex: BotIndex = 1) {
+  const { token } = botCreds(botIndex);
+  if (!token) {
+    console.error(`LINE_CHANNEL_ACCESS_TOKEN for bot ${botIndex} is not set`);
+    throw new Error(`LINE_CHANNEL_ACCESS_TOKEN for bot ${botIndex} is not set`);
+  }
+  if (!_clients[botIndex]) {
+    _clients[botIndex] = new MessagingApiClient({ channelAccessToken: token });
+  }
+  return _clients[botIndex]!;
+}
+
+export function getLineBlobClient(botIndex: BotIndex = 1) {
+  const { token } = botCreds(botIndex);
+  if (!token) {
+    console.error(`LINE_CHANNEL_ACCESS_TOKEN for bot ${botIndex} is not set`);
+    throw new Error(`LINE_CHANNEL_ACCESS_TOKEN for bot ${botIndex} is not set`);
+  }
+  if (!_blobClients[botIndex]) {
+    _blobClients[botIndex] = new MessagingApiBlobClient({ channelAccessToken: token });
+  }
+  return _blobClients[botIndex]!;
+}
+
+/**
+ * Determines which bot a webhook request belongs to by matching its signature
+ * against each configured channel secret. Returns null if no bot matches
+ * (invalid signature). Replaces the old single-secret verifyLineSignature.
+ */
+export function resolveWebhookBot(body: string, signature: string): BotIndex | null {
+  const b1 = botCreds(1);
+  if (b1.secret && validateSignature(body, b1.secret, signature)) return 1;
+  if (isBot2Configured()) {
+    const b2 = botCreds(2);
+    if (b2.secret && validateSignature(body, b2.secret, signature)) return 2;
+  }
+  return null;
+}
+
+/**
+ * Validates the signature of an incoming LINE webhook request (bot 1 only).
+ * Retained for backward compatibility; new code should use resolveWebhookBot.
  */
 export function verifyLineSignature(body: string, signature: string): boolean {
-  const channelSecret = process.env.LINE_CHANNEL_SECRET || '';
-  if (!channelSecret) {
-    console.error('LINE_CHANNEL_SECRET is not set');
-    return false;
-  }
-  return validateSignature(body, channelSecret, signature);
+  return resolveWebhookBot(body, signature) !== null;
 }
 
 /**
- * Fetches binary content (audio, image, etc.) from LINE servers.
+ * Fetches binary content (audio, image, etc.) from LINE servers for a given bot.
  */
-export async function getMessageContent(messageId: string): Promise<Buffer> {
-  const client = getLineBlobClient();
+export async function getMessageContent(messageId: string, botIndex: BotIndex = 1): Promise<Buffer> {
+  const client = getLineBlobClient(botIndex);
   const stream = await client.getMessageContent(messageId) as any;
-  
+
   return new Promise((resolve, reject) => {
     const chunks: any[] = [];
     stream.on('data', (chunk: any) => chunks.push(chunk));
@@ -58,11 +120,12 @@ export async function getMessageContent(messageId: string): Promise<Buffer> {
 }
 
 /**
- * Sends a reply message to a LINE user.
+ * Sends a reply message to a LINE user via the given bot (default bot 1).
+ * Replies must go back through the same bot that received the message.
  */
-export async function replyToUser(replyToken: string, text: string) {
+export async function replyToUser(replyToken: string, text: string, botIndex: BotIndex = 1) {
   try {
-    const client = getLineClient();
+    const client = getLineClient(botIndex);
     await client.replyMessage({
       replyToken,
       messages: [{ type: 'text', text }]
@@ -75,11 +138,11 @@ export async function replyToUser(replyToken: string, text: string) {
 }
 
 /**
- * Sends a push message to a LINE user.
+ * Sends a push message to a LINE user via the given bot (default bot 1).
  */
-export async function pushToUser(to: string, text: string) {
+export async function pushToUser(to: string, text: string, botIndex: BotIndex = 1) {
   try {
-    const client = getLineClient();
+    const client = getLineClient(botIndex);
     await client.pushMessage({
       to,
       messages: [{ type: 'text', text }]
@@ -92,11 +155,37 @@ export async function pushToUser(to: string, text: string) {
 }
 
 /**
+ * Sends a push to a customer using whichever bot is active right now, picking
+ * the LINE user id that matches that bot. Falls back to the other bot's id if
+ * the customer has only linked one of the two Official Accounts, so they still
+ * get notified during the "wrong" half of the month.
+ */
+export async function pushToCustomerActive(
+  cust: { Line_User_ID?: string | null; Line_User_ID_2?: string | null },
+  text: string
+) {
+  const active = getActiveCustomerBot();
+  const primaryId = active === 2 ? cust.Line_User_ID_2 : cust.Line_User_ID;
+  if (primaryId) {
+    return pushToUser(primaryId, text, active);
+  }
+  // Customer hasn't linked the currently-active bot — use the other one so the
+  // notification still lands (it just draws from that bot's quota instead).
+  const other: BotIndex = active === 2 ? 1 : 2;
+  const otherId = active === 2 ? cust.Line_User_ID : cust.Line_User_ID_2;
+  if (otherId) {
+    return pushToUser(otherId, text, other);
+  }
+  return { success: false, error: 'customer has no linked LINE user id' };
+}
+
+/**
  * Sends an IP approval template message with buttons to a LINE user.
+ * Admin-facing feature — always uses bot 1.
  */
 export async function pushIPApprovalToUser(to: string, username: string, ip: string) {
   try {
-    const client = getLineClient();
+    const client = getLineClient(1);
     await client.pushMessage({
       to,
       messages: [

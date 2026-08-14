@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/server'
 import { uploadFileToSupabase } from '@/lib/actions/supabase-upload'
-import { pushToUser } from '@/lib/integrations/line'
+import { pushToCustomerActive } from '@/lib/integrations/line'
 
 import { transitionJobStatus } from "@/services/job-status-machine"
 
@@ -65,34 +65,34 @@ export async function POST(req: NextRequest) {
         // 5. Trigger Customer Satisfaction Survey (If customer has LINE bound)
         try {
             if (job.Customer_ID) {
-                let lineUserId = null
-                
-                // 1. Try Master_Customers
+                let custTarget: { Line_User_ID?: string | null; Line_User_ID_2?: string | null } | null = null
+
+                // 1. Try Master_Customers (has both bot ids)
                 try {
                     const { data: custInfo } = await supabase.from('Master_Customers')
-                        .select('Line_User_ID')
+                        .select('Line_User_ID, Line_User_ID_2')
                         .eq('Customer_ID', job.Customer_ID)
-                        .single()
-                    if (custInfo?.Line_User_ID) {
-                        lineUserId = custInfo.Line_User_ID
+                        .maybeSingle()
+                    if (custInfo && (custInfo.Line_User_ID || custInfo.Line_User_ID_2)) {
+                        custTarget = custInfo
                     }
                 } catch {}
 
-                // 2. Try Master_Users as fallback (e.g. 'uni')
-                if (!lineUserId) {
+                // 2. Try Master_Users as fallback (e.g. 'uni') — primary bot only
+                if (!custTarget) {
                     try {
                         const { data: userCust } = await supabase.from('Master_Users')
                             .select('Line_User_ID')
                             .ilike('Username', job.Customer_ID)
                             .maybeSingle()
                         if (userCust?.Line_User_ID) {
-                            lineUserId = userCust.Line_User_ID
+                            custTarget = { Line_User_ID: userCust.Line_User_ID }
                         }
                     } catch {}
                 }
-                
-                if (lineUserId) {
-                    await pushToUser(lineUserId, `📦 [แจ้งเตือนการส่งมอบสินค้า]\n\nเรียนคุณลูกค้า สินค้าของงาน #${jobId} ได้รับการจัดส่งเรียบร้อยแล้วครับ!\n\n⭐️ เพื่อการปรับปรุงและพัฒนาบริการที่ดีขึ้น กรุณาให้คะแนนความพึงพอใจโดยการส่งตัวเลขกลับหาเรา:\nพิมพ์ "5" สำหรับ ดีเยี่ยม ⭐️⭐️⭐️⭐️⭐️\nพิมพ์ "4" สำหรับ ดีมาก ⭐️⭐️⭐️⭐️\nพิมพ์ "3" สำหรับ ปานกลาง ⭐️⭐️⭐️\nพิมพ์ "2" สำหรับ พอใช้ ⭐️⭐️\nพิมพ์ "1" สำหรับ ต้องปรับปรุง ⭐️`)
+
+                if (custTarget) {
+                    await pushToCustomerActive(custTarget, `📦 [แจ้งเตือนการส่งมอบสินค้า]\n\nเรียนคุณลูกค้า สินค้าของงาน #${jobId} ได้รับการจัดส่งเรียบร้อยแล้วครับ!\n\n⭐️ เพื่อการปรับปรุงและพัฒนาบริการที่ดีขึ้น กรุณาให้คะแนนความพึงพอใจโดยการส่งตัวเลขกลับหาเรา:\nพิมพ์ "5" สำหรับ ดีเยี่ยม ⭐️⭐️⭐️⭐️⭐️\nพิมพ์ "4" สำหรับ ดีมาก ⭐️⭐️⭐️⭐️\nพิมพ์ "3" สำหรับ ปานกลาง ⭐️⭐️⭐️\nพิมพ์ "2" สำหรับ พอใช้ ⭐️⭐️\nพิมพ์ "1" สำหรับ ต้องปรับปรุง ⭐️`)
                 }
             }
         } catch (surveyErr) {

@@ -385,39 +385,33 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       `🔗 ${appUrl}/track/${job.Job_ID}`
     ].join('\n');
     
-    // Find recipients (Line User IDs)
-    const lineUserIds: string[] = [];
-    
-    // 1. Get Admins and Super Admins (Role_ID in [1, 2])
-    const { data: admins } = await supabase
-      .from('Master_Users')
-      .select('Line_User_ID')
-      .in('Role_ID', [1, 2])
-      .not('Line_User_ID', 'is', null);
-      
-    if (admins) {
-      admins.forEach(admin => {
-        if (admin.Line_User_ID) lineUserIds.push(admin.Line_User_ID);
-      });
-    }
-    
-    // 2. Get the bound customer
+    // Find recipient customers. Each target carries both LINE ids (one per bot);
+    // pushToCustomerActive picks the right id for whichever bot is active now.
+    //
+    // NOTE: Admins/Super Admins are intentionally NOT notified via LINE here.
+    // They already receive a free in-app Web Push on Delivered/Completed via
+    // notifyAdminJobStatus() (see app/mobile/jobs/actions.ts). Keeping them on
+    // LINE double-charged the limited 300-msg/month quota for no benefit, so the
+    // LINE completion push is reserved for the external customer only.
+    type CustTarget = { Line_User_ID?: string | null; Line_User_ID_2?: string | null };
+    const targets: CustTarget[] = [];
+
     if (job.Customer_ID) {
-      // Check Master_Customers first
+      // Check Master_Customers first (has both bot ids)
       try {
         const { data: customer } = await supabase
           .from('Master_Customers')
-          .select('Line_User_ID')
+          .select('Line_User_ID, Line_User_ID_2')
           .eq('Customer_ID', job.Customer_ID)
-          .not('Line_User_ID', 'is', null)
-          .single();
-          
-        if (customer?.Line_User_ID) {
-          lineUserIds.push(customer.Line_User_ID);
+          .maybeSingle();
+
+        if (customer && (customer.Line_User_ID || customer.Line_User_ID_2)) {
+          targets.push(customer);
         }
       } catch { /* ignore and proceed */ }
 
-      // Also check Master_Users in case the customer account is registered as a user login (e.g. 'uni')
+      // Also check Master_Users in case the customer account is registered as a
+      // user login (e.g. 'uni'). User logins only ever link the primary bot.
       try {
         const { data: userCust } = await supabase
           .from('Master_Users')
@@ -427,15 +421,23 @@ async function sendDeliveryCompletionNotification(jobId: string) {
           .maybeSingle();
 
         if (userCust?.Line_User_ID) {
-          lineUserIds.push(userCust.Line_User_ID);
+          targets.push({ Line_User_ID: userCust.Line_User_ID });
         }
       } catch { /* ignore and proceed */ }
     }
-    
-    // Deduplicate Line User IDs
-    const uniqueIds = Array.from(new Set(lineUserIds));
-    
-    if (uniqueIds.length === 0) {
+
+    // Deduplicate by the primary (bot 1) id so the same person in both tables
+    // isn't notified twice.
+    const seen = new Set<string>();
+    const uniqueTargets = targets.filter(t => {
+      if (t.Line_User_ID) {
+        if (seen.has(t.Line_User_ID)) return false;
+        seen.add(t.Line_User_ID);
+      }
+      return !!(t.Line_User_ID || t.Line_User_ID_2);
+    });
+
+    if (uniqueTargets.length === 0) {
       console.log(`[Notification] No bound Line users to notify for job completion.`);
       return;
     }
@@ -453,13 +455,13 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       return;
     }
 
-    console.log(`[Notification] Sending completion notification for job ${jobId} to ${uniqueIds.length} users...`);
+    console.log(`[Notification] Sending completion notification for job ${jobId} to ${uniqueTargets.length} customer(s)...`);
 
-    // Dynamically import pushToUser to prevent circular dependencies
-    const { pushToUser } = await import('@/lib/integrations/line');
+    // Dynamically import to prevent circular dependencies
+    const { pushToCustomerActive } = await import('@/lib/integrations/line');
 
-    for (const userId of uniqueIds) {
-      await pushToUser(userId, message);
+    for (const target of uniqueTargets) {
+      await pushToCustomerActive(target, message);
     }
 
   } catch (err) {

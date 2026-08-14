@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/server'
-import { replyToUser, verifyLineSignature, getMessageContent, pushToUser } from '@/lib/integrations/line'
+import { replyToUser as _replyToUser, resolveWebhookBot, getMessageContent as _getMessageContent, pushToUser as _pushToUser, pushToCustomerActive } from '@/lib/integrations/line'
 import { aiToolExecutors, geminiToolDefinitions } from '@/lib/ai/tools'
 import { uploadFileToSupabase } from '@/lib/actions/supabase-upload'
 import { getDetailedDriverAnalytics } from '@/lib/supabase/fleet-analytics'
@@ -388,7 +388,11 @@ export async function POST(req: NextRequest) {
             }
         })
 
-        if (!verifyLineSignature(bodyText, signature)) {
+        // Resolve which bot this request belongs to by matching the signature
+        // against each configured channel secret. All events in a single webhook
+        // delivery come from the same bot.
+        const botIndex = resolveWebhookBot(bodyText, signature)
+        if (botIndex === null) {
             console.warn('[Line] Unauthorized webhook attempt')
             await supabase.from('System_Logs').insert({
                 module: 'WebhookDebug',
@@ -400,6 +404,18 @@ export async function POST(req: NextRequest) {
             })
             return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
         }
+
+        // Bot-scoped wrappers: replies / media fetches / conversational pushes must
+        // go through the SAME bot that received the event. These shadow the imports
+        // so every existing call site is automatically routed to the right bot.
+        const replyToUser = (replyToken: string, text: string) => _replyToUser(replyToken, text, botIndex)
+        const getMessageContent = (messageId: string) => _getMessageContent(messageId, botIndex)
+        const pushToUser = (to: string, text: string) => _pushToUser(to, text, botIndex)
+
+        // Customers link a DIFFERENT LINE user id per bot, stored in separate
+        // columns. Identity lookups and BIND for customers must use the column
+        // that matches the receiving bot. (Drivers/admins only ever use bot 1.)
+        const custLineIdField: 'Line_User_ID' | 'Line_User_ID_2' = botIndex === 2 ? 'Line_User_ID_2' : 'Line_User_ID'
 
         const body = JSON.parse(bodyText)
         const events = body.events || []
@@ -413,7 +429,7 @@ export async function POST(req: NextRequest) {
 
             // ── Identify user ──────────────────────────────────────────────
             const [custRes, drivRes, userRes] = await Promise.all([
-                supabase.from('Master_Customers').select('Customer_ID, Customer_Name').eq('Line_User_ID', targetId).limit(1),
+                supabase.from('Master_Customers').select('Customer_ID, Customer_Name').eq(custLineIdField, targetId).limit(1),
                 supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate, Branch_ID').eq('Line_User_ID', targetId).limit(1),
                 supabase.from('Master_Users').select('Username, Name, Role, Role_ID, Branch_ID').eq('Line_User_ID', targetId).limit(1),
             ])
@@ -553,13 +569,11 @@ export async function POST(req: NextRequest) {
                         .eq('Phone', normalizedPhone)
                         .maybeSingle()
                     if (customer) {
-                        // Enforce unique binding: clear this targetId from other records first
-                        await Promise.all([
-                            supabase.from('Master_Customers').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
-                            supabase.from('Master_Drivers').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
-                            supabase.from('Master_Users').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
-                        ])
-                        await supabase.from('Master_Customers').update({ Line_User_ID: targetId }).eq('Customer_ID', customer.Customer_ID)
+                        // Enforce unique binding for THIS bot's id column: clear it
+                        // from any other customer first, then bind to this customer.
+                        // (custLineIdField = Line_User_ID for bot 1, Line_User_ID_2 for bot 2.)
+                        await supabase.from('Master_Customers').update({ [custLineIdField]: null }).eq(custLineIdField, targetId)
+                        await supabase.from('Master_Customers').update({ [custLineIdField]: targetId }).eq('Customer_ID', customer.Customer_ID)
                         await replyToUser(replyToken, `✅ ${groupId ? 'ไลน์กลุ่มนี้' : 'คุณ ' + customer.Customer_Name} ผูกบัญชีสำเร็จแล้วครับ!\nพิมพ์ HELP เพื่อดูเมนูได้เลย`)
                         continue
                     }
@@ -1605,34 +1619,34 @@ export async function POST(req: NextRequest) {
                                             .single()
 
                                         if (jobWithCust?.Customer_ID) {
-                                            let lineUserId = null
-                                            
-                                            // 1. Try Master_Customers
+                                            let custTarget: { Line_User_ID?: string | null; Line_User_ID_2?: string | null } | null = null
+
+                                            // 1. Try Master_Customers (both bot ids)
                                             try {
                                                 const { data: custInfo } = await supabase.from('Master_Customers')
-                                                    .select('Line_User_ID')
+                                                    .select('Line_User_ID, Line_User_ID_2')
                                                     .eq('Customer_ID', jobWithCust.Customer_ID)
-                                                    .single()
-                                                if (custInfo?.Line_User_ID) {
-                                                    lineUserId = custInfo.Line_User_ID
+                                                    .maybeSingle()
+                                                if (custInfo && (custInfo.Line_User_ID || custInfo.Line_User_ID_2)) {
+                                                    custTarget = custInfo
                                                 }
                                             } catch {}
 
-                                            // 2. Try Master_Users as fallback (e.g. 'uni')
-                                            if (!lineUserId) {
+                                            // 2. Try Master_Users as fallback (e.g. 'uni') — primary bot only
+                                            if (!custTarget) {
                                                 try {
                                                     const { data: userCust } = await supabase.from('Master_Users')
                                                         .select('Line_User_ID')
                                                         .ilike('Username', jobWithCust.Customer_ID)
                                                         .maybeSingle()
                                                     if (userCust?.Line_User_ID) {
-                                                        lineUserId = userCust.Line_User_ID
+                                                        custTarget = { Line_User_ID: userCust.Line_User_ID }
                                                     }
                                                 } catch {}
                                             }
-                                            
-                                            if (lineUserId) {
-                                                await pushToUser(lineUserId, `📦 [แจ้งเตือนการส่งมอบสินค้า]\n\nเรียนคุณลูกค้า สินค้าของงาน #${activeJob.Job_ID} ได้รับการจัดส่งเรียบร้อยแล้วครับ!\n\n⭐️ เพื่อการปรับปรุงและพัฒนาบริการที่ดีขึ้น กรุณาให้คะแนนความพึงพอใจโดยการส่งตัวเลขกลับหาเรา:\nพิมพ์ "5" สำหรับ ดีเยี่ยม ⭐️⭐️⭐️⭐️⭐️\nพิมพ์ "4" สำหรับ ดีมาก ⭐️⭐️⭐️⭐️\nพิมพ์ "3" สำหรับ ปานกลาง ⭐️⭐️⭐️\nพิมพ์ "2" สำหรับ พอใช้ ⭐️⭐️\nพิมพ์ "1" สำหรับ ต้องปรับปรุง ⭐️`)
+
+                                            if (custTarget) {
+                                                await pushToCustomerActive(custTarget, `📦 [แจ้งเตือนการส่งมอบสินค้า]\n\nเรียนคุณลูกค้า สินค้าของงาน #${activeJob.Job_ID} ได้รับการจัดส่งเรียบร้อยแล้วครับ!\n\n⭐️ เพื่อการปรับปรุงและพัฒนาบริการที่ดีขึ้น กรุณาให้คะแนนความพึงพอใจโดยการส่งตัวเลขกลับหาเรา:\nพิมพ์ "5" สำหรับ ดีเยี่ยม ⭐️⭐️⭐️⭐️⭐️\nพิมพ์ "4" สำหรับ ดีมาก ⭐️⭐️⭐️⭐️\nพิมพ์ "3" สำหรับ ปานกลาง ⭐️⭐️⭐️\nพิมพ์ "2" สำหรับ พอใช้ ⭐️⭐️\nพิมพ์ "1" สำหรับ ต้องปรับปรุง ⭐️`)
                                             }
                                         }
                                     } catch (surveyErr) {
@@ -1765,12 +1779,12 @@ export async function POST(req: NextRequest) {
 
                                     if (jobWithCust?.Customer_ID) {
                                         const { data: custInfo } = await supabase.from('Master_Customers')
-                                            .select('Line_User_ID')
+                                            .select('Line_User_ID, Line_User_ID_2')
                                             .eq('Customer_ID', jobWithCust.Customer_ID)
-                                            .single()
-                                        
-                                        if (custInfo?.Line_User_ID) {
-                                            await pushToUser(custInfo.Line_User_ID, `📦 [แจ้งเตือนการส่งมอบสินค้า]\n\nเรียนคุณลูกค้า สินค้าของงาน #${activeJob.Job_ID} ได้รับการจัดส่งเรียบร้อยแล้วครับ!\n\n⭐️ เพื่อการปรับปรุงและพัฒนาบริการที่ดีขึ้น กรุณาให้คะแนนความพึงพอใจโดยการส่งตัวเลขกลับหาเรา:\nพิมพ์ "5" สำหรับ ดีเยี่ยม ⭐️⭐️⭐️⭐️⭐️\nพิมพ์ "4" สำหรับ ดีมาก ⭐️⭐️⭐️⭐️\nพิมพ์ "3" สำหรับ ปานกลาง ⭐️⭐️⭐️\nพิมพ์ "2" สำหรับ พอใช้ ⭐️⭐️\nพิมพ์ "1" สำหรับ ต้องปรับปรุง ⭐️`)
+                                            .maybeSingle()
+
+                                        if (custInfo && (custInfo.Line_User_ID || custInfo.Line_User_ID_2)) {
+                                            await pushToCustomerActive(custInfo, `📦 [แจ้งเตือนการส่งมอบสินค้า]\n\nเรียนคุณลูกค้า สินค้าของงาน #${activeJob.Job_ID} ได้รับการจัดส่งเรียบร้อยแล้วครับ!\n\n⭐️ เพื่อการปรับปรุงและพัฒนาบริการที่ดีขึ้น กรุณาให้คะแนนความพึงพอใจโดยการส่งตัวเลขกลับหาเรา:\nพิมพ์ "5" สำหรับ ดีเยี่ยม ⭐️⭐️⭐️⭐️⭐️\nพิมพ์ "4" สำหรับ ดีมาก ⭐️⭐️⭐️⭐️\nพิมพ์ "3" สำหรับ ปานกลาง ⭐️⭐️⭐️\nพิมพ์ "2" สำหรับ พอใช้ ⭐️⭐️\nพิมพ์ "1" สำหรับ ต้องปรับปรุง ⭐️`)
                                         }
                                     }
                                 } catch (surveyErr) {

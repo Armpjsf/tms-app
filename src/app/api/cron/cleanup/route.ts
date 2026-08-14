@@ -85,7 +85,8 @@ export async function GET(req: Request) {
                 Photo_Proof_Url: null,
                 Signature_Url: null,
                 Pickup_Photo_Url: null,
-                Pickup_Signature_Url: null
+                Pickup_Signature_Url: null,
+                Floor_Climb_Url: null
             })
             .lt('Created_At', storageCutoffStr)
 
