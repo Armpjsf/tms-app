@@ -46,7 +46,7 @@ export async function GET(req: Request) {
         // ── Vehicles: tax / insurance / compulsory ACT ──────────────────────
         const { data: vehicles } = await supabase
             .from('Master_Vehicles')
-            .select('Vehicle_Plate, Tax_Expiry, Insurance_Expiry, Act_Expiry, Active_Status')
+            .select('Vehicle_Plate, Tax_Expiry, Insurance_Expiry, Act_Expiry, Cargo_Insurance_Expiry, Active_Status')
 
         for (const v of vehicles || []) {
             if (v.Active_Status && v.Active_Status !== 'Active') continue
@@ -55,6 +55,7 @@ export async function GET(req: Request) {
                 ['ภาษีรถ', v.Tax_Expiry],
                 ['ประกันภัย', v.Insurance_Expiry],
                 ['พ.ร.บ.', v.Act_Expiry],
+                ['ประกันสินค้า', v.Cargo_Insurance_Expiry],
             ]
             for (const [label, date] of checks) {
                 const d = daysUntil(date, today)

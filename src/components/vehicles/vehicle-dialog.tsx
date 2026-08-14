@@ -72,7 +72,12 @@ export function VehicleDialog({
     is_chassis: (vehicle as { is_chassis?: boolean } | null)?.is_chassis || false,
     Tax_Expiry: vehicle?.Tax_Expiry || '',
     Insurance_Expiry: vehicle?.Insurance_Expiry || '',
-    Act_Expiry: vehicle?.Act_Expiry || ''
+    Act_Expiry: vehicle?.Act_Expiry || '',
+    Cargo_Insurance_Expiry: vehicle?.Cargo_Insurance_Expiry || '',
+    Cargo_Insurance_Company: vehicle?.Cargo_Insurance_Company || '',
+    Tire_Change_Date: vehicle?.Tire_Change_Date || '',
+    Tire_Change_Odometer: vehicle?.Tire_Change_Odometer || '',
+    Tire_Next_Change_Mileage: vehicle?.Tire_Next_Change_Mileage || ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,6 +92,8 @@ export function VehicleDialog({
         Next_Service_Mileage: formData.Next_Service_Mileage === '' ? undefined : Number(formData.Next_Service_Mileage),
         Max_Weight_kg: formData.Max_Weight_kg === '' ? undefined : Number(formData.Max_Weight_kg),
         Max_Volume_cbm: formData.Max_Volume_cbm === '' ? undefined : Number(formData.Max_Volume_cbm),
+        Tire_Change_Odometer: formData.Tire_Change_Odometer === '' ? undefined : Number(formData.Tire_Change_Odometer),
+        Tire_Next_Change_Mileage: formData.Tire_Next_Change_Mileage === '' ? undefined : Number(formData.Tire_Next_Change_Mileage),
       }
 
       if (mode === 'create') {
@@ -115,7 +122,12 @@ export function VehicleDialog({
               is_chassis: false,
               Tax_Expiry: '',
               Insurance_Expiry: '',
-              Act_Expiry: ''
+              Act_Expiry: '',
+              Cargo_Insurance_Expiry: '',
+              Cargo_Insurance_Company: '',
+              Tire_Change_Date: '',
+              Tire_Change_Odometer: '',
+              Tire_Next_Change_Mileage: ''
           })
         }
         if (onSuccess) onSuccess()
@@ -332,6 +344,75 @@ export function VehicleDialog({
                             className="h-10 pl-10 bg-background border-border text-foreground focus:ring-primary/40"
                         />
                     </div>
+                </div>
+            </div>
+          </div>
+
+          {/* ประกันสินค้า (Cargo insurance) */}
+          <div className="p-4 rounded-2xl border border-border bg-muted/20 space-y-4">
+            <Label className="text-sm font-bold text-muted-foreground">ประกันสินค้า (Cargo Insurance)</Label>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                    <Label htmlFor="Cargo_Insurance_Expiry" className="text-xs font-medium text-muted-foreground">วันหมดอายุประกันสินค้า</Label>
+                    <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
+                        <Input
+                            id="Cargo_Insurance_Expiry"
+                            type="date"
+                            value={formData.Cargo_Insurance_Expiry}
+                            onChange={(e) => setFormData({ ...formData, Cargo_Insurance_Expiry: e.target.value })}
+                            className="h-10 pl-10 bg-background border-border text-foreground focus:ring-primary/40"
+                        />
+                    </div>
+                </div>
+                <div className="space-y-1.5">
+                    <Label htmlFor="Cargo_Insurance_Company" className="text-xs font-medium text-muted-foreground">บริษัทประกัน</Label>
+                    <Input
+                        id="Cargo_Insurance_Company"
+                        value={formData.Cargo_Insurance_Company}
+                        onChange={(e) => setFormData({ ...formData, Cargo_Insurance_Company: e.target.value })}
+                        placeholder="เช่น วิริยะประกันภัย"
+                        className="h-10 bg-background border-border text-foreground focus:ring-primary/40"
+                    />
+                </div>
+            </div>
+          </div>
+
+          {/* ยาง (Tires) */}
+          <div className="p-4 rounded-2xl border border-border bg-muted/20 space-y-4">
+            <Label className="text-sm font-bold text-muted-foreground">ยาง (Tires)</Label>
+            <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                    <Label htmlFor="Tire_Change_Date" className="text-xs font-medium text-muted-foreground">วันเปลี่ยนยางล่าสุด</Label>
+                    <Input
+                        id="Tire_Change_Date"
+                        type="date"
+                        value={formData.Tire_Change_Date}
+                        onChange={(e) => setFormData({ ...formData, Tire_Change_Date: e.target.value })}
+                        className="h-10 bg-background border-border text-foreground focus:ring-primary/40"
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label htmlFor="Tire_Change_Odometer" className="text-xs font-medium text-muted-foreground">เลขไมล์ที่เปลี่ยน</Label>
+                    <Input
+                        id="Tire_Change_Odometer"
+                        type="number"
+                        value={formData.Tire_Change_Odometer}
+                        onChange={(e) => setFormData({ ...formData, Tire_Change_Odometer: e.target.value })}
+                        placeholder="เช่น 120000"
+                        className="h-10 bg-background border-border text-foreground focus:ring-primary/40"
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label htmlFor="Tire_Next_Change_Mileage" className="text-xs font-medium text-muted-foreground">ไมล์ครบกำหนดเปลี่ยน</Label>
+                    <Input
+                        id="Tire_Next_Change_Mileage"
+                        type="number"
+                        value={formData.Tire_Next_Change_Mileage}
+                        onChange={(e) => setFormData({ ...formData, Tire_Next_Change_Mileage: e.target.value })}
+                        placeholder="เช่น 180000"
+                        className="h-10 bg-background border-border text-foreground focus:ring-primary/40"
+                    />
                 </div>
             </div>
           </div>

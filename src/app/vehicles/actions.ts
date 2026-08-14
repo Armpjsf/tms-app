@@ -21,6 +21,11 @@ export type VehicleFormData = {
   Max_Weight_kg?: number
   Max_Volume_cbm?: number
   is_chassis?: boolean
+  Cargo_Insurance_Expiry?: string
+  Cargo_Insurance_Company?: string
+  Tire_Change_Date?: string
+  Tire_Change_Odometer?: number
+  Tire_Next_Change_Mileage?: number
 }
 
 export async function createVehicle(data: VehicleFormData) {
@@ -53,6 +58,11 @@ export async function createVehicle(data: VehicleFormData) {
       Max_Weight_kg: numOrNull(data.Max_Weight_kg),
       Max_Volume_cbm: numOrNull(data.Max_Volume_cbm),
       is_chassis: data.is_chassis || false,
+      Cargo_Insurance_Expiry: emptyToNull(data.Cargo_Insurance_Expiry),
+      Cargo_Insurance_Company: emptyToNull(data.Cargo_Insurance_Company),
+      Tire_Change_Date: emptyToNull(data.Tire_Change_Date),
+      Tire_Change_Odometer: data.Tire_Change_Odometer == null ? null : Math.round(Number(data.Tire_Change_Odometer) || 0),
+      Tire_Next_Change_Mileage: data.Tire_Next_Change_Mileage == null ? null : Math.round(Number(data.Tire_Next_Change_Mileage) || 0),
       Branch_ID: finalBranchId
     }, { onConflict: 'Vehicle_Plate' })
 
@@ -187,7 +197,12 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
         Sub_ID: data.Sub_ID || null,
         Max_Weight_kg: data.Max_Weight_kg,
         Max_Volume_cbm: data.Max_Volume_cbm,
-        is_chassis: data.is_chassis
+        is_chassis: data.is_chassis,
+        Cargo_Insurance_Expiry: data.Cargo_Insurance_Expiry || null,
+        Cargo_Insurance_Company: data.Cargo_Insurance_Company || null,
+        Tire_Change_Date: data.Tire_Change_Date || null,
+        Tire_Change_Odometer: data.Tire_Change_Odometer == null ? null : Math.round(Number(data.Tire_Change_Odometer) || 0),
+        Tire_Next_Change_Mileage: data.Tire_Next_Change_Mileage == null ? null : Math.round(Number(data.Tire_Next_Change_Mileage) || 0),
     }
 
     if (isAdmin && data.Branch_ID) {

@@ -23,6 +23,11 @@ export type Vehicle = {
   Current_Mileage: number | null
   Last_Service_Date: string | null
   Next_Service_Mileage: number | null
+  Cargo_Insurance_Expiry?: string | null
+  Cargo_Insurance_Company?: string | null
+  Tire_Change_Date?: string | null
+  Tire_Change_Odometer?: number | null
+  Tire_Next_Change_Mileage?: number | null
   Driver_ID: string | null
   Branch_ID: string | null
   Active_Status: string | null
