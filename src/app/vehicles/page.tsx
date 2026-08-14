@@ -181,9 +181,21 @@ export default function VehiclesPage() {
                         
                         <div className="flex justify-between items-start relative z-10 mb-4">
                             <div>
-                                <Badge className="bg-primary/10 text-primary border-primary/20 mb-2 px-2 py-0.5 rounded-md font-medium text-xs">
-                                    {vehicle.Vehicle_Type || "-"}
-                                </Badge>
+                                <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                                    <Badge className="bg-primary/10 text-primary border-primary/20 px-2 py-0.5 rounded-md font-medium text-xs">
+                                        {vehicle.Vehicle_Type || "-"}
+                                    </Badge>
+                                    {/* Ownership: no Sub_ID = company-owned, has Sub_ID = subcontractor (รถร่วม) */}
+                                    {vehicle.Sub_ID ? (
+                                        <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 px-2 py-0.5 rounded-md font-medium text-xs">
+                                            รถร่วม
+                                        </Badge>
+                                    ) : (
+                                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-2 py-0.5 rounded-md font-medium text-xs">
+                                            รถบริษัท
+                                        </Badge>
+                                    )}
+                                </div>
                                 <h3 className="text-xl font-semibold text-foreground tracking-tight">{vehicle.Vehicle_Plate}</h3>
                             </div>
                             <VehicleActions vehicle={vehicle} />
