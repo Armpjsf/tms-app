@@ -2,11 +2,12 @@
 
 import { Button } from "@/components/ui/button"
 import { deleteVehicle } from "@/app/vehicles/actions"
-import { Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, FileText } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { VehicleDialog } from "./vehicle-dialog"
+import { VehicleLogDialog } from "./vehicle-log-dialog"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Branch } from "@/lib/supabase/branches"
 import { Subcontractor } from "@/types/subcontractor"
@@ -15,6 +16,7 @@ export function VehicleActions({ vehicle, branches = [], subcontractors = [] }: 
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [showLog, setShowLog] = useState(false)
 
   const handleDelete = async () => {
     if (!confirm(`ยืนยันการลบรถทะเบียน ${vehicle.Vehicle_Plate}?`)) return
@@ -39,9 +41,19 @@ export function VehicleActions({ vehicle, branches = [], subcontractors = [] }: 
         open={showEdit}
         onOpenChange={setShowEdit}
       />
-      <Button 
-        variant="ghost" 
-        size="icon" 
+      <VehicleLogDialog vehicle={vehicle} open={showLog} onOpenChange={setShowLog} />
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 hover:bg-emerald-500/20 text-emerald-500"
+        onClick={() => setShowLog(true)}
+        title="เอกสาร & ยาง"
+      >
+        <FileText size={16} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
         className="h-8 w-8 hover:bg-purple-500/20 text-purple-400"
         onClick={() => setShowEdit(true)}
       >
