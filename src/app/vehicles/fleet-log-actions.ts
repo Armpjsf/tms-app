@@ -149,6 +149,8 @@ export interface TirePositionSummary {
     changeCount: number
     avgKmBetweenChanges: number | null
     lastOdometer: number | null
+    /** How far the current tire at this position has run since its last change. */
+    currentRunKm: number | null
 }
 export interface TireSummary {
     records: number
@@ -229,6 +231,12 @@ export async function getVehicleCostSummary(plate: string): Promise<VehicleCostS
 export async function getTireSummary(plate: string): Promise<TireSummary> {
     const logs = (await getTireLogs(plate)) as Array<Record<string, unknown>>
 
+    // Current odometer of the vehicle — used to show how far each position's
+    // current tire has run since its last change.
+    const supabase = createAdminClient()
+    const { data: veh } = await supabase.from('Master_Vehicles').select('Current_Mileage').eq('Vehicle_Plate', plate).maybeSingle()
+    const currentMileage = Number(veh?.Current_Mileage) || 0
+
     const counts = { change: 0, patch: 0, rotate: 0 }
     let totalCost = 0
     const odometers: number[] = []
@@ -255,7 +263,11 @@ export async function getTireSummary(plate: string): Promise<TireSummary> {
             for (let i = 1; i < ods.length; i++) sum += ods[i] - ods[i - 1]
             avgKmBetweenChanges = Math.round(sum / (ods.length - 1))
         }
-        return { position, changeCount: ods.length, avgKmBetweenChanges, lastOdometer: ods[ods.length - 1] }
+        const lastOdometer = ods[ods.length - 1]
+        const currentRunKm = currentMileage > 0 && lastOdometer > 0 && currentMileage >= lastOdometer
+            ? currentMileage - lastOdometer
+            : null
+        return { position, changeCount: ods.length, avgKmBetweenChanges, lastOdometer, currentRunKm }
     }).sort((a, b) => b.changeCount - a.changeCount)
 
     const kmSpan = odometers.length >= 2 ? Math.max(...odometers) - Math.min(...odometers) : 0

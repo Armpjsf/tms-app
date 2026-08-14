@@ -244,11 +244,14 @@ export function VehicleLogDialog({ vehicle, open, onOpenChange }: {
                                                 {tireSummary.positions.map((p, i) => (
                                                     <div key={i} className="flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/30 border border-border text-sm">
                                                         <span className="font-medium text-foreground truncate">{p.position}</span>
-                                                        <span className="text-muted-foreground shrink-0 text-xs">
+                                                        <span className="text-muted-foreground shrink-0 text-xs text-right">
                                                             เปลี่ยน {p.changeCount} ครั้ง
                                                             {p.avgKmBetweenChanges != null
                                                                 ? ` • เฉลี่ย ${p.avgKmBetweenChanges.toLocaleString()} กม./ครั้ง`
                                                                 : ' • ยังคำนวณเฉลี่ยไม่ได้ (ต้องเปลี่ยน ≥2 ครั้ง)'}
+                                                            {p.currentRunKm != null && (
+                                                                <><br /><span className="text-primary">เส้นปัจจุบันวิ่งแล้ว {p.currentRunKm.toLocaleString()} กม.</span></>
+                                                            )}
                                                         </span>
                                                     </div>
                                                 ))}

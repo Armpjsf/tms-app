@@ -325,11 +325,27 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
 
     const { data: maintenance } = await maintenanceQuery
 
-    const stats: Record<string, { plate: string, revenue: number, driverCost: number, fuelCost: number, maintenanceCost: number, totalCost: number, netProfit: number, totalKm: number, count: number }> = {}
+    // Tire costs live in their own table (Tire_Logs) — include them so per-vehicle
+    // profit reflects the real running cost, not just fuel + repairs.
+    const tireQuery = supabase
+        .from('Tire_Logs')
+        .select('Vehicle_Plate, cost')
+        .gte('service_date', firstDay)
+        .lte('service_date', lastDay)
+
+    if (effectiveBranchId) {
+        const branchPlates = await getBranchPlates(effectiveBranchId)
+        if (branchPlates.length > 0) tireQuery.in('Vehicle_Plate', branchPlates)
+        else tireQuery.in('Vehicle_Plate', ['NO_MATCH'])
+    }
+
+    const { data: tireLogs } = await tireQuery
+
+    const stats: Record<string, { plate: string, revenue: number, driverCost: number, fuelCost: number, maintenanceCost: number, tireCost: number, totalCost: number, netProfit: number, totalKm: number, count: number }> = {}
 
     jobs?.forEach((job: { Vehicle_Plate?: string; Price_Cust_Total?: number | string; Cost_Driver_Total?: number | string; Est_Distance_KM?: number | string }) => {
         const plate = job.Vehicle_Plate!
-        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0, totalKm: 0, count: 0 }
+        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, tireCost: 0, totalCost: 0, netProfit: 0, totalKm: 0, count: 0 }
         stats[plate].revenue += Number(job.Price_Cust_Total) || 0
         stats[plate].driverCost += Number(job.Cost_Driver_Total) || 0
         stats[plate].totalKm += Number(job.Est_Distance_KM) || 0
@@ -338,18 +354,24 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
 
     fuel?.forEach((f: { Vehicle_Plate?: string; Price_Total?: number | string }) => {
         const plate = f.Vehicle_Plate!
-        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0, totalKm: 0, count: 0 }
+        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, tireCost: 0, totalCost: 0, netProfit: 0, totalKm: 0, count: 0 }
         stats[plate].fuelCost += Number(f.Price_Total) || 0
     })
 
     maintenance?.forEach((m: { Vehicle_Plate?: string; Cost_Total?: number | string }) => {
         const plate = m.Vehicle_Plate!
-        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0, totalKm: 0, count: 0 }
+        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, tireCost: 0, totalCost: 0, netProfit: 0, totalKm: 0, count: 0 }
         stats[plate].maintenanceCost += Number(m.Cost_Total) || 0
     })
 
+    tireLogs?.forEach((t: { Vehicle_Plate?: string; cost?: number | string }) => {
+        const plate = t.Vehicle_Plate!
+        if (!stats[plate]) stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, tireCost: 0, totalCost: 0, netProfit: 0, totalKm: 0, count: 0 }
+        stats[plate].tireCost += Number(t.cost) || 0
+    })
+
     return Object.values(stats).map(s => {
-        const totalCost = s.driverCost + s.fuelCost + s.maintenanceCost
+        const totalCost = s.driverCost + s.fuelCost + s.maintenanceCost + s.tireCost
         return { ...s, totalCost, netProfit: s.revenue - totalCost }
     }).sort((a, b) => b.netProfit - a.netProfit)
 }
