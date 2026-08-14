@@ -17,12 +17,15 @@ export function SearchInput({ placeholder = "Search...", className, ...props }: 
   const searchParams = useSearchParams()
   const [value, setValue] = React.useState(searchParams.get("q") || "")
 
-  // Debounce search update
+  // Debounce search update.
+  // NOTE: `searchParams` is intentionally NOT in the dependency array. It returns
+  // a new object reference on every render, so including it here caused unrelated
+  // re-renders (presence updates, KPI polls, router.refresh) to clear this timer
+  // before the 600ms elapsed — the filter never committed and appeared to "drop".
+  // We read the *latest* URL at commit time via window.location.search instead.
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      // Create new params from current searchParams
-      // We must use toString() to ensure we get a string compatible with URLSearchParams constructor
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(window.location.search)
       const currentQuery = params.get("q") || ""
 
       // If the query hasn't changed (e.g. just navigating pages), don't update/reset page
@@ -35,12 +38,12 @@ export function SearchInput({ placeholder = "Search...", className, ...props }: 
       }
       // Reset page to 1 ONLY when search changes
       params.set("page", "1")
-      
+
       router.push(`${pathname}?${params.toString()}`)
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [value, router, pathname, searchParams])
+  }, [value, router, pathname])
 
   return (
     <div className={cn("relative", className)}>

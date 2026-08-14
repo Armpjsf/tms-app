@@ -47,9 +47,13 @@ export function DriversContent({
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState(searchParams.get("query") || searchParams.get("q") || "")
 
+  // NOTE: `searchParams` is intentionally NOT in the dependency array — it changes
+  // reference on every render, which let unrelated re-renders clear this debounce
+  // timer before it fired, so the search never committed. Read the latest URL at
+  // commit time via window.location.search instead.
   useEffect(() => {
     const timer = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(window.location.search)
       const currentQuery = params.get("query") || params.get("q") || ""
       if (currentQuery === searchQuery) return
 
@@ -65,7 +69,7 @@ export function DriversContent({
     }, 400)
 
     return () => clearTimeout(timer)
-  }, [searchQuery, router, pathname, searchParams])
+  }, [searchQuery, router, pathname])
 
   const filteredDrivers = (drivers || []).filter(driver => {
     if (!searchQuery.trim()) return true

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { todayTH } from "@/lib/utils/date-th"
 import { useCustomerColor } from "@/components/providers/customer-color-provider"
-import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { 
   History, 
   Truck,
@@ -96,7 +96,6 @@ export function HistoryClient({
     return isNaN(d.getTime()) ? v : new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok" }).format(d)
   }
   const router = useRouter()
-  const searchParams = useSearchParams()
   const pathname = usePathname()
   const [isExporting, setIsExporting] = useState(false)
 
@@ -165,13 +164,19 @@ export function HistoryClient({
     setToInput(dateTo)
   }, [dateTo])
 
+  // NOTE: `searchParams` is intentionally NOT in the dependency array. It changes
+  // reference on every render, so including it let unrelated re-renders (presence,
+  // KPI polling, router.refresh from the session stabilizer) clear this debounce
+  // timer before the 600ms elapsed — the date filter never committed to the URL
+  // and appeared to "drop", forcing repeated re-selection. Read the latest URL at
+  // commit time via window.location.search instead.
   useEffect(() => {
     const timer = setTimeout(() => {
-      const currentFrom = searchParams.get('from') || ''
-      const currentTo = searchParams.get('to') || ''
+      const params = new URLSearchParams(window.location.search)
+      const currentFrom = params.get('from') || ''
+      const currentTo = params.get('to') || ''
       if (currentFrom === fromInput && currentTo === toInput) return
 
-      const params = new URLSearchParams(searchParams.toString())
       if (fromInput) params.set('from', fromInput)
       else params.delete('from')
 
@@ -183,7 +188,7 @@ export function HistoryClient({
     }, 600)
 
     return () => clearTimeout(timer)
-  }, [fromInput, toInput, router, pathname, searchParams])
+  }, [fromInput, toInput, router, pathname])
 
   const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
     New: { label: t('common.pending'), color: "text-primary bg-primary/10 border-primary/20", icon: <Package size={14} /> },
