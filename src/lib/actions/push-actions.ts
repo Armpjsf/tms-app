@@ -610,11 +610,62 @@ export async function notifyAdminJobStatus(driverId: string, driverName: string,
         'Failed': '❌',
         'SOS': '🆘',
     }
+    // Thai labels — raw statuses are stored in English in the DB.
+    const statusThai: Record<string, string> = {
+        'Picked Up': 'รับสินค้าแล้ว',
+        'In Transit': 'กำลังจัดส่ง',
+        'Delivered': 'ส่งสำเร็จ',
+        'Completed': 'ส่งสำเร็จ',
+        'Failed': 'ส่งไม่สำเร็จ',
+        'SOS': 'แจ้งเหตุฉุกเฉิน',
+    }
     const emoji = statusEmoji[newStatus] || '🔔'
+    const statusLabel = statusThai[newStatus] || newStatus
+
+    // Completion gets its OWN distinct, richer notification (customer + route +
+    // drop count) instead of the generic one-line status update.
+    if (newStatus === 'Delivered' || newStatus === 'Completed') {
+        try {
+            const supabase = await createAdminClient()
+            const { data: job } = await supabase
+                .from('Jobs_Main')
+                .select('Customer_Name, Route_Name, Dest_Location, POD_Drops_Json, original_destinations_json')
+                .eq('Job_ID', jobId)
+                .maybeSingle()
+
+            // Derive drop count the same way the customer completion message does.
+            const parseLen = (raw: unknown): number => {
+                try {
+                    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+                    return Array.isArray(parsed) ? parsed.filter(Boolean).length : 0
+                } catch { return 0 }
+            }
+            const dropCount = parseLen(job?.POD_Drops_Json) || parseLen(job?.original_destinations_json) || 1
+
+            const route = job?.Route_Name || job?.Dest_Location || ''
+            const bodyLines = [
+                `👤 ${job?.Customer_Name || 'ไม่ระบุลูกค้า'}`,
+                route ? `🛣️ ${route}` : '',
+                `🚚 ${driverName} • ${dropCount} ดรอป`,
+            ].filter(Boolean)
+
+            await sendPushToAdmins({
+                title: `✅ ส่งสำเร็จ — งาน ${jobId}`,
+                body: bodyLines.join('\n'),
+                url: `/planning?job=${jobId}`,
+                type: 'job_completed',
+                tag: `completed_${jobId}`,
+            })
+            return
+        } catch (err) {
+            console.error('[PUSH] Completion notify failed, using generic format:', err)
+            // fall through to the generic notification below
+        }
+    }
 
     await sendPushToAdmins({
         title: `${emoji} ${driverName} อัปเดตงาน`,
-        body: `งาน ${jobId} → ${newStatus}`,
+        body: `งาน ${jobId} → ${statusLabel}`,
         url: `/planning?job=${jobId}`,
         type: 'status_update',
         tag: `status_${jobId}`,
