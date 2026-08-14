@@ -388,11 +388,12 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     // Find recipient customers. Each target carries both LINE ids (one per bot);
     // pushToCustomerActive picks the right id for whichever bot is active now.
     //
-    // NOTE: Admins/Super Admins are intentionally NOT notified via LINE here.
+    // NOTE: Regular Admins (Role 2) are intentionally NOT notified via LINE here.
     // They already receive a free in-app Web Push on Delivered/Completed via
     // notifyAdminJobStatus() (see app/mobile/jobs/actions.ts). Keeping them on
     // LINE double-charged the limited 300-msg/month quota for no benefit, so the
-    // LINE completion push is reserved for the external customer only.
+    // LINE completion push is reserved for the external customer (plus a Super
+    // Admin monitoring copy — see below).
     type CustTarget = { Line_User_ID?: string | null; Line_User_ID_2?: string | null };
     const targets: CustTarget[] = [];
 
@@ -425,6 +426,24 @@ async function sendDeliveryCompletionNotification(jobId: string) {
         }
       } catch { /* ignore and proceed */ }
     }
+
+    // Super Admin (Role 1) monitoring copy: while the owner is testing the LINE
+    // flow they want to see EVERY customer's completion notification. This is a
+    // deliberate, self-managed opt-in — to stop receiving these, clear the admin's
+    // Line_User_ID in Master_Users (Supabase). Only Role 1, not all admins, and
+    // routed through pushToCustomerActive so it follows the active-bot / fallback
+    // logic (super admins only ever link bot 1, so it falls back to bot 1).
+    try {
+      const { data: superAdmins } = await supabase
+        .from('Master_Users')
+        .select('Line_User_ID')
+        .eq('Role_ID', 1)
+        .not('Line_User_ID', 'is', null);
+
+      superAdmins?.forEach((a: { Line_User_ID: string | null }) => {
+        if (a.Line_User_ID) targets.push({ Line_User_ID: a.Line_User_ID });
+      });
+    } catch { /* ignore and proceed */ }
 
     // Deduplicate by the primary (bot 1) id so the same person in both tables
     // isn't notified twice.
