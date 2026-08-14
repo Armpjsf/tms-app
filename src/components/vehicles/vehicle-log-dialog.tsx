@@ -13,7 +13,8 @@ import { FileText, Paperclip, Loader2, History } from "lucide-react"
 import type { Vehicle } from "@/lib/supabase/vehicles"
 import {
     renewVehicleDocument, getVehicleRenewals,
-    addTireLog, getTireLogs,
+    addTireLog, getTireLogs, getTireSummary,
+    type TireSummary,
 } from "@/app/vehicles/fleet-log-actions"
 
 const DOC_LABELS: Record<string, string> = {
@@ -34,11 +35,13 @@ export function VehicleLogDialog({ vehicle, open, onOpenChange }: {
     const [loading, setLoading] = useState(false)
     const [renewals, setRenewals] = useState<Record<string, unknown>[]>([])
     const [tires, setTires] = useState<Record<string, unknown>[]>([])
+    const [tireSummary, setTireSummary] = useState<TireSummary | null>(null)
 
     const refreshHistory = useCallback(async () => {
-        const [r, t] = await Promise.all([getVehicleRenewals(plate), getTireLogs(plate)])
+        const [r, t, s] = await Promise.all([getVehicleRenewals(plate), getTireLogs(plate), getTireSummary(plate)])
         setRenewals(r as Record<string, unknown>[])
         setTires(t as Record<string, unknown>[])
+        setTireSummary(s)
     }, [plate])
 
     useEffect(() => { if (open) refreshHistory() }, [open, refreshHistory])
@@ -75,9 +78,10 @@ export function VehicleLogDialog({ vehicle, open, onOpenChange }: {
 
                 <div className="flex-1 min-h-0 overflow-y-auto p-6">
                     <Tabs defaultValue="doc" className="w-full">
-                        <TabsList className="grid grid-cols-2 w-full mb-4">
+                        <TabsList className="grid grid-cols-3 w-full mb-4">
                             <TabsTrigger value="doc">ต่อเอกสาร</TabsTrigger>
                             <TabsTrigger value="tire">ยาง</TabsTrigger>
+                            <TabsTrigger value="summary">สรุปยาง</TabsTrigger>
                         </TabsList>
 
                         {/* ── Document renewal ── */}
@@ -189,10 +193,58 @@ export function VehicleLogDialog({ vehicle, open, onOpenChange }: {
                                 render={(r) => `${TIRE_ACTION_LABELS[String(r.action)] || r.action}${r.position ? ` (${r.position})` : ''} • ${fmtDate(r.service_date)}${r.odometer ? ` • ${fmtNum(r.odometer)} กม.` : ''}${r.brand ? ` • ${r.brand}` : ''}${r.cost ? ` • ${fmtNum(r.cost)}฿` : ''}`}
                             />
                         </TabsContent>
+
+                        {/* ── Tire summary ── */}
+                        <TabsContent value="summary" className="space-y-4">
+                            {!tireSummary || tireSummary.records === 0 ? (
+                                <p className="text-sm text-muted-foreground italic py-8 text-center">ยังไม่มีข้อมูลยาง — บันทึกงานยางในแท็บ &quot;ยาง&quot; ก่อน</p>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <SummaryStat label="เปลี่ยน / ปะ / สลับ" value={`${tireSummary.counts.change} / ${tireSummary.counts.patch} / ${tireSummary.counts.rotate}`} />
+                                        <SummaryStat label="ค่ายางสะสม" value={`${tireSummary.totalCost.toLocaleString()} ฿`} />
+                                        <SummaryStat label="ระยะที่มีข้อมูล" value={tireSummary.kmSpan > 0 ? `${tireSummary.kmSpan.toLocaleString()} กม.` : '-'} />
+                                        <SummaryStat label="ต้นทุนยาง / กม." value={tireSummary.costPerKm != null ? `${tireSummary.costPerKm.toFixed(2)} ฿/กม.` : '-'} />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                                            <History size={14} /> เฉลี่ยระยะเปลี่ยน — ต่อตำแหน่ง
+                                        </div>
+                                        {tireSummary.positions.length === 0 ? (
+                                            <p className="text-sm text-muted-foreground italic py-3 text-center">ยังไม่มีรายการ &quot;เปลี่ยน&quot;</p>
+                                        ) : (
+                                            <div className="space-y-1.5">
+                                                {tireSummary.positions.map((p, i) => (
+                                                    <div key={i} className="flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/30 border border-border text-sm">
+                                                        <span className="font-medium text-foreground truncate">{p.position}</span>
+                                                        <span className="text-muted-foreground shrink-0 text-xs">
+                                                            เปลี่ยน {p.changeCount} ครั้ง
+                                                            {p.avgKmBetweenChanges != null
+                                                                ? ` • เฉลี่ย ${p.avgKmBetweenChanges.toLocaleString()} กม./ครั้ง`
+                                                                : ' • ยังคำนวณเฉลี่ยไม่ได้ (ต้องเปลี่ยน ≥2 ครั้ง)'}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </TabsContent>
                     </Tabs>
                 </div>
             </DialogContent>
         </Dialog>
+    )
+}
+
+function SummaryStat({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="p-3 rounded-lg bg-muted/30 border border-border">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{label}</p>
+            <p className="text-lg font-bold text-foreground mt-0.5">{value}</p>
+        </div>
     )
 }
 

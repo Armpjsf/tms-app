@@ -143,3 +143,57 @@ export async function getTireLogs(plate: string) {
         .order('service_date', { ascending: false })
     return data || []
 }
+
+export interface TirePositionSummary {
+    position: string
+    changeCount: number
+    avgKmBetweenChanges: number | null
+    lastOdometer: number | null
+}
+export interface TireSummary {
+    records: number
+    counts: { change: number; patch: number; rotate: number }
+    totalCost: number
+    kmSpan: number
+    costPerKm: number | null
+    positions: TirePositionSummary[]
+}
+
+/** Aggregates a vehicle's Tire_Logs into per-vehicle and per-position stats. */
+export async function getTireSummary(plate: string): Promise<TireSummary> {
+    const logs = (await getTireLogs(plate)) as Array<Record<string, unknown>>
+
+    const counts = { change: 0, patch: 0, rotate: 0 }
+    let totalCost = 0
+    const odometers: number[] = []
+    const byPosition: Record<string, number[]> = {}
+
+    for (const l of logs) {
+        const action = String(l.action)
+        if (action in counts) counts[action as keyof typeof counts]++
+        totalCost += Number(l.cost) || 0
+        const od = Number(l.odometer)
+        if (Number.isFinite(od) && od > 0) odometers.push(od)
+        // Average km between full CHANGES is only meaningful per position.
+        if (action === 'change' && Number.isFinite(od) && od > 0) {
+            const pos = (l.position ? String(l.position) : 'ไม่ระบุตำแหน่ง').trim()
+            ;(byPosition[pos] ||= []).push(od)
+        }
+    }
+
+    const positions: TirePositionSummary[] = Object.entries(byPosition).map(([position, ods]) => {
+        ods.sort((a, b) => a - b)
+        let avgKmBetweenChanges: number | null = null
+        if (ods.length >= 2) {
+            let sum = 0
+            for (let i = 1; i < ods.length; i++) sum += ods[i] - ods[i - 1]
+            avgKmBetweenChanges = Math.round(sum / (ods.length - 1))
+        }
+        return { position, changeCount: ods.length, avgKmBetweenChanges, lastOdometer: ods[ods.length - 1] }
+    }).sort((a, b) => b.changeCount - a.changeCount)
+
+    const kmSpan = odometers.length >= 2 ? Math.max(...odometers) - Math.min(...odometers) : 0
+    const costPerKm = kmSpan > 0 ? totalCost / kmSpan : null
+
+    return { records: logs.length, counts, totalCost, kmSpan, costPerKm, positions }
+}
