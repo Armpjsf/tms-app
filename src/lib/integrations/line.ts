@@ -38,18 +38,36 @@ export function isBot2Configured(): boolean {
 
 /**
  * Which bot should send customer-facing pushes right now.
- * Days 1–15 → bot 1, days 16–end → bot 2, with the switch happening at
- * 05:00 Asia/Bangkok (the pre-dawn lull when almost no jobs complete).
  *
- * Implementation: Bangkok is UTC+7. Shifting the instant by +2h of UTC is the
- * same as (Bangkok time − 5h); taking the UTC calendar day of that shifted
- * instant makes the day boundary land at 05:00 Bangkok.
+ * The LINE free quota resets once a month on a per-account day that is NOT
+ * necessarily the 1st (it depends when the Official Account started). So the
+ * switch is anchored to that reset day via LINE_BOT_RESET_DAY (1–28, default 1):
+ * bot 1 owns the first 15 days of each quota cycle, bot 2 owns the rest. This
+ * gives each bot ~15 active days per its own cycle regardless of the reset date.
+ *
+ * The switch happens at 05:00 Asia/Bangkok (the pre-dawn lull when almost no
+ * jobs complete). Bangkok is UTC+7, so shifting the instant by +2h of UTC equals
+ * (Bangkok − 5h); taking the UTC calendar day of that shifted instant makes the
+ * day boundary land at 05:00 Bangkok.
  */
 export function getActiveCustomerBot(): BotIndex {
   if (!isBot2Configured()) return 1;
+
+  // Reset day of the monthly quota cycle. Clamp to 1–28 so it exists in every
+  // month (avoids "the 30th" being missing in February).
+  const resetDay = Math.min(Math.max(parseInt(process.env.LINE_BOT_RESET_DAY || '1', 10) || 1, 1), 28);
+
   const shifted = new Date(Date.now() + 2 * 60 * 60 * 1000);
-  const dayOfMonth = shifted.getUTCDate();
-  return dayOfMonth <= 15 ? 1 : 2;
+  const day = shifted.getUTCDate();
+
+  // Days elapsed since this cycle's reset day (wrapping into the previous month).
+  let elapsed = day - resetDay;
+  if (elapsed < 0) {
+    const prevMonthLastDay = new Date(Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), 0)).getUTCDate();
+    elapsed += prevMonthLastDay;
+  }
+
+  return elapsed < 15 ? 1 : 2;
 }
 
 // Lazy, per-bot client cache. Instantiated at runtime so env vars are read on
