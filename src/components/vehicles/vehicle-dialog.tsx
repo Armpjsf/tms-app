@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createVehicle, updateVehicle } from "@/app/vehicles/actions"
 import { getVehicleTypes, VehicleType } from "@/lib/actions/vehicle-type-actions"
+import { getAllSubcontractors } from "@/lib/supabase/subcontractors"
 import { useLanguage } from "@/components/providers/language-provider"
 import { Car, Scale, Box, Save, Loader2 } from "lucide-react"
 import { Vehicle } from "@/lib/supabase/vehicles"
@@ -48,6 +49,9 @@ export function VehicleDialog({
   const setShow = isControlled ? onOpenChange! : setInternalOpen
 
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([])
+  // Fetch subcontractors here so the ownership dropdown works from every entry
+  // point (card, Fleet hub) even when the caller didn't pass them as a prop.
+  const [subList, setSubList] = useState<Subcontractor[]>(subcontractors)
 
   useEffect(() => {
     const fetchTypes = async () => {
@@ -55,7 +59,12 @@ export function VehicleDialog({
         setVehicleTypes(types)
     }
     fetchTypes()
-  }, [])
+    if (subcontractors.length === 0) {
+        getAllSubcontractors().then(setSubList).catch(() => {})
+    }
+  }, [subcontractors.length])
+
+  const subs = subList.length ? subList : subcontractors
 
   const [formData, setFormData] = useState({
     Vehicle_Plate: vehicle?.Vehicle_Plate || '',
@@ -165,8 +174,7 @@ export function VehicleDialog({
           </div>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 pt-6 space-y-6 custom-scrollbar">
-          {(branches.length > 0 || subcontractors.length > 0) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {branches.length > 0 && (
                 <div className="space-y-2">
                     <Label htmlFor="Branch_ID" className="text-xs font-medium text-muted-foreground ml-1">Branch</Label>
@@ -201,14 +209,13 @@ export function VehicleDialog({
                       <SelectContent className="bg-card border-border/10 text-foreground">
                           <SelectItem value="__company__">รถบริษัท</SelectItem>
                           <SelectItem value="__independent__">รถร่วมอิสระ</SelectItem>
-                          {subcontractors.map((s) => (
+                          {subs.map((s) => (
                               <SelectItem key={s.Sub_ID} value={s.Sub_ID}>รถร่วม: {s.Sub_Name}</SelectItem>
                           ))}
                       </SelectContent>
                   </Select>
               </div>
             </div>
-          )}
 
           <div className="h-px bg-border mx-[-2rem]" />
 
