@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { useLanguage } from "@/components/providers/language-provider"
 import type { RepairTicket } from "@/lib/supabase/maintenance"
+import { ExcelExport } from "@/components/ui/excel-export"
 import type { Driver } from "@/lib/supabase/drivers"
 import type { MaintenanceScheduleData } from "@/lib/supabase/maintenance-schedule"
 
@@ -182,6 +183,19 @@ export function MaintenanceClient({
               </PremiumButton>
           </form>
         </div>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <ExcelExport
+            filename={`repair_tickets_${new Date().toISOString().slice(0, 10)}`}
+            data={tickets.map((tk) => ({
+                วันที่แจ้ง: (tk.Date_Report || '').slice(0, 10),
+                ทะเบียน: tk.Vehicle_Plate,
+                อาการ: tk.Issue_Type,
+                ค่าใช้จ่าย: tk.Cost_Total ?? '',
+                สถานะ: tk.Status,
+            }))}
+        />
       </div>
 
       {/* Ticket Grid */}

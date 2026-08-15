@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { FuelDialog } from "@/components/fuel/fuel-dialog"
 import { FuelActions } from "@/components/fuel/fuel-actions"
+import { ExcelExport } from "@/components/ui/excel-export"
 import { FuelAnalyticsDashboard } from "@/components/fuel/fuel-analytics-dashboard"
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
@@ -156,9 +157,23 @@ export function FuelClient({
                     <p className="text-primary text-[10px] font-black uppercase tracking-[0.4em] opacity-60">{t('dashboard.subtitle')}</p>
                 </div>
             </div>
-            <div className="hidden lg:flex items-center gap-2 py-1 px-4 bg-muted/50 rounded-full border border-border/10">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">ACTIVE_LOGS</span>
+            <div className="flex items-center gap-3">
+                <ExcelExport
+                    filename={`fuel_logs_${new Date().toISOString().slice(0, 10)}`}
+                    data={logs.map((l) => ({
+                        วันที่: (l.Date_Time || '').slice(0, 10),
+                        ทะเบียน: l.Vehicle_Plate,
+                        คนขับ: l.Driver_Name,
+                        ลิตร: l.Liters,
+                        ยอดเงิน: l.Price_Total,
+                        เลขไมล์: l.Odometer,
+                        'กม./ลิตร': l.Km_Per_Liter ?? '',
+                    }))}
+                />
+                <div className="hidden lg:flex items-center gap-2 py-1 px-4 bg-muted/50 rounded-full border border-border/10">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">ACTIVE_LOGS</span>
+                </div>
             </div>
           </div>
 
