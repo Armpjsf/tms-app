@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { VehicleDialog } from "@/components/vehicles/vehicle-dialog"
 import {
@@ -70,6 +71,7 @@ export default function VehiclesPage() {
           Active_Status: v.Active_Status ?? null,
           Notes: v.Notes ?? null,
           Sub_ID: v.Sub_ID ?? null,
+          Owner_Type: v.Owner_Type ?? null,
           Preferred_Zone: v.Preferred_Zone ?? null,
           Primary_Driver_Name: v.Primary_Driver_Name ?? null,
           is_chassis: v.is_chassis ?? null,
@@ -185,18 +187,17 @@ export default function VehiclesPage() {
                                     <Badge className="bg-primary/10 text-primary border-primary/20 px-2 py-0.5 rounded-md font-medium text-xs">
                                         {vehicle.Vehicle_Type || "-"}
                                     </Badge>
-                                    {/* Ownership: no Sub_ID = company-owned, has Sub_ID = subcontractor (รถร่วม) */}
-                                    {vehicle.Sub_ID ? (
-                                        <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 px-2 py-0.5 rounded-md font-medium text-xs">
-                                            รถร่วม
-                                        </Badge>
-                                    ) : (
-                                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-2 py-0.5 rounded-md font-medium text-xs">
-                                            รถบริษัท
-                                        </Badge>
-                                    )}
+                                    {/* Ownership: company / independent รถร่วม / affiliated รถร่วม */}
+                                    {(() => {
+                                        const ot = vehicle.Owner_Type || (vehicle.Sub_ID ? 'sub' : 'company')
+                                        if (ot === 'sub') return <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 px-2 py-0.5 rounded-md font-medium text-xs">รถร่วม (มีสังกัด)</Badge>
+                                        if (ot === 'independent') return <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 px-2 py-0.5 rounded-md font-medium text-xs">รถร่วมอิสระ</Badge>
+                                        return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-2 py-0.5 rounded-md font-medium text-xs">รถบริษัท</Badge>
+                                    })()}
                                 </div>
-                                <h3 className="text-xl font-semibold text-foreground tracking-tight">{vehicle.Vehicle_Plate}</h3>
+                                <Link href={`/vehicles/${encodeURIComponent(vehicle.Vehicle_Plate)}`} className="text-xl font-semibold text-foreground tracking-tight hover:text-primary hover:underline transition-colors">
+                                    {vehicle.Vehicle_Plate}
+                                </Link>
                             </div>
                             <VehicleActions vehicle={vehicle} />
                         </div>

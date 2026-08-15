@@ -33,6 +33,7 @@ export type Vehicle = {
   Active_Status: string | null
   Notes: string | null
   Sub_ID?: string | null
+  Owner_Type?: string | null
   Preferred_Zone?: string | null
   Primary_Driver_Name?: string | null
   is_chassis?: boolean | null

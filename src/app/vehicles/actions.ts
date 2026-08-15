@@ -18,6 +18,7 @@ export type VehicleFormData = {
   Act_Expiry?: string
   Branch_ID?: string
   Sub_ID?: string
+  Owner_Type?: string
   Max_Weight_kg?: number
   Max_Volume_cbm?: number
   is_chassis?: boolean
@@ -54,7 +55,9 @@ export async function createVehicle(data: VehicleFormData) {
       Tax_Expiry: emptyToNull(data.Tax_Expiry),
       Insurance_Expiry: emptyToNull(data.Insurance_Expiry),
       Act_Expiry: emptyToNull(data.Act_Expiry),
-      Sub_ID: data.Sub_ID || null,
+      Owner_Type: data.Owner_Type || (data.Sub_ID ? 'sub' : 'company'),
+      // Only affiliated (sub) vehicles keep a Sub_ID.
+      Sub_ID: data.Owner_Type === 'sub' ? (data.Sub_ID || null) : null,
       Max_Weight_kg: numOrNull(data.Max_Weight_kg),
       Max_Volume_cbm: numOrNull(data.Max_Volume_cbm),
       is_chassis: data.is_chassis || false,
@@ -184,6 +187,10 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
   const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
 
+    // NOTE: document expiries (tax/insurance/ACT/cargo) and tire fields are
+    // intentionally NOT edited here — they are owned by the renewal / tire-log
+    // workflow (เอกสาร & ยาง) which keeps history and updates them. Editing them
+    // in two places was confusing, so this dialog holds master data only.
     const updatePayload: Partial<Vehicle> = {
         Vehicle_Type: data.Vehicle_Type,
         Brand: data.Brand,
@@ -191,18 +198,11 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
         Active_Status: data.Active_Status,
         Current_Mileage: data.Current_Mileage == null ? data.Current_Mileage : Math.round(Number(data.Current_Mileage) || 0),
         Next_Service_Mileage: data.Next_Service_Mileage == null ? data.Next_Service_Mileage : Math.round(Number(data.Next_Service_Mileage) || 0),
-        Tax_Expiry: data.Tax_Expiry || null,
-        Insurance_Expiry: data.Insurance_Expiry || null,
-        Act_Expiry: data.Act_Expiry || null,
-        Sub_ID: data.Sub_ID || null,
+        Owner_Type: data.Owner_Type || (data.Sub_ID ? 'sub' : 'company'),
+        Sub_ID: data.Owner_Type === 'sub' ? (data.Sub_ID || null) : null,
         Max_Weight_kg: data.Max_Weight_kg,
         Max_Volume_cbm: data.Max_Volume_cbm,
         is_chassis: data.is_chassis,
-        Cargo_Insurance_Expiry: data.Cargo_Insurance_Expiry || null,
-        Cargo_Insurance_Company: data.Cargo_Insurance_Company || null,
-        Tire_Change_Date: data.Tire_Change_Date || null,
-        Tire_Change_Odometer: data.Tire_Change_Odometer == null ? null : Math.round(Number(data.Tire_Change_Odometer) || 0),
-        Tire_Next_Change_Mileage: data.Tire_Next_Change_Mileage == null ? null : Math.round(Number(data.Tire_Next_Change_Mileage) || 0),
     }
 
     if (isAdmin && data.Branch_ID) {

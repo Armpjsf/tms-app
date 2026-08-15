@@ -83,28 +83,33 @@ const navigation: NavGroup[] = [
     items: [
       { titleKey: "navigation.planning", href: "/planning", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.tracking_hub", href: "/admin/tracking", icon: <Compass size={20} /> },
+      { titleKey: "navigation.monitoring", href: "/monitoring", icon: <MapPin size={20} /> },
       { titleKey: "navigation.calendar", href: "/calendar", icon: <Calendar size={20} /> },
       { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
       { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
       { titleKey: "navigation.container", href: "/container", icon: <Container size={20} /> },
-      { titleKey: "navigation.damage_reports", href: "/admin/damage-reports", icon: <AlertTriangle size={20} />, badgeColor: "red" },
-      { titleKey: "navigation.monitoring", href: "/monitoring", icon: <MapPin size={20} /> },
       { titleKey: "navigation.chat", href: "/chat", icon: <MessageSquare size={20} />, badgeColor: "blue" },
     ],
   },
   {
-    titleKey: "nav_groups.asset_control",
-    titleFallback: { th: "รถและทรัพยากร", en: "Fleet & Resources" },
+    titleKey: "nav_groups.fleet",
+    titleFallback: { th: "รถ (Fleet)", en: "Fleet" },
     items: [
-      { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
-      { titleKey: "navigation.danger_zones", href: "/routes/danger-zones", icon: <ShieldAlert size={20} />, badgeColor: "red" },
-      { titleKey: "navigation.drivers", href: "/drivers", icon: <Users size={20} /> },
-      { titleKey: "navigation.driver_leaves", href: "/admin/driver-leaves", icon: <CalendarDays size={20} /> }, 
       { titleKey: "navigation.fleet", href: "/vehicles", icon: <Truck size={20} /> },
-      { titleKey: "navigation.notifications", href: "/notifications", icon: <ShieldCheck size={20} />, badgeColor: "blue" },
-      { titleKey: "navigation.checks", href: "/admin/vehicle-checks", icon: <CheckCircle2 size={20} /> },       
+      { titleKey: "navigation.checks", href: "/admin/vehicle-checks", icon: <CheckCircle2 size={20} /> },
       { titleKey: "navigation.maintenance", href: "/maintenance", icon: <Wrench size={20} /> },
       { titleKey: "navigation.fuel", href: "/fuel", icon: <Fuel size={20} /> },
+      { titleKey: "navigation.damage_reports", href: "/admin/damage-reports", icon: <AlertTriangle size={20} />, badgeColor: "red" },
+    ],
+  },
+  {
+    titleKey: "nav_groups.people",
+    titleFallback: { th: "คนขับ & เส้นทาง", en: "Drivers & Routes" },
+    items: [
+      { titleKey: "navigation.drivers", href: "/drivers", icon: <Users size={20} /> },
+      { titleKey: "navigation.driver_leaves", href: "/admin/driver-leaves", icon: <CalendarDays size={20} /> },
+      { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
+      { titleKey: "navigation.danger_zones", href: "/routes/danger-zones", icon: <ShieldAlert size={20} />, badgeColor: "red" },
     ],
   },
   {
@@ -112,8 +117,8 @@ const navigation: NavGroup[] = [
     titleFallback: { th: "รายงานและวิเคราะห์", en: "Reports & Analytics" },
     items: [
       { titleKey: "navigation.analytics", href: "/admin/analytics", icon: <BarChart3 size={20} />, badgeColor: "blue" },
-      { titleKey: "navigation.ai", href: "/ai", icon: <Bot size={20} />, badge: "common.new", badgeColor: "green" },
       { titleKey: "navigation.reports", href: "/reports", icon: <BarChart3 size={20} /> },
+      { titleKey: "navigation.ai", href: "/ai", icon: <Bot size={20} />, badge: "common.new", badgeColor: "green" },
     ],
   },
   {
@@ -131,10 +136,11 @@ const navigation: NavGroup[] = [
     titleFallback: { th: "ตั้งค่าระบบ", en: "System Settings" },
     items: [
       { titleKey: "navigation.settings", href: "/settings", icon: <Settings size={20} /> },
-      { titleKey: "navigation.logs", href: "/admin/logs", icon: <ClipboardList size={20} /> },
       { titleKey: "navigation.fleet_standards", href: "/settings/fleet-standards", icon: <ShieldCheck size={20} /> },
       { titleKey: "navigation.esg_settings", href: "/settings/esg", icon: <Leaf size={20} /> },
+      { titleKey: "navigation.notifications", href: "/notifications", icon: <ShieldCheck size={20} />, badgeColor: "blue" },
       { titleKey: "settings.items.change_password", href: "/settings/security", icon: <Key size={20} /> },
+      { titleKey: "navigation.logs", href: "/admin/logs", icon: <ClipboardList size={20} /> },
     ],
   },
 ]

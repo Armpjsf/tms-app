@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createVehicle, updateVehicle } from "@/app/vehicles/actions"
 import { getVehicleTypes, VehicleType } from "@/lib/actions/vehicle-type-actions"
 import { useLanguage } from "@/components/providers/language-provider"
-import { Car, Shield, Calendar, Scale, Box, Save, Loader2 } from "lucide-react"
+import { Car, Scale, Box, Save, Loader2 } from "lucide-react"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Branch } from "@/lib/supabase/branches"
 import { Subcontractor } from "@/types/subcontractor"
@@ -67,6 +67,7 @@ export function VehicleDialog({
     Next_Service_Mileage: vehicle?.Next_Service_Mileage || '',
     Branch_ID: vehicle?.Branch_ID || '',
     Sub_ID: vehicle?.Sub_ID || '',
+    Owner_Type: vehicle?.Owner_Type || (vehicle?.Sub_ID ? 'sub' : 'company'),
     Max_Weight_kg: vehicle?.Max_Weight_kg || '',
     Max_Volume_cbm: vehicle?.Max_Volume_cbm || '',
     is_chassis: (vehicle as { is_chassis?: boolean } | null)?.is_chassis || false,
@@ -117,6 +118,7 @@ export function VehicleDialog({
               Next_Service_Mileage: 0,
               Branch_ID: '',
               Sub_ID: '',
+              Owner_Type: 'company',
               Max_Weight_kg: 0,
               Max_Volume_cbm: 0,
               is_chassis: false,
@@ -183,22 +185,28 @@ export function VehicleDialog({
                 </div>
               )}
 
-              {subcontractors && subcontractors.length > 0 && (
-                <div className="space-y-2">
-                    <Label htmlFor="Sub_ID" className="text-xs font-medium text-muted-foreground ml-1">{t('jobs.dialog.carrier')}</Label>
-                    <Select value={formData.Sub_ID || "__company__"} onValueChange={(val) => setFormData({ ...formData, Sub_ID: val === "__company__" ? "" : val })}>
-                        <SelectTrigger className="h-10 rounded-xl bg-muted/50 border-border text-foreground">
-                            <SelectValue placeholder={t('jobs.dialog.internal')} />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card border-border/10 text-foreground">
-                            <SelectItem value="__company__">{t('jobs.dialog.internal')}</SelectItem>
-                            {subcontractors.map((s) => (
-                                <SelectItem key={s.Sub_ID} value={s.Sub_ID}>{s.Sub_Name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-              )}
+              <div className="space-y-2">
+                  <Label htmlFor="Owner_Type" className="text-xs font-medium text-muted-foreground ml-1">ประเภทเจ้าของรถ</Label>
+                  <Select
+                      value={formData.Owner_Type === 'sub' && formData.Sub_ID ? formData.Sub_ID : formData.Owner_Type === 'independent' ? '__independent__' : '__company__'}
+                      onValueChange={(val) => {
+                          if (val === '__company__') setFormData({ ...formData, Owner_Type: 'company', Sub_ID: '' })
+                          else if (val === '__independent__') setFormData({ ...formData, Owner_Type: 'independent', Sub_ID: '' })
+                          else setFormData({ ...formData, Owner_Type: 'sub', Sub_ID: val })
+                      }}
+                  >
+                      <SelectTrigger className="h-10 rounded-xl bg-muted/50 border-border text-foreground">
+                          <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border/10 text-foreground">
+                          <SelectItem value="__company__">รถบริษัท</SelectItem>
+                          <SelectItem value="__independent__">รถร่วมอิสระ</SelectItem>
+                          {subcontractors.map((s) => (
+                              <SelectItem key={s.Sub_ID} value={s.Sub_ID}>รถร่วม: {s.Sub_Name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+              </div>
             </div>
           )}
 
@@ -295,130 +303,12 @@ export function VehicleDialog({
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-muted/30 border border-border space-y-6">
-            <div className="flex items-center gap-3">
-                 <div className="p-2 bg-blue-500/20 rounded-xl">
-                    <Shield size={18} className="text-primary" /> 
-                 </div>
-                 <h4 className="text-base font-semibold text-foreground">{t('vehicles.dialog.compliance_section')}</h4>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-4">
-                <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="Tax_Expiry" className="text-xs font-medium text-muted-foreground">{t('vehicles.dialog.tax_expiry')}</Label>
-                    <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
-                        <Input
-                            id="Tax_Expiry"
-                            type="date"
-                            value={formData.Tax_Expiry}
-                            onChange={(e) => setFormData({ ...formData, Tax_Expiry: e.target.value })}
-                            className="h-10 pl-10 bg-background border-border text-foreground focus:ring-primary/40"
-                        />
-                    </div>
-                </div>
-                
-                <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="Insurance_Expiry" className="text-xs font-medium text-muted-foreground">{t('vehicles.dialog.insurance_expiry')}</Label>
-                    <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
-                        <Input
-                            id="Insurance_Expiry"
-                            type="date"
-                            value={formData.Insurance_Expiry}
-                            onChange={(e) => setFormData({ ...formData, Insurance_Expiry: e.target.value })}
-                            className="h-10 pl-10 bg-background border-border text-foreground focus:ring-primary/40"
-                        />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="Act_Expiry" className="text-xs font-medium text-muted-foreground">{t('vehicles.dialog.act_expiry')}</Label>
-                    <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
-                        <Input
-                            id="Act_Expiry"
-                            type="date"
-                            value={formData.Act_Expiry}
-                            onChange={(e) => setFormData({ ...formData, Act_Expiry: e.target.value })}
-                            className="h-10 pl-10 bg-background border-border text-foreground focus:ring-primary/40"
-                        />
-                    </div>
-                </div>
-            </div>
+          {/* Document expiries (tax/insurance/ACT/cargo) and tires are managed in
+              the "เอกสาร & ยาง" workflow (with renewal history), not here, to avoid
+              editing the same data in two places. */}
+          <div className="p-4 rounded-2xl bg-muted/20 border border-dashed border-border text-xs text-muted-foreground">
+            เอกสาร (ภาษี/ประกัน/พ.ร.บ./ประกันสินค้า) และยาง จัดการที่ปุ่ม “เอกสาร &amp; ยาง” ของรถคันนี้ — มีประวัติการต่อให้ด้วย
           </div>
-
-          {/* ประกันสินค้า (Cargo insurance) */}
-          <div className="p-4 rounded-2xl border border-border bg-muted/20 space-y-4">
-            <Label className="text-sm font-bold text-muted-foreground">ประกันสินค้า (Cargo Insurance)</Label>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                    <Label htmlFor="Cargo_Insurance_Expiry" className="text-xs font-medium text-muted-foreground">วันหมดอายุประกันสินค้า</Label>
-                    <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
-                        <Input
-                            id="Cargo_Insurance_Expiry"
-                            type="date"
-                            value={formData.Cargo_Insurance_Expiry}
-                            onChange={(e) => setFormData({ ...formData, Cargo_Insurance_Expiry: e.target.value })}
-                            className="h-10 pl-10 bg-background border-border text-foreground focus:ring-primary/40"
-                        />
-                    </div>
-                </div>
-                <div className="space-y-1.5">
-                    <Label htmlFor="Cargo_Insurance_Company" className="text-xs font-medium text-muted-foreground">บริษัทประกัน</Label>
-                    <Input
-                        id="Cargo_Insurance_Company"
-                        value={formData.Cargo_Insurance_Company}
-                        onChange={(e) => setFormData({ ...formData, Cargo_Insurance_Company: e.target.value })}
-                        placeholder="เช่น วิริยะประกันภัย"
-                        className="h-10 bg-background border-border text-foreground focus:ring-primary/40"
-                    />
-                </div>
-            </div>
-          </div>
-
-          {/* ยาง (Tires) */}
-          <div className="p-4 rounded-2xl border border-border bg-muted/20 space-y-4">
-            <Label className="text-sm font-bold text-muted-foreground">ยาง (Tires)</Label>
-            <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                    <Label htmlFor="Tire_Change_Date" className="text-xs font-medium text-muted-foreground">วันเปลี่ยนยางล่าสุด</Label>
-                    <Input
-                        id="Tire_Change_Date"
-                        type="date"
-                        value={formData.Tire_Change_Date}
-                        onChange={(e) => setFormData({ ...formData, Tire_Change_Date: e.target.value })}
-                        className="h-10 bg-background border-border text-foreground focus:ring-primary/40"
-                    />
-                </div>
-                <div className="space-y-1.5">
-                    <Label htmlFor="Tire_Change_Odometer" className="text-xs font-medium text-muted-foreground">เลขไมล์ที่เปลี่ยน</Label>
-                    <Input
-                        id="Tire_Change_Odometer"
-                        type="number"
-                        value={formData.Tire_Change_Odometer}
-                        onChange={(e) => setFormData({ ...formData, Tire_Change_Odometer: e.target.value })}
-                        placeholder="เช่น 120000"
-                        className="h-10 bg-background border-border text-foreground focus:ring-primary/40"
-                    />
-                </div>
-                <div className="space-y-1.5">
-                    <Label htmlFor="Tire_Next_Change_Mileage" className="text-xs font-medium text-muted-foreground">ไมล์ครบกำหนดเปลี่ยน</Label>
-                    <Input
-                        id="Tire_Next_Change_Mileage"
-                        type="number"
-                        value={formData.Tire_Next_Change_Mileage}
-                        onChange={(e) => setFormData({ ...formData, Tire_Next_Change_Mileage: e.target.value })}
-                        placeholder="เช่น 180000"
-                        className="h-10 bg-background border-border text-foreground focus:ring-primary/40"
-                    />
-                </div>
-            </div>
-          </div>
-
-
-
 
 
           <div className="space-y-2">

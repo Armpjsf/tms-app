@@ -144,6 +144,50 @@ export async function getTireLogs(plate: string) {
     return data || []
 }
 
+// Per-vehicle history from the existing modules, so the Fleet hub can show them
+// in one place instead of forcing the admin to open /fuel, /maintenance and
+// /admin/vehicle-checks separately and filter by plate.
+
+export async function getFuelLogsFor(plate: string) {
+    const supabase = createAdminClient()
+    const { data } = await supabase
+        .from('Fuel_Logs')
+        .select('Date_Time, Liters, Price_Total, Odometer')
+        .eq('Vehicle_Plate', plate)
+        .order('Date_Time', { ascending: false })
+        .limit(200)
+    return (data || []) as Array<Record<string, unknown>>
+}
+
+export async function getRepairTicketsFor(plate: string) {
+    const supabase = createAdminClient()
+    const { data } = await supabase
+        .from('Repair_Tickets')
+        .select('Date_Report, Issue_Type, Cost_Total, Status')
+        .eq('Vehicle_Plate', plate)
+        .order('Date_Report', { ascending: false })
+        .limit(200)
+    return (data || []) as Array<Record<string, unknown>>
+}
+
+export async function getVehicleChecksFor(plate: string) {
+    const supabase = createAdminClient()
+    const { data } = await supabase
+        .from('Vehicle_Checks')
+        .select('Check_Date, Driver_Name, Passed_Items, Photo_Urls, Signature_Url')
+        .eq('Vehicle_Plate', plate)
+        .order('Check_Date', { ascending: false })
+        .limit(100)
+    return (data || []) as Array<Record<string, unknown>>
+}
+
+/** Vehicle master + its owning subcontractor name, for the Fleet hub header. */
+export async function getVehicleForHub(plate: string) {
+    const supabase = createAdminClient()
+    const { data } = await supabase.from('Master_Vehicles').select('*').eq('Vehicle_Plate', plate).maybeSingle()
+    return data as Record<string, unknown> | null
+}
+
 export interface TirePositionSummary {
     position: string
     changeCount: number
