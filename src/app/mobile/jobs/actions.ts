@@ -2,7 +2,6 @@
 
 import { createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { notifyAdminJobStatus } from '@/lib/actions/push-actions'
 
 import { SupabaseClient } from '@supabase/supabase-js'
 
@@ -165,21 +164,9 @@ export async function updateJobStatus(
         }
     }
 
-    // 3. Push notify admin (fire-and-forget)
-    if (driverId) {
-      const { data: driver } = await supabase
-        .from('Master_Drivers')
-        .select('Driver_Name')
-        .eq('Driver_ID', driverId)
-        .single()
-      
-      notifyAdminJobStatus(
-        driverId,
-        driver?.Driver_Name || 'คนขับ',
-        jobId,
-        status
-      ).catch(() => {})
-    }
+    // NOTE: admin Web Push is now sent inside transitionJobStatus (the single
+    // chokepoint for every status change), so it's no longer triggered here to
+    // avoid double-notifying.
 
     revalidatePath(`/mobile/jobs/${jobId}`)
     revalidatePath('/mobile/jobs')

@@ -162,6 +162,28 @@ export async function transitionJobStatus(
         console.error('[JobStatusMachine] Notification trigger failed:', err);
       });
     }
+
+    // Notify admins in-app (Web Push). This is the single chokepoint every status
+    // change flows through, so admins get the notification whether the driver
+    // finished via POD upload (submitJobPOD), the status button (updateJobStatus)
+    // or LINE. Previously the completion push only fired from the status-button
+    // path, so POD-completed jobs never notified admins.
+    const NOTIFY_STATUSES = ['Picked Up', 'In Transit', 'Delivered', 'Completed', 'Failed', 'SOS'];
+    if (NOTIFY_STATUSES.includes(nextStatus)) {
+      (async () => {
+        try {
+          const { data: j } = await supabase
+            .from('Jobs_Main')
+            .select('Driver_ID, Driver_Name')
+            .eq('Job_ID', jobId)
+            .maybeSingle();
+          const { notifyAdminJobStatus } = await import('@/lib/actions/push-actions');
+          await notifyAdminJobStatus(j?.Driver_ID || '', j?.Driver_Name || 'คนขับ', jobId, nextStatus);
+        } catch (err) {
+          console.error('[JobStatusMachine] Admin push failed:', err);
+        }
+      })();
+    }
  
     // 5. Log the transition
  
