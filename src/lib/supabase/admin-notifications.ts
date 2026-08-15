@@ -123,32 +123,9 @@ export async function getAdminAlerts(): Promise<AdminAlert[]> {
     })
   } catch { /* ignore */ }
 
-  // 4. สถานที่ค้างเติมพิกัด/ลิงก์ (Is_Incomplete = true) — เช่นงานเร่งด่วนที่พิมพ์เส้นทางใหม่เอง
-  try {
-    let locQuery = supabase
-      .from('Master_Locations')
-      .select('Location_ID, Name, Branch_ID')
-      .eq('Is_Incomplete', true)
-      .limit(50)
-
-    if (branchId && branchId !== 'All') {
-      locQuery = locQuery.eq('Branch_ID', branchId)
-    }
-
-    const { data: incompleteLocs } = await locQuery
-    incompleteLocs?.forEach((loc: { Location_ID: string; Name: string; Branch_ID: string | null }) => {
-      alerts.push({
-        id: `loc-incomplete-${loc.Location_ID}`,
-        type: 'location_incomplete',
-        severity: 'warning',
-        title: `สถานที่ค้างเติมพิกัด — ${loc.Name}`,
-        description: 'ยังไม่มีพิกัด/ลิงก์แผนที่ครบ กรุณาเข้าไปเติมข้อมูลให้เรียบร้อย',
-        date: '',
-        href: `/routes?q=${encodeURIComponent(loc.Name)}`,
-        meta: { name: loc.Name, branch: String(loc.Branch_ID || '') }
-      })
-    })
-  } catch { /* ignore */ }
+  // NOTE: "สถานที่ค้างเติมพิกัด" (locations missing coordinates) used to be listed
+  // here too, but that's a location data-quality issue — unrelated to document
+  // renewals/compliance — so it now lives on the Locations page (/routes) instead.
 
   // Sort: critical first, then warning, then info
   const severityOrder = { critical: 0, warning: 1, info: 2 }

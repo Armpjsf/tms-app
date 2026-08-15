@@ -178,7 +178,7 @@ export const dictionaries = {
       history: 'ประวัติงาน',
       monitoring: 'ติดตามรถ',
       pod: 'หลักฐานการส่งสินค้า (POD)',
-      notifications: 'สถานะต่อสัญญา',
+      notifications: 'ศูนย์แจ้งเตือน',
       chat: 'แชท',
       jobs: 'รายการงาน',
       job: 'รายการงาน',
@@ -1978,8 +1978,8 @@ export const dictionaries = {
       unexpected_null: "ไม่พบข้อมูล"
     },
     compliance: {
-      title: 'สถานะต่อสัญญา',
-      subtitle: 'RENEWAL & COMPLIANCE COMMAND CENTRE',
+      title: 'ศูนย์แจ้งเตือนรวม',
+      subtitle: 'เอกสารรถ • ตรวจรถ • ซ่อมบำรุง',
       status: 'สถานะเอกสาร',
       expired: 'หมดอายุ / ด่วน',
       near_expiry: 'ใกล้หมดอายุ',
@@ -2169,7 +2169,7 @@ export const dictionaries = {
       history: 'History',
       monitoring: 'Live Monitoring',
       pod: 'Proof of Delivery',
-      notifications: 'Compliance & Renewal',
+      notifications: 'Alerts Center',
       chat: 'Chat',
       jobs: 'Jobs',
       job: 'Job',
@@ -3916,8 +3916,8 @@ export const dictionaries = {
       unexpected_null: "No Data"
     },
     compliance: {
-      title: 'Compliance & Renewal',
-      subtitle: 'RENEWAL & COMPLIANCE COMMAND CENTRE',
+      title: 'Alerts Center',
+      subtitle: 'DOCUMENTS • INSPECTIONS • MAINTENANCE',
       status: 'Document Status',
       expired: 'Expired / Urgent',
       near_expiry: 'Near Expiry',

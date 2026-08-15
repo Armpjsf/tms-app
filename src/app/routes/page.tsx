@@ -18,7 +18,8 @@ import {
   FileSpreadsheet,
   ShieldCheck,
   Activity,
-  Target
+  Target,
+  AlertTriangle,
 } from "lucide-react"
 import {
   Dialog,
@@ -257,6 +258,31 @@ export default function RoutesPage() {
   return (
     <DashboardLayout>
       {/* Tactical Location Header */}
+      {(() => {
+        const incomplete = locations.filter(l => l.Is_Incomplete || l.Lat == null)
+        if (incomplete.length === 0) return null
+        return (
+          <div className="mb-6 p-5 rounded-2xl border border-amber-500/30 bg-amber-500/10">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="text-amber-500" size={18} />
+              <span className="font-bold text-amber-600">สถานที่ค้างเติมพิกัด — {incomplete.length} แห่ง</span>
+            </div>
+            <p className="text-sm text-muted-foreground mb-2">สถานที่เหล่านี้ยังไม่มีพิกัด/ลิงก์แผนที่ครบ — คลิกเพื่อค้นหาแล้วเข้าไปเติม</p>
+            <div className="flex flex-wrap gap-2">
+              {incomplete.slice(0, 30).map((l) => (
+                <button
+                  key={l.Location_ID}
+                  onClick={() => setSearchQuery(l.Name)}
+                  className="px-3 py-1 rounded-lg bg-amber-500/15 text-amber-700 text-xs font-medium hover:bg-amber-500/25 transition-colors"
+                >
+                  {l.Name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
+
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 bg-background/60 backdrop-blur-3xl p-8 rounded-3xl border border-border/5 shadow-xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
 
