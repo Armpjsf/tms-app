@@ -18,7 +18,7 @@ export async function parseFuelReceiptWithAI(base64Image: string, mimeType: stri
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
   const prompt = `
     Analyze this gas/fuel station receipt image and extract the following information in JSON format:

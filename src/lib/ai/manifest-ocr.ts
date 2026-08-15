@@ -18,7 +18,7 @@ export async function parseManifestWithAI(base64Image: string, mimeType: string)
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
   const prompt = `
     Analyze this delivery note/manifest image and extract the following information in JSON format:

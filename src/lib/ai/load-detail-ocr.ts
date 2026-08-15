@@ -32,7 +32,7 @@ export async function parseLoadDetailWithAI(base64Image: string, mimeType: strin
   if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
   const prompt = `
 คุณคือระบบอ่านเอกสาร "ใบจัดสาย / Load Detail" ของบริษัทขนส่ง (ภาษาไทย)

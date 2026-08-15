@@ -75,7 +75,7 @@ export async function geocodeAddress(address: string, context?: string): Promise
     if (!apiKey) return null;
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
         const prompt = `Convert this Thai address into a searchable string for OpenStreetMap (districts, roads, landmarks only). 
         Address: "${addr}"
         Respond ONLY with the cleaned searchable string. Do not include company legal tags like Co., Ltd. or บริษัท.
