@@ -55,6 +55,28 @@ export async function createFuelLog(data: FuelFormData) {
       return { success: false, message: `Failed to create log: ${error.message}` }
     }
 
+    // Keep the vehicle's live odometer fresh from each fuel entry (drivers already
+    // enter it), so tire lifespan / next-service / reminders stay accurate without
+    // manual updates. Only ever move the odometer forward.
+    if (data.Vehicle_Plate && data.Mileage && data.Mileage > 0) {
+      try {
+        const { data: veh } = await supabase
+          .from('Master_Vehicles')
+          .select('Current_Mileage')
+          .eq('Vehicle_Plate', data.Vehicle_Plate)
+          .maybeSingle()
+        const current = Number(veh?.Current_Mileage) || 0
+        if (data.Mileage > current) {
+          await supabase
+            .from('Master_Vehicles')
+            .update({ Current_Mileage: Math.round(data.Mileage) })
+            .eq('Vehicle_Plate', data.Vehicle_Plate)
+        }
+      } catch (e) {
+        console.error('[Fuel] Odometer sync failed:', e)
+      }
+    }
+
     // Trigger Intelligence Analysis
     analyzeFuelLog(logId).catch(err => console.error("Fuel analysis failed:", err))
 
