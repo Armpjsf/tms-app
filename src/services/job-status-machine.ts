@@ -351,7 +351,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     } catch { /* ignore */ }
     const sigFallback = job.Signature_Url ? job.Signature_Url.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tms-app-five.vercel.app';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tms-e-pod.vercel.app';
 
     // Build a per-drop section: SO + destination + that drop's OWN photos + signature.
     let dropCount: number;
