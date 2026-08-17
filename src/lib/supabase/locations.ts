@@ -32,36 +32,57 @@ export async function getAllLocations(page?: number, limit?: number, query?: str
   try {
     const isAdminUser = await isAdmin()
     const supabase = isAdminUser ? createAdminClient() : await createClient()
-    let qb = supabase.from('Master_Locations').select('*', { count: 'exact' })
-
-    if (page && limit) {
-      const from = (page - 1) * limit
-      qb = qb.range(from, from + limit - 1)
-    }
-
-    if (query) {
-      qb = qb.or(`Name.ilike.%${query}%,Phone.ilike.%${query}%`)
-    }
 
     const userBranchId = await getUserBranchId()
     const isSuper = await isSuperAdmin()
 
+    // Resolve which branch (if any) constrains the query, honouring the
+    // caller's branch selection for super admins and the user's own branch
+    // otherwise. Non-super users without a branch see nothing.
+    let branchFilter: string | null = null
     if (!isSuper) {
       if (userBranchId && userBranchId !== 'All') {
-        qb = qb.eq('Branch_ID', userBranchId)
+        branchFilter = userBranchId
       } else {
         return { data: [], count: 0 }
       }
     } else {
       const targetBranch = branchId || userBranchId
-      if (targetBranch && targetBranch !== 'All') {
-        qb = qb.eq('Branch_ID', targetBranch)
-      }
+      if (targetBranch && targetBranch !== 'All') branchFilter = targetBranch
     }
 
-    const { data, error, count } = await qb.order('Name', { ascending: true })
-    if (error) return { data: [], count: 0 }
-    return { data: data || [], count: count || 0 }
+    // Build a filtered query builder (search + branch) from scratch each call,
+    // so paging can issue several independent requests.
+    const buildQuery = () => {
+      let q = supabase.from('Master_Locations').select('*', { count: 'exact' })
+      if (query) q = q.or(`Name.ilike.%${query}%,Phone.ilike.%${query}%`)
+      if (branchFilter) q = q.eq('Branch_ID', branchFilter)
+      return q.order('Name', { ascending: true })
+    }
+
+    // Explicit page/limit → single ranged page (kept for callers that paginate).
+    if (page && limit) {
+      const from = (page - 1) * limit
+      const { data, error, count } = await buildQuery().range(from, from + limit - 1)
+      if (error) return { data: [], count: 0 }
+      return { data: data || [], count: count || 0 }
+    }
+
+    // No pagination requested → return ALL matching rows. Supabase caps a single
+    // response at 1000 rows, so page through in chunks until exhausted (711+
+    // locations today would otherwise be silently truncated).
+    const CHUNK = 1000
+    const all: Location[] = []
+    let total = 0
+    for (let from = 0; ; from += CHUNK) {
+      const { data, error, count } = await buildQuery().range(from, from + CHUNK - 1)
+      if (error) return { data: all, count: all.length }
+      total = count || total
+      if (!data || data.length === 0) break
+      all.push(...(data as Location[]))
+      if (data.length < CHUNK) break
+    }
+    return { data: all, count: total || all.length }
   } catch {
     return { data: [], count: 0 }
   }

@@ -59,6 +59,7 @@ export default function RoutesPage() {
   const { selectedBranch } = useBranch()
 
   const [locations, setLocations] = useState<Location[]>([])
+  const [totalCount, setTotalCount] = useState(0)
   const [branches, setBranches] = useState<Branch[]>([])
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -81,11 +82,13 @@ export default function RoutesPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     const [locData, branchData, adminStatus] = await Promise.all([
-      getAllLocations(1, 100, searchQuery, selectedBranch),
+      // No page/limit → fetch ALL matching locations (was capped at 100).
+      getAllLocations(undefined, undefined, searchQuery, selectedBranch),
       getBranches(),
       isAdmin()
     ])
     setLocations(locData.data)
+    setTotalCount(locData.count)
     setBranches(branchData)
     setIsAdminUser(adminStatus)
     setLoading(false)
@@ -356,6 +359,13 @@ export default function RoutesPage() {
                 />
             </div>
         </div>
+        {!loading && (
+          <p className="mt-3 ml-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            {searchQuery
+              ? `พบ ${locations.length.toLocaleString()} รายการ`
+              : `ทั้งหมด ${totalCount.toLocaleString()} รายการ`}
+          </p>
+        )}
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
