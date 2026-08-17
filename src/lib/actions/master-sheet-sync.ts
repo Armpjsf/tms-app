@@ -334,6 +334,7 @@ function resolveCustId(job: any): number | string {
     if (idStr.includes('อินไลน์') || idStr.includes('inline') || nameStr.includes('อินไลน์') || nameStr.includes('inline')) return 60
     if (idStr.includes('คิวพลัส') || idStr.includes('qplus') || nameStr.includes('คิวพลัส') || nameStr.includes('qplus')) return 55
     if (idStr.includes('siam') || idStr.includes('สยามรุ่งเรือง') || nameStr.includes('siam') || nameStr.includes('สยามรุ่งเรือง')) return 20
+    if (idStr.includes('pcg') || nameStr.includes('pcg')) return 125
     const code = masterCustomerCode(job.Customer_ID)
     return code ? Number(code) : 20
 }
@@ -500,6 +501,17 @@ export function getJobTabName(
       || SIAM_CUSTOMER_IDS.has(normCustId)) {
     const siamTab = existingTabs.find(t => t.includes('สยามรุ่งเรือง'))
     if (siamTab) return siamTab
+  }
+
+  // PCG customer (รหัสลูกค้า 125) -> dedicated "PCG" tab. Must come before the
+  // Unicord fallback below, which otherwise swallows every unmatched customer.
+  const PCG_CUSTOMER_IDS = new Set(['125'])
+  if (normCustName.includes('pcg')
+      || (custCode && PCG_CUSTOMER_IDS.has(custCode))
+      || PCG_CUSTOMER_IDS.has(normCustId)) {
+    // Exact "PCG" is the ledger tab; never the "DASH_PCG" dashboard tab.
+    const pcgTab = existingTabs.find(t => t.trim().toUpperCase() === 'PCG')
+    if (pcgTab) return pcgTab
   }
 
   // Multi-customer tab (Unicord + 4 new customers) -> "ยูนิคอร์ด" tab
