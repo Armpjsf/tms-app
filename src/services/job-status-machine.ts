@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logActivity } from "@/lib/supabase/logs";
 import { revalidatePath } from "next/cache";
 import { isCompleted } from "@/lib/constants/job-status";
+import { calculateJobEmissions } from "@/lib/utils/esg-utils";
 
 // ชุดสถานะที่ใช้งานจริง (operational) — ตัด alias ที่ไม่เคยถูกเขียน/ไม่มีในข้อมูลออก
 // (เดิมมี Pending, En Route, En-Route, Arrived เดี่ยว, Complete, Failed ที่ไม่ถูกใช้จริง)
@@ -282,7 +283,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     // Fetch job details
     const { data: job, error: jobErr } = await supabase
       .from('Jobs_Main')
-      .select('Job_ID, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Photo_Proof_Url, Signature_Url, Customer_ID, Actual_Delivery_Time, Delivery_Date, Delivery_Notified_At, original_destinations_json, POD_Drops_Json')
+      .select('Job_ID, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Vehicle_Type, Est_Distance_KM, Photo_Proof_Url, Signature_Url, Customer_ID, Branch_ID, Actual_Delivery_Time, Delivery_Date, Delivery_Notified_At, original_destinations_json, POD_Drops_Json')
       .eq('Job_ID', jobId)
       .single();
 
@@ -392,6 +393,33 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       ? '\n\n📸 หลักฐานการจัดส่ง (POD):\n' + job.Photo_Proof_Url.split(',').map((url: string, index: number) => `🔗 รูปที่ ${index + 1}: ${url.trim()}`).join('\n')
       : '';
 
+    // Carbon footprint summary for this trip (TGO / อบก. standard). Normalize the
+    // vehicle type ("4" → "4-Wheel", etc.) so it maps to the emission-factor keys;
+    // no recorded fuel volume → distance-estimated (Scope 3).
+    const normalizeVehicleType = (v: unknown): string => {
+      const s = String(v ?? '').trim().toLowerCase()
+      if (!s) return 'default'
+      if (s.includes('motor') || s.includes('มอเตอร์')) return 'Motorcycle'
+      if (s.startsWith('10')) return '10-Wheel'
+      if (s.startsWith('6')) return '6-Wheel'
+      if (s.startsWith('4')) return '4-Wheel'
+      if (s === '4-wheel' || s === '6-wheel' || s === '10-wheel') return v as string
+      return 'default'
+    }
+    // Round-trip distance (×2): the vehicle drives to the destination and back,
+    // so fuel burned — and therefore emissions — reflect the return leg too.
+    const roundTripKm = (Number(job.Est_Distance_KM) || 0) * 2
+    let carbonText = ''
+    if (roundTripKm > 0) {
+      const esg = calculateJobEmissions(roundTripKm, null, normalizeVehicleType(job.Vehicle_Type))
+      carbonText = [
+        ``,
+        `🌱 คาร์บอนฟุตพริ้นต์เที่ยวนี้ (มาตรฐาน อบก.):`,
+        `   ระยะทางไป-กลับ ~${roundTripKm.toLocaleString()} กม. • ปล่อย ~${esg.co2EmissionsKg.toLocaleString()} kgCO₂e`,
+        `   เทียบเท่าปลูกต้นไม้ ~${esg.treesEquivalentToOffset.toLocaleString()} ต้น เพื่อชดเชย`,
+      ].join('\n')
+    }
+
     const message = [
       `📦 [ยืนยันการส่งมอบสินค้าสำเร็จ]`,
       `--------------------------------`,
@@ -402,6 +430,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       ``,
       `📦 รายการจุดส่ง (${dropCount} ดรอป):`,
       dropText + flatPhotoText,
+      carbonText,
       ``,
       `🌐 ติดตามสถานะและเอกสารเพิ่มเติม:`,
       `🔗 ${appUrl}/track/${job.Job_ID}`
@@ -410,12 +439,11 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     // Find recipient customers. Each target carries both LINE ids (one per bot);
     // pushToCustomerActive picks the right id for whichever bot is active now.
     //
-    // NOTE: Regular Admins (Role 2) are intentionally NOT notified via LINE here.
-    // They already receive a free in-app Web Push on Delivered/Completed via
-    // notifyAdminJobStatus() (see app/mobile/jobs/actions.ts). Keeping them on
-    // LINE double-charged the limited 300-msg/month quota for no benefit, so the
-    // LINE completion push is reserved for the external customer (plus a Super
-    // Admin monitoring copy — see below).
+    // NOTE: Regular Admins (Role 2) normally receive completion alerts via a free
+    // in-app Web Push (notifyAdminJobStatus(), see app/mobile/jobs/actions.ts) and
+    // are NOT put on LINE, to spare the limited 300-msg/month quota.
+    // *** TEMPORARY (TILOG booth): Role 2 is currently ALSO notified via LINE —
+    // see the admin-monitor block below for how to revert. ***
     type CustTarget = { Line_User_ID?: string | null; Line_User_ID_2?: string | null };
     const targets: CustTarget[] = [];
 
@@ -449,21 +477,34 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       } catch { /* ignore and proceed */ }
     }
 
-    // Super Admin (Role 1) monitoring copy: while the owner is testing the LINE
-    // flow they want to see EVERY customer's completion notification. This is a
-    // deliberate, self-managed opt-in — to stop receiving these, clear the admin's
-    // Line_User_ID in Master_Users (Supabase). Only Role 1, not all admins, and
-    // routed through pushToCustomerActive so it follows the active-bot / fallback
-    // logic (super admins only ever link bot 1, so it falls back to bot 1).
+    // Admin monitoring copy, routed through pushToCustomerActive so it follows the
+    // active-bot / fallback logic (admins only ever link bot 1, so it falls back
+    // to bot 1). To stop receiving these, clear the admin's Line_User_ID in
+    // Master_Users (Supabase).
+    //   • Super Admin (Role 1): receives EVERY branch's completion (monitoring).
+    //   • Admin (Role 2): receives ONLY completions for its OWN branch, matched
+    //     against the job's Branch_ID.
+    //
+    // ┌─── TEMPORARY (TILOG booth event) ────────────────────────────────────┐
+    // │ Role 2 (Admin) LINE alerts are enabled for the TILOG booth, scoped to │
+    // │ the admin's branch. This intentionally spends the limited             │
+    // │ 300-msg/month LINE quota. TO REVERT AFTER THE BOOTH: drop 2 from the   │
+    // │ .in([1, 2]) below (back to .eq('Role_ID', 1)) and remove the branch    │
+    // │ filter, then restore the "Role 2 not notified" note above.            │
+    // └───────────────────────────────────────────────────────────────────────┘
     try {
-      const { data: superAdmins } = await supabase
+      const { data: adminMonitors } = await supabase
         .from('Master_Users')
-        .select('Line_User_ID')
-        .eq('Role_ID', 1)
+        .select('Line_User_ID, Role_ID, Branch_ID')
+        .in('Role_ID', [1, 2]) // TEMPORARY: [1] normally; 2 added for TILOG booth
         .not('Line_User_ID', 'is', null);
 
-      superAdmins?.forEach((a: { Line_User_ID: string | null }) => {
-        if (a.Line_User_ID) targets.push({ Line_User_ID: a.Line_User_ID });
+      adminMonitors?.forEach((a: { Line_User_ID: string | null; Role_ID: number | null; Branch_ID: string | number | null }) => {
+        if (!a.Line_User_ID) return;
+        // Role 1 → all branches; Role 2 → only its own branch matches the job.
+        const branchOk = Number(a.Role_ID) === 1
+          || (job.Branch_ID != null && String(a.Branch_ID) === String(job.Branch_ID));
+        if (branchOk) targets.push({ Line_User_ID: a.Line_User_ID });
       });
     } catch { /* ignore and proceed */ }
 
