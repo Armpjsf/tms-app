@@ -185,7 +185,8 @@ export function PlanningClient({
             "รหัสงาน": "JOB-001",
             "วันที่แผน": selectedDate || "",
             "ลูกค้า": templateCustomerId || "CUST-001",
-            "เส้นทาง": "R-001",
+            "ต้นทาง": "คลังสินค้า สุราษฎร์ธานี",
+            "ปลายทาง": "ท่าเรือ กรุงเทพฯ",
             "รหัสคนขับ": "DRV-001",
             "ทะเบียนรถ": "80-1234 กทม.",
             "น้ำหนักสินค้า": 1500,
@@ -250,17 +251,22 @@ export function PlanningClient({
             })
         }
 
-        const maxRows = Math.max(filteredRoutes.length, matchedPairs.length)
+        // Reference list of unique locations (ต้นทาง/ปลายทางใช้ร่วมกันได้ ไม่ต้องแยกคอลัมน์)
+        const locationList = Array.from(new Set(
+            filteredRoutes.flatMap(r => [r?.Origin?.trim(), r?.Destination?.trim()])
+                .filter((v): v is string => Boolean(v))
+        ))
+
+        const maxRows = Math.max(locationList.length, matchedPairs.length)
         const dataSheetContent = []
 
         for (let i = 0; i < maxRows; i++) {
-            const r = filteredRoutes[i]
             const pair = matchedPairs[i]
             const d = pair?.driver
             const v = pair?.vehicle
-            
+
             dataSheetContent.push({
-                "ชื่อเส้นทาง (Route Name)": r?.Route_Name || "",
+                "สถานที่ (Location)": locationList[i] || "",
                 " ": "", // Spacer
                 "รหัสคนขับ (Driver ID)": d?.Driver_ID || "",
                 "ชื่อคนขับ (Driver Name)": d?.Driver_Name || "",
@@ -271,10 +277,10 @@ export function PlanningClient({
         }
 
         const ws2 = utils.json_to_sheet(dataSheetContent)
-        
+
         // Auto-size columns for DATA sheet to make it readable
         const wscols = [
-            {wch: 30}, // ชื่อเส้นทาง (Route Name)
+            {wch: 30}, // สถานที่ (Location)
             {wch: 5},  // Spacer 1
             {wch: 15}, // รหัสคนขับ (Driver ID)
             {wch: 25}, // ชื่อคนขับ (Driver Name)
