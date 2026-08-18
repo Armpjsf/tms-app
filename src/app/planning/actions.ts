@@ -612,7 +612,63 @@ export async function createBulkJobs(
     return String(val)
   }
 
-  const cleanData = jobs.map(j => {
+  // Master-sheet grouping: แถวหลัก (มีรหัสงาน/ลูกค้า) = 1 job, แถวรองที่ใส่แค่ปลายทาง
+  // (เว้นว่างคอลัมน์อื่น) = ดรอปถัดไปของ job แถวบน → รวมเป็น multi-drop งานเดียว
+  // ทำงานเฉพาะเมื่อเปิด checkbox "จัดกลุ่ม" (shouldGroup) เพื่อไม่กระทบไฟล์แบบ 1 แถว = 1 งาน
+  const groupMasterSheetRows = (rows: Partial<JobFormData>[]): Partial<JobFormData>[] => {
+    const DEST_KEYS = ['Dest_Location', 'destination', 'ปลายทาง', 'ส่งที่']
+    const ORIGIN_KEYS = ['Origin_Location', 'origin', 'ต้นทาง', 'รับที่']
+    const IDENTITY_KEYS = ['Job_ID', 'id', 'รหัสงาน', 'Customer_ID', 'cust_id', 'รหัสลูกค้า', 'Customer_Name', 'customer', 'ลูกค้า', 'ชื่อลูกค้า']
+
+    const norm = (s: string) => s.toLowerCase().replace(/\s+/g, '_')
+    const findKey = (row: Record<string, unknown>, keys: string[]) => {
+      const rowKeys = Object.keys(row)
+      for (const key of keys) {
+        const foundKey = rowKeys.find(k => norm(k) === norm(key))
+        if (foundKey) return foundKey
+      }
+      return undefined
+    }
+    const rawGet = (row: Record<string, unknown>, keys: string[]) => {
+      const foundKey = findKey(row, keys)
+      if (foundKey) {
+        const v = row[foundKey]
+        if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim()
+      }
+      return undefined
+    }
+    const appendDrop = (target: Record<string, unknown>, keys: string[], value: string) => {
+      const existingKey = findKey(target, keys) || keys[keys.length - 1]
+      const current = target[existingKey] ? String(target[existingKey]).trim() : ''
+      target[existingKey] = current ? `${current} → ${value}` : value
+    }
+
+    const result: Partial<JobFormData>[] = []
+    let last: Record<string, unknown> | null = null
+    for (const row of rows) {
+      const rec = row as Record<string, unknown>
+      const hasIdentity = IDENTITY_KEYS.some(k => rawGet(rec, [k]) !== undefined)
+      const dest = rawGet(rec, DEST_KEYS)
+      const origin = rawGet(rec, ORIGIN_KEYS)
+
+      if (!hasIdentity && last && (dest || origin)) {
+        // แถวรอง = ดรอปถัดไป: ต่อปลายทาง (และ/หรือ ต้นทาง) เข้ากับ job แถวบน
+        if (dest) appendDrop(last, DEST_KEYS, dest)
+        if (origin) appendDrop(last, ORIGIN_KEYS, origin)
+        continue
+      }
+      if (!hasIdentity && !dest && !origin) continue // ข้ามแถวว่างล้วน
+
+      const copy = { ...rec }
+      result.push(copy as Partial<JobFormData>)
+      last = copy
+    }
+    return result
+  }
+
+  const sourceRows = options.shouldGroup ? groupMasterSheetRows(jobs) : jobs
+
+  const cleanData = sourceRows.map(j => {
     const data = normalizeData(j)
     const driverId = data.Driver_ID as string
     const vehiclePlate = data.Vehicle_Plate as string

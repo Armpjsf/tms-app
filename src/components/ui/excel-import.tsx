@@ -256,7 +256,7 @@ export function ExcelImport({
                     {groupingLabel}
                   </Label>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70">
-                    Auto-merges SOs for the same driver & optimizes route
+                    แถวที่เว้นว่างข้อมูลหลัก = ดรอปถัดไปของงานแถวบน
                   </p>
                 </div>
               </div>

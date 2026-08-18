@@ -500,7 +500,7 @@ export function PlanningClient({
                                 }
                                 title={t('planning.import_title') || 'Import Jobs'}
                                 onImport={(data, options) => createBulkJobs(data, branchId === 'All' ? null : branchId, options)}
-                                groupingLabel="จัดกลุ่มใบสั่งซื้อ (Group SO by Car/Driver)"
+                                groupingLabel="รวมหลายดรอปเป็นงานเดียว (แถวรองใส่แค่ปลายทาง)"
                                 showDraftOption={true}
                                 customTemplateButton={
                                     <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-2xl border border-border/10">
