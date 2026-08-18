@@ -247,9 +247,20 @@ export async function getJobsByStatus(status: string): Promise<Job[]> {
   }
 }
 
+// A customer filter value may be a single id, 'All', empty, or a comma-separated
+// list of ids (multi-select). Returns the concrete ids to filter on ([] = no
+// filter / All).
+function parseCustomerIds(value?: string | null): string[] {
+  if (!value) return []
+  return value
+    .split(',')
+    .map(s => s.trim())
+    .filter(s => s.length > 0 && s !== 'All')
+}
+
 export async function getAllJobs(
-  page = 1, 
-  limit = 50, 
+  page = 1,
+  limit = 50,
   query = '',
   status = '', // Add status parameter
   startDate = '', // Add startDate parameter
@@ -276,9 +287,14 @@ export async function getAllJobs(
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        // STRICT ISOLATION: Apply customer filter first if a specific customer is selected
-        if (providedCustomerId && providedCustomerId !== 'All') {
-            dbQuery = dbQuery.eq('Customer_ID', providedCustomerId)
+        // STRICT ISOLATION: Apply customer filter first if specific customer(s)
+        // are selected. providedCustomerId may be a single id or a comma-separated
+        // list (multi-select) — one → eq, many → in.
+        const custIds = parseCustomerIds(providedCustomerId)
+        if (custIds.length > 0) {
+            dbQuery = custIds.length === 1
+                ? dbQuery.eq('Customer_ID', custIds[0])
+                : dbQuery.in('Customer_ID', custIds)
         } else if (!isSuper) {
             // No customer selected — enforce branch isolation for non-super admins
             if (branchId && branchId !== 'All') {
@@ -418,9 +434,13 @@ export async function getJobStatsSummary(query = '', startDate = '', endDate = '
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
     } else {
-        // STRICT ISOLATION: Apply customer filter first if a specific customer is selected
-        if (providedCustomerId && providedCustomerId !== 'All') {
-            dbQuery = dbQuery.eq('Customer_ID', providedCustomerId)
+        // STRICT ISOLATION: specific customer(s) selected → filter to them.
+        // providedCustomerId may be a comma-separated multi-select list.
+        const custIds = parseCustomerIds(providedCustomerId)
+        if (custIds.length > 0) {
+            dbQuery = custIds.length === 1
+                ? dbQuery.eq('Customer_ID', custIds[0])
+                : dbQuery.in('Customer_ID', custIds)
         } else if (!isSuper) {
             // No customer selected — enforce branch isolation for non-super admins
             if (branchId && branchId !== 'All') {

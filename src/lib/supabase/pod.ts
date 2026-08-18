@@ -84,7 +84,9 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
       .neq('Job_Status', 'Cancelled')
 
     if (effectiveCustomer) {
-        dbQuery = dbQuery.eq('Customer_ID', effectiveCustomer)
+        // effectiveCustomer may be a comma-separated multi-select list.
+        const ids = effectiveCustomer.split(',').map(s => s.trim()).filter(Boolean)
+        dbQuery = ids.length > 1 ? dbQuery.in('Customer_ID', ids) : dbQuery.eq('Customer_ID', ids[0] || effectiveCustomer)
     }
 
     if (customerId) {
@@ -140,7 +142,9 @@ export async function getPODStats(dateFrom?: string, dateTo?: string, customerFi
       .neq('Job_Status', 'Cancelled')
 
     if (effectiveCustomer) {
-        dbQuery = dbQuery.eq('Customer_ID', effectiveCustomer)
+        // effectiveCustomer may be a comma-separated multi-select list.
+        const ids = effectiveCustomer.split(',').map(s => s.trim()).filter(Boolean)
+        dbQuery = ids.length > 1 ? dbQuery.in('Customer_ID', ids) : dbQuery.eq('Customer_ID', ids[0] || effectiveCustomer)
     }
 
     if (customerId) {

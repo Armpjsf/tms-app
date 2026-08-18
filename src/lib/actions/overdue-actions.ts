@@ -43,9 +43,11 @@ export async function getOverdueJobs(branchId?: string, customerId?: string): Pr
             query = query.eq('Branch_ID', branchId)
         }
         // Honor the dashboard's customer filter so admins scoped to a customer
-        // aren't bothered about other customers' overdue jobs.
+        // aren't bothered about other customers' overdue jobs. Supports a
+        // comma-separated multi-select list.
         if (customerId && customerId !== 'All') {
-            query = query.eq('Customer_ID', customerId)
+            const ids = customerId.split(',').map(s => s.trim()).filter(Boolean)
+            query = ids.length > 1 ? query.in('Customer_ID', ids) : query.eq('Customer_ID', ids[0] || customerId)
         }
 
         const { data, error } = await query

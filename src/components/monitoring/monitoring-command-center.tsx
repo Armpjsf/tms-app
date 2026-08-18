@@ -76,6 +76,20 @@ export function MonitoringCommandCenter({
 }: MonitoringCommandCenterProps) {
     const { t } = useLanguage()
     const { selectedCustomer, customers } = useCustomer()
+
+    // Global customer filter supports multi-select ('All' or comma-separated ids).
+    const customerFilterIds = useMemo(
+        () => (selectedCustomer && selectedCustomer !== 'All'
+            ? selectedCustomer.split(',').map(s => s.trim()).filter(Boolean)
+            : []),
+        [selectedCustomer]
+    )
+    const customerFilterNames = useMemo(
+        () => customerFilterIds
+            .map(id => customers.find(c => c.Customer_ID === id)?.Customer_Name)
+            .filter((n): n is string => !!n),
+        [customerFilterIds, customers]
+    )
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [filter, setFilter] = useState<'all' | 'jobs' | 'drivers' | 'alerts' | 'health'>('all')
@@ -258,11 +272,11 @@ export function MonitoringCommandCenter({
     const driversWithGPS = useMemo(() => {
         return drivers
             .filter(d => {
-                // Customer Selector filter
-                if (selectedCustomer && selectedCustomer !== 'All') {
+                // Customer Selector filter (multi-select): keep the driver if it
+                // serves ANY of the selected customers.
+                if (customerFilterNames.length > 0) {
                     const customersForDriver = driverToCustomerMap[d.Driver_ID] || []
-                    const activeCustName = customers.find(c => c.Customer_ID === selectedCustomer)?.Customer_Name
-                    if (!activeCustName || !customersForDriver.includes(activeCustName)) {
+                    if (!customerFilterNames.some(n => customersForDriver.includes(n))) {
                         return false
                     }
                 }
@@ -287,12 +301,12 @@ export function MonitoringCommandCenter({
                 return { ...d, status: isOnline ? 'Online' : 'Offline' }
             })
             .sort((a, b) => (a.status === 'Online' ? -1 : 1))
-    }, [drivers, searchQuery, showPinnedOnly, pinnedCustomerNames, driverToCustomerMap, selectedCustomer, customers])
+    }, [drivers, searchQuery, showPinnedOnly, pinnedCustomerNames, driverToCustomerMap, customerFilterNames])
 
     const filteredJobs = useMemo(() => {
         return jobs.filter(j => {
-            // Customer Selector filter
-            if (selectedCustomer && selectedCustomer !== 'All' && j.Customer_ID !== selectedCustomer) {
+            // Customer Selector filter (multi-select)
+            if (customerFilterIds.length > 0 && !(j.Customer_ID && customerFilterIds.includes(j.Customer_ID))) {
                 return false
             }
 
@@ -305,7 +319,7 @@ export function MonitoringCommandCenter({
             }
             return matchesSearch
         })
-    }, [jobs, searchQuery, showPinnedOnly, pinnedCustomerNames, selectedCustomer])
+    }, [jobs, searchQuery, showPinnedOnly, pinnedCustomerNames, customerFilterIds])
 
     const alertCount = filteredJobs.filter(j => j.Job_Status === 'SOS' || j.Job_Status === 'Failed').length
 

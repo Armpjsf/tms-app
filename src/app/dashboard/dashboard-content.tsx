@@ -44,13 +44,19 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   
   
   const customers = searchParams.customers ? searchParams.customers.split(',') : []
-  
-  if (selectedCustomerId && selectedCustomerId !== 'All') {
-      const custName = await getCustomerName(selectedCustomerId)
-      if (custName) {
-          // Override dashboard-specific multi-select to prioritize global header selection
+
+  // Global header customer filter — 'All' or a comma-separated multi-select list.
+  const selectedCustomerIds = (selectedCustomerId && selectedCustomerId !== 'All')
+      ? selectedCustomerId.split(',').map(s => s.trim()).filter(Boolean)
+      : []
+  if (selectedCustomerIds.length > 0) {
+      // Override the dashboard's own multi-select with the header selection.
+      // Resolve ids → names for the name-based aggregation filter (.in Customer_Name).
+      const names = (await Promise.all(selectedCustomerIds.map(id => getCustomerName(id))))
+          .filter((n): n is string => !!n)
+      if (names.length > 0) {
           customers.length = 0
-          customers.push(custName)
+          customers.push(...names)
       }
   }
   
@@ -64,7 +70,9 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   try {
     customerMode = await isCustomer()
     custId = (await getCustomerId()) ?? null
-    const activeCustomerId = customerMode ? custId : (selectedCustomerId && selectedCustomerId !== 'All' ? selectedCustomerId : null)
+    // Single id → precise id filter; multi-select → rely on the customerNames
+    // array above (id-based widgets fall back to branch-level for multi).
+    const activeCustomerId = customerMode ? custId : (selectedCustomerIds.length === 1 ? selectedCustomerIds[0] : null)
 
     const results = await Promise.allSettled([
       getExecutiveDashboardUnified(currentBranchId, start || undefined, end || undefined, customers, activeCustomerId),
@@ -125,7 +133,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
   // Fetch Live Fleet GPS Status
   let fleetStatus: DashboardClientProps["fleetStatus"] = [];
   try {
-    const rawFleetStatus = await getActiveFleetStatus(currentBranchId, customerMode ? custId : (selectedCustomerId && selectedCustomerId !== 'All' ? selectedCustomerId : null))
+    const rawFleetStatus = await getActiveFleetStatus(currentBranchId, customerMode ? custId : (selectedCustomerIds.length === 1 ? selectedCustomerIds[0] : null))
     fleetStatus = rawFleetStatus
       .filter((driver): driver is typeof driver & { Driver_ID: string } => Boolean(driver.Driver_ID))
       .map((driver) => ({

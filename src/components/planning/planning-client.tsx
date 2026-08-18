@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { 
@@ -107,6 +107,21 @@ export function PlanningClient({
     const [searchQuery, setSearchQuery] = useState(urlQuery)
     const { t } = useLanguage()
     const { selectedCustomer } = useCustomer()
+
+    // The global customer filter may hold one id, 'All', or a comma-separated
+    // multi-select list. Derive a matcher: empty set = no filter (show all).
+    const customerFilterSet = useMemo(
+        () => new Set(
+            selectedCustomer && selectedCustomer !== 'All'
+                ? selectedCustomer.split(',').map(s => s.trim()).filter(Boolean)
+                : []
+        ),
+        [selectedCustomer]
+    )
+    const matchesCustomer = useCallback(
+        (id: string | null | undefined) => customerFilterSet.size === 0 || (id != null && customerFilterSet.has(id)),
+        [customerFilterSet]
+    )
 
     // Sync external query to internal search state
     useEffect(() => {
@@ -287,8 +302,8 @@ export function PlanningClient({
 
     const filteredTodayJobs = useMemo(() => {
         let base = todayJobs
-        if (selectedCustomer && selectedCustomer !== 'All') {
-            base = base.filter(j => j.Customer_ID === selectedCustomer)
+        if (customerFilterSet.size > 0) {
+            base = base.filter(j => matchesCustomer(j.Customer_ID))
         }
         if (searchQuery) {
             const q = searchQuery.toLowerCase()
@@ -318,15 +333,15 @@ export function PlanningClient({
             })
         }
         return base
-    }, [todayJobs, selectedCustomer, searchQuery])
+    }, [todayJobs, customerFilterSet, matchesCustomer, searchQuery])
 
     const filteredJobs = useMemo(() => {
         let base = view === 'requests' ? requestedJobs : filteredTodayJobs.filter(j => j.Job_Status !== 'Requested')
         
-        if (view === 'requests' && selectedCustomer && selectedCustomer !== 'All') {
-            base = base.filter(j => j.Customer_ID === selectedCustomer)
+        if (view === 'requests' && customerFilterSet.size > 0) {
+            base = base.filter(j => matchesCustomer(j.Customer_ID))
         }
-        
+
         if (view === 'requests' && searchQuery) {
             const q = searchQuery.toLowerCase()
             base = base.filter(j => 
@@ -336,10 +351,10 @@ export function PlanningClient({
         }
         
         return base
-    }, [filteredTodayJobs, requestedJobs, view, selectedCustomer, searchQuery])
+    }, [filteredTodayJobs, requestedJobs, view, customerFilterSet, matchesCustomer, searchQuery])
 
     const calculatedStats = useMemo(() => {
-        if (!selectedCustomer || selectedCustomer === 'All') {
+        if (customerFilterSet.size === 0) {
             return stats
         }
         const total = filteredTodayJobs.length
@@ -347,14 +362,14 @@ export function PlanningClient({
         const inProgress = filteredTodayJobs.filter(j => j.Job_Status === 'In Transit' || j.Job_Status === 'In Progress' || j.Job_Status === 'Arrived Pickup' || j.Job_Status === 'Arrived Dropoff').length
         const pending = filteredTodayJobs.filter(j => j.Job_Status === 'New' || j.Job_Status === 'Assigned' || j.Job_Status === 'Requested' || j.Job_Status === 'Pending' || j.Job_Status === 'Draft').length
         return { total, pending, inProgress, delivered }
-    }, [stats, filteredTodayJobs, selectedCustomer])
+    }, [stats, filteredTodayJobs, customerFilterSet])
 
     const requestCount = useMemo(() => {
-        if (selectedCustomer && selectedCustomer !== 'All') {
-            return requestedJobs.filter(j => j.Customer_ID === selectedCustomer).length
+        if (customerFilterSet.size > 0) {
+            return requestedJobs.filter(j => matchesCustomer(j.Customer_ID)).length
         }
         return requestedJobs.length
-    }, [requestedJobs, selectedCustomer])
+    }, [requestedJobs, customerFilterSet, matchesCustomer])
 
     return (
         <motion.div 

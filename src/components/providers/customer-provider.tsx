@@ -27,7 +27,15 @@ const CustomerContext = createContext<CustomerContextType>({
   currentUserCustomerId: null
 })
 
-function CustomerParamSync({ 
+// A selection is valid when it is 'All' or a comma-separated list whose every
+// token is a known customer id (supports the multi-select filter).
+function isValidCustomerSelection(value: string, customers: Customer[]): boolean {
+  if (value === 'All') return true
+  const ids = value.split(',').map(s => s.trim()).filter(Boolean)
+  return ids.length > 0 && ids.every(id => customers.some(c => c.Customer_ID === id))
+}
+
+function CustomerParamSync({
   onParamFound,
   customers 
 }: { 
@@ -38,7 +46,8 @@ function CustomerParamSync({
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search)
       const custParam = params.get('customer')
-      if (custParam && (custParam === 'All' || customers.some(c => c.Customer_ID === custParam))) {
+      // Accept 'All' or a comma-separated list where every id is known (multi-select).
+      if (custParam && isValidCustomerSelection(custParam, customers)) {
           onParamFound(custParam)
       }
     }
@@ -74,9 +83,9 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         setIsCustomerUser(sessionInfo.isCustomerUser)
         setCurrentUserCustomerId(sessionInfo.customerId)
         
-        // Sync with cookie or URL
+        // Sync with cookie or URL (value may be a comma-separated multi-select list)
         const savedCustomer = Cookies.get("selectedCustomer")
-        if (savedCustomer && (savedCustomer === 'All' || fetchedCustomers.some((c: Customer) => c.Customer_ID === savedCustomer))) {
+        if (savedCustomer && isValidCustomerSelection(savedCustomer, fetchedCustomers)) {
             setSelectedCustomerState(prev => prev === 'All' ? savedCustomer : prev)
         }
     } catch (error) {
