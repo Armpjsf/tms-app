@@ -447,6 +447,12 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     type CustTarget = { Line_User_ID?: string | null; Line_User_ID_2?: string | null };
     const targets: CustTarget[] = [];
 
+    // Telegram: เก็บ chat_id ปลายทางแยกจาก LINE (ใช้ routing กฎเดียวกัน)
+    //   ลูกค้า → Telegram_Chat_ID ของลูกค้ารายนั้น (ส่วนตัว)
+    //   Super Admin (Role 1) → ลูกค้าทั้งระบบ; Admin (Role 2) → เฉพาะสาขาตัวเอง
+    // ใช้ query แยก + try/catch เอง เพื่อไม่ให้พังตอนคอลัมน์ยังไม่มี (SQL ยังไม่รัน)
+    const telegramChatIds = new Set<string>();
+
     if (job.Customer_ID) {
       // Check Master_Customers first (has both bot ids)
       try {
@@ -508,6 +514,45 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       });
     } catch { /* ignore and proceed */ }
 
+    // ── Telegram targets (routing เดียวกับ LINE ด้านบน) ──
+    // 1) ลูกค้าเจ้าของงาน
+    if (job.Customer_ID) {
+      try {
+        const { data: c } = await supabase
+          .from('Master_Customers')
+          .select('Telegram_Chat_ID')
+          .eq('Customer_ID', job.Customer_ID)
+          .maybeSingle();
+        if (c?.Telegram_Chat_ID) telegramChatIds.add(String(c.Telegram_Chat_ID));
+      } catch { /* คอลัมน์อาจยังไม่มี → ข้าม */ }
+
+      try {
+        const { data: uc } = await supabase
+          .from('Master_Users')
+          .select('Telegram_Chat_ID')
+          .eq('Customer_ID', job.Customer_ID)
+          .not('Telegram_Chat_ID', 'is', null)
+          .maybeSingle();
+        if (uc?.Telegram_Chat_ID) telegramChatIds.add(String(uc.Telegram_Chat_ID));
+      } catch { /* ข้าม */ }
+    }
+
+    // 2) แอดมินที่รับผิดชอบ: Role 1 → ทุกสาขา, Role 2 → เฉพาะสาขาของงาน
+    try {
+      const { data: tgAdmins } = await supabase
+        .from('Master_Users')
+        .select('Telegram_Chat_ID, Role_ID, Branch_ID')
+        .in('Role_ID', [1, 2])
+        .not('Telegram_Chat_ID', 'is', null);
+
+      tgAdmins?.forEach((a: { Telegram_Chat_ID: string | null; Role_ID: number | null; Branch_ID: string | number | null }) => {
+        if (!a.Telegram_Chat_ID) return;
+        const branchOk = Number(a.Role_ID) === 1
+          || (job.Branch_ID != null && String(a.Branch_ID) === String(job.Branch_ID));
+        if (branchOk) telegramChatIds.add(String(a.Telegram_Chat_ID));
+      });
+    } catch { /* ข้าม */ }
+
     // Deduplicate by the primary (bot 1) id so the same person in both tables
     // isn't notified twice.
     const seen = new Set<string>();
@@ -519,8 +564,8 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       return !!(t.Line_User_ID || t.Line_User_ID_2);
     });
 
-    if (uniqueTargets.length === 0) {
-      console.log(`[Notification] No bound Line users to notify for job completion.`);
+    if (uniqueTargets.length === 0 && telegramChatIds.size === 0) {
+      console.log(`[Notification] No bound LINE/Telegram users to notify for job completion.`);
       return;
     }
 
@@ -544,6 +589,15 @@ async function sendDeliveryCompletionNotification(jobId: string) {
 
     for (const target of uniqueTargets) {
       await pushToCustomerActive(target, message);
+    }
+
+    // Telegram: ส่งข้อความเดียวกันไปยัง chat_id ที่ผูกไว้ (ส่วนตัว/รายคน) — ฟรี ไม่กินโควต้า LINE
+    if (telegramChatIds.size > 0) {
+      const { sendTelegramText } = await import('@/lib/integrations/telegram');
+      console.log(`[Notification] Sending Telegram completion to ${telegramChatIds.size} chat(s)...`);
+      await Promise.allSettled(
+        Array.from(telegramChatIds).map(id => sendTelegramText(id, message))
+      );
     }
 
   } catch (err) {

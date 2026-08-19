@@ -13,6 +13,7 @@ import { createUser, updateUser, deleteUser, UserData, getCurrentUserRole, creat
 import { Customer } from "@/lib/supabase/customers"
 import { fetchCustomerList } from "@/lib/actions/customer-fetcher"
 import { ExcelImport } from "@/components/ui/excel-import"
+import { TelegramLinkButton } from "@/components/telegram/telegram-link-button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { MODULE_GROUPS } from "@/constants/permissions"
 import { useBranch } from "@/components/providers/branch-provider"
@@ -574,7 +575,16 @@ export default function UserSettingsPage() {
                             </Select>
                         </div>
                     </div>
- 
+
+                    {editingUser && (
+                        <div className="px-4 sm:px-6 pb-2">
+                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 block">
+                                แจ้งเตือนผ่าน Telegram
+                            </Label>
+                            <TelegramLinkButton kind="user" id={editingUser} label="ผูก Telegram แอดมิน" />
+                        </div>
+                    )}
+
                     <DialogFooter className="p-4 sm:p-6 border-t border-border bg-muted/20 gap-4 sm:gap-6 flex-row shrink-0">
                         <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-10 rounded-xl sm:rounded-2xl border-border text-muted-foreground hover:text-foreground uppercase tracking-normal text-sm sm:text-base font-bold font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
                         <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-12 sm:h-14 px-8 sm:px-12 rounded-xl sm:rounded-2xl gap-3 sm:gap-4 shadow-lg sm:min-w-[200px] text-base sm:text-lg tracking-normal bg-primary text-foreground border-0">

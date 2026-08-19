@@ -1,17 +1,26 @@
 /**
- * Telegram alert channel — ช่องแจ้งเตือนแอดมิน/dev เสริมจาก Web Push + LINE
+ * Telegram integration — ช่องแจ้งเตือนเสริมจาก Web Push + LINE
  *
- * ฟรี ไม่มีลิมิตโหดเหมือน LINE (300 pushes/เดือน) เหมาะเป็นช่องแจ้งเตือนภายในทีม
- * (SOS, สถานะงาน, IP ค้างอนุมัติ ฯลฯ). ทำงานแบบ opt-in: ถ้าไม่ตั้ง env ก็เงียบ (no-op)
+ * รองรับ 2 รูปแบบ:
+ *  1) กลุ่มแอดมินภายใน (env TELEGRAM_CHAT_ID) — sendTelegramAlert()
+ *  2) ส่วนตัวรายคน (chat_id ต่อ user/ลูกค้าใน DB) — sendTelegramText()
  *
- * ตั้งค่า:
- *   TELEGRAM_BOT_TOKEN  — token จาก @BotFather
- *   TELEGRAM_CHAT_ID    — chat/group id ที่จะให้บอทส่งเข้าไป
+ * ฟรี ไม่มีลิมิตแบบ LINE (300 pushes/เดือน). ทำงานแบบ opt-in: ถ้าไม่ตั้ง env token
+ * ทุกฟังก์ชันจะเป็น no-op เงียบๆ ไม่กระทบระบบเดิม
  *
- * วิธีหา chat id: เพิ่มบอทเข้ากลุ่ม แล้วเปิด
- *   https://api.telegram.org/bot<token>/getUpdates  → ดู chat.id
+ * ENV:
+ *   TELEGRAM_BOT_TOKEN     — token จาก @BotFather (จำเป็นสำหรับส่งทุกแบบ)
+ *   TELEGRAM_CHAT_ID       — chat/group id ของกลุ่มแอดมิน (สำหรับ sendTelegramAlert)
+ *   TELEGRAM_BOT_USERNAME  — username บอท (ไม่มี @) ใช้สร้างลิงก์ผูกบัญชี
+ *   TELEGRAM_WEBHOOK_SECRET— secret ตรวจสอบ webhook (ตั้งตอน setWebhook)
  */
 
+/** มี token → ส่งข้อความแบบเจาะ chat_id ได้ */
+export function hasTelegramBot(): boolean {
+    return !!process.env.TELEGRAM_BOT_TOKEN
+}
+
+/** มีทั้ง token + กลุ่มแอดมิน → sendTelegramAlert() ใช้งานได้ */
 export function isTelegramConfigured(): boolean {
     return !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID)
 }
@@ -21,30 +30,13 @@ function escapeMarkdown(text: string): string {
     return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, "\\$&")
 }
 
-type TelegramAlert = {
-    title: string
-    body?: string
-    /** ลิงก์ให้กดจากในแชท (เช่นลิงก์หน้า job) */
-    url?: string
-}
-
 /**
- * ส่งข้อความแจ้งเตือนเข้า Telegram — non-throwing เสมอ (คืน false ถ้าล้มเหลว/ไม่ได้ตั้งค่า)
+ * ส่งข้อความดิบไป chat_id ที่ระบุ — non-throwing เสมอ (คืน false ถ้าล้มเหลว)
  * ตั้งใจให้เรียกแบบ fire-and-forget โดยไม่บล็อก flow หลัก
  */
-export async function sendTelegramAlert(alert: TelegramAlert): Promise<boolean> {
-    if (!isTelegramConfigured()) return false
-
-    const token = process.env.TELEGRAM_BOT_TOKEN!
-    const chatId = process.env.TELEGRAM_CHAT_ID!
-
-    const lines = [`*${escapeMarkdown(alert.title)}*`]
-    if (alert.body) lines.push(escapeMarkdown(alert.body))
-    if (alert.url) {
-        const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || ""
-        const fullUrl = alert.url.startsWith("http") ? alert.url : `${base}${alert.url}`
-        if (fullUrl) lines.push(escapeMarkdown(fullUrl))
-    }
+async function sendRaw(chatId: string, text: string, useMarkdown: boolean): Promise<boolean> {
+    const token = process.env.TELEGRAM_BOT_TOKEN
+    if (!token || !chatId) return false
 
     try {
         const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -52,11 +44,10 @@ export async function sendTelegramAlert(alert: TelegramAlert): Promise<boolean> 
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 chat_id: chatId,
-                text: lines.join("\n"),
-                parse_mode: "MarkdownV2",
+                text,
+                ...(useMarkdown ? { parse_mode: "MarkdownV2" } : {}),
                 disable_web_page_preview: true,
             }),
-            // อย่าให้ค้างนาน — timeout 5s
             signal: AbortSignal.timeout(5000),
         })
         if (!res.ok) {
@@ -68,4 +59,48 @@ export async function sendTelegramAlert(alert: TelegramAlert): Promise<boolean> 
         console.warn("[TELEGRAM] sendMessage error:", e instanceof Error ? e.message : e)
         return false
     }
+}
+
+/** ส่งข้อความธรรมดา (ไม่ใช้ markdown) ไป chat_id — เหมาะกับข้อความยาว/มีอักขระพิเศษ เช่น แจ้งงาน */
+export async function sendTelegramText(chatId: string, text: string): Promise<boolean> {
+    return sendRaw(chatId, text, false)
+}
+
+type TelegramAlert = {
+    title: string
+    body?: string
+    /** ลิงก์ให้กดจากในแชท (เช่นลิงก์หน้า job) */
+    url?: string
+}
+
+/**
+ * ส่งแจ้งเตือน (markdown) เข้ากลุ่มแอดมินภายใน (env TELEGRAM_CHAT_ID)
+ */
+export async function sendTelegramAlert(alert: TelegramAlert): Promise<boolean> {
+    if (!isTelegramConfigured()) return false
+
+    const lines = [`*${escapeMarkdown(alert.title)}*`]
+    if (alert.body) lines.push(escapeMarkdown(alert.body))
+    if (alert.url) {
+        const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || ""
+        const fullUrl = alert.url.startsWith("http") ? alert.url : `${base}${alert.url}`
+        if (fullUrl) lines.push(escapeMarkdown(fullUrl))
+    }
+
+    return sendRaw(process.env.TELEGRAM_CHAT_ID!, lines.join("\n"), true)
+}
+
+/**
+ * สร้างลิงก์ผูกบัญชี Telegram (deep link) — ลูกค้า/แอดมินกด Start แล้ว webhook บันทึก chat_id
+ *   kind 'customer' → payload c_<Customer_ID>   บันทึกลง Master_Customers
+ *   kind 'user'     → payload u_<Username>      บันทึกลง Master_Users
+ * คืน null ถ้ายังไม่ได้ตั้ง TELEGRAM_BOT_USERNAME
+ */
+export function telegramLinkFor(kind: "customer" | "user", id: string): string | null {
+    const username = process.env.TELEGRAM_BOT_USERNAME
+    if (!username || !id) return null
+    const prefix = kind === "customer" ? "c_" : "u_"
+    // start payload อนุญาตเฉพาะ A-Za-z0-9_- (สูงสุด 64 ตัว)
+    const safeId = String(id).replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 60)
+    return `https://t.me/${username}?start=${prefix}${safeId}`
 }

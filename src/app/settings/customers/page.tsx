@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { ExcelExport } from "@/components/ui/excel-export"
+import { TelegramLinkButton } from "@/components/telegram/telegram-link-button"
 import { createBulkCustomers, getAllCustomers, createCustomer, updateCustomer, deleteCustomer } from "@/lib/supabase/customers"
 import { getExecutiveKPIs } from "@/lib/supabase/analytics"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -444,6 +445,11 @@ export default function CustomersSettingsPage() {
                             className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-primary/10 tracking-normal"
                         />
                     </div>
+                    {editingCustomer && (
+                      <div className="ml-2">
+                        <TelegramLinkButton kind="customer" id={formData.Customer_ID || ""} label="ผูก Telegram ลูกค้า" />
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-10">
