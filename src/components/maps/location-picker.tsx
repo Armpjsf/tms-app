@@ -25,6 +25,9 @@ import { cn } from '@/lib/utils'
 
 // Thailand centroid — sensible default view when no point is chosen yet.
 const TH_CENTER: [number, number] = [13.7563, 100.5018]
+// Thailand bounding box [minLon, minLat, maxLon, maxLat] — used to constrain
+// autocomplete so it stops suggesting places on the other side of the planet.
+const TH_BBOX = { minLon: 97.3, minLat: 5.5, maxLon: 105.7, maxLat: 20.6 }
 
 const pinIcon = L.icon({
   iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -48,6 +51,7 @@ type PhotonFeature = {
     state?: string
     postcode?: string
     country?: string
+    countrycode?: string
   }
 }
 
@@ -184,19 +188,51 @@ export default function LocationPicker({
       abortRef.current = ctrl
       setSearching(true)
       try {
-        // lat/lon bias toward Thailand centre so local places rank first.
-        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lang=default&lat=${TH_CENTER[0]}&lon=${TH_CENTER[1]}`
+        // Photon: bias to Thailand centre AND clip to the Thailand bbox, then
+        // keep only TH results — this is what stops the flood of foreign places.
+        const bbox = `${TH_BBOX.minLon},${TH_BBOX.minLat},${TH_BBOX.maxLon},${TH_BBOX.maxLat}`
+        const url =
+          `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8&lang=default` +
+          `&lat=${TH_CENTER[0]}&lon=${TH_CENTER[1]}&bbox=${bbox}`
         const res = await fetch(url, { signal: ctrl.signal })
-        if (!res.ok) return
-        const data = await res.json()
-        const feats: PhotonFeature[] = data?.features || []
-        setSuggestions(
-          feats.map((f) => ({
-            label: labelFromFeature(f),
-            lat: f.geometry.coordinates[1],
-            lng: f.geometry.coordinates[0],
-          })).filter((s) => s.label)
-        )
+        let results: Suggestion[] = []
+        if (res.ok) {
+          const data = await res.json()
+          const feats: PhotonFeature[] = data?.features || []
+          results = feats
+            // Only keep Thai results (Photon has no countrycodes filter param).
+            .filter((f) => !f.properties.countrycode || f.properties.countrycode.toUpperCase() === 'TH')
+            .map((f) => ({
+              label: labelFromFeature(f),
+              lat: f.geometry.coordinates[1],
+              lng: f.geometry.coordinates[0],
+            }))
+            .filter((s) => s.label)
+        }
+
+        // Fallback: if Photon found little inside Thailand, ask Nominatim which
+        // DOES support a hard country filter (countrycodes=th) and is strong on
+        // Thai company / landmark names.
+        if (results.length < 3) {
+          try {
+            const nres = await fetch(
+              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&countrycodes=th&accept-language=th&addressdetails=1`,
+              { headers: { 'User-Agent': 'TMS-Logistics-Platform-v2 (contact@logispro-epod.app)' }, signal: ctrl.signal }
+            )
+            if (nres.ok) {
+              const ndata: Array<{ lat: string; lon: string; display_name: string; name?: string }> = await nres.json()
+              const seenLabels = new Set(results.map((r) => r.label))
+              for (const n of ndata) {
+                const label = (n.name && n.name.trim()) || n.display_name
+                if (!label || seenLabels.has(label)) continue
+                seenLabels.add(label)
+                results.push({ label, lat: parseFloat(n.lat), lng: parseFloat(n.lon) })
+              }
+            }
+          } catch { /* keep Photon results */ }
+        }
+
+        setSuggestions(results.slice(0, 8))
         setShowList(true)
       } catch {
         /* ignore */

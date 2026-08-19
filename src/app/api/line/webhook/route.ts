@@ -574,6 +574,22 @@ export async function POST(req: NextRequest) {
                         // (custLineIdField = Line_User_ID for bot 1, Line_User_ID_2 for bot 2.)
                         await supabase.from('Master_Customers').update({ [custLineIdField]: null }).eq(custLineIdField, targetId)
                         await supabase.from('Master_Customers').update({ [custLineIdField]: targetId }).eq('Customer_ID', customer.Customer_ID)
+
+                        // Also register this recipient (group or individual) in the
+                        // team-contacts table so a customer can accumulate 3-5 members
+                        // and/or a group chat, instead of overwriting a single field.
+                        // upsert on (Line_Target_ID, Bot_Index) keeps re-binds idempotent.
+                        try {
+                            await supabase.from('Customer_Line_Contacts').upsert({
+                                Customer_ID: customer.Customer_ID,
+                                Line_Target_ID: targetId,
+                                Target_Type: groupId ? 'group' : 'user',
+                                Bot_Index: botIndex,
+                                Contact_Name: groupId ? 'กลุ่มไลน์ทีมลูกค้า' : null,
+                                Active: true,
+                            }, { onConflict: 'Line_Target_ID,Bot_Index' })
+                        } catch { /* table may not exist yet → legacy field still bound */ }
+
                         await replyToUser(replyToken, `✅ ${groupId ? 'ไลน์กลุ่มนี้' : 'คุณ ' + customer.Customer_Name} ผูกบัญชีสำเร็จแล้วครับ!\nพิมพ์ HELP เพื่อดูเมนูได้เลย`)
                         continue
                     }

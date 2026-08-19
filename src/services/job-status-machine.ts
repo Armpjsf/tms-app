@@ -447,6 +447,12 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     type CustTarget = { Line_User_ID?: string | null; Line_User_ID_2?: string | null };
     const targets: CustTarget[] = [];
 
+    // Extra LINE recipients for this customer's team: a group chat and/or several
+    // individual members, stored one row each in Customer_Line_Contacts. Pushed
+    // after the legacy targets, de-duplicated against them.
+    type LineContactRow = { Line_Target_ID: string; Bot_Index?: number | null; Target_Type?: string | null; Active?: boolean | null };
+    let lineContacts: LineContactRow[] = [];
+
     // Telegram: เก็บ chat_id ปลายทางแยกจาก LINE (ใช้ routing กฎเดียวกัน)
     //   ลูกค้า → Telegram_Chat_ID ของลูกค้ารายนั้น (ส่วนตัว)
     //   Super Admin (Role 1) → ลูกค้าทั้งระบบ; Admin (Role 2) → เฉพาะสาขาตัวเอง
@@ -481,6 +487,18 @@ async function sendDeliveryCompletionNotification(jobId: string) {
           targets.push({ Line_User_ID: userCust.Line_User_ID });
         }
       } catch { /* ignore and proceed */ }
+
+      // Team recipients (LINE group + individual members). Wrapped in try/catch
+      // so completion notifications keep working even if the table isn't created
+      // yet (SQL migration run manually in Supabase).
+      try {
+        const { data: contacts } = await supabase
+          .from('Customer_Line_Contacts')
+          .select('Line_Target_ID, Bot_Index, Target_Type, Active')
+          .eq('Customer_ID', job.Customer_ID)
+          .eq('Active', true);
+        if (contacts && contacts.length > 0) lineContacts = contacts as LineContactRow[];
+      } catch { /* table may not exist yet → skip */ }
     }
 
     // Admin monitoring copy, routed through pushToCustomerActive so it follows the
@@ -564,7 +582,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       return !!(t.Line_User_ID || t.Line_User_ID_2);
     });
 
-    if (uniqueTargets.length === 0 && telegramChatIds.size === 0) {
+    if (uniqueTargets.length === 0 && telegramChatIds.size === 0 && lineContacts.length === 0) {
       console.log(`[Notification] No bound LINE/Telegram users to notify for job completion.`);
       return;
     }
@@ -585,10 +603,19 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     console.log(`[Notification] Sending completion notification for job ${jobId} to ${uniqueTargets.length} customer(s)...`);
 
     // Dynamically import to prevent circular dependencies
-    const { pushToCustomerActive } = await import('@/lib/integrations/line');
+    const { pushToCustomerActive, pushToContacts } = await import('@/lib/integrations/line');
 
     for (const target of uniqueTargets) {
       await pushToCustomerActive(target, message);
+    }
+
+    // Team recipients: LINE group + individual members. Skip any id already
+    // reached through a legacy Line_User_ID / Line_User_ID_2 above so nobody is
+    // messaged twice (and the 300/mo quota isn't double-spent).
+    if (lineContacts.length > 0) {
+      const legacyIds = uniqueTargets.flatMap(t => [t.Line_User_ID, t.Line_User_ID_2]);
+      const { sent } = await pushToContacts(lineContacts, message, legacyIds);
+      console.log(`[Notification] Sent completion to ${sent} team contact(s) for job ${jobId}.`);
     }
 
     // Telegram: ส่งข้อความเดียวกันไปยัง chat_id ที่ผูกไว้ (ส่วนตัว/รายคน) — ฟรี ไม่กินโควต้า LINE

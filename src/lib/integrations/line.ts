@@ -198,6 +198,45 @@ export async function pushToCustomerActive(
 }
 
 /**
+ * A LINE recipient row from Customer_Line_Contacts — a single team member or a
+ * team group chat, each bound through a specific Official Account (bot).
+ */
+export type LineContact = {
+  Line_Target_ID: string;
+  Bot_Index?: number | null;
+  Target_Type?: string | null;
+  Active?: boolean | null;
+};
+
+/**
+ * Pushes the same text to every active contact of a customer (LINE groups and
+ * individual members alike), each through the bot it was linked with.
+ *
+ * `skipIds` lets the caller pass ids it has already pushed to (e.g. the legacy
+ * Line_User_ID) so a member who is ALSO listed here isn't messaged twice and
+ * the limited quota isn't wasted. Returns how many pushes were sent.
+ */
+export async function pushToContacts(
+  contacts: LineContact[],
+  text: string,
+  skipIds: Array<string | null | undefined> = []
+): Promise<{ sent: number }> {
+  const skip = new Set(skipIds.filter(Boolean) as string[]);
+  const seen = new Set<string>();
+  let sent = 0;
+  for (const c of contacts) {
+    const id = c.Line_Target_ID;
+    if (!id || c.Active === false) continue;
+    if (skip.has(id) || seen.has(id)) continue;   // de-dupe against legacy + within list
+    seen.add(id);
+    const bot: BotIndex = c.Bot_Index === 2 ? 2 : 1;
+    const res = await pushToUser(id, text, bot);
+    if (res.success) sent++;
+  }
+  return { sent };
+}
+
+/**
  * Sends an IP approval template message with buttons to a LINE user.
  * Admin-facing feature — always uses bot 1.
  */

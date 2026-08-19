@@ -37,6 +37,7 @@ import { ExcelImport } from "@/components/ui/excel-import"
 import { ExcelExport } from "@/components/ui/excel-export"
 import { TelegramLinkButton } from "@/components/telegram/telegram-link-button"
 import { createBulkCustomers, getAllCustomers, createCustomer, updateCustomer, deleteCustomer } from "@/lib/supabase/customers"
+import { CustomerLineContacts } from "@/components/settings/customer-line-contacts"
 import { getExecutiveKPIs } from "@/lib/supabase/analytics"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
@@ -451,6 +452,13 @@ export default function CustomersSettingsPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Team of LINE recipients (group + individual members) */}
+                  {editingCustomer && formData.Customer_ID && (
+                    <div className="glass-panel p-5 rounded-2xl border-emerald-500/20 bg-emerald-500/5">
+                      <CustomerLineContacts customerId={formData.Customer_ID} />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-10">
                     <div className="space-y-4">

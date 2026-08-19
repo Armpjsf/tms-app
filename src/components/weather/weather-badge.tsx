@@ -16,6 +16,8 @@ type Props = {
     lon?: number | null
     date?: string | null // YYYY-MM-DD หรือ ISO
     className?: string
+    // compact = ชิปเล็กบรรทัดเดียว (อีโมจิ + อุณหภูมิ + โอกาสฝน) สำหรับการ์ด/ลิสต์
+    compact?: boolean
 }
 
 type Forecast = {
@@ -51,7 +53,7 @@ function toDateOnly(d?: string | null): string | null {
     return null
 }
 
-export function WeatherBadge({ lat, lon, date, className }: Props) {
+export function WeatherBadge({ lat, lon, date, className, compact }: Props) {
     const [forecast, setForecast] = useState<Forecast | null>(null)
     const [loading, setLoading] = useState(false)
     const [failed, setFailed] = useState(false)
@@ -104,6 +106,7 @@ export function WeatherBadge({ lat, lon, date, className }: Props) {
     if (failed) return null
 
     if (loading) {
+        if (compact) return null // keep cards/lists quiet while loading
         return (
             <div className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}>
                 <Loader2 size={12} className="animate-spin" />
@@ -116,6 +119,25 @@ export function WeatherBadge({ lat, lon, date, className }: Props) {
 
     const { emoji, label } = describe(forecast.code)
     const heavyRain = forecast.rainProb >= 60 || (forecast.code >= 61 && forecast.code <= 99)
+
+    // Compact chip — one line, fits inside a job card / tracking list row.
+    if (compact) {
+        return (
+            <div
+                className={cn(
+                    "inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-bold",
+                    heavyRain ? "bg-blue-500/10 border-blue-500/30 text-blue-600" : "bg-sky-500/5 border-sky-500/20 text-foreground",
+                    className
+                )}
+                title={`อากาศปลายทางวันส่ง: ${label} · ${forecast.tMin}–${forecast.tMax}°C · โอกาสฝน ${forecast.rainProb}%`}
+            >
+                <span className="text-sm leading-none" aria-hidden>{emoji}</span>
+                <span>{forecast.tMin}–{forecast.tMax}°C</span>
+                <span className={cn("opacity-70", heavyRain && "opacity-100")}>· ฝน {forecast.rainProb}%</span>
+                {heavyRain && <span className="uppercase tracking-wider">· เตรียมกันฝน</span>}
+            </div>
+        )
+    }
 
     return (
         <div

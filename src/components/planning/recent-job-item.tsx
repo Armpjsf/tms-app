@@ -14,6 +14,7 @@ import { Customer } from "@/lib/supabase/customers"
 import { Subcontractor } from "@/types/subcontractor"
 import { useLanguage } from "@/components/providers/language-provider"
 import { LineShareButton } from "@/components/admin/line-share-button"
+import { WeatherBadge } from "@/components/weather/weather-badge"
 
 type Props = {
   job: Job
@@ -131,6 +132,16 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
                     {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : t('common.no_data')}
                 </p>
             </div>
+        </div>
+
+        {/* พยากรณ์อากาศปลายทางวันส่ง (ชิปเล็ก) — โชว์เมื่อมีพิกัด+วันที่อยู่ในช่วง */}
+        <div className="mt-2 relative z-10">
+            <WeatherBadge
+                compact
+                lat={job.Delivery_Lat}
+                lon={job.Delivery_Lon}
+                date={job.Delivery_Date || job.Plan_Date}
+            />
         </div>
       </div>
 

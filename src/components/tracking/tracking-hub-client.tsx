@@ -39,6 +39,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useLanguage } from "@/components/providers/language-provider"
 import { LineShareButton } from "@/components/admin/line-share-button"
 import { AdminJobActions } from "@/components/admin/admin-job-actions"
+import { WeatherBadge } from "@/components/weather/weather-badge"
 
 interface TrackingHubClientProps {
   initialActiveJobs: PublicJobDetails[]
@@ -252,6 +253,8 @@ export function TrackingHubClient({ initialActiveJobs, customerMode = false }: T
                   <MapPin size={10} className="text-primary/50" />
                   <span className="truncate">{job.destination}</span>
                 </div>
+                {/* อากาศจุดส่งปลายทาง (ชิปเล็ก) — โชว์เมื่อมีพิกัด+วันที่อยู่ในช่วงพยากรณ์ */}
+                <WeatherBadge compact lat={job.dropoffLat} lon={job.dropoffLon} date={job.deliveryDate || job.planDate} />
                 <div className="flex items-center justify-between">
                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                       <Truck size={10} /> <span>{job.vehiclePlate}</span>

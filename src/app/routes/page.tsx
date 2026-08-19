@@ -45,6 +45,9 @@ import {
 } from "@/lib/supabase/locations"
 import { extractCoordsFromUrl, extractQueryTextFromUrl, buildGoogleMapLink } from "@/lib/utils"
 import { geocodeAddress, reverseGeocode } from "@/lib/ai/geocoding"
+import dynamic from "next/dynamic"
+import type { PickedLocation } from "@/components/maps/location-picker"
+const LocationPicker = dynamic(() => import("@/components/maps/location-picker"), { ssr: false })
 import { ExcelImport } from "@/components/ui/excel-import"
 import { ExcelExport } from "@/components/ui/excel-export"
 import { useBranch } from "@/components/providers/branch-provider"
@@ -78,6 +81,17 @@ export default function RoutesPage() {
     Branch_ID: "",
   }
   const [formData, setFormData] = useState<Partial<Location>>(emptyForm)
+  const [pickerOpen, setPickerOpen] = useState(false)
+
+  const handlePickerConfirm = (loc: PickedLocation) => {
+    setFormData(prev => ({
+      ...prev,
+      // เติมชื่อให้ก็ต่อเมื่อยังว่าง เพื่อไม่ทับชื่อที่ผู้ใช้พิมพ์ไว้
+      Name: prev.Name?.trim() ? prev.Name : (loc.name || prev.Name),
+      Lat: Number(loc.lat.toFixed(6)),
+      Lon: Number(loc.lng.toFixed(6)),
+    }))
+  }
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -442,13 +456,20 @@ export default function RoutesPage() {
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10 p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10">
-                    <div className="space-y-3 col-span-1 md:col-span-1 flex flex-col justify-end">
+                    <div className="space-y-3 col-span-1 md:col-span-1 flex flex-col justify-end gap-2">
                         <PremiumButton
                             type="button"
                             onClick={handleSmartFill}
                             className="w-full h-12 bg-primary/20 text-primary border border-primary/30 rounded-xl font-bold uppercase text-xs"
                         >
                             <Search className="w-4 h-4 mr-2" /> ค้นหา/เติมอัตโนมัติ
+                        </PremiumButton>
+                        <PremiumButton
+                            type="button"
+                            onClick={() => setPickerOpen(true)}
+                            className="w-full h-12 bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 rounded-xl font-bold uppercase text-xs"
+                        >
+                            <MapPin className="w-4 h-4 mr-2" /> เลือกบนแผนที่
                         </PremiumButton>
                     </div>
                     <div className="space-y-3">
@@ -488,6 +509,18 @@ export default function RoutesPage() {
             </div>
           </DialogContent>
       </Dialog>
+
+      {pickerOpen && (
+        <LocationPicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          initialLat={formData.Lat ?? undefined}
+          initialLng={formData.Lon ?? undefined}
+          initialName={formData.Name || ""}
+          onConfirm={handlePickerConfirm}
+          title={editingLocation ? "แก้ไขพิกัดสถานที่บนแผนที่" : "เลือกพิกัดสถานที่บนแผนที่"}
+        />
+      )}
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-40 glass-panel rounded-[4rem] border-border/5 group">
