@@ -55,7 +55,7 @@ const settingsSections = [
     titleFallback: { th: "ข้อมูลหลักสำหรับปฏิบัติงาน", en: "Master Data" },
     icon: Database,
     items: [
-      { labelKey: "settings.items.customers", descKey: "settings.items.customers_desc", path: "/settings/customers", permKey: "settings.items.customers" },
+      { labelKey: "settings.items.customers", descKey: "settings.items.customers_desc", path: "/settings/customers", permKey: "navigation.customers" },
       { labelKey: "settings.items.partners", descKey: "settings.items.partners_desc", path: "/settings/subcontractors", permKey: "settings.items.partners" },
       { labelKey: "settings.items.vehicles", descKey: "settings.items.vehicles_desc", path: "/settings/vehicle-types", permKey: "settings.items.vehicles" },
       { labelKey: "settings.items.fleet_standards", descKey: "settings.items.fleet_standards_desc", path: "/settings/fleet-standards", permKey: "settings.items.fleet_standards" },

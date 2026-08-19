@@ -21,6 +21,8 @@ import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Customer } from "@/lib/supabase/customers"
 import { AiSuggestionCard } from "@/components/planning/ai-suggestion-card"
+import dynamic from "next/dynamic"
+import type { PickedLocation } from "@/components/maps/location-picker"
 import { geocodeAddress } from "@/lib/ai/geocoding"
 import { extractCoordsFromUrl } from "@/lib/utils"
 import { getDrivingDistance, optimizeRouteSequence } from "@/lib/ai/distance"
@@ -41,6 +43,10 @@ import { getVehicleTypes, VehicleType as MasterVehicleType } from "@/lib/actions
 import { getExpenseTypes, ExpenseType } from "@/lib/supabase/master-data"
 import { FUEL_BASELINES } from "@/lib/constants/fuel-baselines"
 import { JobTimeline } from "./job-timeline"
+
+// Map picker modal is client-only (Leaflet) — load on demand to keep the
+// dialog bundle light and avoid SSR window access.
+const LocationPicker = dynamic(() => import("@/components/maps/location-picker"), { ssr: false })
 
 type LocationPoint = {
   name: string
@@ -735,6 +741,19 @@ export function JobDialog({
     navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  // Which location row (if any) has the map picker open.
+  // e.g. { kind: 'origin', index: 0 }
+  const [pickerTarget, setPickerTarget] = useState<{ kind: 'origin' | 'destination'; index: number } | null>(null)
+
+  const handlePickerConfirm = (loc: PickedLocation) => {
+    if (!pickerTarget) return
+    const { kind, index } = pickerTarget
+    const setName = kind === 'origin' ? updateOrigin : updateDestination
+    if (loc.name) setName(index, 'name', loc.name)
+    setName(index, 'lat', loc.lat.toFixed(6))
+    setName(index, 'lng', loc.lng.toFixed(6))
   }
 
   const handleGeocodeOrigin = async (index: number) => {
@@ -1779,6 +1798,18 @@ export function JobDialog({
                                             <SearchIcon className="w-6 h-6" />
                                         </Button>
                                     </div>
+                                    <div className="w-full sm:w-auto">
+                                        <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="outline"
+                                            className="h-14 w-14 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+                                            onClick={() => setPickerTarget({ kind: 'origin', index })}
+                                            title="เลือกบนแผนที่"
+                                        >
+                                            <MapPin className="w-6 h-6" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                             <div className="col-span-12 flex justify-end">
@@ -1869,6 +1900,18 @@ export function JobDialog({
                                             <SearchIcon className="w-6 h-6" />
                                         </Button>
                                     </div>
+                                    <div className="w-full sm:w-auto">
+                                        <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="outline"
+                                            className="h-14 w-14 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+                                            onClick={() => setPickerTarget({ kind: 'destination', index })}
+                                            title="เลือกบนแผนที่"
+                                        >
+                                            <MapPin className="w-6 h-6" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                             <div className="col-span-12 flex justify-end">
@@ -1886,6 +1929,24 @@ export function JobDialog({
                         </div>
                         ))}
                     </div>
+
+                    {/* Google-Maps-style map picker (free stack: Photon + Leaflet + Nominatim) */}
+                    {pickerTarget && (() => {
+                        const row = pickerTarget.kind === 'origin'
+                            ? origins[pickerTarget.index]
+                            : destinations[pickerTarget.index]
+                        return (
+                            <LocationPicker
+                                open={!!pickerTarget}
+                                onOpenChange={(o) => { if (!o) setPickerTarget(null) }}
+                                initialLat={row?.lat}
+                                initialLng={row?.lng}
+                                initialName={row?.name}
+                                onConfirm={handlePickerConfirm}
+                                title={pickerTarget.kind === 'origin' ? 'เลือกจุดรับสินค้าบนแผนที่' : 'เลือกจุดส่งสินค้าบนแผนที่'}
+                            />
+                        )
+                    })()}
 
                     <div className="h-px bg-border my-8" />
 
