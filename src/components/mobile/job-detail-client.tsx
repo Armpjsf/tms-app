@@ -13,6 +13,7 @@ import { JobActionButton } from "@/components/mobile/job-action-button"
 import { JobWorkflow } from "@/components/mobile/job-workflow"
 import { NavigationButton } from "@/components/mobile/navigation-button"
 import { RouteStrip } from "@/components/mobile/route-strip"
+import { WeatherBadge } from "@/components/weather/weather-badge"
 import { Job } from "@/lib/supabase/jobs"
 import { cn } from "@/lib/utils"
 import { fmtDateTH } from "@/lib/utils/date-th"
@@ -157,10 +158,25 @@ export function JobDetailClient({ job, success, initialTab = 'mission' }: JobDet
                             </div>
                         )}
                     </div>
+
+                    {/* พยากรณ์อากาศปลายทางในวันจัดส่ง (Open-Meteo, ฟรี) */}
+                    {(() => {
+                        const completedDrops = job?.Signature_Url ? job.Signature_Url.split(',').filter(Boolean).length : 0
+                        const totalDrop = Array.isArray(destinations) ? destinations.length : 1
+                        const currentDropIndex = Math.min(completedDrops, Math.max(totalDrop - 1, 0))
+                        const drop = Array.isArray(destinations) ? destinations[currentDropIndex] as { lat?: number; lng?: number } | undefined : undefined
+                        const wLat = drop?.lat ?? job?.Delivery_Lat
+                        const wLon = drop?.lng ?? job?.Delivery_Lon
+                        return (
+                            <WeatherBadge
+                                lat={wLat}
+                                lon={wLon}
+                                date={job?.Delivery_Date || job?.Plan_Date}
+                                className="mt-3"
+                            />
+                        )
+                    })()}
                 </div>
-
-
-
 
                 {job?.Notes && (
                     <div className="p-5 bg-amber-50/50 border border-amber-200/50 rounded-2xl">
