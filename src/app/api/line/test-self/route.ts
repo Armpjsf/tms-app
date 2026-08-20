@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/server'
-import { requireAdmin } from '@/services/permission-guards'
+import { isAdmin } from '@/lib/permissions'
 import { getLineClient, isBot2Configured, getActiveCustomerBot, type BotIndex } from '@/lib/integrations/line'
 
 /**
@@ -29,9 +29,7 @@ async function trySend(to: string, bot: BotIndex) {
 }
 
 export async function GET() {
-    try {
-        await requireAdmin()
-    } catch {
+    if (!(await isAdmin())) {
         return NextResponse.json({ success: false, error: 'admin only' }, { status: 403 })
     }
 
