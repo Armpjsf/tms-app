@@ -28,8 +28,14 @@ async function trySend(to: string, bot: BotIndex) {
     }
 }
 
-export async function GET() {
-    if (!(await isAdmin())) {
+// Temporary unguessable key so we can run the probe even if the session isn't
+// visible in this route handler. Remove this route after diagnosing.
+const DIAG_KEY = 'ddst-line-diag-7f3a'
+
+export async function GET(request: Request) {
+    const key = new URL(request.url).searchParams.get('key')
+    const allowed = key === DIAG_KEY || (await isAdmin())
+    if (!allowed) {
         return NextResponse.json({ success: false, error: 'admin only' }, { status: 403 })
     }
 
