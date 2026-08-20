@@ -187,45 +187,70 @@ export async function createBillingNote(
     }
 }
 
+// Sum the driver-side extra costs stored on a job (mirrors getJobTotal in the UI
+// so the saved payment matches exactly what the operator sees on screen).
+function sumDriverExtra(extraJson: unknown): number {
+    if (!extraJson) return 0
+    try {
+        const costs = typeof extraJson === 'string' ? JSON.parse(extraJson) : extraJson
+        if (!Array.isArray(costs)) return 0
+        return costs.reduce((s: number, c: { cost_driver?: string | number }) => s + (Number(c?.cost_driver) || 0), 0)
+    } catch {
+        return 0
+    }
+}
+
 export async function createDriverPayment(
-    jobIds: string[], 
-    driverName: string, 
+    jobIds: string[],
+    driverName: string,
     date: string
 ) {
     try {
         const hasAdminPrivileges = await isAdmin()
         const supabase = hasAdminPrivileges ? await createAdminClient() : await createClient()
 
-        // 1. Calculate Total Amount
+        if (!Array.isArray(jobIds) || jobIds.length === 0) {
+            return { success: false, error: 'ไม่มีงานที่เลือก' }
+        }
+
+        // 1. Fetch the selected jobs and keep ONLY those that are still unpaid.
+        // This is the server-side guard that prevents (a) paying jobs that were
+        // already settled by a concurrent action and (b) a stale client selection
+        // marking the wrong jobs as paid.
         const { data: jobs, error: jobsError } = await supabase
             .from('Jobs_Main')
-            .select('Cost_Driver_Total, Branch_ID')
+            .select('Job_ID, Cost_Driver_Total, extra_costs_json, Branch_ID, Driver_Payment_ID')
             .in('Job_ID', jobIds)
 
         if (jobsError) throw new Error("Failed to fetch jobs for calculation")
-        
-        const totalAmount = jobs?.reduce((sum: number, job: { Price_Cust_Total?: number, Cost_Driver_Total?: number, charge_cust?: number }) => sum + (job.Cost_Driver_Total || 0), 0) || 0
 
-        // 2. Generate Driver Payment ID (DP-YYYYMM-XXXX)
-        const dateObj = new Date()
-        const ym = dateObj.toISOString().slice(0, 7).replace('-', '') // 202402
-        const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
-        const paymentId = `DP-${ym}-${randomSuffix}`
-
-        // 3. Insert Driver Payment
-        const userBranchId = await getUserBranchId()
-        // Use Branch_ID from the first job if available, otherwise fallback to user's branch
-        let branchId = jobs?.[0]?.Branch_ID || userBranchId || 'HQ'
-        
-        // Normalize "All" branch
-        if (branchId === 'All') {
-            branchId = jobs?.[0]?.Branch_ID || 'HQ'
+        const unpaidJobs = (jobs || []).filter((j: { Driver_Payment_ID?: string | null }) => !j.Driver_Payment_ID)
+        if (unpaidJobs.length === 0) {
+            return { success: false, error: 'งานที่เลือกถูกทำจ่ายไปแล้ว (โปรดรีเฟรช)' }
         }
+        const payableIds = unpaidJobs.map((j: { Job_ID: string }) => j.Job_ID)
 
-        const { error: insertError } = await supabase
+        // Total = base driver cost + driver-side extra costs (matches the UI total).
+        const totalAmount = unpaidJobs.reduce(
+            (sum: number, job: { Cost_Driver_Total?: number; extra_costs_json?: unknown }) =>
+                sum + (Number(job.Cost_Driver_Total) || 0) + sumDriverExtra(job.extra_costs_json),
+            0
+        )
+
+        // 2. Generate a collision-resistant Driver Payment ID (DP-YYYYMM-XXXXXX).
+        const ym = new Date().toISOString().slice(0, 7).replace('-', '') // 202602
+        const rand = () => Math.floor(Math.random() * 1_000_000).toString().padStart(6, '0')
+        let paymentId = `DP-${ym}-${rand()}`
+
+        // 3. Insert Driver Payment (retry once on the unlikely ID collision).
+        const userBranchId = await getUserBranchId()
+        let branchId = unpaidJobs[0]?.Branch_ID || userBranchId || 'HQ'
+        if (branchId === 'All') branchId = unpaidJobs[0]?.Branch_ID || 'HQ'
+
+        const insertPayment = async (id: string) => supabase
             .from('Driver_Payments')
             .insert({
-                Driver_Payment_ID: paymentId,
+                Driver_Payment_ID: id,
                 Driver_Name: driverName,
                 Payment_Date: date,
                 Total_Amount: totalAmount,
@@ -235,17 +260,42 @@ export async function createDriverPayment(
                 Branch_ID: branchId
             })
 
+        let insertError = (await insertPayment(paymentId)).error
+        if (insertError && /duplicate|unique/i.test(insertError.message || '')) {
+            paymentId = `DP-${ym}-${rand()}`
+            insertError = (await insertPayment(paymentId)).error
+        }
         if (insertError) throw insertError
 
-        // 4. Update Jobs with Driver Payment ID
-        const { error: updateError } = await supabase
+        // 4. Claim the jobs: only flip rows that are STILL unpaid. Returns the rows
+        // actually claimed so we know exactly what this payment covers (prevents a
+        // race where two settlements target the same job).
+        const { data: claimed, error: updateError } = await supabase
             .from('Jobs_Main')
             .update({ Driver_Payment_ID: paymentId })
-            .in('Job_ID', jobIds)
+            .in('Job_ID', payableIds)
+            .is('Driver_Payment_ID', null)
+            .select('Job_ID')
 
-        if (updateError) {
-             throw updateError
+        if (updateError) throw updateError
+
+        const paidCount = claimed?.length || 0
+        // If nothing was actually claimed (someone else won the race), roll back the
+        // empty payment so we don't leave an orphan record.
+        if (paidCount === 0) {
+            await supabase.from('Driver_Payments').delete().eq('Driver_Payment_ID', paymentId)
+            return { success: false, error: 'งานที่เลือกถูกทำจ่ายไปแล้ว (โปรดรีเฟรช)' }
         }
+
+        // Persist withholding tax + net (best-effort: silently skipped if the
+        // columns don't exist yet, so payments never fail on this).
+        const WHT_RATE = 0.01
+        const withholding = Math.round(totalAmount * WHT_RATE)
+        const netAmount = totalAmount - withholding
+        await supabase
+            .from('Driver_Payments')
+            .update({ Withholding_Tax: withholding, Net_Amount: netAmount })
+            .eq('Driver_Payment_ID', paymentId)
 
         // Log Driver Payment creation
         await logActivity({
@@ -255,7 +305,7 @@ export async function createDriverPayment(
             details: {
                 driver: driverName,
                 total: totalAmount,
-                job_count: jobIds.length
+                job_count: paidCount
             }
         })
 
@@ -268,15 +318,15 @@ export async function createDriverPayment(
                 Total_Amount: totalAmount
             };
             
-            // Trigger sync in background
-            accountingService.syncDriverPaymentToBill(paymentData, (jobs as unknown as Job[]) || []).then(() => {
+            // Trigger sync in background (only the jobs actually claimed).
+            accountingService.syncDriverPaymentToBill(paymentData, (unpaidJobs as unknown as Job[]) || []).then(() => {
                 // Background sync
             });
         } catch {
             // Error triggering auto-sync
         }
 
-        return { success: true, id: paymentId }
+        return { success: true, id: paymentId, paidCount }
 
     } catch (e: unknown) {
         return { success: false, error: getErrorMessage(e) }

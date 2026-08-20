@@ -125,9 +125,12 @@ const navigation: NavGroup[] = [
     titleKey: "nav_groups.financial",
     titleFallback: { th: "การเงินและวางบิล", en: "Finance & Billing" },
     items: [
-      { titleKey: "navigation.billing_customer", href: "/billing/customer", icon: <Receipt size={20} /> },      
-      { titleKey: "navigation.billing_automation", href: "/billing/automation", icon: <Zap size={20} />, badge: "common.new", badgeColor: "yellow" },
+      // "วางบิลลูกค้า" (/billing/customer) is the customer-portal bill view and is
+      // redundant for admins — the invoices hub below already lists billing notes.
+      // Removed from the admin menu to end the duplication; the page still serves
+      // customers directly.
       { titleKey: "navigation.invoices", href: "/billing/invoices", icon: <FileText size={20} /> },
+      { titleKey: "navigation.billing_automation", href: "/billing/automation", icon: <Zap size={20} />, badge: "common.new", badgeColor: "yellow" },
       { titleKey: "navigation.payouts", href: "/billing/driver", icon: <Wallet size={20} /> },
     ],
   },

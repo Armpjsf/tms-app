@@ -205,18 +205,38 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                     >
                         {t('invoices.tab_ledger')} ({initialInvoices.length})
                     </button>
-                    <button 
+                    <button
                         onClick={() => setActiveTab('create')}
                         className={cn(
                             "px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
                             activeTab === 'create' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
                         )}
                     >
-                        สร้าง
+                        + ออกเอกสาร
                     </button>
                 </div>
             </div>
           </div>
+      </div>
+
+      {/* How the billing flow works — the two real-world steps, so the page reads
+          as one pipeline instead of two parallel document types. */}
+      <div className="mb-8 flex flex-col md:flex-row items-stretch gap-3">
+        <div className="flex-1 flex items-center gap-3 p-4 rounded-2xl border border-indigo-500/20 bg-indigo-500/5">
+            <span className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-black shrink-0">1</span>
+            <div>
+                <p className="font-black text-foreground text-sm">ออกใบแจ้งหนี้ (Excel) เพื่อตรวจสอบ</p>
+                <p className="text-xs text-muted-foreground">เลือกงานของลูกค้า → ส่ง Excel ให้ลูกค้าตรวจความถูกต้อง</p>
+            </div>
+        </div>
+        <div className="hidden md:flex items-center text-muted-foreground font-black">→</div>
+        <div className="flex-1 flex items-center gap-3 p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
+            <span className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-black shrink-0">2</span>
+            <div>
+                <p className="font-black text-foreground text-sm">ออกใบวางบิล (PDF) เพื่อเรียกเก็บ</p>
+                <p className="text-xs text-muted-foreground">เมื่อลูกค้ายืนยันถูกต้อง → ออกใบวางบิล PDF + ส่งเมลวางบิล</p>
+            </div>
+        </div>
       </div>
 
       {activeTab === 'create' ? (

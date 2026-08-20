@@ -138,7 +138,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
         const more = zeroPriceJobs.length > 5 ? `\n...และอีก ${zeroPriceJobs.length - 5} งาน` : ''
         const ok = confirm(
             `⚠️ มีงาน ${zeroPriceJobs.length} รายการที่ราคายังเป็น 0:\n${list}${more}\n\n` +
-            `แนะนำให้กด "ยิงค์ราคา" หรือใส่ราคาก่อนวางบิล\nยืนยันวางบิลทั้งที่ราคาเป็น 0 หรือไม่?`
+            `แนะนำให้กด "ดึงราคา" หรือใส่ราคาก่อนออกใบแจ้งหนี้\nยืนยันออกใบแจ้งหนี้ทั้งที่ราคาเป็น 0 หรือไม่?`
         )
         if (!ok) return
     }
