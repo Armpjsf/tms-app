@@ -174,27 +174,33 @@ export async function pushToUser(to: string, text: string, botIndex: BotIndex = 
 
 /**
  * Sends a push to a customer using whichever bot is active right now, picking
- * the LINE user id that matches that bot. Falls back to the other bot's id if
- * the customer has only linked one of the two Official Accounts, so they still
- * get notified during the "wrong" half of the month.
+ * the LINE user id that matches that bot. Falls back to the OTHER bot when the
+ * active one either isn't linked OR fails to send — e.g. it hit its monthly
+ * quota (429). Without this, the whole half-month owned by an exhausted bot
+ * would go silent even though the other bot still has quota. (Each id is only
+ * valid on its own Official Account, so we only retry when a second id exists.)
  */
 export async function pushToCustomerActive(
   cust: { Line_User_ID?: string | null; Line_User_ID_2?: string | null },
   text: string
 ) {
   const active = getActiveCustomerBot();
-  const primaryId = active === 2 ? cust.Line_User_ID_2 : cust.Line_User_ID;
-  if (primaryId) {
-    return pushToUser(primaryId, text, active);
-  }
-  // Customer hasn't linked the currently-active bot — use the other one so the
-  // notification still lands (it just draws from that bot's quota instead).
   const other: BotIndex = active === 2 ? 1 : 2;
+  const activeId = active === 2 ? cust.Line_User_ID_2 : cust.Line_User_ID;
   const otherId = active === 2 ? cust.Line_User_ID : cust.Line_User_ID_2;
-  if (otherId) {
-    return pushToUser(otherId, text, other);
+
+  // 1) Try the active bot with its own id.
+  if (activeId) {
+    const res = await pushToUser(activeId, text, active);
+    if (res.success) return res;
   }
-  return { success: false, error: 'customer has no linked LINE user id' };
+  // 2) Fall back to the other bot (covers "not linked to active bot" AND
+  //    "active bot failed / out of quota").
+  if (otherId) {
+    const res = await pushToUser(otherId, text, other);
+    if (res.success) return res;
+  }
+  return { success: false, error: 'no LINE id could be reached (missing id or all bots failed)' };
 }
 
 /**
