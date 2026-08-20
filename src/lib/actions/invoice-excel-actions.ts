@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/utils/supabase/server'
 import { CO2_COEFFICIENTS } from '@/lib/utils/esg-utils'
+import { getCarbonFactors } from '@/lib/actions/carbon-factors'
 import ExcelJS from 'exceljs'
 import { getSystemSetting } from './system-settings-actions'
 import { 
@@ -239,6 +240,9 @@ export async function exportInvoiceExcel(invoiceId: string) {
         let totalQuantity = 0
         let totalCO2 = 0
 
+        // Live TGO freight factors (editable in /settings/esg), loaded once.
+        const { freightPerKm = {} } = await getCarbonFactors()
+
         for (let index = 0; index < jobs.length; index++) {
             const job = jobs[index]
             const r = 10 + index
@@ -263,9 +267,12 @@ export async function exportInvoiceExcel(invoiceId: string) {
             row.getCell(5).value = origin || ''
             row.getCell(6).value = dest || asString(job.Route_Name)
             
-            // Carbon Footprint
+            // Carbon Footprint — live TGO freight factor per vehicle type
+            // (editable in /settings/esg; falls back to default when unknown).
             const effectiveDist = Number(job.Est_Distance_KM) || 12.5
-            const co2Value = Number((effectiveDist * CO2_COEFFICIENTS['default']).toFixed(2))
+            const vType = normalizeVehicleType(asString(job.Vehicle_Type))
+            const co2Coeff = freightPerKm[vType] ?? freightPerKm['default'] ?? CO2_COEFFICIENTS['default']
+            const co2Value = Number((effectiveDist * co2Coeff).toFixed(2))
             row.getCell(7).value = co2Value
             totalCO2 += co2Value
 

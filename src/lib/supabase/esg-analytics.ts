@@ -4,6 +4,7 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { getEffectiveBranchId, REVENUE_STATUSES, formatDateSafe } from './analytics-helpers'
 import { getCustomerId } from "@/lib/permissions"
 import { calculateJobEmissions, TGO_STANDARDS_METADATA } from '../utils/esg-utils'
+import { getCarbonFactors } from '@/lib/actions/carbon-factors'
 
 /**
  * ESG Intelligence Engine - TMS 2026 (TGO Standard Certified Edition)
@@ -107,6 +108,9 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
 
         const monthlyTrend: Record<string, number> = {}
 
+        // Live carbon factors (editable in /settings/esg), loaded once for the loop.
+        const factors = await getCarbonFactors()
+
         jobs.forEach((j: any) => {
             const vType = j.Vehicle_Type || 'default'
             const actualFuel: number | null = null // Actual_Fuel_Liters column not yet in DB
@@ -131,7 +135,7 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
             }
 
             validJobsCount++
-            const impact = calculateJobEmissions(dist, actualFuel, vType)
+            const impact = calculateJobEmissions(dist, actualFuel, vType, factors)
 
             totalFuelLiters += impact.fuelUsedLiters
             totalCo2Emissions += impact.co2EmissionsKg
