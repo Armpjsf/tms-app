@@ -22,6 +22,8 @@ import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
 import { InvoiceRowActions } from "@/components/billing/invoice-actions"
+import { BillingActions } from "@/components/billing/billing-actions"
+import { Mail } from "lucide-react"
 import { Job } from "@/lib/supabase/jobs"
 import { Customer } from "@/lib/supabase/customers"
 import {
@@ -41,6 +43,7 @@ interface Invoice {
   Invoice_ID: string
   Tax_Invoice_ID?: string
   Customer_Name: string
+  Customer_Email?: string | null
   Issue_Date?: string
   Due_Date?: string
   Grand_Total: number
@@ -421,7 +424,24 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
                                         </div>
                                     </td>
                                     <td className="px-6 py-2 text-center" onClick={(e) => e.stopPropagation()}>
-                                        <InvoiceRowActions id={inv.Invoice_ID} type={inv.Type} status={inv.Status} language={language} />
+                                        <div className="flex items-center justify-center gap-2">
+                                            {/* Step 2: once the invoice is confirmed (a billing note exists), let
+                                                the admin email the billing-note PDF straight from the hub. */}
+                                            {inv.Status !== 'Draft' && (
+                                                <BillingActions
+                                                    billingNoteId={inv.Invoice_ID}
+                                                    customerEmail={inv.Customer_Email || ""}
+                                                    customerName={inv.Customer_Name}
+                                                    hidePrint
+                                                    trigger={
+                                                        <button className="h-10 px-3 rounded-xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 hover:bg-indigo-500 hover:text-white transition-all flex items-center gap-1.5 text-xs font-bold" title="ส่งเมลวางบิล">
+                                                            <Mail className="h-4 w-4" /> ส่งเมล
+                                                        </button>
+                                                    }
+                                                />
+                                            )}
+                                            <InvoiceRowActions id={inv.Invoice_ID} type={inv.Type} status={inv.Status} language={language} />
+                                        </div>
                                     </td>
                                 </tr>
                             ))

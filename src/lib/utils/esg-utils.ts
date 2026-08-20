@@ -30,9 +30,9 @@ export type JobESGImpact = {
 }
 
 export const TGO_EMISSION_FACTORS: Record<string, number> = {
-    'Diesel_B7': 2.6335,   // ค่า EF อ้างอิงจาก อบก. สำหรับดีเซล B7 (kgCO2e/ลิตร)
-    'Gasoline_E10': 2.1815, // ค่า EF อ้างอิงจาก อบก. สำหรับเบนซิน E10 (kgCO2e/ลิตร)
-    'default': 2.6335
+    'Diesel_B7': 2.5504,   // อบก. Mobile Combustion ประกาศปี 2569 — ดีเซล B7 (kgCO2e/ลิตร)
+    'Gasoline_E10': 2.1815, // เบนซิน/แก๊สโซฮอล์ E10 (kgCO2e/ลิตร)
+    'default': 2.5504
 }
 
 export const VEHICLE_FUEL_MAP: Record<string, string> = {

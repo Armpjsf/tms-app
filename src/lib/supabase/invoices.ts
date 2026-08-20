@@ -33,6 +33,7 @@ export type Invoice = {
 type UnifiedInvoiceRow = {
   Invoice_ID: string
   Customer_Name: string
+  Customer_Email?: string | null
   Issue_Date?: string | null
   Due_Date?: string | null
   Grand_Total?: number
@@ -50,7 +51,7 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
     // 1. Fetch Invoices
     let invQuery = supabase
       .from('invoices')
-      .select('*, Master_Customers(Customer_Name)')
+      .select('*, Master_Customers(Customer_Name, Email)')
     
     if (branchId && branchId !== 'All') {
         invQuery = invQuery.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
@@ -86,17 +87,30 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
     ])
 
     // 3. Merge and Map
-    const mappedInvoices: UnifiedInvoiceRow[] = (invRes.data || []).map((inv: Partial<{ Invoice_ID: string, Issue_Date: string, Due_Date: string | null, Created_At: string, Grand_Total: number, Status: string, Master_Customers?: { Customer_Name?: string } }>) => ({
+    const mappedInvoices: UnifiedInvoiceRow[] = (invRes.data || []).map((inv: Partial<{ Invoice_ID: string, Issue_Date: string, Due_Date: string | null, Created_At: string, Grand_Total: number, Status: string, Master_Customers?: { Customer_Name?: string, Email?: string } }>) => ({
         ...inv,
         Invoice_ID: inv.Invoice_ID || '',
         Customer_Name: inv.Master_Customers?.Customer_Name || 'Unknown Customer',
+        Customer_Email: inv.Master_Customers?.Email || null,
         Created_At: inv.Created_At || '',
         Type: 'Invoice'
     }))
 
+    // Billing_Notes store only the customer name, so resolve emails in one lookup
+    // (needed for the "send billing email" action on the invoices hub).
+    const bnNames = Array.from(new Set((bnRes.data || []).map((b: { Customer_Name?: string }) => b.Customer_Name).filter(Boolean))) as string[]
+    const bnEmailMap = new Map<string, string>()
+    if (bnNames.length > 0) {
+        const { data: custs } = await supabase.from('Master_Customers').select('Customer_Name, Email').in('Customer_Name', bnNames)
+        for (const c of custs || []) {
+            if (c?.Customer_Name && c?.Email) bnEmailMap.set(c.Customer_Name, c.Email)
+        }
+    }
+
     const mappedBN: UnifiedInvoiceRow[] = (bnRes.data || []).map((bn: Partial<{ Billing_No: string, Billing_Note_ID?: string, Document_Date: string, Billing_Date?: string, Due_Date?: string, Created_At?: string, Customer_Name: string, Total_Amount: number, Status: string }>) => ({
         Invoice_ID: bn.Billing_Note_ID || '',
         Customer_Name: bn.Customer_Name || 'Unknown Customer',
+        Customer_Email: bn.Customer_Name ? (bnEmailMap.get(bn.Customer_Name) || null) : null,
         Issue_Date: bn.Billing_Date,
         Due_Date: bn.Due_Date,
         Grand_Total: bn.Total_Amount,
