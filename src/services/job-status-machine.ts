@@ -459,13 +459,28 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     // ใช้ query แยก + try/catch เอง เพื่อไม่ให้พังตอนคอลัมน์ยังไม่มี (SQL ยังไม่รัน)
     const telegramChatIds = new Set<string>();
 
-    if (job.Customer_ID) {
+    // Resolve the customer id even when the job only stored a customer NAME.
+    // Jobs created by typing the customer name (no linked id) would otherwise
+    // never reach the bound customer's LINE — a silent "bound but no alerts" bug.
+    let effectiveCustomerId: string | null = job.Customer_ID || null;
+    if (!effectiveCustomerId && job.Customer_Name) {
+      try {
+        const { data: cById } = await supabase
+          .from('Master_Customers')
+          .select('Customer_ID')
+          .eq('Customer_Name', job.Customer_Name)
+          .maybeSingle();
+        effectiveCustomerId = cById?.Customer_ID || null;
+      } catch { /* ignore */ }
+    }
+
+    if (effectiveCustomerId) {
       // Check Master_Customers first (has both bot ids)
       try {
         const { data: customer } = await supabase
           .from('Master_Customers')
           .select('Line_User_ID, Line_User_ID_2')
-          .eq('Customer_ID', job.Customer_ID)
+          .eq('Customer_ID', effectiveCustomerId)
           .maybeSingle();
 
         if (customer && (customer.Line_User_ID || customer.Line_User_ID_2)) {
@@ -479,7 +494,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
         const { data: userCust } = await supabase
           .from('Master_Users')
           .select('Line_User_ID')
-          .eq('Customer_ID', job.Customer_ID)
+          .eq('Customer_ID', effectiveCustomerId)
           .not('Line_User_ID', 'is', null)
           .maybeSingle();
 
@@ -495,7 +510,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
         const { data: contacts } = await supabase
           .from('Customer_Line_Contacts')
           .select('Line_Target_ID, Bot_Index, Target_Type, Active')
-          .eq('Customer_ID', job.Customer_ID)
+          .eq('Customer_ID', effectiveCustomerId)
           .eq('Active', true);
         if (contacts && contacts.length > 0) lineContacts = contacts as LineContactRow[];
       } catch { /* table may not exist yet → skip */ }
@@ -534,12 +549,12 @@ async function sendDeliveryCompletionNotification(jobId: string) {
 
     // ── Telegram targets (routing เดียวกับ LINE ด้านบน) ──
     // 1) ลูกค้าเจ้าของงาน
-    if (job.Customer_ID) {
+    if (effectiveCustomerId) {
       try {
         const { data: c } = await supabase
           .from('Master_Customers')
           .select('Telegram_Chat_ID')
-          .eq('Customer_ID', job.Customer_ID)
+          .eq('Customer_ID', effectiveCustomerId)
           .maybeSingle();
         if (c?.Telegram_Chat_ID) telegramChatIds.add(String(c.Telegram_Chat_ID));
       } catch { /* คอลัมน์อาจยังไม่มี → ข้าม */ }
@@ -548,7 +563,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
         const { data: uc } = await supabase
           .from('Master_Users')
           .select('Telegram_Chat_ID')
-          .eq('Customer_ID', job.Customer_ID)
+          .eq('Customer_ID', effectiveCustomerId)
           .not('Telegram_Chat_ID', 'is', null)
           .maybeSingle();
         if (uc?.Telegram_Chat_ID) telegramChatIds.add(String(uc.Telegram_Chat_ID));
