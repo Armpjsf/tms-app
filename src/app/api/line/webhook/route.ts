@@ -623,13 +623,16 @@ export async function POST(req: NextRequest) {
                     const adminUser = allAdminMatches?.[0] ?? null
 
                     if (adminUser && phone.toUpperCase() === 'ADMIN') {
-                        // Enforce unique binding: clear this targetId from other records first
+                        // Admin can link BOTH bots: each OA gives a different userId, so
+                        // store it in the column for the bot that sent this BIND
+                        // (Line_User_ID for bot 1, Line_User_ID_2 for bot 2).
+                        // Enforce unique binding: clear this targetId from other records first.
                         await Promise.all([
-                            supabase.from('Master_Customers').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
+                            supabase.from('Master_Customers').update({ [custLineIdField]: null }).eq(custLineIdField, targetId),
                             supabase.from('Master_Drivers').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
-                            supabase.from('Master_Users').update({ Line_User_ID: null }).eq('Line_User_ID', targetId),
+                            supabase.from('Master_Users').update({ [custLineIdField]: null }).eq(custLineIdField, targetId),
                         ])
-                        await supabase.from('Master_Users').update({ Line_User_ID: targetId }).eq('Username', adminUser.Username)
+                        await supabase.from('Master_Users').update({ [custLineIdField]: targetId }).eq('Username', adminUser.Username)
                         await replyToUser(replyToken, `✅ ยินดีต้อนรับ${groupId ? 'ไลน์กลุ่มนี้' : 'คุณ ' + adminUser.Name}!\nRole: ${adminUser.Role}\nผูกบัญชีสำเร็จแล้วครับ 🎉`)
                         continue
                     }
