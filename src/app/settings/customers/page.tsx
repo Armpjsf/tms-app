@@ -433,6 +433,31 @@ export default function CustomersSettingsPage() {
                       </div>
                     </div>
 
+                    {/* LINE Notification Toggle Feature */}
+                    <div className="p-6 rounded-[2rem] border-2 border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between shadow-lg">
+                      <div className="space-y-1">
+                        <Label className="text-lg font-black uppercase tracking-wide text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                          การแจ้งเตือนทาง LINE (LINE Notifications)
+                        </Label>
+                        <p className="text-sm text-muted-foreground font-bold opacity-80">
+                          เปิดเพื่อส่งข้อความแจ้งเตือนสถานะส่งสินค้า/ปิดงานเข้า LINE ของลูกค้ารายนี้ (หากปิด การแจ้งเตือนหน้าระบบ In-App ยังทำงานปกติ)
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={cn("text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border", (formData.Line_Notify_Disabled || (formData.Customer_Name && (formData.Customer_Name.includes('สยามรุ่งเรือง') || formData.Customer_Name.toLowerCase().includes('siam rungruang')))) ? "bg-rose-500/10 border-rose-500/30 text-rose-500" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-500")}>
+                          {(formData.Line_Notify_Disabled || (formData.Customer_Name && (formData.Customer_Name.includes('สยามรุ่งเรือง') || formData.Customer_Name.toLowerCase().includes('siam rungruang')))) ? "ปิดแจ้งเตือน (Off)" : "เปิดแจ้งเตือน (On)"}
+                        </span>
+                        <input
+                          type="checkbox"
+                          id="Line_Notify_Disabled"
+                          checked={!(formData.Line_Notify_Disabled || (formData.Customer_Name && (formData.Customer_Name.includes('สยามรุ่งเรือง') || formData.Customer_Name.toLowerCase().includes('siam rungruang'))))}
+                          onChange={(e) => updateForm("Line_Notify_Disabled", !e.target.checked)}
+                          className="w-8 h-8 rounded-lg border-border bg-muted text-emerald-600 focus:ring-emerald-500/40 cursor-pointer accent-emerald-500"
+                        />
+                      </div>
+                    </div>
+
                   <div className="space-y-4">
                     <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-primary ml-2 flex items-center gap-3">
                         <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -597,12 +622,17 @@ export default function CustomersSettingsPage() {
               <div className="px-6 py-4 bg-muted/30 border-t border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Mail size={10} className="text-muted-foreground opacity-40" />
-                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-normal truncate max-w-[140px] italic">{customer.Email || "registry-pending@logispro.io"}</span>
+                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-normal truncate max-w-[120px] italic">{customer.Email || "registry-pending@logispro.io"}</span>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1 bg-primary/20 text-primary rounded-lg shadow-lg ring-1 ring-primary/30">
-                    <span className="text-[9px] font-black tracking-normal">
-                        {customer.Price_Per_Unit && customer.Price_Per_Unit > 0 ? `฿${customer.Price_Per_Unit}/UNIT` : t('settings_pages.customers.status.connected')}
+                <div className="flex items-center gap-2">
+                    <span className={cn("text-[9px] font-black tracking-normal px-2.5 py-1 rounded-lg border shadow-sm", (customer.Line_Notify_Disabled || (customer.Customer_Name && (customer.Customer_Name.includes('สยามรุ่งเรือง') || customer.Customer_Name.toLowerCase().includes('siam rungruang')))) ? "bg-rose-500/10 border-rose-500/30 text-rose-500" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-500")}>
+                      {(customer.Line_Notify_Disabled || (customer.Customer_Name && (customer.Customer_Name.includes('สยามรุ่งเรือง') || customer.Customer_Name.toLowerCase().includes('siam rungruang')))) ? "LINE: OFF" : "LINE: ON"}
                     </span>
+                    <div className="flex items-center gap-2 px-3 py-1 bg-primary/20 text-primary rounded-lg shadow-lg ring-1 ring-primary/30">
+                        <span className="text-[9px] font-black tracking-normal">
+                            {customer.Price_Per_Unit && customer.Price_Per_Unit > 0 ? `฿${customer.Price_Per_Unit}/UNIT` : t('settings_pages.customers.status.connected')}
+                        </span>
+                    </div>
                 </div>
               </div>
             </div>

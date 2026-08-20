@@ -67,13 +67,14 @@ export async function POST(req: NextRequest) {
             if (job.Customer_ID) {
                 let custTarget: { Line_User_ID?: string | null; Line_User_ID_2?: string | null } | null = null
 
-                // 1. Try Master_Customers (has both bot ids)
+                // 1. Try Master_Customers (has both bot ids and Line_Notify_Disabled)
                 try {
                     const { data: custInfo } = await supabase.from('Master_Customers')
-                        .select('Line_User_ID, Line_User_ID_2')
+                        .select('Line_User_ID, Line_User_ID_2, Line_Notify_Disabled, Customer_Name')
                         .eq('Customer_ID', job.Customer_ID)
                         .maybeSingle()
-                    if (custInfo && (custInfo.Line_User_ID || custInfo.Line_User_ID_2)) {
+                    const isDisabled = custInfo?.Line_Notify_Disabled || (custInfo?.Customer_Name && (custInfo.Customer_Name.includes('สยามรุ่งเรือง') || custInfo.Customer_Name.toLowerCase().includes('siam rungruang')));
+                    if (!isDisabled && custInfo && (custInfo.Line_User_ID || custInfo.Line_User_ID_2)) {
                         custTarget = custInfo
                     }
                 } catch {}

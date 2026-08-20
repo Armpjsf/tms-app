@@ -463,57 +463,71 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     // Jobs created by typing the customer name (no linked id) would otherwise
     // never reach the bound customer's LINE — a silent "bound but no alerts" bug.
     let effectiveCustomerId: string | null = job.Customer_ID || null;
+    let isLineNotifyDisabled = false;
+
+    if (job.Customer_Name && (job.Customer_Name.includes('สยามรุ่งเรือง') || job.Customer_Name.toLowerCase().includes('siam rungruang'))) {
+      isLineNotifyDisabled = true;
+    }
+
     if (!effectiveCustomerId && job.Customer_Name) {
       try {
         const { data: cById } = await supabase
           .from('Master_Customers')
-          .select('Customer_ID')
+          .select('Customer_ID, Line_Notify_Disabled')
           .eq('Customer_Name', job.Customer_Name)
           .maybeSingle();
         effectiveCustomerId = cById?.Customer_ID || null;
+        if (cById?.Line_Notify_Disabled) isLineNotifyDisabled = true;
       } catch { /* ignore */ }
     }
 
     if (effectiveCustomerId) {
-      // Check Master_Customers first (has both bot ids)
+      // Check Master_Customers first (has both bot ids and Line_Notify_Disabled)
       try {
         const { data: customer } = await supabase
           .from('Master_Customers')
-          .select('Line_User_ID, Line_User_ID_2')
+          .select('Line_User_ID, Line_User_ID_2, Line_Notify_Disabled, Customer_Name')
           .eq('Customer_ID', effectiveCustomerId)
           .maybeSingle();
 
-        if (customer && (customer.Line_User_ID || customer.Line_User_ID_2)) {
-          targets.push(customer);
+        if (customer) {
+          if (customer.Line_Notify_Disabled || (customer.Customer_Name && (customer.Customer_Name.includes('สยามรุ่งเรือง') || customer.Customer_Name.toLowerCase().includes('siam rungruang')))) {
+            isLineNotifyDisabled = true;
+          }
+          if (!isLineNotifyDisabled && (customer.Line_User_ID || customer.Line_User_ID_2)) {
+            targets.push(customer);
+          }
         }
       } catch { /* ignore and proceed */ }
 
-      // Also check Master_Users in case the customer account is registered as a
-      // user login (e.g. 'uni'). User logins only ever link the primary bot.
-      try {
-        const { data: userCust } = await supabase
-          .from('Master_Users')
-          .select('Line_User_ID')
-          .eq('Customer_ID', effectiveCustomerId)
-          .not('Line_User_ID', 'is', null)
-          .maybeSingle();
+      if (!isLineNotifyDisabled) {
+        // Also check Master_Users in case the customer account is registered as a
+        // user login (e.g. 'uni'). User logins only ever link the primary bot.
+        try {
+          const { data: userCust } = await supabase
+            .from('Master_Users')
+            .select('Line_User_ID')
+            .eq('Customer_ID', effectiveCustomerId)
+            .not('Line_User_ID', 'is', null)
+            .maybeSingle();
 
-        if (userCust?.Line_User_ID) {
-          targets.push({ Line_User_ID: userCust.Line_User_ID });
-        }
-      } catch { /* ignore and proceed */ }
+          if (userCust?.Line_User_ID) {
+            targets.push({ Line_User_ID: userCust.Line_User_ID });
+          }
+        } catch { /* ignore and proceed */ }
 
-      // Team recipients (LINE group + individual members). Wrapped in try/catch
-      // so completion notifications keep working even if the table isn't created
-      // yet (SQL migration run manually in Supabase).
-      try {
-        const { data: contacts } = await supabase
-          .from('Customer_Line_Contacts')
-          .select('Line_Target_ID, Bot_Index, Target_Type, Active')
-          .eq('Customer_ID', effectiveCustomerId)
-          .eq('Active', true);
-        if (contacts && contacts.length > 0) lineContacts = contacts as LineContactRow[];
-      } catch { /* table may not exist yet → skip */ }
+        // Team recipients (LINE group + individual members). Wrapped in try/catch
+        // so completion notifications keep working even if the table isn't created
+        // yet (SQL migration run manually in Supabase).
+        try {
+          const { data: contacts } = await supabase
+            .from('Customer_Line_Contacts')
+            .select('Line_Target_ID, Bot_Index, Target_Type, Active')
+            .eq('Customer_ID', effectiveCustomerId)
+            .eq('Active', true);
+          if (contacts && contacts.length > 0) lineContacts = contacts as LineContactRow[];
+        } catch { /* table may not exist yet → skip */ }
+      }
     }
 
     // Admin monitoring copy, routed through pushToCustomerActive so it follows the
