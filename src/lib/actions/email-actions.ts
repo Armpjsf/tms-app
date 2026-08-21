@@ -23,10 +23,29 @@ interface SendBillingEmailProps {
 }
 
 export async function sendBillingEmail({ from, to, cc, subject, html, attachments }: SendBillingEmailProps) {
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = Number(process.env.SMTP_PORT || 587);
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+    let smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+    let smtpPort = Number(process.env.SMTP_PORT || 587);
+    let smtpUser = process.env.SMTP_USER;
+    let smtpPass = process.env.SMTP_PASS;
+
+    // Dynamically check if the sender email/branch has its own App Password in Master_Branches
+    if (from) {
+        try {
+            const { createAdminClient } = await import('@/utils/supabase/server')
+            const supabase = createAdminClient()
+            const { data: branch } = await supabase
+                .from('Master_Branches')
+                .select('Email, Smtp_Host, Smtp_User, Smtp_Pass')
+                .or(`Email.eq.${from},Branch_ID.eq.${from}`)
+                .maybeSingle()
+            
+            if (branch?.Smtp_Pass) {
+                smtpHost = branch.Smtp_Host || 'smtp.gmail.com'
+                smtpUser = branch.Smtp_User || branch.Email || from
+                smtpPass = branch.Smtp_Pass
+            }
+        } catch { /* ignore */ }
+    }
 
     const senderEmail = from || process.env.SMTP_FROM || process.env.DEFAULT_SENDER_EMAIL || 'billing@logispro.io';
     const ccList = cc ? cc.split(',').map(e => e.trim()).filter(Boolean) : undefined;

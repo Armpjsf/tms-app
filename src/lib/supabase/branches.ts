@@ -10,6 +10,9 @@ export type Branch = {
   Phone?: string
   Email?: string
   Sender_Name?: string
+  Smtp_Host?: string
+  Smtp_User?: string
+  Smtp_Pass?: string
 }
 
 export async function getAllBranches() {
@@ -24,7 +27,7 @@ export async function getAllBranches() {
     let query = supabase
 
       .from('Master_Branches')
-      .select('Branch_ID, Branch_Name, Email, Sender_Name, Address, Phone')
+      .select('Branch_ID, Branch_Name, Email, Sender_Name, Address, Phone, Smtp_Host, Smtp_User, Smtp_Pass')
     
     // STRICT ISOLATION: Non-SuperAdmin users (Admin, Staff, etc.) 
     // are restricted to their assigned branch.
@@ -46,7 +49,7 @@ export async function getAllBranches() {
   }
 }
 
-export async function updateBranchSettings(branchId: string, settings: Partial<Pick<Branch, 'Email' | 'Sender_Name' | 'Address' | 'Phone' | 'Branch_Name'>>) {
+export async function updateBranchSettings(branchId: string, settings: Partial<Pick<Branch, 'Email' | 'Sender_Name' | 'Address' | 'Phone' | 'Branch_Name' | 'Smtp_Host' | 'Smtp_User' | 'Smtp_Pass'>>) {
     try {
         const isAdmin = await isSuperAdmin()
         const supabase = isAdmin ? await createAdminClient() : await createClient()
