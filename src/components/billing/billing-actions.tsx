@@ -63,6 +63,12 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
         }
     }, [customerEmail])
 
+    // Dynamic Gmail Web Compose Link (Direct HTML Link to bypass browser popup blockers)
+    const ccParam = emailCC ? `&cc=${encodeURIComponent(emailCC)}` : ''
+    const gmailWebUrl = emailTo 
+        ? `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailTo)}${ccParam}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}` 
+        : '#'
+
     // Handle Print
     const handlePrint = () => {
         window.print()
@@ -72,7 +78,6 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
     const handleOpenMailApp = () => {
         if (!emailTo) return toast.error("กรุณาระบุอีเมลผู้รับ")
         
-        const ccParam = emailCC ? `&cc=${encodeURIComponent(emailCC)}` : ''
         const mailtoUrl = `mailto:${encodeURIComponent(emailTo)}?subject=${encodeURIComponent(subject)}${ccParam}&body=${encodeURIComponent(message)}`
         
         try {
@@ -86,17 +91,6 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
         } catch {
             window.location.href = mailtoUrl
         }
-    }
-
-    // Handle Open in Gmail Web Compose (100% reliable web browser open)
-    const handleOpenGmailWeb = () => {
-        if (!emailTo) return toast.error("กรุณาระบุอีเมลผู้รับ")
-        
-        const ccParam = emailCC ? `&cc=${encodeURIComponent(emailCC)}` : ''
-        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailTo)}${ccParam}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
-        
-        window.open(gmailUrl, '_blank')
-        toast.success("เปิดหน้าเขียนอีเมลใน Gmail Web เรียบร้อยแล้ว")
     }
 
     // Handle Send Email (Via Server Action / Custom SMTP or Resend API)
@@ -177,7 +171,7 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                             ส่งใบวางบิลทางอีเมล
                         </DialogTitle>
                         <DialogDescription>
-                            เลือกช่องทางการส่งอีเมล: เปิดใน Gmail Web / แอปในเครื่อง หรือส่งผ่านระบบเซิร์ฟเวอร์
+                            เลือกส่งผ่าน Gmail Web Direct / แอปในเครื่อง หรือส่งอัตโนมัติผ่านระบบเซิร์ฟเวอร์
                         </DialogDescription>
                     </DialogHeader>
 
@@ -240,10 +234,23 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                     <DialogFooter className="p-4 bg-muted/30 border-t flex flex-col gap-2">
                         <div className="flex flex-wrap gap-2 w-full justify-between items-center">
                             <div className="flex gap-2">
-                                <Button variant="outline" onClick={handleOpenGmailWeb} type="button" className="border-rose-500/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">
+                                <a 
+                                    href={gmailWebUrl}
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => {
+                                        if (!emailTo) {
+                                            e.preventDefault()
+                                            toast.error("กรุณาระบุอีเมลผู้รับ")
+                                        } else {
+                                            toast.success("เปิดหน้าเขียนอีเมลใน Gmail Web เรียบร้อยแล้ว")
+                                        }
+                                    }}
+                                    className="inline-flex items-center justify-center rounded-md text-sm font-bold transition-colors border border-rose-500/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 h-9 px-3 py-2 cursor-pointer"
+                                >
                                     <ExternalLink className="w-4 h-4 mr-1.5" />
                                     เปิดใน Gmail Web
-                                </Button>
+                                </a>
                                 <Button variant="outline" onClick={handleOpenMailApp} type="button" className="border-sky-500/40 text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/30">
                                     <ExternalLink className="w-4 h-4 mr-1.5" />
                                     แอปในเครื่อง (Outlook)
