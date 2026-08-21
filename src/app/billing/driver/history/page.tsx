@@ -34,8 +34,8 @@ import {
   CloudSync,
   Eye
 } from "lucide-react"
-import { getDriverPayments, DriverPayment, updateDriverPaymentStatus, recallDriverPayment, getDriverPaymentByIdWithJobs } from "@/lib/supabase/billing"
-import { getBankCode } from "@/lib/constants/banks"
+import { getDriverPayments, DriverPayment, updateDriverPaymentStatus, recallDriverPayment } from "@/lib/supabase/billing"
+import { generateScbPaymentXlsx } from "@/lib/actions/scb-export"
 import { isSuperAdmin } from "@/lib/permissions"
 import { toast } from "sonner"
 import { manualSyncBill } from "@/app/settings/accounting/actions"
@@ -132,38 +132,18 @@ export default function DriverPaymentHistory() {
   const handleExportSCB = async (id: string) => {
     setProcessingId(id)
     try {
-        const data = await getDriverPaymentByIdWithJobs(id)
-        if (!data) throw new Error("Could not fetch details")
-
-        const { payment, jobs, bankInfo } = data
-
-        if (!bankInfo.Bank_Account_No) {
-            toast.error("ไม่สามารถ Export ได้เนื่องจากคนขับไม่มีเลขบัญชี")
-            return
-        }
-
-        // ยอดโอนสุทธิ: ใช้ Net_Amount ที่แอดมินตั้งตอนทำจ่าย (VAT/WHT/เคลม) ถ้ามี
-        const pRec = payment as unknown as { Net_Amount?: number }
-        const subtotal = jobs.reduce((sum: number, j: typeof jobs[0]) => sum + (j.Cost_Driver_Total || 0), 0)
-        const netTotal = pRec.Net_Amount != null ? Number(pRec.Net_Amount) : subtotal - Math.round(subtotal * 0.01)
-        const bankCode = getBankCode(bankInfo.Bank_Name || "") // เลขรหัสธนาคาร (เช่น 014) ไม่ใช่ชื่อ
-
-        // Format for SCB Mass Payout (Simple CSV)
-        const lines = [
-            "Bank Code,Account No,Amount,Beneficiary Name,Ref1,Ref2",
-            `${bankCode},${bankInfo.Bank_Account_No},${netTotal.toFixed(2)},${bankInfo.Bank_Account_Name || payment.Driver_Name},Salary,${payment.Driver_Payment_ID}`
-        ]
-
-        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + lines.join("\n") // Add BOM for Excel Thai support
-        const encodedUri = encodeURI(csvContent)
+        // สร้างไฟล์ Excel (paste-ready ตามเทมเพลต SCB Business Anywhere) ฝั่ง server
+        const res = await generateScbPaymentXlsx(id)
+        if (!res.success) { toast.error(res.message || "Export ไม่สำเร็จ"); return }
+        const href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${res.base64}`
         const link = document.createElement("a")
-        link.setAttribute("href", encodedUri)
-        link.setAttribute("download", `SCB_Export_${payment.Driver_Payment_ID}.csv`)
+        link.setAttribute("href", href)
+        link.setAttribute("download", res.filename)
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
 
-        toast.success("เตรียมไฟล์ Export เรียบร้อย")
+        toast.success("เตรียมไฟล์ SCB (Excel) เรียบร้อย — นำไปวางในเทมเพลตธนาคาร")
     } catch {
         toast.error("Export ไม่สำเร็จ")
     } finally {
