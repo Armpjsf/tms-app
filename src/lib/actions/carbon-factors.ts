@@ -52,6 +52,7 @@ export async function getCarbonFactors(): Promise<CarbonFactors> {
     const fuelWTT: Record<string, number> = { ...TGO_WTT_FACTORS }
     const freightPerKm: Record<string, number> = { ...CO2_COEFFICIENTS }
     const freightWTTPerKm: Record<string, number> = { ...WTT_FREIGHT_COEFFICIENTS }
+    const freightEfTkm: Record<string, number> = {}
     let emptyReturnRatio = EMPTY_RETURN_RATIO
     let treeAbsorbKgPerYear = TREE_ABSORB_KG_PER_YEAR
 
@@ -59,7 +60,7 @@ export async function getCarbonFactors(): Promise<CarbonFactors> {
         const supabase = createAdminClient()
         const [{ data: fuels }, { data: freight }, { data: params }] = await Promise.all([
             supabase.from("tgo_emission_factors").select("fuel_code, ef_value, wtt_value, is_active"),
-            supabase.from("tgo_freight_factors").select("vehicle_type, co2_per_km, wtt_per_km, is_active"),
+            supabase.from("tgo_freight_factors").select("vehicle_type, co2_per_km, wtt_per_km, ef_tkm, is_active"),
             supabase.from("esg_parameters").select("param_key, param_value"),
         ])
         for (const f of fuels || []) {
@@ -72,6 +73,7 @@ export async function getCarbonFactors(): Promise<CarbonFactors> {
             if (f?.is_active !== false && f?.vehicle_type && f?.co2_per_km != null) {
                 freightPerKm[f.vehicle_type] = Number(f.co2_per_km)
                 if (f?.wtt_per_km != null) freightWTTPerKm[f.vehicle_type] = Number(f.wtt_per_km)
+                if (f?.ef_tkm != null) freightEfTkm[f.vehicle_type] = Number(f.ef_tkm)
             }
         }
         const findParam = (k: string) => (params || []).find((p: { param_key?: string }) => p?.param_key === k)?.param_value
@@ -84,7 +86,7 @@ export async function getCarbonFactors(): Promise<CarbonFactors> {
     }
 
     const data: CarbonFactors = {
-        fuelEF, fuelWTT, freightPerKm, freightWTTPerKm,
+        fuelEF, fuelWTT, freightPerKm, freightWTTPerKm, freightEfTkm,
         emptyReturnRatio,
         roundTripEmissionFactor: 1 + emptyReturnRatio,
         treeAbsorbKgPerYear,

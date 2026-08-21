@@ -134,6 +134,7 @@ export type CarbonFactors = {
     fuelWTT?: Record<string, number>         // WTT kgCO2e per liter
     freightPerKm?: Record<string, number>    // TTW kgCO2e per km at rated load
     freightWTTPerKm?: Record<string, number> // WTT kgCO2e per km
+    freightEfTkm?: Record<string, number>    // GLEC tonne-km EF (kgCO2e/tonne-km) ต่อชนิดรถ จาก DB
     emptyReturnRatio?: number                // สัดส่วนปล่อยเที่ยวกลับรถเปล่า (0–1)
     roundTripEmissionFactor?: number         // ตัวคูณระยะเทียบเท่าการปล่อยไป-กลับ = 1 + emptyReturnRatio
     treeAbsorbKgPerYear?: number             // อัตราดูดซับคาร์บอนต้นไม้ (kgCO2/ต้น/ปี)
@@ -148,6 +149,7 @@ export type CarbonFactors = {
  * @param cargoWeightTonnes น้ำหนักสินค้าจริงในใบงาน (ตัน) — หากมีจะคำนวณ Tonne-KM ตรงแบบ GLEC
  * @param emptyReturnRatio ถ้า >0 จะบวก "เที่ยวกลับรถเปล่า" แบบแยกขา (per-km × ratio)
  *        โดยไม่แตะ tonne-km ของสินค้า (กันการนับซ้ำ / Double Counting)
+ * @param fuelTypeOverride ระบุประเภทเชื้อเพลิงตรงๆ สำหรับ Scope 1 (ถ้าไม่ส่ง ใช้ VEHICLE_FUEL_MAP)
  */
 export function calculateJobEmissions(
     distanceKm: number,
@@ -155,13 +157,16 @@ export function calculateJobEmissions(
     vehicleType = 'default',
     factors?: CarbonFactors,
     cargoWeightTonnes?: number | null,
-    emptyReturnRatio?: number | null
+    emptyReturnRatio?: number | null,
+    fuelTypeOverride?: string | null
 ): JobESGImpact {
     const fuelEFMap = factors?.fuelEF ?? TGO_EMISSION_FACTORS
     const fuelWTTMap = factors?.fuelWTT ?? TGO_WTT_FACTORS
     const freightMap = factors?.freightPerKm ?? CO2_COEFFICIENTS
     const freightWTTMap = factors?.freightWTTPerKm ?? WTT_FREIGHT_COEFFICIENTS
-    const fuelType = VEHICLE_FUEL_MAP[vehicleType] || VEHICLE_FUEL_MAP['default']
+    const freightEfTkmMap = factors?.freightEfTkm ?? {}
+    // A: เชื้อเพลิงจากพารามิเตอร์ก่อน แล้ว fallback ตามชนิดรถ
+    const fuelType = fuelTypeOverride || VEHICLE_FUEL_MAP[vehicleType] || VEHICLE_FUEL_MAP['default']
     const efValue = fuelEFMap[fuelType] ?? fuelEFMap['default'] ?? TGO_EMISSION_FACTORS['default']
     const wttFuel = fuelWTTMap[fuelType] ?? fuelWTTMap['default'] ?? 0
 
@@ -169,6 +174,10 @@ export function calculateJobEmissions(
     const ttwPerKm = freightMap[vehicleType] ?? freightMap['default'] ?? CO2_COEFFICIENTS['default']
     const wttPerKm = freightWTTMap[vehicleType] ?? freightWTTMap['default'] ?? 0
     const ratio = (emptyReturnRatio && emptyReturnRatio > 0) ? emptyReturnRatio : 0
+
+    // D: coerce กันค่า string/null จาก DB
+    const fuelLiters = Number(actualFuelLiters) || 0
+    const cargoWeight = Number(cargoWeightTonnes) || 0
 
     let fuelUsedLiters = 0
     let ttwKg = 0
@@ -178,8 +187,8 @@ export function calculateJobEmissions(
 
     // 1. Primary Data (Scope 1): น้ำมันเติมจริง (Company Fleet)
     //    ลิตรจริงสะท้อนระยะที่วิ่งจริงอยู่แล้ว จึงไม่บวกเที่ยวกลับสังเคราะห์
-    if (actualFuelLiters !== null && actualFuelLiters > 0) {
-        fuelUsedLiters = actualFuelLiters
+    if (fuelLiters > 0) {
+        fuelUsedLiters = fuelLiters
         method = 'Exact Volume (Primary Data)'
         ghgScope = 'Scope 1'
         ttwKg = fuelUsedLiters * efValue
@@ -187,11 +196,15 @@ export function calculateJobEmissions(
     }
     // 2. Secondary Data (Scope 3): GLEC Tonne-KM ตามน้ำหนักสินค้าจริง
     //    เที่ยวไป (loaded) คิดตาม tonne-km ของสินค้า; เที่ยวกลับ (empty) คิดแบบ per-km ไม่มีสินค้า
-    else if (cargoWeightTonnes !== undefined && cargoWeightTonnes !== null && cargoWeightTonnes > 0) {
-        const glecTonKmEf = DHL_FREIGHT_EF_TKM[vehicleType]?.ef ?? DHL_FREIGHT_EF_TKM['default'].ef
-        // loaded leg (เที่ยวไป)
-        ttwKg = (cargoWeightTonnes * distanceKm) * glecTonKmEf
-        wttKg = distanceKm * wttPerKm
+    else if (cargoWeight > 0) {
+        // B: ef_tkm จาก DB ต่อชนิดรถก่อน แล้ว fallback ค่า hardcode
+        const glecTonKmEf = freightEfTkmMap[vehicleType]
+            ?? DHL_FREIGHT_EF_TKM[vehicleType]?.ef ?? DHL_FREIGHT_EF_TKM['default'].ef
+        // loaded leg (เที่ยวไป) — TTW ตาม tonne-km ของสินค้า
+        ttwKg = (cargoWeight * distanceKm) * glecTonKmEf
+        // C: WTT ขาไปผูกกับเชื้อเพลิงที่เผาจริง (ไม่ใช่ระยะทางดิบ) → consistent กับ TTW/Scope 1
+        const loadedLiters = efValue > 0 ? ttwKg / efValue : 0
+        wttKg = loadedLiters * wttFuel
         // empty return leg (เที่ยวกลับรถเปล่า) — per-km เต็ม × ratio, ไม่ผูกกับน้ำหนักสินค้า
         ttwKg += distanceKm * ttwPerKm * ratio
         wttKg += distanceKm * wttPerKm * ratio
