@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { PremiumCard, PremiumCardHeader, PremiumCardTitle } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
@@ -125,18 +126,6 @@ export default function DriverPaymentHistory() {
     } finally {
         setProcessingId(null)
     }
-  }
-
-  const handlePrint = (id: string) => {
-    // เปิดหน้าใบสำคัญจ่ายพร้อมสั่งพิมพ์อัตโนมัติ (mode=print)
-    const w = window.open(`/billing/driver/print/${encodeURIComponent(id)}?mode=print`, '_blank')
-    if (!w) toast.error("เบราว์เซอร์บล็อกการเปิดแท็บใหม่ — โปรดอนุญาต pop-up แล้วลองใหม่")
-  }
-
-  const handleViewDetail = (id: string) => {
-    // เปิดดูรายละเอียดงานย้อนหลัง (โหมดดู ไม่สั่งพิมพ์อัตโนมัติ)
-    const w = window.open(`/billing/driver/print/${encodeURIComponent(id)}`, '_blank')
-    if (!w) toast.error("เบราว์เซอร์บล็อกการเปิดแท็บใหม่ — โปรดอนุญาต pop-up แล้วลองใหม่")
   }
 
   const handleExportSCB = async (id: string) => {
@@ -325,15 +314,15 @@ export default function DriverPaymentHistory() {
                         </TableCell>
                         <TableCell className="py-5 px-8 text-right">
                              <div className="flex justify-end gap-2">
-                                <PremiumButton
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-xl"
+                                <Link
+                                    href={`/billing/driver/print/${encodeURIComponent(item.Driver_Payment_ID)}`}
+                                    target="_blank"
+                                    rel="noopener"
                                     title="ดูรายละเอียดงาน"
-                                    onClick={() => handleViewDetail(item.Driver_Payment_ID)}
+                                    className="p-2 rounded-xl text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 inline-flex items-center transition"
                                 >
                                     <Eye className="w-4 h-4" />
-                                </PremiumButton>
+                                </Link>
 
                                 {item.Status !== 'Paid' && (
                                     <PremiumButton 
@@ -369,15 +358,15 @@ export default function DriverPaymentHistory() {
                                 >
                                     {processingId === item.Driver_Payment_ID ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
                                 </PremiumButton>
-                                <PremiumButton 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl" 
+                                <Link
+                                    href={`/billing/driver/print/${encodeURIComponent(item.Driver_Payment_ID)}?mode=print`}
+                                    target="_blank"
+                                    rel="noopener"
                                     title="พิมพ์"
-                                    onClick={() => handlePrint(item.Driver_Payment_ID)}
+                                    className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 inline-flex items-center transition"
                                 >
                                     <Printer className="w-4 h-4" />
-                                </PremiumButton>
+                                </Link>
 
                                 {isAdmin && item.Status !== 'Paid' && (
                                     <PremiumButton 
