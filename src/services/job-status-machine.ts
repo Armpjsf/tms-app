@@ -414,7 +414,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       const esg = calculateJobEmissions(roundTripKm, null, normalizeVehicleType(job.Vehicle_Type))
       carbonText = [
         ``,
-        `🌱 คาร์บอนฟุตพริ้นต์เที่ยวนี้ (มาตรฐาน อบก.):`,
+        `🌱 คาร์บอนฟุตพริ้นต์เที่ยวนี้ (มาตรฐาน ISO 14083 / GLEC / อบก.):`,
         `   ระยะทางไป-กลับ ~${roundTripKm.toLocaleString()} กม. • ปล่อย ~${esg.co2EmissionsKg.toLocaleString()} kgCO₂e`,
         `   เทียบเท่าปลูกต้นไม้ ~${esg.treesEquivalentToOffset.toLocaleString()} ต้น เพื่อชดเชย`,
       ].join('\n')
