@@ -35,6 +35,7 @@ import {
   Eye
 } from "lucide-react"
 import { getDriverPayments, DriverPayment, updateDriverPaymentStatus, recallDriverPayment, getDriverPaymentByIdWithJobs } from "@/lib/supabase/billing"
+import { getBankCode } from "@/lib/constants/banks"
 import { isSuperAdmin } from "@/lib/permissions"
 import { toast } from "sonner"
 import { manualSyncBill } from "@/app/settings/accounting/actions"
@@ -141,14 +142,16 @@ export default function DriverPaymentHistory() {
             return
         }
 
+        // ยอดโอนสุทธิ = ต้นทุนคนขับ − หัก ณ ที่จ่าย 1% (ให้ตรงกับใบสำคัญจ่าย ไม่ใช่บวก VAT)
         const subtotal = jobs.reduce((sum: number, j: typeof jobs[0]) => sum + (j.Cost_Driver_Total || 0), 0)
-        const vat = subtotal * 0.07
-        const total = subtotal + vat
+        const withholding = Math.round(subtotal * 0.01)
+        const netTotal = subtotal - withholding
+        const bankCode = getBankCode(bankInfo.Bank_Name || "") // เลขรหัสธนาคาร (เช่น 014) ไม่ใช่ชื่อ
 
         // Format for SCB Mass Payout (Simple CSV)
         const lines = [
             "Bank Code,Account No,Amount,Beneficiary Name,Ref1,Ref2",
-            `${bankInfo.Bank_Name || 'SCB'},${bankInfo.Bank_Account_No},${total.toFixed(2)},${bankInfo.Bank_Account_Name || payment.Driver_Name},Salary,${payment.Driver_Payment_ID}`
+            `${bankCode},${bankInfo.Bank_Account_No},${netTotal.toFixed(2)},${bankInfo.Bank_Account_Name || payment.Driver_Name},Salary,${payment.Driver_Payment_ID}`
         ]
 
         const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + lines.join("\n") // Add BOM for Excel Thai support
