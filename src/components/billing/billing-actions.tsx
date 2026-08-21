@@ -33,9 +33,18 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
     const [sending, setSending] = useState(false)
 
     useEffect(() => {
-        // Load default sender email from company profile if available
+        // Load default sender email from branch settings or company profile if available
         const loadDefaultSender = async () => {
              try {
+                 const { getAllBranches } = await import('@/lib/supabase/branches')
+                 const branches = await getAllBranches()
+                 if (branches && branches.length > 0) {
+                     const branchWithEmail = branches.find(b => b.Email) || branches[0]
+                     if (branchWithEmail?.Email) {
+                         setEmailFrom(branchWithEmail.Email)
+                         return
+                     }
+                 }
                  const res = await fetch('/api/settings/company')
                  if (res.ok) {
                      const data = await res.json()
