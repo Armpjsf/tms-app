@@ -203,7 +203,8 @@ function sumDriverExtra(extraJson: unknown): number {
 export async function createDriverPayment(
     jobIds: string[],
     driverName: string,
-    date: string
+    date: string,
+    adjustments?: { vatRate?: number; whtRate?: number; claimRate?: number }
 ) {
     try {
         const hasAdminPrivileges = await isAdmin()
@@ -287,14 +288,24 @@ export async function createDriverPayment(
             return { success: false, error: 'งานที่เลือกถูกทำจ่ายไปแล้ว (โปรดรีเฟรช)' }
         }
 
-        // Persist withholding tax + net (best-effort: silently skipped if the
-        // columns don't exist yet, so payments never fail on this).
-        const WHT_RATE = 0.01
-        const withholding = Math.round(totalAmount * WHT_RATE)
-        const netAmount = totalAmount - withholding
+        // Persist VAT / WHT / claim adjustments + net (best-effort: silently skipped
+        // if the columns don't exist yet, so payments never fail on this).
+        // มาตรฐาน: VAT/WHT/เคลม คิดจาก base (Total_Amount) ทั้งหมด; WHT คิดก่อนรวม VAT
+        const vatRate = Number(adjustments?.vatRate) || 0
+        const whtRate = adjustments?.whtRate != null ? Number(adjustments.whtRate) : 1 // default 1%
+        const claimRate = Number(adjustments?.claimRate) || 0
+        const vatAmount = Math.round(totalAmount * vatRate) / 100
+        const whtAmount = Math.round(totalAmount * whtRate) / 100
+        const claimAmount = Math.round(totalAmount * claimRate) / 100
+        const netAmount = Math.round((totalAmount + vatAmount - whtAmount - claimAmount) * 100) / 100
         await supabase
             .from('Driver_Payments')
-            .update({ Withholding_Tax: withholding, Net_Amount: netAmount })
+            .update({
+                VAT_Rate: vatRate, VAT_Amount: vatAmount,
+                WHT_Rate: whtRate, Withholding_Tax: whtAmount,
+                Claim_Rate: claimRate, Claim_Amount: claimAmount,
+                Net_Amount: netAmount,
+            })
             .eq('Driver_Payment_ID', paymentId)
 
         // Log Driver Payment creation

@@ -23,6 +23,11 @@ interface PaymentVoucherProps {
   selectedSubtotal: number
   selectedWithholding: number
   selectedNetTotal: number
+  selectedVat?: number
+  selectedClaim?: number
+  vatRate?: number
+  whtRate?: number
+  claimRate?: number
   t: (key: string) => string
 }
 
@@ -35,6 +40,11 @@ export const PaymentVoucher = ({
   selectedSubtotal,
   selectedWithholding,
   selectedNetTotal,
+  selectedVat = 0,
+  selectedClaim = 0,
+  vatRate = 0,
+  whtRate = 1,
+  claimRate = 0,
   t
 }: PaymentVoucherProps) => {
   return (
@@ -281,10 +291,22 @@ export const PaymentVoucher = ({
                         <span className="text-foreground transition-colors">{t('billing_driver.subtotal_matrix')}</span>
                         <span className="font-bold text-xl">{selectedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
+                    {selectedVat > 0 && (
+                        <div className="flex justify-between items-center text-emerald-600">
+                            <span className="text-sm font-bold">+ VAT {vatRate}%</span>
+                            <span className="font-bold text-xl">+{selectedVat.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between items-center text-primary/80 group">
-                        <span className="text-base font-bold font-black uppercase tracking-[0.2em] group-hover:text-primary transition-colors">{t('billing_driver.tax_retention')}</span>
+                        <span className="text-base font-bold font-black uppercase tracking-[0.2em] group-hover:text-primary transition-colors">{t('billing_driver.tax_retention')} {whtRate}%</span>
                         <span className="font-bold text-xl">-{selectedWithholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
+                    {selectedClaim > 0 && (
+                        <div className="flex justify-between items-center text-rose-500">
+                            <span className="text-sm font-bold">หักค่าเคลมสินค้า {claimRate}%</span>
+                            <span className="font-bold text-xl">-{selectedClaim.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        </div>
+                    )}
                     <div className="h-px bg-muted/80" />
                     <div className="space-y-2 py-2">
                         <div className="flex justify-between items-baseline">

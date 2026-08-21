@@ -142,10 +142,10 @@ export default function DriverPaymentHistory() {
             return
         }
 
-        // ยอดโอนสุทธิ = ต้นทุนคนขับ − หัก ณ ที่จ่าย 1% (ให้ตรงกับใบสำคัญจ่าย ไม่ใช่บวก VAT)
+        // ยอดโอนสุทธิ: ใช้ Net_Amount ที่แอดมินตั้งตอนทำจ่าย (VAT/WHT/เคลม) ถ้ามี
+        const pRec = payment as unknown as { Net_Amount?: number }
         const subtotal = jobs.reduce((sum: number, j: typeof jobs[0]) => sum + (j.Cost_Driver_Total || 0), 0)
-        const withholding = Math.round(subtotal * 0.01)
-        const netTotal = subtotal - withholding
+        const netTotal = pRec.Net_Amount != null ? Number(pRec.Net_Amount) : subtotal - Math.round(subtotal * 0.01)
         const bankCode = getBankCode(bankInfo.Bank_Name || "") // เลขรหัสธนาคาร (เช่น 014) ไม่ใช่ชื่อ
 
         // Format for SCB Mass Payout (Simple CSV)

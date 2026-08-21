@@ -24,8 +24,22 @@ export type ESGStats = {
     efficiencyRate: number // % ใบงานที่มีข้อมูลสมบูรณ์
     scope1EmissionsKg: number // Scope 1: รถบริษัท (Direct Emissions - Exact Volume)
     scope3EmissionsKg: number // Scope 3: รถร่วม (Upstream Transportation - Distance Estimated)
+    dataTiering: ESGDataTiering // จำแนกคุณภาพข้อมูล (Data Tiering) สำหรับยื่น อบก./ISO
     tgoMetadata: typeof TGO_STANDARDS_METADATA
     historicalData: { month: string; co2Emissions: number }[]
+}
+
+export type ESGTierRow = { count: number; co2Kg: number; pct: number }
+export type ESGDataTiering = {
+    exactVolume: ESGTierRow       // Primary Data (Scope 1) — ลิตรน้ำมันจริง
+    tonneKm: ESGTierRow           // GLEC Tonne-KM — น้ำหนักสินค้าจริง (Scope 3)
+    distanceEstimated: ESGTierRow // GLEC Distance Estimated — ประเมินจากพิกัดรถ (Scope 3)
+}
+
+const EMPTY_TIERING: ESGDataTiering = {
+    exactVolume: { count: 0, co2Kg: 0, pct: 0 },
+    tonneKm: { count: 0, co2Kg: 0, pct: 0 },
+    distanceEstimated: { count: 0, co2Kg: 0, pct: 0 },
 }
 
 const KG_CO2_PER_TREE_YEAR = 22 // 1 tree offsets ~22kg CO2 per year (TGO Baseline)
@@ -92,6 +106,7 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
                 efficiencyRate: 0,
                 scope1EmissionsKg: 0,
                 scope3EmissionsKg: 0,
+                dataTiering: EMPTY_TIERING,
                 tgoMetadata: TGO_STANDARDS_METADATA,
                 historicalData: []
             }
@@ -105,6 +120,13 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
         let totalCo2Emissions = 0
         let scope1Co2Total = 0
         let scope3Co2Total = 0
+
+        // Data Tiering (จำแนกวิธีคำนวณตามคุณภาพข้อมูล — ใช้ยื่น อบก./ISO)
+        const tier = {
+            exactVolume:       { count: 0, co2: 0 }, // Primary Data (Scope 1) — ลิตรจริง
+            tonneKm:           { count: 0, co2: 0 }, // GLEC Tonne-KM — น้ำหนักสินค้าจริง
+            distanceEstimated: { count: 0, co2: 0 }, // GLEC Distance Estimated — ประเมินจากพิกัดรถ
+        }
 
         const monthlyTrend: Record<string, number> = {}
 
@@ -150,6 +172,15 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
                 scope3Co2Total += impact.co2EmissionsKg
             }
 
+            // Data Tiering: จำแนกตามวิธีคำนวณ (คุณภาพข้อมูล)
+            if (impact.calculationMethod === 'Exact Volume (Primary Data)') {
+                tier.exactVolume.count++; tier.exactVolume.co2 += impact.co2EmissionsKg
+            } else if (impact.calculationMethod === 'GLEC Tonne-KM (Shipment Weight)') {
+                tier.tonneKm.count++; tier.tonneKm.co2 += impact.co2EmissionsKg
+            } else {
+                tier.distanceEstimated.count++; tier.distanceEstimated.co2 += impact.co2EmissionsKg
+            }
+
             // Monthly Trend Aggregation
             const dateStr = j.Plan_Date as string
             if (dateStr) {
@@ -158,7 +189,17 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
             }
         })
 
-        const treesSaved = totalCo2Emissions / KG_CO2_PER_TREE_YEAR
+        // ใช้อัตราดูดซับต้นไม้จาก DB (ตั้งค่าได้ /settings/esg) ให้ตรงกับ LINE/ใบแจ้งหนี้
+        const treeKg = factors.treeAbsorbKgPerYear ?? KG_CO2_PER_TREE_YEAR
+        const treesSaved = treeKg > 0 ? totalCo2Emissions / treeKg : 0
+
+        const validCount = validJobsCount || 0
+        const pct = (n: number) => validCount > 0 ? Math.round((n / validCount) * 1000) / 10 : 0
+        const dataTiering = {
+            exactVolume:       { count: tier.exactVolume.count,       co2Kg: Math.round(tier.exactVolume.co2 * 10) / 10,       pct: pct(tier.exactVolume.count) },
+            tonneKm:           { count: tier.tonneKm.count,           co2Kg: Math.round(tier.tonneKm.co2 * 10) / 10,           pct: pct(tier.tonneKm.count) },
+            distanceEstimated: { count: tier.distanceEstimated.count, co2Kg: Math.round(tier.distanceEstimated.co2 * 10) / 10, pct: pct(tier.distanceEstimated.count) },
+        }
 
         const historicalData = Object.entries(monthlyTrend)
             .map(([month, co2Emissions]) => ({ month, co2Emissions: Math.round(co2Emissions) }))
@@ -178,6 +219,7 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
             efficiencyRate: totalJobs > 0 ? Math.round((validJobsCount / totalJobs) * 100) : 0,
             scope1EmissionsKg: Math.round(scope1Co2Total * 100) / 100,
             scope3EmissionsKg: Math.round(scope3Co2Total * 100) / 100,
+            dataTiering,
             tgoMetadata: TGO_STANDARDS_METADATA,
             historicalData
         }
@@ -196,6 +238,7 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
             efficiencyRate: 0,
             scope1EmissionsKg: 0,
             scope3EmissionsKg: 0,
+            dataTiering: EMPTY_TIERING,
             tgoMetadata: TGO_STANDARDS_METADATA,
             historicalData: []
         }

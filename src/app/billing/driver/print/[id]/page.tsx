@@ -37,7 +37,11 @@ export default async function DriverPaymentPrintPage(props: Props) {
     }
 
     const { payment, jobs, company, bankInfo } = data
-    const WITHHOLDING_TAX_RATE = 0.01
+    // ยอดที่แอดมินตั้งตอนทำจ่าย (จาก DB) — ถ้าไม่มีค่อย fallback หัก 1%
+    const p = payment as unknown as {
+        Total_Amount?: number; VAT_Rate?: number; VAT_Amount?: number
+        WHT_Rate?: number; Withholding_Tax?: number; Claim_Rate?: number; Claim_Amount?: number; Net_Amount?: number
+    }
 
     // Calculate totals to ensure consistency
     const subtotal = jobs.reduce((sum: number, job: { Cost_Driver_Total?: number | null; extra_costs_json?: unknown }) => {
@@ -63,8 +67,13 @@ export default async function DriverPaymentPrintPage(props: Props) {
         return sum + base + extra
     }, 0)
 
-    const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
-    const netTotal = subtotal - withholding
+    const vatRate = Number(p.VAT_Rate) || 0
+    const whtRate = p.WHT_Rate != null ? Number(p.WHT_Rate) : 1
+    const claimRate = Number(p.Claim_Rate) || 0
+    const vatAmount = p.VAT_Amount != null ? Number(p.VAT_Amount) : Math.round(subtotal * vatRate) / 100
+    const withholding = p.Withholding_Tax != null ? Number(p.Withholding_Tax) : Math.round(subtotal * whtRate) / 100
+    const claimAmount = p.Claim_Amount != null ? Number(p.Claim_Amount) : Math.round(subtotal * claimRate) / 100
+    const netTotal = p.Net_Amount != null ? Number(p.Net_Amount) : (subtotal + vatAmount - withholding - claimAmount)
 
     return (
         <div className="bg-white min-h-screen p-4 text-black print:p-0 print-container">
@@ -243,20 +252,32 @@ export default async function DriverPaymentPrintPage(props: Props) {
                             </tbody>
                         <tfoot>
                              <tr>
-                                <td colSpan={2} rowSpan={3} className="pt-2 pr-4 align-top">
+                                <td colSpan={2} rowSpan={2 + (vatAmount > 0 ? 1 : 0) + (claimAmount > 0 ? 1 : 0) + 1} className="pt-2 pr-4 align-top">
                                     <div className="border border-slate-300 bg-slate-50 p-2 rounded text-base font-bold text-muted-foreground">
                                         <p className="font-bold mb-0.5">หมายเหตุ (Remarks):</p>
                                         <p>- ยอดเงินนี้รวมค่าแรงและค่าพาหนะแล้ว</p>
                                         <p>- Auto-generated Payment Voucher</p>
                                     </div>
                                 </td>
-                                <td className="py-1 px-3 text-right font-bold text-muted-foreground">รวมเป็นเงิน</td>
+                                <td className="py-1 px-3 text-right font-bold text-muted-foreground">รวมเป็นเงิน (ค่าเที่ยว)</td>
                                 <td className="py-1 px-3 text-right font-bold text-muted-foreground">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             </tr>
+                            {vatAmount > 0 && (
                             <tr>
-                                <td className="py-1 px-3 text-right text-muted-foreground text-base font-bold">หัก ณ ที่จ่าย 1%</td>
+                                <td className="py-1 px-3 text-right text-emerald-700 text-base font-bold">ภาษีมูลค่าเพิ่ม {vatRate}%</td>
+                                <td className="py-1 px-3 text-right text-emerald-700 font-medium">+{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            )}
+                            <tr>
+                                <td className="py-1 px-3 text-right text-muted-foreground text-base font-bold">หัก ณ ที่จ่าย {whtRate}%</td>
                                 <td className="py-1 px-3 text-right text-red-500 font-medium">-{withholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             </tr>
+                            {claimAmount > 0 && (
+                            <tr>
+                                <td className="py-1 px-3 text-right text-red-500 text-base font-bold">หักค่าเคลมสินค้า {claimRate}%</td>
+                                <td className="py-1 px-3 text-right text-red-500 font-medium">-{claimAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            )}
                             <tr className="bg-slate-50 border-t-2 border-slate-300 border-b-2">
                                 <td className="py-2 px-3 text-right font-bold text-foreground text-base">ยอดสุทธิ</td>
                                 <td className="py-2 px-3 text-right font-bold text-indigo-700 text-base decoration-double underline">

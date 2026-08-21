@@ -193,6 +193,25 @@ export async function upsertEmptyReturnRatio(value: number): Promise<{ success: 
     }
 }
 
+export type EsgParameterItem = { param_key: string; param_value: number; notes: string; updated_at?: string }
+
+/** ดึงพารามิเตอร์ ESG ทั้งหมด (empty_return_ratio, tree_absorb_kg_per_year, ...) สำหรับ Evidence Report. */
+export async function getEsgParametersList(): Promise<EsgParameterItem[]> {
+    try {
+        const supabase = createAdminClient()
+        const { data, error } = await supabase.from("esg_parameters").select("*").order("param_key")
+        if (error) return []
+        return (data || []).map((i: Record<string, unknown>) => ({
+            param_key: String(i.param_key),
+            param_value: Number(i.param_value),
+            notes: (i.notes as string) || "",
+            updated_at: i.updated_at as string | undefined,
+        }))
+    } catch {
+        return []
+    }
+}
+
 /** อ่านอัตราดูดซับคาร์บอนของต้นไม้ (kgCO2/ต้น/ปี). */
 export async function getTreeAbsorbKgPerYear(): Promise<number> {
     const { treeAbsorbKgPerYear } = await getCarbonFactors()

@@ -1,13 +1,21 @@
 "use client"
 
 import { PremiumCard } from "@/components/ui/premium-card"
-import { TreePine, Leaf, Wind, Activity, TrendingDown } from "lucide-react"
+import { TreePine, Leaf, Wind, Activity, TrendingDown, Layers, ShieldCheck } from "lucide-react"
 import { ESGStats } from "@/lib/supabase/esg-analytics"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
 
 export function ESGSection({ data }: { data: ESGStats }) {
   const { t } = useLanguage()
+
+  const dt = data.dataTiering
+  const tierRows = [
+    { key: 'primary', label: 'ข้อมูลปฐมภูมิ (Exact Volume)', sub: 'Scope 1 · ลิตรน้ำมันจริง', color: 'emerald', ...dt.exactVolume },
+    { key: 'tonnekm', label: 'GLEC Tonne-KM', sub: 'Scope 3 · น้ำหนักสินค้าจริง', color: 'sky', ...dt.tonneKm },
+    { key: 'estimated', label: 'ประเมินจากพิกัดรถ (Estimated)', sub: 'Scope 3 · Secondary Data', color: 'amber', ...dt.distanceEstimated },
+  ]
+  const totalTierJobs = dt.exactVolume.count + dt.tonneKm.count + dt.distanceEstimated.count
 
   return (
     <div className="space-y-6">
@@ -111,6 +119,59 @@ export function ESGSection({ data }: { data: ESGStats }) {
              </PremiumCard>
         </div>
       </div>
+
+      {/* Data Tiering Summary — จำแนกคุณภาพข้อมูลสำหรับยื่น อบก./ISO 14083 */}
+      <PremiumCard className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-muted rounded-xl text-primary border border-border/80 shadow-sm">
+              <Layers size={16} />
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-foreground">การจำแนกคุณภาพข้อมูล (Data Tiering)</h4>
+              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">ISO 14083 / GLEC · สำหรับยื่น อบก.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-xs">
+            <span className="inline-flex items-center gap-1.5 text-success font-bold">
+              <ShieldCheck size={14} /> ข้อมูลครบ {data.validJobsCount} งาน
+            </span>
+            {data.incompleteJobsCount > 0 && (
+              <span className="text-amber-500 font-bold">⚠ ไม่ครบ {data.incompleteJobsCount} งาน</span>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {tierRows.map(row => (
+            <div key={row.key} className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className={cn("w-2.5 h-2.5 rounded-full",
+                    row.color === 'emerald' ? 'bg-emerald-500' : row.color === 'sky' ? 'bg-sky-500' : 'bg-amber-500')} />
+                  <span className="font-bold text-foreground">{row.label}</span>
+                  <span className="text-muted-foreground">· {row.sub}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-muted-foreground">{row.count} งาน</span>
+                  <span className="text-muted-foreground">{row.co2Kg.toLocaleString()} kgCO₂e</span>
+                  <span className="font-black text-foreground w-12 text-right">{row.pct}%</span>
+                </div>
+              </div>
+              <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                <div className={cn("h-full rounded-full",
+                  row.color === 'emerald' ? 'bg-emerald-500' : row.color === 'sky' ? 'bg-sky-500' : 'bg-amber-500')}
+                  style={{ width: `${row.pct}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-[10px] text-muted-foreground mt-4 leading-relaxed">
+          📊 ยิ่งสัดส่วน &quot;ข้อมูลปฐมภูมิ&quot; และ &quot;Tonne-KM&quot; สูง = คุณภาพการรายงานยิ่งดีตามเกณฑ์ อบก./ISO 14083
+          (รวม {totalTierJobs} งานที่คำนวณได้ · {data.co2SavedKg.toLocaleString()} kgCO₂e)
+        </p>
+      </PremiumCard>
     </div>
   )
 }

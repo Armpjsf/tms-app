@@ -24,8 +24,6 @@ import { exportToCSV } from "@/lib/utils/export"
 import { PaymentVoucher } from "@/components/billing/driver/PaymentVoucher"
 import { cn } from "@/lib/utils"
 
-const WITHHOLDING_TAX_RATE = 0.01 // 1%
-
 interface ExtraCost { cost_driver: string | number; type: string }
 
 const getJobTotal = (job: Job) => {
@@ -70,6 +68,10 @@ export default function DriverPaymentClient({
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  // แอดมินเลือกก่อนทำจ่าย — VAT / หัก ณ ที่จ่าย / ค่าเคลมสินค้า (เป็น %)
+  const [vatRate, setVatRate] = useState<number>(0)
+  const [whtRate, setWhtRate] = useState<number>(1)
+  const [claimRate, setClaimRate] = useState<number>(0)
 
   // Jobs belonging to the chosen recipient (and date range). This is the ONLY
   // set that can ever be paid — the whole point of the recipient-first flow.
@@ -107,8 +109,11 @@ export default function DriverPaymentClient({
 
   const selectedData = recipientJobs.filter(i => selectedItems.includes(i.Job_ID))
   const selectedSubtotal = selectedData.reduce((s, i) => s + getJobTotal(i), 0)
-  const selectedWithholding = Math.round(selectedSubtotal * WITHHOLDING_TAX_RATE)
-  const selectedNetTotal = selectedSubtotal - selectedWithholding
+  // มาตรฐาน: VAT/WHT/เคลม คิดจาก base (subtotal) ทั้งหมด
+  const selectedVat = Math.round(selectedSubtotal * vatRate) / 100
+  const selectedWithholding = Math.round(selectedSubtotal * whtRate) / 100
+  const selectedClaim = Math.round(selectedSubtotal * claimRate) / 100
+  const selectedNetTotal = Math.round((selectedSubtotal + selectedVat - selectedWithholding - selectedClaim) * 100) / 100
 
   const entityName = mode === 'individual'
     ? selectedEntityId
@@ -140,7 +145,7 @@ export default function DriverPaymentClient({
     if (idsToPay.length === 0) { toast.warning("ยังไม่ได้เลือกงาน"); return }
     setLoading(true)
     try {
-        const result = await createDriverPayment(idsToPay, entityName, todayTH())
+        const result = await createDriverPayment(idsToPay, entityName, todayTH(), { vatRate, whtRate, claimRate })
         if (result.success) {
             const paid = (result as { paidCount?: number }).paidCount ?? idsToPay.length
             toast.success(`ทำจ่ายสำเร็จ (${paid} งาน)`)
@@ -204,6 +209,11 @@ export default function DriverPaymentClient({
         selectedSubtotal={selectedSubtotal}
         selectedWithholding={selectedWithholding}
         selectedNetTotal={selectedNetTotal}
+        selectedVat={selectedVat}
+        selectedClaim={selectedClaim}
+        vatRate={vatRate}
+        whtRate={whtRate}
+        claimRate={claimRate}
         t={t}
     />
   )
@@ -410,9 +420,36 @@ export default function DriverPaymentClient({
                         <p className="text-sm text-muted-foreground mt-1">{selectedData.length} งาน</p>
                     </div>
                     <div className="sm:text-right space-y-1">
-                        <div className="flex sm:justify-end gap-3 text-sm"><span className="text-muted-foreground">ยอดรวม</span><span className="font-bold">฿{selectedSubtotal.toLocaleString()}</span></div>
-                        <div className="flex sm:justify-end gap-3 text-sm text-rose-500"><span>หัก ณ ที่จ่าย 1%</span><span className="font-bold">-฿{selectedWithholding.toLocaleString()}</span></div>
-                        <div className="flex sm:justify-end gap-3 text-lg border-t border-border/20 pt-1 mt-1"><span className="text-primary font-black">ยอดโอนสุทธิ</span><span className="text-primary font-black">฿{selectedNetTotal.toLocaleString()}</span></div>
+                        <div className="flex sm:justify-end gap-3 text-sm"><span className="text-muted-foreground">ยอดรวม (ค่าเที่ยว)</span><span className="font-bold">฿{selectedSubtotal.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>
+                        {selectedVat > 0 && <div className="flex sm:justify-end gap-3 text-sm text-emerald-600"><span>+ VAT {vatRate}%</span><span className="font-bold">+฿{selectedVat.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>}
+                        <div className="flex sm:justify-end gap-3 text-sm text-rose-500"><span>หัก ณ ที่จ่าย {whtRate}%</span><span className="font-bold">-฿{selectedWithholding.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>
+                        {selectedClaim > 0 && <div className="flex sm:justify-end gap-3 text-sm text-rose-500"><span>หักค่าเคลมสินค้า {claimRate}%</span><span className="font-bold">-฿{selectedClaim.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>}
+                        <div className="flex sm:justify-end gap-3 text-lg border-t border-border/20 pt-1 mt-1"><span className="text-primary font-black">ยอดโอนสุทธิ</span><span className="text-primary font-black">฿{selectedNetTotal.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>
+                    </div>
+                </div>
+
+                {/* แอดมินปรับ VAT / หัก ณ ที่จ่าย / ค่าเคลมสินค้า ก่อนทำจ่าย */}
+                <div className="p-5 rounded-2xl border border-amber-500/20 bg-amber-500/5">
+                    <p className="text-sm font-black mb-3 flex items-center gap-2"><Percent size={16} className="text-amber-500" /> ปรับรายการหัก/ภาษี (กรอกก่อนยืนยัน)</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <label className="text-xs font-bold">VAT (%)
+                            <Input type="number" step="any" min="0" value={vatRate}
+                                onChange={e => setVatRate(Number(e.target.value) || 0)}
+                                className="h-11 mt-1" placeholder="0" />
+                            <span className="text-[10px] text-muted-foreground">รถร่วมจด VAT ใส่ 7</span>
+                        </label>
+                        <label className="text-xs font-bold">หัก ณ ที่จ่าย (%)
+                            <Input type="number" step="any" min="0" value={whtRate}
+                                onChange={e => setWhtRate(Number(e.target.value) || 0)}
+                                className="h-11 mt-1" placeholder="1" />
+                            <span className="text-[10px] text-muted-foreground">ขนส่งมาตรฐาน 1</span>
+                        </label>
+                        <label className="text-xs font-bold">หักค่าเคลมสินค้า (%)
+                            <Input type="number" step="any" min="0" value={claimRate}
+                                onChange={e => setClaimRate(Number(e.target.value) || 0)}
+                                className="h-11 mt-1" placeholder="0" />
+                            <span className="text-[10px] text-muted-foreground">กรณีสินค้าเสียหาย</span>
+                        </label>
                     </div>
                 </div>
 
