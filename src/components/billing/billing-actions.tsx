@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Printer, Mail, Paperclip, Send, Loader2, ExternalLink } from "lucide-react"
+import { Printer, Mail, Paperclip, Send, Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -83,34 +83,9 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
         }
     }, [customerEmail])
 
-    // Dynamic Gmail Web Compose Link (Direct HTML Link to bypass browser popup blockers)
-    const ccParam = emailCC ? `&cc=${encodeURIComponent(emailCC)}` : ''
-    const gmailWebUrl = emailTo 
-        ? `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailTo)}${ccParam}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}` 
-        : '#'
-
     // Handle Print
     const handlePrint = () => {
         window.print()
-    }
-
-    // Handle Open in Local Mail Client (Outlook / Mail App)
-    const handleOpenMailApp = () => {
-        if (!emailTo) return toast.error("กรุณาระบุอีเมลผู้รับ")
-        
-        const mailtoUrl = `mailto:${encodeURIComponent(emailTo)}?subject=${encodeURIComponent(subject)}${ccParam}&body=${encodeURIComponent(message)}`
-        
-        try {
-            const a = document.createElement('a')
-            a.href = mailtoUrl
-            a.target = '_self'
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-            toast.success("สั่งเปิดโปรแกรมอีเมลในเครื่องเรียบร้อยแล้ว (หากโปรแกรมไม่เปิด กรุณาใช้ปุ่ม 'เปิดใน Gmail Web')")
-        } catch {
-            window.location.href = mailtoUrl
-        }
     }
 
     // Handle Send Email (Via Server Action / Custom SMTP or Resend API)
@@ -191,7 +166,7 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                             ส่งใบวางบิลทางอีเมล
                         </DialogTitle>
                         <DialogDescription>
-                            เลือกส่งผ่าน Gmail Web Direct / แอปในเครื่อง หรือส่งอัตโนมัติผ่านระบบเซิร์ฟเวอร์
+                            ตรวจสอบอีเมลผู้รับ ผู้ส่ง และกดส่งข้อความผ่านระบบเซิร์ฟเวอร์
                         </DialogDescription>
                     </DialogHeader>
 
@@ -251,41 +226,13 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                         </div>
                     </div>
 
-                    <DialogFooter className="p-4 bg-muted/30 border-t flex flex-col gap-2">
-                        <div className="flex flex-wrap gap-2 w-full justify-between items-center">
-                            <div className="flex gap-2">
-                                <a 
-                                    href={gmailWebUrl}
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    onClick={(e) => {
-                                        if (!emailTo) {
-                                            e.preventDefault()
-                                            toast.error("กรุณาระบุอีเมลผู้รับ")
-                                        } else {
-                                            toast.success("เปิดหน้าเขียนอีเมลใน Gmail Web เรียบร้อยแล้ว")
-                                        }
-                                    }}
-                                    className="inline-flex items-center justify-center rounded-md text-sm font-bold transition-colors border border-rose-500/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 h-9 px-3 py-2 cursor-pointer"
-                                >
-                                    <ExternalLink className="w-4 h-4 mr-1.5" />
-                                    เปิดใน Gmail Web
-                                </a>
-                                <Button variant="outline" onClick={handleOpenMailApp} type="button" className="border-sky-500/40 text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/30">
-                                    <ExternalLink className="w-4 h-4 mr-1.5" />
-                                    แอปในเครื่อง (Outlook)
-                                </Button>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <Button variant="outline" onClick={() => setIsEmailOpen(false)}>ยกเลิก</Button>
-                                <Button onClick={handleSendEmail} disabled={sending} className="bg-primary text-primary-foreground">
-                                    {sending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                    <Send className="w-4 h-4 mr-2" />
-                                    ส่งผ่านระบบ
-                                </Button>
-                            </div>
-                        </div>
+                    <DialogFooter className="p-4 bg-muted/30 border-t flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsEmailOpen(false)}>ยกเลิก</Button>
+                        <Button onClick={handleSendEmail} disabled={sending} className="bg-primary text-primary-foreground px-6">
+                            {sending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            <Send className="w-4 h-4 mr-2" />
+                            ส่งอีเมลผ่านระบบ
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
