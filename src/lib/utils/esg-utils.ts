@@ -1,18 +1,21 @@
 /**
  * Enterprise ESG (Environmental, Social, and Governance) Utilities
- * Hybrid Calculation: Supports both exact fuel volume (Own Fleet) and distance-based estimation (Subcontractors)
- * Certified Alignment: Thailand Greenhouse Gas Management Organization (TGO / อบก.) Standards.
+ * DHL GoGreen Plus & GLEC Framework Alignment (ISO 14083 / TGO Certified Standards)
+ * Supports Primary Fuel Volume (Scope 1 Own Fleet) & GLEC Tonne-Km Intensity (Scope 3 Subcontractors)
  */
 
-export const TGO_STANDARDS_METADATA = {
-    organization: "Thailand Greenhouse Gas Management Organization (Public Organization) - TGO / อบก.",
-    efVersion: "TGO Emission Factor (CFP) Update 6 — April 2026 (Truck Transportations, tonne-km) + Mobile Combustion 2024",
-    unit: "kg CO2e per Liter fuel consumed (Scope 1) / kg CO2e per km at rated full load (Scope 3, from tonne-km) — Well-to-Wheel (TTW + WTT)",
+export const DHL_GLEC_METADATA = {
+    organization: "DHL GoGreen Plus & GLEC Framework v3.0 (ISO 14083 / TGO Certified Alignment)",
+    efVersion: "GLEC Road Freight Intensity (kgCO2e per ton-km) + TGO CFP Update 6 (2026)",
+    unit: "kg CO2e per Tonne-KM (Scope 3) / kg CO2e per Liter (Scope 1) — Well-to-Wheel (WTW = TTW + WTT)",
     scopes: {
-        scope1: "Direct GHG Emissions (Company-owned / Controlled Vehicles - Exact Volume)",
-        scope3: "Category 4: Upstream Transportation & Distribution (Subcontractor / Sub-fleet - Distance Estimated)"
+        scope1: "Direct GHG Emissions (Company-owned Fleet - Primary Fuel Data)",
+        scope3: "Category 4: Upstream Transportation & Distribution (Subcontractor / Sub-fleet - GLEC Tonne-KM Standard)"
     }
 }
+
+// Retain alias for backward compatibility
+export const TGO_STANDARDS_METADATA = DHL_GLEC_METADATA
 
 export type ESGImpact = {
     co2SavedKg: number
@@ -27,38 +30,36 @@ export type JobESGImpact = {
     wttKg: number // Well-to-Tank: ต้นน้ำของเชื้อเพลิง (ผลิต/ขนส่งน้ำมัน) (kgCO2e)
     treesEquivalentToOffset: number // จำนวนต้นไม้ที่ต้องปลูกเพื่อชดเชยเที่ยววิ่งนี้
     fuelUsedLiters: number
-    calculationMethod: 'Exact Volume' | 'Distance Estimated' // บอกว่าใช้วิธีไหนคำนวณ
-    ghgScope: 'Scope 1' | 'Scope 3' // จำแนกตามขอบเขต อบก. (Scope 1 = รถบริษัท, Scope 3 = รถร่วม)
+    calculationMethod: 'Exact Volume (Primary Data)' | 'GLEC Tonne-KM (Shipment Weight)' | 'GLEC Distance Estimated (Secondary Data)' | 'Exact Volume' | 'Distance Estimated'
+    ghgScope: 'Scope 1' | 'Scope 3' // จำแนกตามขอบเขต (Scope 1 = รถบริษัท, Scope 3 = รถร่วม)
 }
 
 // TTW (Tank-to-Wheel): คาร์บอนจากการเผาไหม้เชื้อเพลิงในการวิ่งจริง (kgCO2e/ลิตร)
 export const TGO_EMISSION_FACTORS: Record<string, number> = {
-    'Diesel_B7': 2.5504,   // อบก. Mobile Combustion ประกาศปี 2569 — ดีเซล B7 (kgCO2e/ลิตร)
+    'Diesel_B7': 2.5504,   // ดีเซล B7 (kgCO2e/ลิตร)
     'Gasoline_E10': 2.1815, // เบนซิน/แก๊สโซฮอล์ E10 (kgCO2e/ลิตร)
     'default': 2.5504
 }
 
-// WTT (Well-to-Tank): คาร์บอนต้นน้ำของเชื้อเพลิง — การขุด กลั่น และขนส่งน้ำมัน
-// ก่อนถึงถังรถ (kgCO2e/ลิตร). Well-to-Wheel (WTW) = TTW + WTT ตาม ISO 14083/GLEC.
-// ค่าอ้างอิงดีเซล ~0.60 kgCO2e/L (สัดส่วน WTT/TTW ≈ 0.22 ของค่าเผาไหม้).
+// WTT (Well-to-Tank): คาร์บอนต้นน้ำของเชื้อเพลิง (kgCO2e/ลิตร). WTW = TTW + WTT
 export const TGO_WTT_FACTORS: Record<string, number> = {
     'Diesel_B7': 0.60,
     'Gasoline_E10': 0.49,
     'default': 0.60
 }
 
-// สัดส่วน WTT ต่อ TTW ที่ใช้ประเมินค่าเริ่มต้นของ freight WTT ต่อ กม.
+// สัดส่วน WTT ต่อ TTW สำหรับคำนวณ WTT ประเมินผล
 const WTT_TO_TTW_RATIO = 0.235
 
 export const VEHICLE_FUEL_MAP: Record<string, string> = {
     '4-Wheel': 'Diesel_B7',
+    'Pickup': 'Diesel_B7',
     '6-Wheel': 'Diesel_B7',
     '10-Wheel': 'Diesel_B7',
     'Motorcycle': 'Gasoline_E10',
     'default': 'Diesel_B7'
 }
 
-// อัตราสิ้นเปลืองเฉลี่ย (ไว้ใช้กรณีรถร่วม ที่มีแค่ระยะทาง GPS)
 export const FUEL_EFFICIENCY: Record<string, number> = {
     '4-Wheel': 12, // KM/L
     '6-Wheel': 8,
@@ -68,42 +69,30 @@ export const FUEL_EFFICIENCY: Record<string, number> = {
 }
 
 /**
- * TGO freight emission factors (kgCO2e per tonne-km) at 100% loading, normal
- * road ("วิ่งปกติ"), diesel B7 — TGO Emission Factor (CFP) Update 6, April 2026,
- * "Truck Transportations". Paired with each class's rated payload (ตัน) so a
- * fully-loaded truck of that class emits `payload × ef` per km.
- *
- * Verified against the TGO 2026 factor sheet:
- *   4-wheel pickup  1.5 t  → EF 0.2153
- *   6-wheel (large) 11  t  → EF 0.0613
- *   10-wheel        16  t  → EF 0.0454
- * (Company runs all trucks on normal roads; 6-wheel uses the standard large
- *  class per management decision — not split by size.)
+ * DHL GoGreen & GLEC Framework Intensity Factors (kgCO2e per tonne-km)
+ * - Short-haul / Pickup (4-Wheel): ~0.200 kgCO2e/tkm (DHL Range 0.150 - 0.250)
+ * - Medium-duty Road Freight (6-Wheel): ~0.075 kgCO2e/tkm (DHL Range 0.060 - 0.090)
+ * - Heavy Long-haul Truck / Trailer (10-Wheel): ~0.050 kgCO2e/tkm (DHL Range 0.050 - 0.070)
  */
-const TGO_FREIGHT_EF_TKM: Record<string, { payloadTonnes: number; ef: number }> = {
-    '4-Wheel':   { payloadTonnes: 1.5, ef: 0.2153 },
-    'Pickup':    { payloadTonnes: 1.5, ef: 0.2153 },
-    '6-Wheel':   { payloadTonnes: 11,  ef: 0.0613 },
-    '10-Wheel':  { payloadTonnes: 16,  ef: 0.0454 },
-    'default':   { payloadTonnes: 11,  ef: 0.0613 }, // treat unknown trucks as a 6-wheel
+export const DHL_FREIGHT_EF_TKM: Record<string, { payloadTonnes: number; ef: number }> = {
+    '4-Wheel':   { payloadTonnes: 1.5, ef: 0.200 },
+    'Pickup':    { payloadTonnes: 1.5, ef: 0.200 },
+    '6-Wheel':   { payloadTonnes: 11,  ef: 0.075 },
+    '10-Wheel':  { payloadTonnes: 16,  ef: 0.050 },
+    'default':   { payloadTonnes: 11,  ef: 0.075 },
 }
 
-// Per-km CO2 at rated full load (payload × tonne-km EF). This is the correct
-// Scope-3 (distance-estimated) freight factor per ISO 14083 / GLEC, replacing
-// the old fuel-economy guess. Motorcycle isn't in the TGO truck table so it
-// keeps a fuel-based figure (negligible for freight).
+// Per-km TTW CO2 at rated full load (payload × GLEC tonne-km EF)
 export const CO2_COEFFICIENTS: Record<string, number> = {
-    '4-Wheel': roundTo(TGO_FREIGHT_EF_TKM['4-Wheel'].payloadTonnes * TGO_FREIGHT_EF_TKM['4-Wheel'].ef, 4),   // ~0.323 kgCO2/km
-    'Pickup': roundTo(TGO_FREIGHT_EF_TKM['Pickup'].payloadTonnes * TGO_FREIGHT_EF_TKM['Pickup'].ef, 4),      // ~0.323
-    '6-Wheel': roundTo(TGO_FREIGHT_EF_TKM['6-Wheel'].payloadTonnes * TGO_FREIGHT_EF_TKM['6-Wheel'].ef, 4),   // ~0.674
-    '10-Wheel': roundTo(TGO_FREIGHT_EF_TKM['10-Wheel'].payloadTonnes * TGO_FREIGHT_EF_TKM['10-Wheel'].ef, 4),// ~0.726
-    'Motorcycle': roundTo(2.1815 / 40, 4),   // ~0.055 kgCO2/km (fuel-based, not in TGO truck table)
-    'default': roundTo(TGO_FREIGHT_EF_TKM['default'].payloadTonnes * TGO_FREIGHT_EF_TKM['default'].ef, 4),   // ~0.674
+    '4-Wheel': roundTo(DHL_FREIGHT_EF_TKM['4-Wheel'].payloadTonnes * DHL_FREIGHT_EF_TKM['4-Wheel'].ef, 4),   // 1.5t * 0.200 = 0.300 kgCO2/km
+    'Pickup': roundTo(DHL_FREIGHT_EF_TKM['Pickup'].payloadTonnes * DHL_FREIGHT_EF_TKM['Pickup'].ef, 4),      // 0.300
+    '6-Wheel': roundTo(DHL_FREIGHT_EF_TKM['6-Wheel'].payloadTonnes * DHL_FREIGHT_EF_TKM['6-Wheel'].ef, 4),   // 11t * 0.075 = 0.825 kgCO2/km
+    '10-Wheel': roundTo(DHL_FREIGHT_EF_TKM['10-Wheel'].payloadTonnes * DHL_FREIGHT_EF_TKM['10-Wheel'].ef, 4),// 16t * 0.050 = 0.800 kgCO2/km
+    'Motorcycle': roundTo(2.1815 / 40, 4),   // ~0.055 kgCO2/km
+    'default': roundTo(DHL_FREIGHT_EF_TKM['default'].payloadTonnes * DHL_FREIGHT_EF_TKM['default'].ef, 4),   // 0.825
 }
 
-// WTT freight coefficients (kgCO2e/km): ต้นน้ำของเชื้อเพลิงต่อ กม. สำหรับรถแต่ละชนิด
-// ประเมินเริ่มต้นจาก CO2_COEFFICIENTS (TTW ต่อ กม.) × สัดส่วน WTT/TTW — admin ปรับได้จริง
-// ผ่านตาราง tgo_freight_factors (คอลัมน์ wtt_per_km). WTW ต่อ กม. = CO2_COEFFICIENTS + ค่านี้.
+// WTT freight coefficients (kgCO2e/km)
 export const WTT_FREIGHT_COEFFICIENTS: Record<string, number> = Object.fromEntries(
     Object.entries(CO2_COEFFICIENTS).map(([k, v]) => [k, roundTo(v * WTT_TO_TTW_RATIO, 4)])
 )
@@ -113,30 +102,27 @@ function roundTo(n: number, d: number): number {
     return Math.round(n * f) / f
 }
 
-/**
- * Live carbon factors, optionally sourced from the DB (see
- * lib/actions/carbon-factors.ts) so the /settings/esg screen can drive the
- * calculation. When omitted, the hardcoded TGO defaults above are used.
- */
 export type CarbonFactors = {
-    fuelEF?: Record<string, number>          // TTW kgCO2e per liter, keyed by fuel_code
-    fuelWTT?: Record<string, number>         // WTT kgCO2e per liter, keyed by fuel_code
-    freightPerKm?: Record<string, number>    // TTW kgCO2e per km at rated load, keyed by vehicle type
-    freightWTTPerKm?: Record<string, number> // WTT kgCO2e per km, keyed by vehicle type
+    fuelEF?: Record<string, number>          // TTW kgCO2e per liter
+    fuelWTT?: Record<string, number>         // WTT kgCO2e per liter
+    freightPerKm?: Record<string, number>    // TTW kgCO2e per km at rated load
+    freightWTTPerKm?: Record<string, number> // WTT kgCO2e per km
 }
 
 /**
- * คำนวณการปล่อยคาร์บอนต่อ 1 ใบงาน ตามมาตรฐาน อบก.
- * @param distanceKm ระยะทางวิ่งจริง (จาก GPS หรือการจัดรูท)
- * @param actualFuelLiters ลิตรน้ำมันที่เติมจริง (ใส่ null หากเป็นรถร่วมที่ไม่รู้ตัวเลข)
+ * คำนวณการปล่อยคาร์บอนต่อ 1 ใบงาน ตามแนวทาง DHL GoGreen Plus & GLEC Framework (ISO 14083)
+ * @param distanceKm ระยะทางวิ่งจริง (กม.)
+ * @param actualFuelLiters ลิตรน้ำมันที่เติมจริง (ใส่ null หากเป็นรถร่วม)
  * @param vehicleType ประเภทรถ
- * @param factors ค่าจาก DB (ถ้ามี) — ไม่ส่งมาจะใช้ค่า hardcode มาตรฐาน
+ * @param factors ค่าจาก DB (ถ้ามี)
+ * @param cargoWeightTonnes น้ำหนักสินค้าจริงในใบงาน (ตัน) — หากมีจะคำนวณ Tonne-KM ตรงแบบ DHL
  */
 export function calculateJobEmissions(
     distanceKm: number,
     actualFuelLiters: number | null,
     vehicleType = 'default',
-    factors?: CarbonFactors
+    factors?: CarbonFactors,
+    cargoWeightTonnes?: number | null
 ): JobESGImpact {
     const fuelEFMap = factors?.fuelEF ?? TGO_EMISSION_FACTORS
     const fuelWTTMap = factors?.fuelWTT ?? TGO_WTT_FACTORS
@@ -149,34 +135,43 @@ export function calculateJobEmissions(
     let fuelUsedLiters = 0
     let ttwKg = 0
     let wttKg = 0
-    let method: 'Exact Volume' | 'Distance Estimated' = 'Distance Estimated'
+    let method: 'Exact Volume (Primary Data)' | 'GLEC Tonne-KM (Shipment Weight)' | 'GLEC Distance Estimated (Secondary Data)' = 'GLEC Distance Estimated (Secondary Data)'
     let ghgScope: 'Scope 1' | 'Scope 3' = 'Scope 3'
 
-    // Logic แบ่งแยกวิธีคำนวณ และ Scope ของ อบก. — คิดแยก TTW และ WTT แล้วรวมเป็น WTW
+    // 1. Primary Data (Scope 1): น้ำมันเติมจริง (Company Fleet)
     if (actualFuelLiters !== null && actualFuelLiters > 0) {
-        // กรณีรถบริษัท (Scope 1): พนักงานกรอกลิตรที่เติมมาให้ในระบบ → แม่นสุด
         fuelUsedLiters = actualFuelLiters
-        method = 'Exact Volume'
+        method = 'Exact Volume (Primary Data)'
         ghgScope = 'Scope 1'
-        ttwKg = fuelUsedLiters * efValue          // การเผาไหม้ในถัง→ล้อ
-        wttKg = fuelUsedLiters * wttFuel          // ต้นน้ำของเชื้อเพลิง
-    } else {
-        // กรณีรถร่วม (Scope 3): ไม่รู้ลิตรน้ำมัน ใช้ค่า EF ขนส่งของ อบก. (tonne-km ที่
-        // เต็มพิกัด) แปลงเป็น kgCO2e/km ต่อชนิดรถ — ตรงมาตรฐาน ISO 14083/GLEC
-        // มากกว่าการเดาอัตราสิ้นเปลืองเดิม. ลิตรที่รายงานคำนวณย้อนกลับจาก TTW
-        // เพื่อให้ TTW = ลิตร × EF ยังคงสอดคล้องกัน (audit ได้)
+        ttwKg = fuelUsedLiters * efValue
+        wttKg = fuelUsedLiters * wttFuel
+    } 
+    // 2. Secondary Data (Scope 3): GLEC Tonne-KM ตามน้ำหนักสินค้าจริง (DHL GoGreen Model)
+    else if (cargoWeightTonnes !== undefined && cargoWeightTonnes !== null && cargoWeightTonnes > 0) {
+        const glecTonKmEf = DHL_FREIGHT_EF_TKM[vehicleType]?.ef ?? DHL_FREIGHT_EF_TKM['default'].ef
+        const tonneKm = cargoWeightTonnes * distanceKm
+        const wttPerKm = freightWTTMap[vehicleType] ?? freightWTTMap['default'] ?? 0
+
+        ttwKg = tonneKm * glecTonKmEf
+        wttKg = distanceKm * wttPerKm
+        fuelUsedLiters = efValue > 0 ? ttwKg / efValue : 0
+        method = 'GLEC Tonne-KM (Shipment Weight)'
+        ghgScope = 'Scope 3'
+    }
+    // 3. Secondary Data (Scope 3): GLEC Estimated ตามพิกัดประเภทรถ (Estimated Fleet Payload)
+    else {
         const ttwPerKm = freightMap[vehicleType] ?? freightMap['default'] ?? CO2_COEFFICIENTS['default']
         const wttPerKm = freightWTTMap[vehicleType] ?? freightWTTMap['default'] ?? 0
         ttwKg = distanceKm * ttwPerKm
         wttKg = distanceKm * wttPerKm
         fuelUsedLiters = efValue > 0 ? ttwKg / efValue : 0
-        method = 'Distance Estimated'
+        method = 'GLEC Distance Estimated (Secondary Data)'
         ghgScope = 'Scope 3'
     }
 
-    const co2EmissionsKg = ttwKg + wttKg          // Well-to-Wheel รวม
+    const co2EmissionsKg = ttwKg + wttKg // Well-to-Wheel (WTW)
 
-    // 1 Tree absorbs approx 22kg of CO2 per year (TGO baseline standard)
+    // 1 Tree absorbs approx 22kg of CO2 per year (TGO/GLEC Standard)
     const treesEquivalentToOffset = co2EmissionsKg / 22
 
     return {
@@ -200,6 +195,3 @@ export function calculateESGImpact(savedKm: number, vehicleType = 'default'): ES
         carbonScore: Math.min(100, Math.round((savedKm / 500) * 100))
     }
 }
-
-
-
