@@ -401,26 +401,27 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       const s = String(v ?? '').trim().toLowerCase()
       if (!s) return 'default'
       if (s.includes('motor') || s.includes('มอเตอร์')) return 'Motorcycle'
+      // เช็กเลขล้อมากก่อน (กันชนกับ 2 หลัก)
+      if (s.startsWith('22')) return '22-Wheel'
+      if (s.startsWith('18')) return '18-Wheel'
       if (s.startsWith('10')) return '10-Wheel'
       if (s.startsWith('6')) return '6-Wheel'
       if (s.startsWith('4')) return '4-Wheel'
-      if (s === '4-wheel' || s === '6-wheel' || s === '10-wheel') return v as string
       return 'default'
     }
-    // ระยะทางไป-กลับที่แสดงผล = เที่ยวเดียว ×2 (ระยะจริงที่รถวิ่ง)
+    // ใบแจ้งหนี้ + LINE: คิด "1 ขา รถหนัก" (เที่ยวเดียว บรรทุกจริง) ไม่รวมตีเปล่ากลับ
     const oneWayKm = Number(job.Est_Distance_KM) || 0
-    const roundTripKm = oneWayKm * 2
     let carbonText = ''
-    if (roundTripKm > 0) {
+    if (oneWayKm > 0) {
       const carbonFactors = await getCarbonFactors()
-      // น้ำหนักสินค้าจริง (ถ้ามี) → คำนวณแบบ tonne-km ตาม ISO 14083; ฟังก์ชันคิดเที่ยวกลับรถเปล่าเอง
+      // น้ำหนักสินค้าจริง (ถ้ามี) → คำนวณแบบ tonne-km ตาม ISO 14083; emptyReturnRatio=0 (ไม่รวมขากลับ)
       const rawWeight = Number(job.Weight_Kg) || 0
       const cargoWeightTonnes = rawWeight > 0 ? rawWeight / 1000 : null
-      const esg = calculateJobEmissions(oneWayKm, null, normalizeVehicleType(job.Vehicle_Type), carbonFactors, cargoWeightTonnes, carbonFactors.emptyReturnRatio)
+      const esg = calculateJobEmissions(oneWayKm, null, normalizeVehicleType(job.Vehicle_Type), carbonFactors, cargoWeightTonnes, 0)
       carbonText = [
         ``,
         `🌱 คาร์บอนฟุตพริ้นต์เที่ยวนี้ (มาตรฐาน ISO 14083 / GLEC / อบก.):`,
-        `   ระยะทางไป-กลับ ~${roundTripKm.toLocaleString()} กม. • ปล่อย ~${esg.co2EmissionsKg.toLocaleString()} kgCO₂e`,
+        `   ระยะทางขนส่ง ~${oneWayKm.toLocaleString()} กม. • ปล่อย ~${esg.co2EmissionsKg.toLocaleString()} kgCO₂e`,
         `   เทียบเท่าปลูกต้นไม้ ~${esg.treesEquivalentToOffset.toLocaleString()} ต้น เพื่อชดเชย`,
       ].join('\n')
     }

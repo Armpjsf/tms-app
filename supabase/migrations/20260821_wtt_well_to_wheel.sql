@@ -29,3 +29,5 @@ alter table tgo_freight_factors
 update tgo_freight_factors set wtt_per_km = 0.0759 where vehicle_type in ('4-Wheel','Pickup') and (wtt_per_km is null or wtt_per_km = 0);
 update tgo_freight_factors set wtt_per_km = 0.1585 where vehicle_type in ('6-Wheel','default') and (wtt_per_km is null or wtt_per_km = 0);
 update tgo_freight_factors set wtt_per_km = 0.1707 where vehicle_type = '10-Wheel' and (wtt_per_km is null or wtt_per_km = 0);
+update tgo_freight_factors set wtt_per_km = 0.2056 where vehicle_type = '18-Wheel' and (wtt_per_km is null or wtt_per_km = 0);
+update tgo_freight_factors set wtt_per_km = 0.2115 where vehicle_type = '22-Wheel' and (wtt_per_km is null or wtt_per_km = 0);

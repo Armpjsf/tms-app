@@ -7,7 +7,7 @@ import { ConfirmInvoiceButton } from "@/components/billing/confirm-invoice-butto
 import { cookies } from "next/headers"
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
 import { createClient } from "@/utils/supabase/server"
-import { CO2_COEFFICIENTS, WTT_FREIGHT_COEFFICIENTS, ROUND_TRIP_EMISSION_FACTOR } from "@/lib/utils/esg-utils"
+import { CO2_COEFFICIENTS, WTT_FREIGHT_COEFFICIENTS } from "@/lib/utils/esg-utils"
 import { getCarbonFactors } from "@/lib/actions/carbon-factors"
 
 export default async function InvoiceViewPage({ params }: { params: Promise<{ id: string }> }) {
@@ -36,15 +36,14 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
     return 0
   }
   // ดึงค่า EF จาก DB (แอดมินตั้งใน /settings/esg) แล้ว fallback เป็น hardcode
-  const { freightPerKm = {}, freightWTTPerKm = {}, roundTripEmissionFactor } = await getCarbonFactors()
-  const rtFactor = roundTripEmissionFactor ?? ROUND_TRIP_EMISSION_FACTOR
+  const { freightPerKm = {}, freightWTTPerKm = {} } = await getCarbonFactors()
   const calculateCO2 = (dist?: number | null, vType?: string | null) => {
     const key = vType || 'default'
     // WTW = TTW + WTT ต่อ กม. ตาม ISO 14083
     const ttw = freightPerKm[key] ?? freightPerKm['default'] ?? CO2_COEFFICIENTS[key] ?? CO2_COEFFICIENTS['default']
     const wtt = freightWTTPerKm[key] ?? freightWTTPerKm['default'] ?? WTT_FREIGHT_COEFFICIENTS[key] ?? WTT_FREIGHT_COEFFICIENTS['default'] ?? 0
-    // ระยะเทียบเท่าการปล่อย: เที่ยวไป(เต็ม) + เที่ยวกลับ(รถเปล่า) ตาม ISO 14083/GLEC
-    const emissionDist = (Number(dist) || 12.5) * rtFactor
+    // ใบแจ้งหนี้: คิด "1 ขา รถหนัก" (เที่ยวเดียว) ไม่รวมตีเปล่ากลับ
+    const emissionDist = Number(dist) || 12.5
     return emissionDist * (ttw + wtt)
   }
 

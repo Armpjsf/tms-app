@@ -28,10 +28,9 @@ export async function calculateJobCO2(supabase: SupabaseClient, jobId: string) {
         const rawWeight = Number(job.Weight_Kg) || 0
         const cargoWeightTonnes = rawWeight > 0 ? rawWeight / 1000 : null
 
-        // ดึงค่า EF จาก DB (แอดมินตั้งเอง) แล้วส่งเข้า calculateJobEmissions
-        // ส่งระยะ "เที่ยวเดียว" + น้ำหนักสินค้า + emptyReturnRatio ให้ฟังก์ชันคิดเที่ยวกลับรถเปล่าแยกขา
+        // ใบแจ้งหนี้: คิด "1 ขา รถหนัก" (เที่ยวเดียว บรรทุกจริง) ไม่รวมตีเปล่ากลับ → emptyReturnRatio=0
         const factors = await getCarbonFactors()
-        const emissions = calculateJobEmissions(oneWayKm, null, vType, factors, cargoWeightTonnes, factors.emptyReturnRatio)
+        const emissions = calculateJobEmissions(oneWayKm, null, vType, factors, cargoWeightTonnes, 0)
         const co2Amount = emissions.co2EmissionsKg
 
         return {

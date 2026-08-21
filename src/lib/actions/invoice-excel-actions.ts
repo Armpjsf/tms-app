@@ -1,7 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/server'
-import { CO2_COEFFICIENTS, ROUND_TRIP_EMISSION_FACTOR } from '@/lib/utils/esg-utils'
+import { CO2_COEFFICIENTS } from '@/lib/utils/esg-utils'
 import { getCarbonFactors } from '@/lib/actions/carbon-factors'
 import ExcelJS from 'exceljs'
 import { getSystemSetting } from './system-settings-actions'
@@ -29,9 +29,11 @@ const EXPENSE_MAP: Record<string, string> = {
 const normalizeVehicleType = (v: string) => {
     if (!v || v === '-' || v.trim() === '') return '-'
     const normalized = v.toLowerCase().trim()
-    if (normalized.includes('4w') || normalized.includes('4wheel') || normalized.includes('4 wheel')) return '4-Wheel'
-    if (normalized.includes('6w') || normalized.includes('6wheel') || normalized.includes('6 wheel')) return '6-Wheel'
-    if (normalized.includes('10w') || normalized.includes('10wheel')) return '10-Wheel'
+    if (normalized.startsWith('22')) return '22-Wheel'
+    if (normalized.startsWith('18')) return '18-Wheel'
+    if (normalized.startsWith('10') || normalized.includes('10w') || normalized.includes('10wheel')) return '10-Wheel'
+    if (normalized.startsWith('4') || normalized.includes('4w') || normalized.includes('4wheel') || normalized.includes('4 wheel')) return '4-Wheel'
+    if (normalized.startsWith('6') || normalized.includes('6w') || normalized.includes('6wheel') || normalized.includes('6 wheel')) return '6-Wheel'
     return v
 }
 
@@ -241,8 +243,7 @@ export async function exportInvoiceExcel(invoiceId: string) {
         let totalCO2 = 0
 
         // Live TGO freight factors (editable in /settings/esg), loaded once.
-        const { freightPerKm = {}, freightWTTPerKm = {}, roundTripEmissionFactor } = await getCarbonFactors()
-        const rtFactor = roundTripEmissionFactor ?? ROUND_TRIP_EMISSION_FACTOR
+        const { freightPerKm = {}, freightWTTPerKm = {} } = await getCarbonFactors()
 
         for (let index = 0; index < jobs.length; index++) {
             const job = jobs[index]
@@ -287,8 +288,8 @@ export async function exportInvoiceExcel(invoiceId: string) {
             // Carbon Footprint — live TGO freight factor per vehicle type
             // (editable in /settings/esg; falls back to default when unknown).
             // WTW = TTW + WTT ต่อ กม. ตาม ISO 14083
-            // ระยะเทียบเท่าการปล่อย: เที่ยวไป(เต็ม) + เที่ยวกลับ(รถเปล่า)
-            const emissionDist = (Number(job.Est_Distance_KM) || 12.5) * rtFactor
+            // ใบแจ้งหนี้: คิด "1 ขา รถหนัก" (เที่ยวเดียว) ไม่รวมตีเปล่ากลับ
+            const emissionDist = Number(job.Est_Distance_KM) || 12.5
             const vType = normalizeVehicleType(asString(job.Vehicle_Type))
             const ttwCoeff = freightPerKm[vType] ?? freightPerKm['default'] ?? CO2_COEFFICIENTS['default']
             const wttCoeff = freightWTTPerKm[vType] ?? freightWTTPerKm['default'] ?? 0

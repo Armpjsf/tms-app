@@ -83,6 +83,8 @@ export const VEHICLE_FUEL_MAP: Record<string, string> = {
     'Pickup': 'Diesel_B7',
     '6-Wheel': 'Diesel_B7',
     '10-Wheel': 'Diesel_B7',
+    '18-Wheel': 'Diesel_B7',
+    '22-Wheel': 'Diesel_B7',
     'Motorcycle': 'Gasoline_E10',
     'default': 'Diesel_B7'
 }
@@ -106,6 +108,8 @@ export const DHL_FREIGHT_EF_TKM: Record<string, { payloadTonnes: number; ef: num
     'Pickup':    { payloadTonnes: 1.5, ef: 0.200 },
     '6-Wheel':   { payloadTonnes: 11,  ef: 0.075 },
     '10-Wheel':  { payloadTonnes: 16,  ef: 0.050 },
+    '18-Wheel':  { payloadTonnes: 25,  ef: 0.035 }, // เทรลเลอร์/พ่วง — ค่าประมาณ ปรับที่ /settings/esg ให้ตรง TGO
+    '22-Wheel':  { payloadTonnes: 30,  ef: 0.030 }, // ค่าประมาณ ปรับที่ /settings/esg ให้ตรง TGO
     'default':   { payloadTonnes: 11,  ef: 0.075 },
 }
 
@@ -115,6 +119,8 @@ export const CO2_COEFFICIENTS: Record<string, number> = {
     'Pickup': roundTo(DHL_FREIGHT_EF_TKM['Pickup'].payloadTonnes * DHL_FREIGHT_EF_TKM['Pickup'].ef, 4),      // 0.300
     '6-Wheel': roundTo(DHL_FREIGHT_EF_TKM['6-Wheel'].payloadTonnes * DHL_FREIGHT_EF_TKM['6-Wheel'].ef, 4),   // 11t * 0.075 = 0.825 kgCO2/km
     '10-Wheel': roundTo(DHL_FREIGHT_EF_TKM['10-Wheel'].payloadTonnes * DHL_FREIGHT_EF_TKM['10-Wheel'].ef, 4),// 16t * 0.050 = 0.800 kgCO2/km
+    '18-Wheel': roundTo(DHL_FREIGHT_EF_TKM['18-Wheel'].payloadTonnes * DHL_FREIGHT_EF_TKM['18-Wheel'].ef, 4), // 25t * 0.035 = 0.875
+    '22-Wheel': roundTo(DHL_FREIGHT_EF_TKM['22-Wheel'].payloadTonnes * DHL_FREIGHT_EF_TKM['22-Wheel'].ef, 4), // 30t * 0.030 = 0.900
     'Motorcycle': roundTo(2.1815 / 40, 4),   // ~0.055 kgCO2/km
     'default': roundTo(DHL_FREIGHT_EF_TKM['default'].payloadTonnes * DHL_FREIGHT_EF_TKM['default'].ef, 4),   // 0.825
 }
