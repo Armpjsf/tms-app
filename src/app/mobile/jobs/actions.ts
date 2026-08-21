@@ -17,7 +17,7 @@ export async function calculateJobCO2(supabase: SupabaseClient, jobId: string) {
     try {
         const { data: job } = await supabase
             .from('Jobs_Main')
-            .select('Est_Distance_KM, Actual_Distance_KM, Vehicle_Type, Total_Weight_Kg')
+            .select('Est_Distance_KM, Actual_Distance_KM, Vehicle_Type, Weight_Kg')
             .eq('Job_ID', jobId)
             .single()
 
@@ -25,7 +25,7 @@ export async function calculateJobCO2(supabase: SupabaseClient, jobId: string) {
 
         const oneWayKm = Number(job.Est_Distance_KM) || 12.5
         const vType = job.Vehicle_Type || '4-Wheel'
-        const rawWeight = Number(job.Total_Weight_Kg) || 0
+        const rawWeight = Number(job.Weight_Kg) || 0
         const cargoWeightTonnes = rawWeight > 0 ? rawWeight / 1000 : null
 
         // ดึงค่า EF จาก DB (แอดมินตั้งเอง) แล้วส่งเข้า calculateJobEmissions

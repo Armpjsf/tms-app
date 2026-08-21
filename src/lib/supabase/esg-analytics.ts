@@ -69,7 +69,7 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
 
         let query = supabase
             .from('Jobs_Main')
-            .select('Job_ID, Plan_Date, Price_Cust_Total, Branch_ID, Customer_ID, Est_Distance_KM, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Vehicle_Type, original_origins_json, original_destinations_json, Total_Weight_Kg')
+            .select('Job_ID, Plan_Date, Price_Cust_Total, Branch_ID, Customer_ID, Est_Distance_KM, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Vehicle_Type, original_origins_json, original_destinations_json, Weight_Kg')
             .in('Job_Status', REVENUE_STATUSES)
 
         if (sDate) query = query.gte('Plan_Date', sDate)
@@ -137,7 +137,7 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
             const vType = j.Vehicle_Type || 'default'
             const actualFuel: number | null = null // Actual_Fuel_Liters column not yet in DB
             let dist = Number(j.Est_Distance_KM) || 0
-            const rawWeight = Number(j.Total_Weight_Kg) || null
+            const rawWeight = Number(j.Weight_Kg) || null
             const cargoWeightTonnes = rawWeight ? rawWeight / 1000 : null
             
             // Try to recover distance from coordinates if Est_Distance_KM is missing

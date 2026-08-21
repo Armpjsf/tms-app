@@ -284,7 +284,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     // Fetch job details
     const { data: job, error: jobErr } = await supabase
       .from('Jobs_Main')
-      .select('Job_ID, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Vehicle_Type, Est_Distance_KM, Total_Weight_Kg, Photo_Proof_Url, Signature_Url, Customer_ID, Branch_ID, Actual_Delivery_Time, Delivery_Date, Delivery_Notified_At, original_destinations_json, POD_Drops_Json')
+      .select('Job_ID, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Vehicle_Type, Est_Distance_KM, Weight_Kg, Photo_Proof_Url, Signature_Url, Customer_ID, Branch_ID, Actual_Delivery_Time, Delivery_Date, Delivery_Notified_At, original_destinations_json, POD_Drops_Json')
       .eq('Job_ID', jobId)
       .single();
 
@@ -414,7 +414,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     if (roundTripKm > 0) {
       const carbonFactors = await getCarbonFactors()
       // น้ำหนักสินค้าจริง (ถ้ามี) → คำนวณแบบ tonne-km ตาม ISO 14083; ฟังก์ชันคิดเที่ยวกลับรถเปล่าเอง
-      const rawWeight = Number(job.Total_Weight_Kg) || 0
+      const rawWeight = Number(job.Weight_Kg) || 0
       const cargoWeightTonnes = rawWeight > 0 ? rawWeight / 1000 : null
       const esg = calculateJobEmissions(oneWayKm, null, normalizeVehicleType(job.Vehicle_Type), carbonFactors, cargoWeightTonnes, carbonFactors.emptyReturnRatio)
       carbonText = [
