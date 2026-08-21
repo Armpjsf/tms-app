@@ -20,6 +20,7 @@ import {
     CO2_COEFFICIENTS,
     WTT_FREIGHT_COEFFICIENTS,
     EMPTY_RETURN_RATIO,
+    TREE_ABSORB_KG_PER_YEAR,
     type CarbonFactors,
 } from "@/lib/utils/esg-utils"
 
@@ -52,6 +53,7 @@ export async function getCarbonFactors(): Promise<CarbonFactors> {
     const freightPerKm: Record<string, number> = { ...CO2_COEFFICIENTS }
     const freightWTTPerKm: Record<string, number> = { ...WTT_FREIGHT_COEFFICIENTS }
     let emptyReturnRatio = EMPTY_RETURN_RATIO
+    let treeAbsorbKgPerYear = TREE_ABSORB_KG_PER_YEAR
 
     try {
         const supabase = createAdminClient()
@@ -72,8 +74,11 @@ export async function getCarbonFactors(): Promise<CarbonFactors> {
                 if (f?.wtt_per_km != null) freightWTTPerKm[f.vehicle_type] = Number(f.wtt_per_km)
             }
         }
-        const rawRatio = (params || []).find((p: { param_key?: string }) => p?.param_key === "empty_return_ratio")?.param_value
+        const findParam = (k: string) => (params || []).find((p: { param_key?: string }) => p?.param_key === k)?.param_value
+        const rawRatio = findParam("empty_return_ratio")
         if (rawRatio != null && Number.isFinite(Number(rawRatio))) emptyReturnRatio = Number(rawRatio)
+        const rawTree = findParam("tree_absorb_kg_per_year")
+        if (rawTree != null && Number.isFinite(Number(rawTree)) && Number(rawTree) > 0) treeAbsorbKgPerYear = Number(rawTree)
     } catch {
         /* DB unreachable / tables not created / columns not migrated → use hardcoded defaults */
     }
@@ -82,6 +87,7 @@ export async function getCarbonFactors(): Promise<CarbonFactors> {
         fuelEF, fuelWTT, freightPerKm, freightWTTPerKm,
         emptyReturnRatio,
         roundTripEmissionFactor: 1 + emptyReturnRatio,
+        treeAbsorbKgPerYear,
     }
     cache = { data, ts: Date.now() }
     return data
@@ -180,6 +186,33 @@ export async function upsertEmptyReturnRatio(value: number): Promise<{ success: 
         invalidate()
         revalidatePath("/settings/esg")
         return { success: true, message: "บันทึกสัดส่วนเที่ยวกลับสำเร็จ" }
+    } catch (err) {
+        return { success: false, message: err instanceof Error ? err.message : "บันทึกไม่สำเร็จ" }
+    }
+}
+
+/** อ่านอัตราดูดซับคาร์บอนของต้นไม้ (kgCO2/ต้น/ปี). */
+export async function getTreeAbsorbKgPerYear(): Promise<number> {
+    const { treeAbsorbKgPerYear } = await getCarbonFactors()
+    return treeAbsorbKgPerYear ?? TREE_ABSORB_KG_PER_YEAR
+}
+
+/** บันทึกอัตราดูดซับคาร์บอนของต้นไม้ (kgCO2/ต้น/ปี) ลงตาราง esg_parameters. */
+export async function upsertTreeAbsorbKgPerYear(value: number): Promise<{ success: boolean; message?: string }> {
+    try {
+        await requireAdmin()
+        if (!Number.isFinite(value) || value <= 0 || value > 1000) {
+            return { success: false, message: "ค่าต้องมากกว่า 0 (kgCO2/ต้น/ปี)" }
+        }
+        const supabase = createAdminClient()
+        const { error } = await supabase.from("esg_parameters").upsert(
+            { param_key: "tree_absorb_kg_per_year", param_value: value, updated_at: new Date().toISOString() },
+            { onConflict: "param_key" }
+        )
+        if (error) throw error
+        invalidate()
+        revalidatePath("/settings/esg")
+        return { success: true, message: "บันทึกอัตราดูดซับต้นไม้สำเร็จ" }
     } catch (err) {
         return { success: false, message: err instanceof Error ? err.message : "บันทึกไม่สำเร็จ" }
     }

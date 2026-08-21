@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logActivity } from "@/lib/supabase/logs";
 import { revalidatePath } from "next/cache";
 import { isCompleted } from "@/lib/constants/job-status";
-import { calculateJobEmissions, ROUND_TRIP_EMISSION_FACTOR } from "@/lib/utils/esg-utils";
+import { calculateJobEmissions } from "@/lib/utils/esg-utils";
 import { getCarbonFactors } from "@/lib/actions/carbon-factors";
 
 // ชุดสถานะที่ใช้งานจริง (operational) — ตัด alias ที่ไม่เคยถูกเขียน/ไม่มีในข้อมูลออก
@@ -284,7 +284,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     // Fetch job details
     const { data: job, error: jobErr } = await supabase
       .from('Jobs_Main')
-      .select('Job_ID, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Vehicle_Type, Est_Distance_KM, Photo_Proof_Url, Signature_Url, Customer_ID, Branch_ID, Actual_Delivery_Time, Delivery_Date, Delivery_Notified_At, original_destinations_json, POD_Drops_Json')
+      .select('Job_ID, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Vehicle_Type, Est_Distance_KM, Total_Weight_Kg, Photo_Proof_Url, Signature_Url, Customer_ID, Branch_ID, Actual_Delivery_Time, Delivery_Date, Delivery_Notified_At, original_destinations_json, POD_Drops_Json')
       .eq('Job_ID', jobId)
       .single();
 
@@ -413,9 +413,10 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     let carbonText = ''
     if (roundTripKm > 0) {
       const carbonFactors = await getCarbonFactors()
-      // ระยะเทียบเท่าสำหรับ "การปล่อย": เที่ยวไป(เต็ม) + เที่ยวกลับ(รถเปล่า) ตาม ISO 14083/GLEC
-      const emissionKm = oneWayKm * (carbonFactors.roundTripEmissionFactor ?? ROUND_TRIP_EMISSION_FACTOR)
-      const esg = calculateJobEmissions(emissionKm, null, normalizeVehicleType(job.Vehicle_Type), carbonFactors)
+      // น้ำหนักสินค้าจริง (ถ้ามี) → คำนวณแบบ tonne-km ตาม ISO 14083; ฟังก์ชันคิดเที่ยวกลับรถเปล่าเอง
+      const rawWeight = Number(job.Total_Weight_Kg) || 0
+      const cargoWeightTonnes = rawWeight > 0 ? rawWeight / 1000 : null
+      const esg = calculateJobEmissions(oneWayKm, null, normalizeVehicleType(job.Vehicle_Type), carbonFactors, cargoWeightTonnes, carbonFactors.emptyReturnRatio)
       carbonText = [
         ``,
         `🌱 คาร์บอนฟุตพริ้นต์เที่ยวนี้ (มาตรฐาน ISO 14083 / GLEC / อบก.):`,

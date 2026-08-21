@@ -70,6 +70,14 @@ export const EMPTY_RETURN_RATIO = 0.65
  */
 export const ROUND_TRIP_EMISSION_FACTOR = 1 + EMPTY_RETURN_RATIO // 1.65
 
+/**
+ * อัตราการดูดซับคาร์บอนของต้นไม้ (kgCO2/ต้น/ปี) สำหรับคำนวณ "เทียบเท่าปลูกต้นไม้"
+ * ค่า default 9.5 อ้างอิง TGO/อบก. (LESS): ต้นไม้ 1 ต้นกักเก็บคาร์บอนเพิ่มขึ้น ~9.5 kgCO2/ปี
+ * (วิธีเข้มของ T-VER ใช้สมการแอลโลเมตรีรายต้น/รายชนิด — ค่า 9.5 เป็นค่าสื่อสารเฉลี่ย)
+ * ปรับได้ที่ /settings/esg (ตาราง esg_parameters.tree_absorb_kg_per_year) — ค่านี้เป็น fallback
+ */
+export const TREE_ABSORB_KG_PER_YEAR = 9.5
+
 export const VEHICLE_FUEL_MAP: Record<string, string> = {
     '4-Wheel': 'Diesel_B7',
     'Pickup': 'Diesel_B7',
@@ -128,22 +136,26 @@ export type CarbonFactors = {
     freightWTTPerKm?: Record<string, number> // WTT kgCO2e per km
     emptyReturnRatio?: number                // สัดส่วนปล่อยเที่ยวกลับรถเปล่า (0–1)
     roundTripEmissionFactor?: number         // ตัวคูณระยะเทียบเท่าการปล่อยไป-กลับ = 1 + emptyReturnRatio
+    treeAbsorbKgPerYear?: number             // อัตราดูดซับคาร์บอนต้นไม้ (kgCO2/ต้น/ปี)
 }
 
 /**
  * คำนวณการปล่อยคาร์บอนต่อ 1 ใบงาน ตามแนวทาง DHL GoGreen Plus & GLEC Framework (ISO 14083)
- * @param distanceKm ระยะทางวิ่งจริง (กม.)
+ * @param distanceKm ระยะทาง "เที่ยวเดียว" (one-way, กม.) — ห้ามคูณไป-กลับมาก่อน
  * @param actualFuelLiters ลิตรน้ำมันที่เติมจริง (ใส่ null หากเป็นรถร่วม)
  * @param vehicleType ประเภทรถ
  * @param factors ค่าจาก DB (ถ้ามี)
- * @param cargoWeightTonnes น้ำหนักสินค้าจริงในใบงาน (ตัน) — หากมีจะคำนวณ Tonne-KM ตรงแบบ DHL
+ * @param cargoWeightTonnes น้ำหนักสินค้าจริงในใบงาน (ตัน) — หากมีจะคำนวณ Tonne-KM ตรงแบบ GLEC
+ * @param emptyReturnRatio ถ้า >0 จะบวก "เที่ยวกลับรถเปล่า" แบบแยกขา (per-km × ratio)
+ *        โดยไม่แตะ tonne-km ของสินค้า (กันการนับซ้ำ / Double Counting)
  */
 export function calculateJobEmissions(
     distanceKm: number,
     actualFuelLiters: number | null,
     vehicleType = 'default',
     factors?: CarbonFactors,
-    cargoWeightTonnes?: number | null
+    cargoWeightTonnes?: number | null,
+    emptyReturnRatio?: number | null
 ): JobESGImpact {
     const fuelEFMap = factors?.fuelEF ?? TGO_EMISSION_FACTORS
     const fuelWTTMap = factors?.fuelWTT ?? TGO_WTT_FACTORS
@@ -153,6 +165,11 @@ export function calculateJobEmissions(
     const efValue = fuelEFMap[fuelType] ?? fuelEFMap['default'] ?? TGO_EMISSION_FACTORS['default']
     const wttFuel = fuelWTTMap[fuelType] ?? fuelWTTMap['default'] ?? 0
 
+    // per-km ของรถ "เต็มพิกัด" (kgCO2e/km) — ใช้ทั้ง branch ประเมิน และคิดเที่ยวกลับรถเปล่า
+    const ttwPerKm = freightMap[vehicleType] ?? freightMap['default'] ?? CO2_COEFFICIENTS['default']
+    const wttPerKm = freightWTTMap[vehicleType] ?? freightWTTMap['default'] ?? 0
+    const ratio = (emptyReturnRatio && emptyReturnRatio > 0) ? emptyReturnRatio : 0
+
     let fuelUsedLiters = 0
     let ttwKg = 0
     let wttKg = 0
@@ -160,31 +177,33 @@ export function calculateJobEmissions(
     let ghgScope: 'Scope 1' | 'Scope 3' = 'Scope 3'
 
     // 1. Primary Data (Scope 1): น้ำมันเติมจริง (Company Fleet)
+    //    ลิตรจริงสะท้อนระยะที่วิ่งจริงอยู่แล้ว จึงไม่บวกเที่ยวกลับสังเคราะห์
     if (actualFuelLiters !== null && actualFuelLiters > 0) {
         fuelUsedLiters = actualFuelLiters
         method = 'Exact Volume (Primary Data)'
         ghgScope = 'Scope 1'
         ttwKg = fuelUsedLiters * efValue
         wttKg = fuelUsedLiters * wttFuel
-    } 
-    // 2. Secondary Data (Scope 3): GLEC Tonne-KM ตามน้ำหนักสินค้าจริง (DHL GoGreen Model)
+    }
+    // 2. Secondary Data (Scope 3): GLEC Tonne-KM ตามน้ำหนักสินค้าจริง
+    //    เที่ยวไป (loaded) คิดตาม tonne-km ของสินค้า; เที่ยวกลับ (empty) คิดแบบ per-km ไม่มีสินค้า
     else if (cargoWeightTonnes !== undefined && cargoWeightTonnes !== null && cargoWeightTonnes > 0) {
         const glecTonKmEf = DHL_FREIGHT_EF_TKM[vehicleType]?.ef ?? DHL_FREIGHT_EF_TKM['default'].ef
-        const tonneKm = cargoWeightTonnes * distanceKm
-        const wttPerKm = freightWTTMap[vehicleType] ?? freightWTTMap['default'] ?? 0
-
-        ttwKg = tonneKm * glecTonKmEf
+        // loaded leg (เที่ยวไป)
+        ttwKg = (cargoWeightTonnes * distanceKm) * glecTonKmEf
         wttKg = distanceKm * wttPerKm
+        // empty return leg (เที่ยวกลับรถเปล่า) — per-km เต็ม × ratio, ไม่ผูกกับน้ำหนักสินค้า
+        ttwKg += distanceKm * ttwPerKm * ratio
+        wttKg += distanceKm * wttPerKm * ratio
         fuelUsedLiters = efValue > 0 ? ttwKg / efValue : 0
         method = 'GLEC Tonne-KM (Shipment Weight)'
         ghgScope = 'Scope 3'
     }
     // 3. Secondary Data (Scope 3): GLEC Estimated ตามพิกัดประเภทรถ (Estimated Fleet Payload)
+    //    ทั้งเที่ยวไป (เต็ม) + เที่ยวกลับ (เปล่า×ratio) = per-km × (1 + ratio)
     else {
-        const ttwPerKm = freightMap[vehicleType] ?? freightMap['default'] ?? CO2_COEFFICIENTS['default']
-        const wttPerKm = freightWTTMap[vehicleType] ?? freightWTTMap['default'] ?? 0
-        ttwKg = distanceKm * ttwPerKm
-        wttKg = distanceKm * wttPerKm
+        ttwKg = distanceKm * ttwPerKm * (1 + ratio)
+        wttKg = distanceKm * wttPerKm * (1 + ratio)
         fuelUsedLiters = efValue > 0 ? ttwKg / efValue : 0
         method = 'GLEC Distance Estimated (Secondary Data)'
         ghgScope = 'Scope 3'
@@ -192,8 +211,9 @@ export function calculateJobEmissions(
 
     const co2EmissionsKg = ttwKg + wttKg // Well-to-Wheel (WTW)
 
-    // 1 Tree absorbs approx 22kg of CO2 per year (TGO/GLEC Standard)
-    const treesEquivalentToOffset = co2EmissionsKg / 22
+    // อัตราดูดซับของต้นไม้ (kgCO2/ต้น/ปี) — ตั้งค่าได้จาก DB, fallback ค่าคงที่
+    const treeKg = factors?.treeAbsorbKgPerYear ?? TREE_ABSORB_KG_PER_YEAR
+    const treesEquivalentToOffset = treeKg > 0 ? co2EmissionsKg / treeKg : 0
 
     return {
         co2EmissionsKg: Math.round(co2EmissionsKg * 100) / 100,

@@ -1,5 +1,5 @@
 import { getEmissionFactorsList } from "@/lib/actions/esg-settings-actions"
-import { getFreightFactorsList, getEmptyReturnRatio } from "@/lib/actions/carbon-factors"
+import { getFreightFactorsList, getEmptyReturnRatio, getTreeAbsorbKgPerYear } from "@/lib/actions/carbon-factors"
 import { ESGSettingsClient } from "./esg-settings-client"
 import { FreightFactorsCard } from "./freight-factors-card"
 import { EmptyReturnCard } from "./empty-return-card"
@@ -10,10 +10,11 @@ export const metadata = {
 }
 
 export default async function ESGSettingsPage() {
-    const [list, freight, emptyReturnRatio] = await Promise.all([
+    const [list, freight, emptyReturnRatio, treeKg] = await Promise.all([
         getEmissionFactorsList(),
         getFreightFactorsList(),
         getEmptyReturnRatio(),
+        getTreeAbsorbKgPerYear(),
     ])
 
     return (
@@ -21,7 +22,7 @@ export default async function ESGSettingsPage() {
             <ESGSettingsClient initialList={list} />
             <div className="max-w-6xl mx-auto w-full px-4 space-y-6">
                 <FreightFactorsCard initialList={freight} />
-                <EmptyReturnCard initialRatio={emptyReturnRatio} />
+                <EmptyReturnCard initialRatio={emptyReturnRatio} initialTreeKg={treeKg} />
             </div>
         </div>
     )

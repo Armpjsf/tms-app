@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { SupabaseClient } from '@supabase/supabase-js'
 
-import { calculateJobEmissions, ROUND_TRIP_EMISSION_FACTOR } from '@/lib/utils/esg-utils'
+import { calculateJobEmissions } from '@/lib/utils/esg-utils'
 import { getCarbonFactors } from '@/lib/actions/carbon-factors'
 
 /**
@@ -17,7 +17,7 @@ export async function calculateJobCO2(supabase: SupabaseClient, jobId: string) {
     try {
         const { data: job } = await supabase
             .from('Jobs_Main')
-            .select('Est_Distance_KM, Actual_Distance_KM, Vehicle_Type')
+            .select('Est_Distance_KM, Actual_Distance_KM, Vehicle_Type, Total_Weight_Kg')
             .eq('Job_ID', jobId)
             .single()
 
@@ -25,13 +25,13 @@ export async function calculateJobCO2(supabase: SupabaseClient, jobId: string) {
 
         const oneWayKm = Number(job.Est_Distance_KM) || 12.5
         const vType = job.Vehicle_Type || '4-Wheel'
+        const rawWeight = Number(job.Total_Weight_Kg) || 0
+        const cargoWeightTonnes = rawWeight > 0 ? rawWeight / 1000 : null
 
         // ดึงค่า EF จาก DB (แอดมินตั้งเอง) แล้วส่งเข้า calculateJobEmissions
-        // WTW = TTW (เผาไหม้) + WTT (ต้นน้ำเชื้อเพลิง) ตาม ISO 14083
+        // ส่งระยะ "เที่ยวเดียว" + น้ำหนักสินค้า + emptyReturnRatio ให้ฟังก์ชันคิดเที่ยวกลับรถเปล่าแยกขา
         const factors = await getCarbonFactors()
-        // ระยะเทียบเท่าการปล่อย: เที่ยวไป(เต็ม) + เที่ยวกลับ(รถเปล่า) ตาม ISO 14083/GLEC
-        const emissionKm = oneWayKm * (factors.roundTripEmissionFactor ?? ROUND_TRIP_EMISSION_FACTOR)
-        const emissions = calculateJobEmissions(emissionKm, null, vType, factors)
+        const emissions = calculateJobEmissions(oneWayKm, null, vType, factors, cargoWeightTonnes, factors.emptyReturnRatio)
         const co2Amount = emissions.co2EmissionsKg
 
         return {

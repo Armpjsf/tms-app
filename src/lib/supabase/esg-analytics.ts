@@ -3,7 +3,7 @@
 import { createAdminClient } from '@/utils/supabase/server'
 import { getEffectiveBranchId, REVENUE_STATUSES, formatDateSafe } from './analytics-helpers'
 import { getCustomerId } from "@/lib/permissions"
-import { calculateJobEmissions, TGO_STANDARDS_METADATA, ROUND_TRIP_EMISSION_FACTOR } from '../utils/esg-utils'
+import { calculateJobEmissions, TGO_STANDARDS_METADATA } from '../utils/esg-utils'
 import { getCarbonFactors } from '@/lib/actions/carbon-factors'
 
 /**
@@ -137,10 +137,9 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
             }
 
             validJobsCount++
-            // ระยะเทียบเท่าการปล่อยไป-กลับ: เที่ยวไป(เต็ม) + เที่ยวกลับ(รถเปล่า) ตาม ISO 14083/GLEC
-            // หมายเหตุ: กรณีมีน้ำหนักสินค้า (tonne-km) การ scale ระยะนี้เป็นค่าประมาณของเที่ยวกลับ
-            const emissionDist = dist * (factors.roundTripEmissionFactor ?? ROUND_TRIP_EMISSION_FACTOR)
-            const impact = calculateJobEmissions(emissionDist, actualFuel, vType, factors, cargoWeightTonnes)
+            // ส่งระยะ "เที่ยวเดียว" + emptyReturnRatio ให้ฟังก์ชันคิดเที่ยวกลับรถเปล่าแยกขาเอง
+            // (กันการนับซ้ำ: tonne-km ของสินค้าไม่ถูกคูณด้วยเที่ยวกลับ)
+            const impact = calculateJobEmissions(dist, actualFuel, vType, factors, cargoWeightTonnes, factors.emptyReturnRatio)
 
             totalFuelLiters += impact.fuelUsedLiters
             totalCo2Emissions += impact.co2EmissionsKg

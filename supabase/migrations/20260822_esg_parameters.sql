@@ -20,7 +20,8 @@ create table if not exists esg_parameters (
 
 insert into esg_parameters (param_key, param_value, notes)
 values
-    ('empty_return_ratio', 0.65, 'สัดส่วนปล่อยเที่ยวกลับรถเปล่า เทียบเที่ยวไปเต็ม · อ้างอิง DEFRA 2025 all-HGV (empty 0.660 / full 1.012 kgCO2e-km ≈ 0.65)')
+    ('empty_return_ratio', 0.65, 'สัดส่วนปล่อยเที่ยวกลับรถเปล่า เทียบเที่ยวไปเต็ม · อ้างอิง DEFRA 2025 all-HGV (empty 0.660 / full 1.012 kgCO2e-km ≈ 0.65)'),
+    ('tree_absorb_kg_per_year', 9.5, 'อัตราดูดซับ CO2 ของต้นไม้ 9.5 kgCO2/ต้น/ปี · อ้างอิง TGO/อบก. (LESS) — ต้นไม้ 1 ต้นกักเก็บคาร์บอนเพิ่มขึ้น ~9.5 kg/ปี')
 on conflict (param_key) do nothing;
 
 alter table esg_parameters enable row level security;
