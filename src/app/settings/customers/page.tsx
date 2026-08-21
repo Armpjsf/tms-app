@@ -441,7 +441,7 @@ export default function CustomersSettingsPage() {
                           การแจ้งเตือนทาง LINE (LINE Notifications)
                         </Label>
                         <p className="text-sm text-muted-foreground font-bold opacity-80">
-                          เปิดเพื่อส่งข้อความแจ้งเตือนสถานะส่งสินค้า/ปิดงานเข้า LINE ของลูกค้ารายนี้ (หากปิด การแจ้งเตือนหน้าระบบ In-App ยังทำงานปกติ)
+                          เปิด = แจ้งเตือนปิดงานเข้า LINE สำหรับงานของลูกค้ารายนี้ · ปิด = งานของลูกค้ารายนี้จะไม่ยิง LINE เลย (รวมสำเนาที่ส่งหาแอดมิน) เหมาะกับลูกค้าที่เที่ยวเยอะ — การแจ้งเตือนหน้าระบบ (In-App) และ Telegram ยังทำงานปกติ
                         </p>
                       </div>
                       <div className="flex items-center gap-3">

@@ -543,23 +543,28 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     // │ .in([1, 2]) below (back to .eq('Role_ID', 1)) and remove the branch    │
     // │ filter, then restore the "Role 2 not notified" note above.            │
     // └───────────────────────────────────────────────────────────────────────┘
-    try {
-      const { data: adminMonitors } = await supabase
-        .from('Master_Users')
-        .select('Line_User_ID, Line_User_ID_2, Role_ID, Branch_ID')
-        .in('Role_ID', [1, 2]) // TEMPORARY: [1] normally; 2 added for TILOG booth
-        .or('Line_User_ID.not.is.null,Line_User_ID_2.not.is.null');
+    // When a customer is muted for LINE, suppress the ADMIN monitoring copy too —
+    // otherwise a high-frequency customer (the reason for muting) still spams the
+    // admins' LINE. In-app web push and Telegram are unaffected.
+    if (!isLineNotifyDisabled) {
+      try {
+        const { data: adminMonitors } = await supabase
+          .from('Master_Users')
+          .select('Line_User_ID, Line_User_ID_2, Role_ID, Branch_ID')
+          .in('Role_ID', [1, 2]) // TEMPORARY: [1] normally; 2 added for TILOG booth
+          .or('Line_User_ID.not.is.null,Line_User_ID_2.not.is.null');
 
-      adminMonitors?.forEach((a: { Line_User_ID: string | null; Line_User_ID_2?: string | null; Role_ID: number | null; Branch_ID: string | number | null }) => {
-        if (!a.Line_User_ID && !a.Line_User_ID_2) return;
-        // Role 1 → all branches; Role 2 → only its own branch matches the job.
-        const branchOk = Number(a.Role_ID) === 1
-          || (job.Branch_ID != null && String(a.Branch_ID) === String(job.Branch_ID));
-        // Carry BOTH bot ids so pushToCustomerActive picks the right OA (and
-        // falls back to the other) — an admin may have linked either or both.
-        if (branchOk) targets.push({ Line_User_ID: a.Line_User_ID, Line_User_ID_2: a.Line_User_ID_2 });
-      });
-    } catch { /* ignore and proceed */ }
+        adminMonitors?.forEach((a: { Line_User_ID: string | null; Line_User_ID_2?: string | null; Role_ID: number | null; Branch_ID: string | number | null }) => {
+          if (!a.Line_User_ID && !a.Line_User_ID_2) return;
+          // Role 1 → all branches; Role 2 → only its own branch matches the job.
+          const branchOk = Number(a.Role_ID) === 1
+            || (job.Branch_ID != null && String(a.Branch_ID) === String(job.Branch_ID));
+          // Carry BOTH bot ids so pushToCustomerActive picks the right OA (and
+          // falls back to the other) — an admin may have linked either or both.
+          if (branchOk) targets.push({ Line_User_ID: a.Line_User_ID, Line_User_ID_2: a.Line_User_ID_2 });
+        });
+      } catch { /* ignore and proceed */ }
+    }
 
     // ── Telegram targets (routing เดียวกับ LINE ด้านบน) ──
     // 1) ลูกค้าเจ้าของงาน
