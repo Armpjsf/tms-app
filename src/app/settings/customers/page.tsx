@@ -445,13 +445,13 @@ export default function CustomersSettingsPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className={cn("text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border", (formData.Line_Notify_Disabled || (formData.Customer_Name && (formData.Customer_Name.includes('สยามรุ่งเรือง') || formData.Customer_Name.toLowerCase().includes('siam rungruang')))) ? "bg-rose-500/10 border-rose-500/30 text-rose-500" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-500")}>
-                          {(formData.Line_Notify_Disabled || (formData.Customer_Name && (formData.Customer_Name.includes('สยามรุ่งเรือง') || formData.Customer_Name.toLowerCase().includes('siam rungruang')))) ? "ปิดแจ้งเตือน (Off)" : "เปิดแจ้งเตือน (On)"}
+                        <span className={cn("text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border", formData.Line_Notify_Disabled ? "bg-rose-500/10 border-rose-500/30 text-rose-500" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-500")}>
+                          {formData.Line_Notify_Disabled ? "ปิดแจ้งเตือน (Off)" : "เปิดแจ้งเตือน (On)"}
                         </span>
                         <input
                           type="checkbox"
                           id="Line_Notify_Disabled"
-                          checked={!(formData.Line_Notify_Disabled || (formData.Customer_Name && (formData.Customer_Name.includes('สยามรุ่งเรือง') || formData.Customer_Name.toLowerCase().includes('siam rungruang'))))}
+                          checked={!formData.Line_Notify_Disabled}
                           onChange={(e) => updateForm("Line_Notify_Disabled", !e.target.checked)}
                           className="w-8 h-8 rounded-lg border-border bg-muted text-emerald-600 focus:ring-emerald-500/40 cursor-pointer accent-emerald-500"
                         />
@@ -625,8 +625,8 @@ export default function CustomersSettingsPage() {
                     <span className="text-[9px] font-black text-muted-foreground uppercase tracking-normal truncate max-w-[120px] italic">{customer.Email || "registry-pending@logispro.io"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className={cn("text-[9px] font-black tracking-normal px-2.5 py-1 rounded-lg border shadow-sm", (customer.Line_Notify_Disabled || (customer.Customer_Name && (customer.Customer_Name.includes('สยามรุ่งเรือง') || customer.Customer_Name.toLowerCase().includes('siam rungruang')))) ? "bg-rose-500/10 border-rose-500/30 text-rose-500" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-500")}>
-                      {(customer.Line_Notify_Disabled || (customer.Customer_Name && (customer.Customer_Name.includes('สยามรุ่งเรือง') || customer.Customer_Name.toLowerCase().includes('siam rungruang')))) ? "LINE: OFF" : "LINE: ON"}
+                    <span className={cn("text-[9px] font-black tracking-normal px-2.5 py-1 rounded-lg border shadow-sm", customer.Line_Notify_Disabled ? "bg-rose-500/10 border-rose-500/30 text-rose-500" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-500")}>
+                      {customer.Line_Notify_Disabled ? "LINE: OFF" : "LINE: ON"}
                     </span>
                     <div className="flex items-center gap-2 px-3 py-1 bg-primary/20 text-primary rounded-lg shadow-lg ring-1 ring-primary/30">
                         <span className="text-[9px] font-black tracking-normal">

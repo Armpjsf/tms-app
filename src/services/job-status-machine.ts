@@ -463,11 +463,9 @@ async function sendDeliveryCompletionNotification(jobId: string) {
     // Jobs created by typing the customer name (no linked id) would otherwise
     // never reach the bound customer's LINE — a silent "bound but no alerts" bug.
     let effectiveCustomerId: string | null = job.Customer_ID || null;
+    // Per-customer LINE switch — single source of truth is the DB flag
+    // Master_Customers.Line_Notify_Disabled (toggle it from the customer screen).
     let isLineNotifyDisabled = false;
-
-    if (job.Customer_Name && (job.Customer_Name.includes('สยามรุ่งเรือง') || job.Customer_Name.toLowerCase().includes('siam rungruang'))) {
-      isLineNotifyDisabled = true;
-    }
 
     if (!effectiveCustomerId && job.Customer_Name) {
       try {
@@ -491,7 +489,7 @@ async function sendDeliveryCompletionNotification(jobId: string) {
           .maybeSingle();
 
         if (customer) {
-          if (customer.Line_Notify_Disabled || (customer.Customer_Name && (customer.Customer_Name.includes('สยามรุ่งเรือง') || customer.Customer_Name.toLowerCase().includes('siam rungruang')))) {
+          if (customer.Line_Notify_Disabled) {
             isLineNotifyDisabled = true;
           }
           if (!isLineNotifyDisabled && (customer.Line_User_ID || customer.Line_User_ID_2)) {
