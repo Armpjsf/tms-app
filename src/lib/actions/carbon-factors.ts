@@ -16,7 +16,9 @@ import { requireAdmin } from "@/services/permission-guards"
 import { revalidatePath } from "next/cache"
 import {
     TGO_EMISSION_FACTORS,
+    TGO_WTT_FACTORS,
     CO2_COEFFICIENTS,
+    WTT_FREIGHT_COEFFICIENTS,
     type CarbonFactors,
 } from "@/lib/utils/esg-utils"
 
@@ -28,7 +30,8 @@ export type FreightFactorItem = {
     vehicle_type: string
     payload_tonnes: number | null
     ef_tkm: number | null
-    co2_per_km: number
+    co2_per_km: number       // TTW kgCO2e/km (การเผาไหม้)
+    wtt_per_km: number       // WTT kgCO2e/km (ต้นน้ำเชื้อเพลิง)
     mode: string
     effective_date: string
     notes?: string
@@ -44,29 +47,33 @@ export async function getCarbonFactors(): Promise<CarbonFactors> {
 
     // Start from hardcoded defaults so any missing DB row stays covered.
     const fuelEF: Record<string, number> = { ...TGO_EMISSION_FACTORS }
+    const fuelWTT: Record<string, number> = { ...TGO_WTT_FACTORS }
     const freightPerKm: Record<string, number> = { ...CO2_COEFFICIENTS }
+    const freightWTTPerKm: Record<string, number> = { ...WTT_FREIGHT_COEFFICIENTS }
 
     try {
         const supabase = createAdminClient()
         const [{ data: fuels }, { data: freight }] = await Promise.all([
-            supabase.from("tgo_emission_factors").select("fuel_code, ef_value, is_active"),
-            supabase.from("tgo_freight_factors").select("vehicle_type, co2_per_km, is_active"),
+            supabase.from("tgo_emission_factors").select("fuel_code, ef_value, wtt_value, is_active"),
+            supabase.from("tgo_freight_factors").select("vehicle_type, co2_per_km, wtt_per_km, is_active"),
         ])
         for (const f of fuels || []) {
             if (f?.is_active !== false && f?.fuel_code && f?.ef_value != null) {
                 fuelEF[f.fuel_code] = Number(f.ef_value)
+                if (f?.wtt_value != null) fuelWTT[f.fuel_code] = Number(f.wtt_value)
             }
         }
         for (const f of freight || []) {
             if (f?.is_active !== false && f?.vehicle_type && f?.co2_per_km != null) {
                 freightPerKm[f.vehicle_type] = Number(f.co2_per_km)
+                if (f?.wtt_per_km != null) freightWTTPerKm[f.vehicle_type] = Number(f.wtt_per_km)
             }
         }
     } catch {
-        /* DB unreachable / tables not created → use hardcoded defaults */
+        /* DB unreachable / tables not created / WTT columns not migrated → use hardcoded defaults */
     }
 
-    const data: CarbonFactors = { fuelEF, freightPerKm }
+    const data: CarbonFactors = { fuelEF, fuelWTT, freightPerKm, freightWTTPerKm }
     cache = { data, ts: Date.now() }
     return data
 }
@@ -90,6 +97,7 @@ export async function getFreightFactorsList(): Promise<FreightFactorItem[]> {
             payload_tonnes: i.payload_tonnes != null ? Number(i.payload_tonnes) : null,
             ef_tkm: i.ef_tkm != null ? Number(i.ef_tkm) : null,
             co2_per_km: Number(i.co2_per_km),
+            wtt_per_km: i.wtt_per_km != null ? Number(i.wtt_per_km) : 0,
             mode: String(i.mode || "normal"),
             effective_date: String(i.effective_date),
             notes: (i.notes as string) || "",
@@ -106,6 +114,7 @@ export async function upsertFreightFactor(payload: {
     payload_tonnes?: number | null
     ef_tkm?: number | null
     co2_per_km: number
+    wtt_per_km?: number | null
     mode?: string
     effective_date?: string
     notes?: string
@@ -119,6 +128,7 @@ export async function upsertFreightFactor(payload: {
             payload_tonnes: payload.payload_tonnes ?? null,
             ef_tkm: payload.ef_tkm ?? null,
             co2_per_km: payload.co2_per_km,
+            wtt_per_km: payload.wtt_per_km ?? 0,
             mode: payload.mode || "normal",
             effective_date: payload.effective_date || new Date().toISOString().slice(0, 10),
             notes: payload.notes || "",

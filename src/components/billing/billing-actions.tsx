@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Printer, Mail, Paperclip, Send, Loader2 } from "lucide-react"
+import { Printer, Mail, Paperclip, Send, Loader2, ExternalLink } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -33,18 +33,20 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
     const [sending, setSending] = useState(false)
 
     useEffect(() => {
-        // Load default sender email from company profile
+        // Load default sender email from company profile if available
         const loadDefaultSender = async () => {
-             const res = await fetch('/api/settings/company') // Assuming this exists or using a direct lib call
-             if (res.ok) {
-                 const data = await res.json()
-                 if (data?.email) setEmailFrom(data.email)
-             }
+             try {
+                 const res = await fetch('/api/settings/company')
+                 if (res.ok) {
+                     const data = await res.json()
+                     if (data?.email) setEmailFrom(data.email)
+                 }
+             } catch { /* ignore */ }
         }
         loadDefaultSender()
 
         // Append link to message on client side to avoid hydration mismatch
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
         const link = `${appUrl}/billing/print/${billingNoteId}`
         
         setMessage(prev => {
@@ -54,17 +56,35 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
         })
     }, [billingNoteId])
 
+    // Update emailTo if prop changes
+    useEffect(() => {
+        if (customerEmail) {
+            setEmailTo(customerEmail)
+        }
+    }, [customerEmail])
+
     // Handle Print
     const handlePrint = () => {
         window.print()
     }
 
-    // Handle Send Email (Via Resend API - Automated Flow)
+    // Handle Open in Local Mail Client (mailto:)
+    const handleOpenMailApp = () => {
+        if (!emailTo) return toast.error("กรุณาระบุอีเมลผู้รับ")
+        
+        const ccParam = emailCC ? `&cc=${encodeURIComponent(emailCC)}` : ''
+        const mailtoUrl = `mailto:${encodeURIComponent(emailTo)}?subject=${encodeURIComponent(subject)}${ccParam}&body=${encodeURIComponent(message)}`
+        
+        window.open(mailtoUrl, '_blank')
+        toast.success("เปิดแอปพลิเคชันอีเมลในเครื่องเรียบร้อยแล้ว (เช่น Outlook, Apple Mail, Gmail)")
+    }
+
+    // Handle Send Email (Via Server Action / Custom SMTP or Resend API)
     const handleSendEmail = async () => {
         if (!emailTo) return toast.error("กรุณาระบุอีเมลผู้รับ")
         
         setSending(true)
-        const toastId = toast.loading("กำลังเตรียมเอกสาร PDF และส่งอีเมล...")
+        const toastId = toast.loading("กำลังเตรียมเอกสารและส่งอีเมล...")
         
         try {
             // 1. Fetch current attachments (manually uploaded ones)
@@ -74,7 +94,7 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                 path: `${process.env.NEXT_PUBLIC_SUPABASE_URL!}/storage/v1/object/public/billing-documents/${a.File_Path}`
             })) || []
 
-            // 2. Send via Server Action (Resend)
+            // 2. Send via Server Action
             const { success, error } = await sendBillingEmail({
                 from: emailFrom,
                 to: emailTo,
@@ -86,7 +106,7 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
 
             if (!success) throw new Error(error)
             
-            toast.success("ส่งอีเมลเรียบร้อย (เช็คได้จากโปรแกรมเมล/Resend Dashboard)", { id: toastId })
+            toast.success("ส่งอีเมลเรียบร้อยแล้ว", { id: toastId })
             setIsEmailOpen(false)
         } catch (error) {
             toast.error("ส่งอีเมลไม่สำเร็จ: " + ((error as Error)?.message || " Unknown error"), { id: toastId })
@@ -131,76 +151,85 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
             {/* Email Dialog */}
             <Dialog open={isEmailOpen} onOpenChange={setIsEmailOpen}>
                 <DialogContent className="max-w-md max-h-[95vh] flex flex-col p-0 overflow-hidden">
-                    <DialogHeader className="p-8 pb-4 flex-shrink-0">
-                        <DialogTitle>ส่งใบวางบิลทางอีเมล</DialogTitle>
+                    <DialogHeader className="p-6 pb-2 flex-shrink-0">
+                        <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                            <Mail className="w-5 h-5 text-primary" />
+                            ส่งใบวางบิลทางอีเมล
+                        </DialogTitle>
                         <DialogDescription>
-                            ส่งเอกสารและไฟล์แนบไปยังลูกค้า
+                            กรอกอีเมลผู้ส่ง ผู้รับ และข้อมูลใบวางบิลเพื่อจัดส่ง
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="flex-1 overflow-y-auto p-8 pt-0 space-y-6 custom-scrollbar">
-                        <div className="space-y-2">
-                            <Label className="text-gray-800">อีเมลสำหรับตอบกลับ (Reply-To Email)</Label>
+                    <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-4 custom-scrollbar">
+                        <div className="space-y-1.5">
+                            <Label className="text-gray-800 font-bold text-sm">อีเมลผู้ส่ง (Sender / From)</Label>
                             <Input 
                                 value={emailFrom} 
                                 onChange={e => setEmailFrom(e.target.value)} 
                                 className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400"
-                                placeholder="sender@company.com"
+                                placeholder="billing@yourcompany.com"
                             />
                             <p className="text-[11px] text-muted-foreground italic">
-                                * ระบบจะใช้ชื่อโดเมนบริษัทเป็นผู้ส่ง และใช้เมลนี้เมื่อลูกค้ากด &apos;ตอบกลับ&apos;
+                                * อีเมลผู้ส่ง/แผนกบัญชีสำหรับระบุเป็นผู้ส่ง
                             </p>
                         </div>
-                        <div className="space-y-2">
-                            <Label className="text-gray-800">ส่งถึง (To Email)</Label>
+                        <div className="space-y-1.5">
+                            <Label className="text-gray-800 font-bold text-sm">ส่งถึงผู้รับ (To Email)</Label>
                             <Input 
                                 value={emailTo} 
                                 onChange={e => setEmailTo(e.target.value)} 
                                 className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400"
-                                placeholder="ของคุณเองในช่วงเทส"
+                                placeholder="customer@company.com"
                             />
-                            <p className="text-[11px] text-rose-500 font-bold italic">
-                                * ในช่วงทดสอบ (ยังไม่ยืนยันโดเมน) ส่งเข้าเมลตัวเองที่สมัคร Resend เท่านั้น
+                            <p className="text-[11px] text-emerald-600 font-semibold italic">
+                                * ระบุอีเมลปลายทางของลูกค้าที่ต้องการส่งใบวางบิลได้โดยตรง
                             </p>
                         </div>
-                        <div className="space-y-2">
-                            <Label className="text-gray-800">สำเนาถึง (CC Email)</Label>
+                        <div className="space-y-1.5">
+                            <Label className="text-gray-800 font-bold text-sm">สำเนาถึง (CC Email)</Label>
                             <Input 
                                 value={emailCC} 
                                 onChange={e => setEmailCC(e.target.value)} 
                                 className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400"
-                                placeholder="boss@company.com, account@company.com"
+                                placeholder="account@company.com, manager@company.com"
                             />
                             <p className="text-[11px] text-muted-foreground italic">
-                                * ส่งแบบ CC ได้สูงสุด 50 อีเมลต่อฉบับ (ต้องยืนยันโดเมนก่อนถ้าจะส่งหาคนอื่น)
+                                * คั่นด้วยเครื่องหมายจุลภาค (,) หากมีหลายอีเมล
                             </p>
                         </div>
-                        <div className="space-y-2">
-                            <Label className="text-gray-800">หัวข้อ (Subject)</Label>
+                        <div className="space-y-1.5">
+                            <Label className="text-gray-800 font-bold text-sm">หัวข้อ (Subject)</Label>
                             <Input 
                                 value={subject} 
-                                onChange={setSubject ? (e => setSubject(e.target.value)) : undefined}
+                                onChange={e => setSubject(e.target.value)}
                                 className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label className="text-gray-800">ข้อความ</Label>
+                        <div className="space-y-1.5">
+                            <Label className="text-gray-800 font-bold text-sm">ข้อความ (Message)</Label>
                             <Textarea 
                                 value={message} 
                                 onChange={e => setMessage(e.target.value)} 
-                                rows={8}
-                                className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400 min-h-[150px]"
+                                rows={6}
+                                className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400 min-h-[120px]"
                             />
                         </div>
                     </div>
 
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEmailOpen(false)}>ยกเลิก</Button>
-                        <Button onClick={handleSendEmail} disabled={sending}>
-                            {sending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            <Send className="w-4 h-4 mr-2" />
-                            ส่งอีเมล
+                    <DialogFooter className="p-4 bg-muted/30 border-t flex flex-col sm:flex-row gap-2 justify-between">
+                        <Button variant="outline" onClick={handleOpenMailApp} type="button" className="border-sky-500/40 text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/30">
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            เปิดในแอปอีเมล (Mail App)
                         </Button>
+                        <div className="flex gap-2 justify-end">
+                            <Button variant="outline" onClick={() => setIsEmailOpen(false)}>ยกเลิก</Button>
+                            <Button onClick={handleSendEmail} disabled={sending} className="bg-primary text-primary-foreground">
+                                {sending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                <Send className="w-4 h-4 mr-2" />
+                                ส่งผ่านระบบ
+                            </Button>
+                        </div>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -1,9 +1,11 @@
 "use server"
 
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
-// Initialize Resend conditionally or lazily
-const resend = new Resend(process.env.RESEND_API_KEY || 're_123'); // Default dummy key to prevent crash on init, but check before send
+// Initialize Resend conditionally
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 export interface EmailAttachment {
     filename: string;
@@ -21,41 +23,82 @@ interface SendBillingEmailProps {
 }
 
 export async function sendBillingEmail({ from, to, cc, subject, html, attachments }: SendBillingEmailProps) {
-    if (!process.env.RESEND_API_KEY) {
-        return { success: false, error: "RESEND_API_KEY is not configured" };
-    }
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = Number(process.env.SMTP_PORT || 587);
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
 
-    try {
-        // RESEND SECURITY RULE: 'from' must be a VERIFIED domain in your Resend account.
-        // We use a verified fallback for delivery, and set the user's input as 'reply_to'
-        // so that the customer can still reply directly to the person who sent it.
-        const deliverySender = 'Logis-Pro <onboarding@resend.dev>'; 
-        const replyToAddress = from || '';
+    const senderEmail = from || process.env.SMTP_FROM || process.env.DEFAULT_SENDER_EMAIL || 'billing@logispro.io';
+    const ccList = cc ? cc.split(',').map(e => e.trim()).filter(Boolean) : undefined;
 
-        // Handle CC: split by comma if it's a string
-        const ccList = cc ? cc.split(',').map(e => e.trim()).filter(Boolean) : undefined;
+    // 1. Try Custom SMTP Transport if configured
+    if (smtpHost && smtpUser && smtpPass) {
+        try {
+            const transporter = nodemailer.createTransport({
+                host: smtpHost,
+                port: smtpPort,
+                secure: smtpPort === 465, // true for 465, false for other ports
+                auth: {
+                    user: smtpUser,
+                    pass: smtpPass
+                }
+            });
 
-        const { data, error } = await resend.emails.send({
-            from: deliverySender, 
-            to: [to],
-            cc: ccList,
-            replyTo: replyToAddress,
-            subject: subject,
-            html: html,
-            attachments: attachments
-        });
+            const mailOptions = {
+                from: senderEmail,
+                to: to,
+                cc: ccList,
+                subject: subject,
+                html: html,
+                attachments: attachments?.map(att => ({
+                    filename: att.filename,
+                    path: att.path,
+                    content: att.content
+                }))
+            };
 
-        if (error) {
-            // Log full error for debugging but return safe message
-            console.error("[Email Action Error]", error);
-            return { success: false, error: error.message };
+            const info = await transporter.sendMail(mailOptions);
+            return { success: true, data: info };
+        } catch (smtpErr: unknown) {
+            const errMessage = smtpErr instanceof Error ? smtpErr.message : String(smtpErr);
+            console.error("[SMTP Send Error]", errMessage);
+            return { success: false, error: `SMTP Error: ${errMessage}` };
         }
-
-        return { success: true, data };
-    } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : String(e);
-        return { success: false, error: message };
     }
+
+    // 2. Fallback to Resend API if configured
+    if (resend) {
+        try {
+            // Resend delivery sender rule
+            const deliverySender = process.env.RESEND_VERIFIED_FROM || 'Logis-Pro <onboarding@resend.dev>';
+            const replyToAddress = from || undefined;
+
+            const { data, error } = await resend.emails.send({
+                from: deliverySender,
+                to: [to],
+                cc: ccList,
+                replyTo: replyToAddress,
+                subject: subject,
+                html: html,
+                attachments: attachments
+            });
+
+            if (error) {
+                console.error("[Resend Email Action Error]", error);
+                return { success: false, error: error.message };
+            }
+
+            return { success: true, data };
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : String(e);
+            return { success: false, error: message };
+        }
+    }
+
+    return { 
+        success: false, 
+        error: "ยังไม่ได้ตั้งค่าระบบส่งอีเมลฝั่งเซิร์ฟเวอร์ (SMTP หรือ RESEND_API_KEY) — คุณสามารถใช้ออปชัน 'เปิดในโปรแกรมอีเมล (Mail App)' เพื่อส่งตรงจาก Outlook / Gmail ในเครื่องได้ทันที" 
+    };
 }
 
 export async function sendDangerZoneAlert({ plate, driverName, zoneName, timestamp, recipient }: { plate: string, driverName: string, zoneName: string, timestamp: string, recipient: string }) {

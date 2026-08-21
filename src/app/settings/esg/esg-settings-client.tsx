@@ -18,6 +18,7 @@ export function ESGSettingsClient({ initialList }: { initialList: TGOEmissionFac
             fuel_code: 'Diesel_B7',
             fuel_name: 'น้ำมันดีเซล B7',
             ef_value: 2.6335,
+            wtt_value: 0.60,
             unit: 'kgCO2e/L',
             effective_date: new Date().toISOString().substring(0, 10),
             notes: 'คู่มือ อบก. 2024',
@@ -58,6 +59,7 @@ export function ESGSettingsClient({ initialList }: { initialList: TGOEmissionFac
                 fuel_code: editingItem.fuel_code!,
                 fuel_name: editingItem.fuel_name || editingItem.fuel_code!,
                 ef_value: Number(editingItem.ef_value),
+                wtt_value: Number(editingItem.wtt_value) || 0,
                 unit: editingItem.unit || 'kgCO2e/L',
                 effective_date: editingItem.effective_date!,
                 notes: editingItem.notes || '',
@@ -141,7 +143,9 @@ export function ESGSettingsClient({ initialList }: { initialList: TGOEmissionFac
                             <tr>
                                 <th className="p-4">รหัสเชื้อเพลิง (Fuel Code)</th>
                                 <th className="p-4">ชื่อเชื้อเพลิง</th>
-                                <th className="p-4">ค่า EF (kgCO2e)</th>
+                                <th className="p-4">TTW เผาไหม้ (kgCO2e)</th>
+                                <th className="p-4">WTT ต้นน้ำ (kgCO2e)</th>
+                                <th className="p-4">WTW รวม (kgCO2e)</th>
                                 <th className="p-4">วันเริ่มบังคับใช้</th>
                                 <th className="p-4">หมายเหตุ อบก.</th>
                                 <th className="p-4 text-center">สถานะ</th>
@@ -151,7 +155,7 @@ export function ESGSettingsClient({ initialList }: { initialList: TGOEmissionFac
                         <tbody className="divide-y divide-border/60 font-medium">
                             {list.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                                    <td colSpan={9} className="p-8 text-center text-muted-foreground">
                                         ยังไม่มีข้อมูล Emission Factor ในระบบ
                                     </td>
                                 </tr>
@@ -166,6 +170,12 @@ export function ESGSettingsClient({ initialList }: { initialList: TGOEmissionFac
                                         </td>
                                         <td className="p-4 font-mono text-emerald-400 font-bold text-sm">
                                             {item.ef_value} <span className="text-[10px] text-muted-foreground font-normal">{item.unit}</span>
+                                        </td>
+                                        <td className="p-4 font-mono text-amber-400 font-bold text-sm">
+                                            {(item.wtt_value ?? 0)} <span className="text-[10px] text-muted-foreground font-normal">{item.unit}</span>
+                                        </td>
+                                        <td className="p-4 font-mono text-foreground font-black text-sm">
+                                            {(Number(item.ef_value) + Number(item.wtt_value ?? 0)).toFixed(4)} <span className="text-[10px] text-muted-foreground font-normal">{item.unit}</span>
                                         </td>
                                         <td className="p-4 font-mono text-muted-foreground">
                                             {item.effective_date}
@@ -248,7 +258,7 @@ export function ESGSettingsClient({ initialList }: { initialList: TGOEmissionFac
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="font-bold text-foreground">ค่า EF (kgCO2e/L หรือ kWh)</label>
+                                    <label className="font-bold text-foreground">TTW เผาไหม้ (kgCO2e/L หรือ kWh)</label>
                                     <input
                                         type="number"
                                         step="0.0001"
@@ -261,15 +271,34 @@ export function ESGSettingsClient({ initialList }: { initialList: TGOEmissionFac
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="font-bold text-foreground">วันเริ่มบังคับใช้ (Effective Date)</label>
+                                    <label className="font-bold text-foreground">WTT ต้นน้ำ (kgCO2e/L)</label>
                                     <input
-                                        type="date"
-                                        required
-                                        value={editingItem.effective_date || ''}
-                                        onChange={e => setEditingItem({ ...editingItem, effective_date: e.target.value })}
-                                        className="w-full bg-muted/50 border border-border rounded-xl p-2.5 font-mono text-foreground focus:outline-none focus:border-emerald-500"
+                                        type="number"
+                                        step="0.0001"
+                                        value={editingItem.wtt_value ?? ''}
+                                        onChange={e => setEditingItem({ ...editingItem, wtt_value: parseFloat(e.target.value) })}
+                                        placeholder="เช่น 0.60 (0 = ไม่คิดต้นน้ำ)"
+                                        className="w-full bg-muted/50 border border-border rounded-xl p-2.5 font-mono text-foreground focus:outline-none focus:border-amber-500"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="rounded-xl bg-muted/40 border border-border/60 p-3 text-[11px] text-muted-foreground flex items-center justify-between">
+                                <span>Well-to-Wheel (WTW) = TTW + WTT ตาม ISO 14083</span>
+                                <span className="font-mono font-black text-foreground">
+                                    {((Number(editingItem.ef_value) || 0) + (Number(editingItem.wtt_value) || 0)).toFixed(4)} kgCO2e/L
+                                </span>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="font-bold text-foreground">วันเริ่มบังคับใช้ (Effective Date)</label>
+                                <input
+                                    type="date"
+                                    required
+                                    value={editingItem.effective_date || ''}
+                                    onChange={e => setEditingItem({ ...editingItem, effective_date: e.target.value })}
+                                    className="w-full bg-muted/50 border border-border rounded-xl p-2.5 font-mono text-foreground focus:outline-none focus:border-emerald-500"
+                                />
                             </div>
 
                             <div className="space-y-1">

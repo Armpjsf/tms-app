@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { SupabaseClient } from '@supabase/supabase-js'
 
-import { CO2_COEFFICIENTS } from '@/lib/utils/esg-utils'
+import { CO2_COEFFICIENTS, WTT_FREIGHT_COEFFICIENTS } from '@/lib/utils/esg-utils'
 
 /**
  * Helper to calculate CO2 based on distance and vehicle type
@@ -23,8 +23,10 @@ export async function calculateJobCO2(supabase: SupabaseClient, jobId: string) {
         const distance = Number(job.Est_Distance_KM) || 12.5
         const vType = job.Vehicle_Type || '4-Wheel'
         
-        const factor = CO2_COEFFICIENTS[vType as keyof typeof CO2_COEFFICIENTS] || CO2_COEFFICIENTS['default']
-        const co2Amount = Number((distance * factor).toFixed(2))
+        // WTW = TTW (เผาไหม้) + WTT (ต้นน้ำเชื้อเพลิง) ต่อ กม. ตาม ISO 14083
+        const ttwFactor = CO2_COEFFICIENTS[vType as keyof typeof CO2_COEFFICIENTS] || CO2_COEFFICIENTS['default']
+        const wttFactor = WTT_FREIGHT_COEFFICIENTS[vType as keyof typeof WTT_FREIGHT_COEFFICIENTS] || WTT_FREIGHT_COEFFICIENTS['default'] || 0
+        const co2Amount = Number((distance * (ttwFactor + wttFactor)).toFixed(2))
         
         return {
             amount: co2Amount,

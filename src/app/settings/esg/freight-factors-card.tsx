@@ -37,9 +37,10 @@ export function FreightFactorsCard({ initialList }: { initialList: FreightFactor
         if (!draft?.vehicle_type?.trim()) { toast.error("ระบุประเภทรถ"); return }
         const payload = Number(draft.payload_tonnes) || null
         const ef = Number(draft.ef_tkm) || null
-        // co2_per_km = payload × ef when both given, else use typed co2_per_km.
+        // co2_per_km (TTW) = payload × ef when both given, else use typed co2_per_km.
         const co2 = payload && ef ? Number((payload * ef).toFixed(4)) : Number(draft.co2_per_km)
         if (!co2 || co2 <= 0) { toast.error("ต้องมีค่า CO₂/km (หรือกรอกน้ำหนัก+EF ให้คำนวณ)"); return }
+        const wtt = Number(draft.wtt_per_km) || 0
         start(async () => {
             const res = await upsertFreightFactor({
                 id: draft.id,
@@ -47,6 +48,7 @@ export function FreightFactorsCard({ initialList }: { initialList: FreightFactor
                 payload_tonnes: payload,
                 ef_tkm: ef,
                 co2_per_km: co2,
+                wtt_per_km: wtt,
                 mode: draft.mode || "normal",
                 notes: draft.notes,
             })
@@ -57,7 +59,7 @@ export function FreightFactorsCard({ initialList }: { initialList: FreightFactor
                 refreshRow({
                     id: draft.id || crypto.randomUUID(),
                     vehicle_type: draft.vehicle_type!.trim(),
-                    payload_tonnes: payload, ef_tkm: ef, co2_per_km: co2,
+                    payload_tonnes: payload, ef_tkm: ef, co2_per_km: co2, wtt_per_km: wtt,
                     mode: draft.mode || "normal",
                     effective_date: draft.effective_date || new Date().toISOString().slice(0, 10),
                     notes: draft.notes || "", is_active: true,
@@ -89,7 +91,7 @@ export function FreightFactorsCard({ initialList }: { initialList: FreightFactor
 
             {/* Add/edit form */}
             {draft && (
-                <div className="p-4 rounded-xl border border-border bg-background/60 grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+                <div className="p-4 rounded-xl border border-border bg-background/60 grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
                     <label className="text-xs font-bold col-span-2 md:col-span-1">ประเภทรถ
                         <Input value={draft.vehicle_type || ""} onChange={e => setDraft({ ...draft, vehicle_type: e.target.value })} placeholder="10-Wheel" className="h-10 mt-1" />
                     </label>
@@ -99,8 +101,11 @@ export function FreightFactorsCard({ initialList }: { initialList: FreightFactor
                     <label className="text-xs font-bold">EF (/tkm)
                         <Input type="number" step="any" value={draft.ef_tkm ?? ""} onChange={e => setDraft({ ...draft, ef_tkm: e.target.value === "" ? null : Number(e.target.value) })} placeholder="0.0454" className="h-10 mt-1" />
                     </label>
-                    <label className="text-xs font-bold">CO₂/km
+                    <label className="text-xs font-bold">TTW /km
                         <Input type="number" step="any" value={draft.payload_tonnes && draft.ef_tkm ? (Number(draft.payload_tonnes) * Number(draft.ef_tkm)).toFixed(4) : (draft.co2_per_km ?? "")} onChange={e => setDraft({ ...draft, co2_per_km: Number(e.target.value) })} placeholder="0.7264" className="h-10 mt-1" />
+                    </label>
+                    <label className="text-xs font-bold">WTT /km
+                        <Input type="number" step="any" value={draft.wtt_per_km ?? ""} onChange={e => setDraft({ ...draft, wtt_per_km: e.target.value === "" ? undefined : Number(e.target.value) })} placeholder="0.1707" className="h-10 mt-1" />
                     </label>
                     <div className="col-span-2 md:col-span-1 flex gap-2">
                         <Button type="button" onClick={save} disabled={pending} className="flex-1 gap-1.5">
@@ -121,10 +126,10 @@ export function FreightFactorsCard({ initialList }: { initialList: FreightFactor
                         <Truck className="w-5 h-5 text-emerald-600 shrink-0" />
                         <div className="flex-1 min-w-0">
                             <p className="font-bold text-sm">{item.vehicle_type}
-                                <span className="ml-2 text-emerald-600 font-black">{item.co2_per_km} <span className="text-[10px] font-normal text-muted-foreground">kgCO₂e/km</span></span>
+                                <span className="ml-2 text-emerald-600 font-black">{(Number(item.co2_per_km) + Number(item.wtt_per_km || 0)).toFixed(4)} <span className="text-[10px] font-normal text-muted-foreground">kgCO₂e/km (WTW)</span></span>
                             </p>
                             <p className="text-[11px] text-muted-foreground truncate">
-                                {item.payload_tonnes ? `${item.payload_tonnes} ต. × ${item.ef_tkm}/tkm` : "กำหนดเอง"} · {item.mode === "rough" ? "สมบุกสมบัน" : "วิ่งปกติ"}{item.notes ? ` · ${item.notes}` : ""}
+                                TTW {item.co2_per_km} + WTT {item.wtt_per_km || 0} · {item.payload_tonnes ? `${item.payload_tonnes} ต. × ${item.ef_tkm}/tkm` : "กำหนดเอง"} · {item.mode === "rough" ? "สมบุกสมบัน" : "วิ่งปกติ"}{item.notes ? ` · ${item.notes}` : ""}
                             </p>
                         </div>
                         <button type="button" onClick={() => setDraft(item)} className="text-xs font-bold px-2 py-1 rounded-lg text-primary hover:bg-primary/10">แก้ไข</button>

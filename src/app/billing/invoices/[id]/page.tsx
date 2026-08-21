@@ -7,7 +7,7 @@ import { ConfirmInvoiceButton } from "@/components/billing/confirm-invoice-butto
 import { cookies } from "next/headers"
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
 import { createClient } from "@/utils/supabase/server"
-import { CO2_COEFFICIENTS } from "@/lib/utils/esg-utils"
+import { CO2_COEFFICIENTS, WTT_FREIGHT_COEFFICIENTS } from "@/lib/utils/esg-utils"
 
 export default async function InvoiceViewPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params
@@ -35,9 +35,11 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
     return 0
   }
   const calculateCO2 = (dist?: number | null, vType?: string | null) => {
-    const coefficient = CO2_COEFFICIENTS[vType || 'default'] || CO2_COEFFICIENTS['default']
+    // WTW = TTW + WTT ต่อ กม. ตาม ISO 14083
+    const ttw = CO2_COEFFICIENTS[vType || 'default'] || CO2_COEFFICIENTS['default']
+    const wtt = WTT_FREIGHT_COEFFICIENTS[vType || 'default'] || WTT_FREIGHT_COEFFICIENTS['default'] || 0
     const effectiveDist = Number(dist) || 12.5
-    return effectiveDist * coefficient
+    return effectiveDist * (ttw + wtt)
   }
 
   const totalCO2 = (jobs || []).reduce((sum, job) => {

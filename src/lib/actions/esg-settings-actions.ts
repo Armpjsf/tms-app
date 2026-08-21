@@ -7,7 +7,8 @@ export type TGOEmissionFactorItem = {
     id: string
     fuel_code: string
     fuel_name: string
-    ef_value: number
+    ef_value: number       // TTW kgCO2e/L (การเผาไหม้)
+    wtt_value: number      // WTT kgCO2e/L (ต้นน้ำเชื้อเพลิง) — WTW = ef_value + wtt_value
     unit: string
     effective_date: string
     notes?: string
@@ -37,6 +38,7 @@ export async function getEmissionFactorsList(): Promise<TGOEmissionFactorItem[]>
             fuel_code: item.fuel_code,
             fuel_name: item.fuel_name,
             ef_value: Number(item.ef_value),
+            wtt_value: item.wtt_value != null ? Number(item.wtt_value) : 0,
             unit: item.unit || 'kgCO2e/L',
             effective_date: item.effective_date,
             notes: item.notes || '',
@@ -57,6 +59,7 @@ export async function upsertEmissionFactor(payload: {
     fuel_code: string
     fuel_name: string
     ef_value: number
+    wtt_value?: number
     unit?: string
     effective_date: string
     notes?: string
@@ -69,6 +72,7 @@ export async function upsertEmissionFactor(payload: {
             fuel_code: payload.fuel_code.trim(),
             fuel_name: payload.fuel_name.trim(),
             ef_value: payload.ef_value,
+            wtt_value: payload.wtt_value ?? 0,
             unit: payload.unit || 'kgCO2e/L',
             effective_date: payload.effective_date,
             notes: payload.notes || '',
