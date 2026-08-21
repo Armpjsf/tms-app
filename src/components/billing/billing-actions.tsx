@@ -68,15 +68,35 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
         window.print()
     }
 
-    // Handle Open in Local Mail Client (mailto:)
+    // Handle Open in Local Mail Client (Outlook / Mail App)
     const handleOpenMailApp = () => {
         if (!emailTo) return toast.error("กรุณาระบุอีเมลผู้รับ")
         
         const ccParam = emailCC ? `&cc=${encodeURIComponent(emailCC)}` : ''
         const mailtoUrl = `mailto:${encodeURIComponent(emailTo)}?subject=${encodeURIComponent(subject)}${ccParam}&body=${encodeURIComponent(message)}`
         
-        window.open(mailtoUrl, '_blank')
-        toast.success("เปิดแอปพลิเคชันอีเมลในเครื่องเรียบร้อยแล้ว (เช่น Outlook, Apple Mail, Gmail)")
+        try {
+            const a = document.createElement('a')
+            a.href = mailtoUrl
+            a.target = '_self'
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+            toast.success("สั่งเปิดโปรแกรมอีเมลในเครื่องเรียบร้อยแล้ว (หากโปรแกรมไม่เปิด กรุณาใช้ปุ่ม 'เปิดใน Gmail Web')")
+        } catch {
+            window.location.href = mailtoUrl
+        }
+    }
+
+    // Handle Open in Gmail Web Compose (100% reliable web browser open)
+    const handleOpenGmailWeb = () => {
+        if (!emailTo) return toast.error("กรุณาระบุอีเมลผู้รับ")
+        
+        const ccParam = emailCC ? `&cc=${encodeURIComponent(emailCC)}` : ''
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailTo)}${ccParam}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
+        
+        window.open(gmailUrl, '_blank')
+        toast.success("เปิดหน้าเขียนอีเมลใน Gmail Web เรียบร้อยแล้ว")
     }
 
     // Handle Send Email (Via Server Action / Custom SMTP or Resend API)
@@ -150,14 +170,14 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
 
             {/* Email Dialog */}
             <Dialog open={isEmailOpen} onOpenChange={setIsEmailOpen}>
-                <DialogContent className="max-w-md max-h-[95vh] flex flex-col p-0 overflow-hidden">
+                <DialogContent className="max-w-lg max-h-[95vh] flex flex-col p-0 overflow-hidden">
                     <DialogHeader className="p-6 pb-2 flex-shrink-0">
                         <DialogTitle className="text-xl font-bold flex items-center gap-2">
                             <Mail className="w-5 h-5 text-primary" />
                             ส่งใบวางบิลทางอีเมล
                         </DialogTitle>
                         <DialogDescription>
-                            กรอกอีเมลผู้ส่ง ผู้รับ และข้อมูลใบวางบิลเพื่อจัดส่ง
+                            เลือกช่องทางการส่งอีเมล: เปิดใน Gmail Web / แอปในเครื่อง หรือส่งผ่านระบบเซิร์ฟเวอร์
                         </DialogDescription>
                     </DialogHeader>
 
@@ -211,24 +231,33 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                             <Textarea 
                                 value={message} 
                                 onChange={e => setMessage(e.target.value)} 
-                                rows={6}
-                                className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400 min-h-[120px]"
+                                rows={5}
+                                className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400 min-h-[110px]"
                             />
                         </div>
                     </div>
 
-                    <DialogFooter className="p-4 bg-muted/30 border-t flex flex-col sm:flex-row gap-2 justify-between">
-                        <Button variant="outline" onClick={handleOpenMailApp} type="button" className="border-sky-500/40 text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/30">
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            เปิดในแอปอีเมล (Mail App)
-                        </Button>
-                        <div className="flex gap-2 justify-end">
-                            <Button variant="outline" onClick={() => setIsEmailOpen(false)}>ยกเลิก</Button>
-                            <Button onClick={handleSendEmail} disabled={sending} className="bg-primary text-primary-foreground">
-                                {sending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                <Send className="w-4 h-4 mr-2" />
-                                ส่งผ่านระบบ
-                            </Button>
+                    <DialogFooter className="p-4 bg-muted/30 border-t flex flex-col gap-2">
+                        <div className="flex flex-wrap gap-2 w-full justify-between items-center">
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={handleOpenGmailWeb} type="button" className="border-rose-500/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">
+                                    <ExternalLink className="w-4 h-4 mr-1.5" />
+                                    เปิดใน Gmail Web
+                                </Button>
+                                <Button variant="outline" onClick={handleOpenMailApp} type="button" className="border-sky-500/40 text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/30">
+                                    <ExternalLink className="w-4 h-4 mr-1.5" />
+                                    แอปในเครื่อง (Outlook)
+                                </Button>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={() => setIsEmailOpen(false)}>ยกเลิก</Button>
+                                <Button onClick={handleSendEmail} disabled={sending} className="bg-primary text-primary-foreground">
+                                    {sending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                    <Send className="w-4 h-4 mr-2" />
+                                    ส่งผ่านระบบ
+                                </Button>
+                            </div>
                         </div>
                     </DialogFooter>
                 </DialogContent>
