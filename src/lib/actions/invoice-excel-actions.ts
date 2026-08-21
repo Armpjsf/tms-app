@@ -1,7 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/server'
-import { CO2_COEFFICIENTS } from '@/lib/utils/esg-utils'
+import { CO2_COEFFICIENTS, ROUND_TRIP_EMISSION_FACTOR } from '@/lib/utils/esg-utils'
 import { getCarbonFactors } from '@/lib/actions/carbon-factors'
 import ExcelJS from 'exceljs'
 import { getSystemSetting } from './system-settings-actions'
@@ -241,7 +241,8 @@ export async function exportInvoiceExcel(invoiceId: string) {
         let totalCO2 = 0
 
         // Live TGO freight factors (editable in /settings/esg), loaded once.
-        const { freightPerKm = {} } = await getCarbonFactors()
+        const { freightPerKm = {}, freightWTTPerKm = {}, roundTripEmissionFactor } = await getCarbonFactors()
+        const rtFactor = roundTripEmissionFactor ?? ROUND_TRIP_EMISSION_FACTOR
 
         for (let index = 0; index < jobs.length; index++) {
             const job = jobs[index]
@@ -264,15 +265,34 @@ export async function exportInvoiceExcel(invoiceId: string) {
                     if (!dest) dest = parts.slice(1).join(' - ').trim()
                 }
             }
+
+            // งานหลายดรอป: list ทุกปลายทางในช่องเดียว คั่นด้วย " - "
+            // ลำดับความสำคัญ: POD_Drops_Json (destination) → original_destinations_json (name) → dest เดี่ยว
+            const multiDropDests = ((): string => {
+                const parseArr = (raw: unknown): any[] => {
+                    try { const p = typeof raw === 'string' ? JSON.parse(raw) : raw; return Array.isArray(p) ? p.filter(Boolean) : [] } catch { return [] }
+                }
+                const fromDrops = parseArr(job.POD_Drops_Json)
+                    .map((d: any) => String(d?.destination || '').trim()).filter(Boolean)
+                if (fromDrops.length > 0) return fromDrops.join(' - ')
+                const fromDests = parseArr(job.original_destinations_json)
+                    .map((d: any) => String(d?.name || '').trim()).filter(Boolean)
+                if (fromDests.length > 0) return fromDests.join(' - ')
+                return ''
+            })()
+
             row.getCell(5).value = origin || ''
-            row.getCell(6).value = dest || asString(job.Route_Name)
+            row.getCell(6).value = multiDropDests || dest || asString(job.Route_Name)
             
             // Carbon Footprint — live TGO freight factor per vehicle type
             // (editable in /settings/esg; falls back to default when unknown).
-            const effectiveDist = Number(job.Est_Distance_KM) || 12.5
+            // WTW = TTW + WTT ต่อ กม. ตาม ISO 14083
+            // ระยะเทียบเท่าการปล่อย: เที่ยวไป(เต็ม) + เที่ยวกลับ(รถเปล่า)
+            const emissionDist = (Number(job.Est_Distance_KM) || 12.5) * rtFactor
             const vType = normalizeVehicleType(asString(job.Vehicle_Type))
-            const co2Coeff = freightPerKm[vType] ?? freightPerKm['default'] ?? CO2_COEFFICIENTS['default']
-            const co2Value = Number((effectiveDist * co2Coeff).toFixed(2))
+            const ttwCoeff = freightPerKm[vType] ?? freightPerKm['default'] ?? CO2_COEFFICIENTS['default']
+            const wttCoeff = freightWTTPerKm[vType] ?? freightWTTPerKm['default'] ?? 0
+            const co2Value = Number((emissionDist * (ttwCoeff + wttCoeff)).toFixed(2))
             row.getCell(7).value = co2Value
             totalCO2 += co2Value
 

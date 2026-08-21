@@ -30,7 +30,8 @@ import {
   CheckCircle2,
   Undo2,
   Loader2,
-  CloudSync
+  CloudSync,
+  Eye
 } from "lucide-react"
 import { getDriverPayments, DriverPayment, updateDriverPaymentStatus, recallDriverPayment, getDriverPaymentByIdWithJobs } from "@/lib/supabase/billing"
 import { isSuperAdmin } from "@/lib/permissions"
@@ -127,7 +128,15 @@ export default function DriverPaymentHistory() {
   }
 
   const handlePrint = (id: string) => {
-    window.open(`/billing/driver/print/${id}`, '_blank')
+    // เปิดหน้าใบสำคัญจ่ายพร้อมสั่งพิมพ์อัตโนมัติ (mode=print)
+    const w = window.open(`/billing/driver/print/${encodeURIComponent(id)}?mode=print`, '_blank')
+    if (!w) toast.error("เบราว์เซอร์บล็อกการเปิดแท็บใหม่ — โปรดอนุญาต pop-up แล้วลองใหม่")
+  }
+
+  const handleViewDetail = (id: string) => {
+    // เปิดดูรายละเอียดงานย้อนหลัง (โหมดดู ไม่สั่งพิมพ์อัตโนมัติ)
+    const w = window.open(`/billing/driver/print/${encodeURIComponent(id)}`, '_blank')
+    if (!w) toast.error("เบราว์เซอร์บล็อกการเปิดแท็บใหม่ — โปรดอนุญาต pop-up แล้วลองใหม่")
   }
 
   const handleExportSCB = async (id: string) => {
@@ -316,6 +325,16 @@ export default function DriverPaymentHistory() {
                         </TableCell>
                         <TableCell className="py-5 px-8 text-right">
                              <div className="flex justify-end gap-2">
+                                <PremiumButton
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-xl"
+                                    title="ดูรายละเอียดงาน"
+                                    onClick={() => handleViewDetail(item.Driver_Payment_ID)}
+                                >
+                                    <Eye className="w-4 h-4" />
+                                </PremiumButton>
+
                                 {item.Status !== 'Paid' && (
                                     <PremiumButton 
                                         size="sm" 

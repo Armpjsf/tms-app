@@ -27,5 +27,5 @@ alter table tgo_freight_factors
     add column if not exists wtt_per_km numeric(10,4) not null default 0;
 
 update tgo_freight_factors set wtt_per_km = 0.0759 where vehicle_type in ('4-Wheel','Pickup') and (wtt_per_km is null or wtt_per_km = 0);
-update tgo_freight_factors set wtt_per_km = 0.1585 where vehicle_type = '6-Wheel'  and (wtt_per_km is null or wtt_per_km = 0);
+update tgo_freight_factors set wtt_per_km = 0.1585 where vehicle_type in ('6-Wheel','default') and (wtt_per_km is null or wtt_per_km = 0);
 update tgo_freight_factors set wtt_per_km = 0.1707 where vehicle_type = '10-Wheel' and (wtt_per_km is null or wtt_per_km = 0);

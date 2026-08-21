@@ -31,12 +31,14 @@ create unique index if not exists tgo_freight_vehicle_uidx
     on tgo_freight_factors (vehicle_type) where is_active;
 
 -- Seed verified TGO April-2026 values (normal road, 100% loading, diesel B7).
+-- NOTE: wtt_per_km ถูกเพิ่ม + เติมค่าในไฟล์ 20260821_wtt_well_to_wheel.sql (รันถัดจากนี้).
 insert into tgo_freight_factors (vehicle_type, payload_tonnes, ef_tkm, co2_per_km, mode, notes)
 values
-    ('4-Wheel',  1.5, 0.2153, 0.3230, 'normal', 'กระบะ 4 ล้อ · TGO CFP Update 6 เม.ย. 2026'),
-    ('Pickup',   1.5, 0.2153, 0.3230, 'normal', 'กระบะ 4 ล้อ · TGO CFP Update 6 เม.ย. 2026'),
+    ('4-Wheel',  2,   0.2153, 0.4306, 'normal', 'กระบะ 4 ล้อ (พิกัด 2 ต.) · TGO CFP Update 6 เม.ย. 2026'),
+    ('Pickup',   2,   0.2153, 0.4306, 'normal', 'กระบะ (เท่ารถ 4 ล้อ 2 ต.) · TGO CFP Update 6 เม.ย. 2026'),
     ('6-Wheel',  11,  0.0613, 0.6743, 'normal', 'รถ 6 ล้อ ขนาดใหญ่ · TGO CFP Update 6 เม.ย. 2026'),
-    ('10-Wheel', 16,  0.0454, 0.7264, 'normal', 'รถตู้ 10 ล้อ · TGO CFP Update 6 เม.ย. 2026')
+    ('10-Wheel', 16,  0.0454, 0.7264, 'normal', 'รถตู้ 10 ล้อ · TGO CFP Update 6 เม.ย. 2026'),
+    ('default',  11,  0.0613, 0.6743, 'normal', 'ค่ากลาง (รถ 6 ล้อ) สำหรับประเภทที่ไม่ระบุ · TGO CFP Update 6 เม.ย. 2026')
 on conflict do nothing;
 
 alter table tgo_freight_factors enable row level security;

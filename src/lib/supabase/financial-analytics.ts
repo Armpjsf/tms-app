@@ -13,6 +13,18 @@ import {
     getThaiNow
 } from './analytics-helpers'
 import { CO2_COEFFICIENTS } from '../utils/esg-utils'
+import { getCarbonFactors } from '@/lib/actions/carbon-factors'
+
+// อัตราดูดซับคาร์บอนของต้นไม้มาตรฐาน TGO (kgCO2/ต้น/ปี) — ให้ตรงกับ esg-utils
+const TREE_ABSORB_KG_PER_YEAR = 22
+
+// WTW (TTW + WTT) kgCO2e/km ของรถพิกัดกลาง (default) จากค่า EF ที่ตั้งใน DB
+async function getDefaultWTWPerKm(): Promise<number> {
+    const { freightPerKm = {}, freightWTTPerKm = {} } = await getCarbonFactors()
+    const ttw = freightPerKm['default'] ?? CO2_COEFFICIENTS['default']
+    const wtt = freightWTTPerKm['default'] ?? 0
+    return ttw + wtt
+}
 
 // 1. Unified Executive Dashboard (Ultra-Performance via RPC)
 export async function getExecutiveDashboardUnified(branchId?: string, startDate?: string, endDate?: string, customerNames?: string[], providedCustomerId?: string | null) {
@@ -198,11 +210,12 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             statusMap[s] = (statusMap[s] || 0) + 1
         })
 
-        // ESG Heuristics
+        // ESG Heuristics — ใช้ค่า EF (WTW) จาก DB ให้สอดคล้องกับการคำนวณจริง
         const effectiveDistance = Math.max(curr.distance, curr.count * 12.5) // Floor of 12.5km per job
-        const co2Saved = effectiveDistance * 0.082 * CO2_COEFFICIENTS['default']
+        const wtwPerKm = await getDefaultWTWPerKm()
+        const co2Saved = effectiveDistance * 0.082 * wtwPerKm
         const fuelSaved = co2Saved / 2.68
-        const treesSaved = co2Saved / 20.2
+        const treesSaved = co2Saved / TREE_ABSORB_KG_PER_YEAR
 
         const predictedFuelCost = (curr.distance / 10) * 38 // 10km/L, 38 THB/L
         const predictedMaintCost = curr.distance * 1.5 // 1.5 THB/KM
@@ -369,9 +382,10 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     
     // TMS 2026 Goal: 8.2% Efficiency Gain Benchmark
     const totalSavedKm = effectiveDistance * 0.082
-    const co2Saved = totalSavedKm * CO2_COEFFICIENTS['default'] // Standard CO2 per avg KM saved (Medium Fleet)
-    const fuelSaved = co2Saved / 2.68 
-    const treesSaved = co2Saved / 20.2 
+    const wtwPerKm = await getDefaultWTWPerKm() // WTW EF (DB) — สอดคล้องกับการคำนวณจริง
+    const co2Saved = totalSavedKm * wtwPerKm
+    const fuelSaved = co2Saved / 2.68
+    const treesSaved = co2Saved / TREE_ABSORB_KG_PER_YEAR
 
     const predictedFuelCost = (effectiveDistance / 10) * 38
     const predictedMaintCost = effectiveDistance * 1.5

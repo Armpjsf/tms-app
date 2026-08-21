@@ -4,7 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logActivity } from "@/lib/supabase/logs";
 import { revalidatePath } from "next/cache";
 import { isCompleted } from "@/lib/constants/job-status";
-import { calculateJobEmissions } from "@/lib/utils/esg-utils";
+import { calculateJobEmissions, ROUND_TRIP_EMISSION_FACTOR } from "@/lib/utils/esg-utils";
+import { getCarbonFactors } from "@/lib/actions/carbon-factors";
 
 // ชุดสถานะที่ใช้งานจริง (operational) — ตัด alias ที่ไม่เคยถูกเขียน/ไม่มีในข้อมูลออก
 // (เดิมมี Pending, En Route, En-Route, Arrived เดี่ยว, Complete, Failed ที่ไม่ถูกใช้จริง)
@@ -406,12 +407,15 @@ async function sendDeliveryCompletionNotification(jobId: string) {
       if (s === '4-wheel' || s === '6-wheel' || s === '10-wheel') return v as string
       return 'default'
     }
-    // Round-trip distance (×2): the vehicle drives to the destination and back,
-    // so fuel burned — and therefore emissions — reflect the return leg too.
-    const roundTripKm = (Number(job.Est_Distance_KM) || 0) * 2
+    // ระยะทางไป-กลับที่แสดงผล = เที่ยวเดียว ×2 (ระยะจริงที่รถวิ่ง)
+    const oneWayKm = Number(job.Est_Distance_KM) || 0
+    const roundTripKm = oneWayKm * 2
     let carbonText = ''
     if (roundTripKm > 0) {
-      const esg = calculateJobEmissions(roundTripKm, null, normalizeVehicleType(job.Vehicle_Type))
+      const carbonFactors = await getCarbonFactors()
+      // ระยะเทียบเท่าสำหรับ "การปล่อย": เที่ยวไป(เต็ม) + เที่ยวกลับ(รถเปล่า) ตาม ISO 14083/GLEC
+      const emissionKm = oneWayKm * (carbonFactors.roundTripEmissionFactor ?? ROUND_TRIP_EMISSION_FACTOR)
+      const esg = calculateJobEmissions(emissionKm, null, normalizeVehicleType(job.Vehicle_Type), carbonFactors)
       carbonText = [
         ``,
         `🌱 คาร์บอนฟุตพริ้นต์เที่ยวนี้ (มาตรฐาน ISO 14083 / GLEC / อบก.):`,

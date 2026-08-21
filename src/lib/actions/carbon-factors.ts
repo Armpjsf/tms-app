@@ -19,6 +19,7 @@ import {
     TGO_WTT_FACTORS,
     CO2_COEFFICIENTS,
     WTT_FREIGHT_COEFFICIENTS,
+    EMPTY_RETURN_RATIO,
     type CarbonFactors,
 } from "@/lib/utils/esg-utils"
 
@@ -50,12 +51,14 @@ export async function getCarbonFactors(): Promise<CarbonFactors> {
     const fuelWTT: Record<string, number> = { ...TGO_WTT_FACTORS }
     const freightPerKm: Record<string, number> = { ...CO2_COEFFICIENTS }
     const freightWTTPerKm: Record<string, number> = { ...WTT_FREIGHT_COEFFICIENTS }
+    let emptyReturnRatio = EMPTY_RETURN_RATIO
 
     try {
         const supabase = createAdminClient()
-        const [{ data: fuels }, { data: freight }] = await Promise.all([
+        const [{ data: fuels }, { data: freight }, { data: params }] = await Promise.all([
             supabase.from("tgo_emission_factors").select("fuel_code, ef_value, wtt_value, is_active"),
             supabase.from("tgo_freight_factors").select("vehicle_type, co2_per_km, wtt_per_km, is_active"),
+            supabase.from("esg_parameters").select("param_key, param_value"),
         ])
         for (const f of fuels || []) {
             if (f?.is_active !== false && f?.fuel_code && f?.ef_value != null) {
@@ -69,11 +72,17 @@ export async function getCarbonFactors(): Promise<CarbonFactors> {
                 if (f?.wtt_per_km != null) freightWTTPerKm[f.vehicle_type] = Number(f.wtt_per_km)
             }
         }
+        const rawRatio = (params || []).find((p: { param_key?: string }) => p?.param_key === "empty_return_ratio")?.param_value
+        if (rawRatio != null && Number.isFinite(Number(rawRatio))) emptyReturnRatio = Number(rawRatio)
     } catch {
-        /* DB unreachable / tables not created / WTT columns not migrated → use hardcoded defaults */
+        /* DB unreachable / tables not created / columns not migrated → use hardcoded defaults */
     }
 
-    const data: CarbonFactors = { fuelEF, fuelWTT, freightPerKm, freightWTTPerKm }
+    const data: CarbonFactors = {
+        fuelEF, fuelWTT, freightPerKm, freightWTTPerKm,
+        emptyReturnRatio,
+        roundTripEmissionFactor: 1 + emptyReturnRatio,
+    }
     cache = { data, ts: Date.now() }
     return data
 }
@@ -142,6 +151,35 @@ export async function upsertFreightFactor(payload: {
         invalidate()
         revalidatePath("/settings/esg")
         return { success: true, message: "บันทึกค่า EF ขนส่งสำเร็จ" }
+    } catch (err) {
+        return { success: false, message: err instanceof Error ? err.message : "บันทึกไม่สำเร็จ" }
+    }
+}
+
+// ── ESG global parameter (empty-return ratio) ──
+
+/** อ่านสัดส่วนเที่ยวกลับรถเปล่า (fallback = ค่า default ในโค้ด). */
+export async function getEmptyReturnRatio(): Promise<number> {
+    const { emptyReturnRatio } = await getCarbonFactors()
+    return emptyReturnRatio ?? EMPTY_RETURN_RATIO
+}
+
+/** บันทึกสัดส่วนเที่ยวกลับรถเปล่า (0–1) ลงตาราง esg_parameters. */
+export async function upsertEmptyReturnRatio(value: number): Promise<{ success: boolean; message?: string }> {
+    try {
+        await requireAdmin()
+        if (!Number.isFinite(value) || value < 0 || value > 1) {
+            return { success: false, message: "ค่าต้องอยู่ระหว่าง 0–1" }
+        }
+        const supabase = createAdminClient()
+        const { error } = await supabase.from("esg_parameters").upsert(
+            { param_key: "empty_return_ratio", param_value: value, updated_at: new Date().toISOString() },
+            { onConflict: "param_key" }
+        )
+        if (error) throw error
+        invalidate()
+        revalidatePath("/settings/esg")
+        return { success: true, message: "บันทึกสัดส่วนเที่ยวกลับสำเร็จ" }
     } catch (err) {
         return { success: false, message: err instanceof Error ? err.message : "บันทึกไม่สำเร็จ" }
     }

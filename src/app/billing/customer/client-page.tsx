@@ -239,7 +239,7 @@ export default function CustomerBillingClient({ customers, initialBillingNotes }
                             </td>
                             <td className="px-12 py-8 text-center">
                                 <Link 
-                                    href={`/billing/print/${note.Billing_Note_ID}`} 
+                                    href={`/billing/print/${note.Billing_Note_ID}?mode=print`}
                                     target="_blank"
                                     className="h-10 px-6 rounded-xl bg-primary text-white hover:bg-primary/80 transition-all font-black uppercase tracking-widest text-sm inline-flex items-center gap-2 shadow-lg hover:shadow-primary/20"
                                 >

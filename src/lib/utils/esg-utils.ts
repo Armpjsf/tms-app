@@ -51,6 +51,25 @@ export const TGO_WTT_FACTORS: Record<string, number> = {
 // สัดส่วน WTT ต่อ TTW สำหรับคำนวณ WTT ประเมินผล
 const WTT_TO_TTW_RATIO = 0.235
 
+/**
+ * สัดส่วนการปล่อยคาร์บอนของเที่ยวกลับ (รถเปล่า) เทียบกับเที่ยวไป (บรรทุกเต็ม)
+ * ตามหลัก ISO 14083/GLEC เที่ยวกลับที่วิ่งรถเปล่าปล่อยน้อยกว่าเพราะน้ำหนักลดลง
+ *
+ * ค่า default 0.65 อ้างอิง DEFRA 2025 UK GHG Conversion Factors (all-HGV, kgCO2e/km):
+ *   0% laden (empty) = 0.660, 100% laden (full) = 1.012 → 0.660/1.012 ≈ 0.65
+ * (สอดคล้องกับ HBEFA/COPERT ที่ให้รถเปล่าใช้เชื้อเพลิง ~60–70% ของรถเต็ม)
+ * ค่านี้เป็น fallback — ค่าจริงแก้ได้ที่ /settings/esg (ตาราง esg_parameters.empty_return_ratio)
+ */
+export const EMPTY_RETURN_RATIO = 0.65
+
+/**
+ * ตัวคูณระยะทางเทียบเท่าการปล่อยของ 1 เที่ยว (ไป-กลับ):
+ *   เที่ยวไป (เต็ม) 1.0 + เที่ยวกลับ (เปล่า) × EMPTY_RETURN_RATIO
+ * ใช้คูณกับระยะทางเที่ยวเดียว (one-way km) เพื่อได้ km เทียบเท่าสำหรับคำนวณคาร์บอน
+ * หมายเหตุ: ค่านี้ใช้กับ "การปล่อย" เท่านั้น — ระยะทางที่แสดงผลให้ใช้ ×2 จริง
+ */
+export const ROUND_TRIP_EMISSION_FACTOR = 1 + EMPTY_RETURN_RATIO // 1.65
+
 export const VEHICLE_FUEL_MAP: Record<string, string> = {
     '4-Wheel': 'Diesel_B7',
     'Pickup': 'Diesel_B7',
@@ -107,6 +126,8 @@ export type CarbonFactors = {
     fuelWTT?: Record<string, number>         // WTT kgCO2e per liter
     freightPerKm?: Record<string, number>    // TTW kgCO2e per km at rated load
     freightWTTPerKm?: Record<string, number> // WTT kgCO2e per km
+    emptyReturnRatio?: number                // สัดส่วนปล่อยเที่ยวกลับรถเปล่า (0–1)
+    roundTripEmissionFactor?: number         // ตัวคูณระยะเทียบเท่าการปล่อยไป-กลับ = 1 + emptyReturnRatio
 }
 
 /**

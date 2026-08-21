@@ -1,6 +1,7 @@
 import { getBillingNoteByIdWithJobs } from "@/lib/supabase/billing"
 import { notFound } from "next/navigation"
 import { PrintButton } from "@/components/billing/print-button"
+import { AutoPrint } from "@/components/utils/auto-print"
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
 import { Phone, Mail, User, FileText, CreditCard, MessageSquare, PenTool, Globe as GlobeIcon } from "lucide-react"
 import { headers } from "next/headers"
@@ -14,7 +15,7 @@ export const dynamic = 'force-dynamic'
 
 type Props = {
     params: Promise<{ id: string }>;
-    searchParams: Promise<{ lang?: string }>;
+    searchParams: Promise<{ lang?: string; mode?: string }>;
 }
 
 function safeLocaleDateString(date: Date, locale: string) {
@@ -31,6 +32,7 @@ export default async function BillingPrintPage(props: Props) {
     const searchParams = await props.searchParams;
     const { id } = params
     const lang = (searchParams?.lang as Language) || 'th'
+    const autoPrint = searchParams?.mode === 'print'
     
     const data = await getBillingNoteByIdWithJobs(id)
 
@@ -99,6 +101,7 @@ export default async function BillingPrintPage(props: Props) {
 
     return (
         <div className="bg-white min-h-screen p-8 text-black print:p-0 print-container font-sans">
+            {autoPrint && <AutoPrint />}
             <div className="fixed top-4 right-4 print:hidden flex gap-2">
                 <PrintButton />
             </div>

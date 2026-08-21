@@ -5,10 +5,13 @@ import { revalidatePath } from 'next/cache'
 
 import { SupabaseClient } from '@supabase/supabase-js'
 
-import { CO2_COEFFICIENTS, WTT_FREIGHT_COEFFICIENTS } from '@/lib/utils/esg-utils'
+import { calculateJobEmissions, ROUND_TRIP_EMISSION_FACTOR } from '@/lib/utils/esg-utils'
+import { getCarbonFactors } from '@/lib/actions/carbon-factors'
 
 /**
- * Helper to calculate CO2 based on distance and vehicle type
+ * Helper to calculate CO2 based on distance and vehicle type.
+ * ใช้ค่า EF ที่แอดมินตั้งในหน้า /settings/esg (ตาราง tgo_freight_factors) เป็นหลัก
+ * ผ่าน getCarbonFactors() แล้ว fallback เป็นค่า hardcode ถ้า DB ว่าง/ล่ม
  */
 export async function calculateJobCO2(supabase: SupabaseClient, jobId: string) {
     try {
@@ -20,14 +23,17 @@ export async function calculateJobCO2(supabase: SupabaseClient, jobId: string) {
 
         if (!job) return null
 
-        const distance = Number(job.Est_Distance_KM) || 12.5
+        const oneWayKm = Number(job.Est_Distance_KM) || 12.5
         const vType = job.Vehicle_Type || '4-Wheel'
-        
-        // WTW = TTW (เผาไหม้) + WTT (ต้นน้ำเชื้อเพลิง) ต่อ กม. ตาม ISO 14083
-        const ttwFactor = CO2_COEFFICIENTS[vType as keyof typeof CO2_COEFFICIENTS] || CO2_COEFFICIENTS['default']
-        const wttFactor = WTT_FREIGHT_COEFFICIENTS[vType as keyof typeof WTT_FREIGHT_COEFFICIENTS] || WTT_FREIGHT_COEFFICIENTS['default'] || 0
-        const co2Amount = Number((distance * (ttwFactor + wttFactor)).toFixed(2))
-        
+
+        // ดึงค่า EF จาก DB (แอดมินตั้งเอง) แล้วส่งเข้า calculateJobEmissions
+        // WTW = TTW (เผาไหม้) + WTT (ต้นน้ำเชื้อเพลิง) ตาม ISO 14083
+        const factors = await getCarbonFactors()
+        // ระยะเทียบเท่าการปล่อย: เที่ยวไป(เต็ม) + เที่ยวกลับ(รถเปล่า) ตาม ISO 14083/GLEC
+        const emissionKm = oneWayKm * (factors.roundTripEmissionFactor ?? ROUND_TRIP_EMISSION_FACTOR)
+        const emissions = calculateJobEmissions(emissionKm, null, vType, factors)
+        const co2Amount = emissions.co2EmissionsKg
+
         return {
             amount: co2Amount,
             note: `[ESG] ปล่อย CO2: ${co2Amount} kg`
