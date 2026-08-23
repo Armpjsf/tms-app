@@ -1,7 +1,7 @@
 "use server"
 
 import { createAdminClient } from '@/utils/supabase/server'
-import { getEffectiveBranchId, REVENUE_STATUSES, formatDateSafe } from './analytics-helpers'
+import { getEffectiveBranchId, REVENUE_STATUSES, formatDateSafe, fetchAllRows } from './analytics-helpers'
 import { getCustomerId } from "@/lib/permissions"
 import { calculateJobEmissions, TGO_STANDARDS_METADATA } from '../utils/esg-utils'
 import { getCarbonFactors } from '@/lib/actions/carbon-factors'
@@ -67,32 +67,18 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
         const sDate = formatDateSafe(startDate)
         const eDate = formatDateSafe(endDate)
 
-        let query = supabase
-            .from('Jobs_Main')
-            .select('Job_ID, Plan_Date, Price_Cust_Total, Branch_ID, Customer_ID, Est_Distance_KM, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Vehicle_Type, original_origins_json, original_destinations_json, Weight_Kg')
-            .in('Job_Status', REVENUE_STATUSES)
-
-        if (sDate) query = query.gte('Plan_Date', sDate)
-        if (eDate) query = query.lte('Plan_Date', eDate)
-
-        if (finalCustomerId) {
-            query = query.eq('Customer_ID', finalCustomerId)
-        }
-        if (effectiveBranchId) {
-            query = query.eq('Branch_ID', effectiveBranchId)
-        }
-        
-        const { data: jobs, error: queryError } = await query
-        
-        if (queryError) {
-            console.error("[ESG] Supabase Query Error:", JSON.stringify({
-                message: queryError.message,
-                code: queryError.code,
-                details: queryError.details,
-                hint: queryError.hint,
-            }))
-        }
-
+        // page ครบทุกแถว (กัน cap 1000 ทำให้ยอดคาร์บอนตกหล่นเมื่องาน > 1000)
+        const jobs = await fetchAllRows(() => {
+            let query = supabase
+                .from('Jobs_Main')
+                .select('Job_ID, Plan_Date, Price_Cust_Total, Branch_ID, Customer_ID, Est_Distance_KM, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Vehicle_Type, original_origins_json, original_destinations_json, Weight_Kg')
+                .in('Job_Status', REVENUE_STATUSES)
+            if (sDate) query = query.gte('Plan_Date', sDate)
+            if (eDate) query = query.lte('Plan_Date', eDate)
+            if (finalCustomerId) query = query.eq('Customer_ID', finalCustomerId)
+            if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+            return query
+        })
         if (!jobs || jobs.length === 0) {
             return {
                 validJobsCount: 0,

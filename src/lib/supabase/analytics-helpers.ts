@@ -12,6 +12,27 @@ export type FinancialJob = {
     Cost_Driver_Extra?: number | null;
 }
 
+/**
+ * Supabase/PostgREST จำกัดผลลัพธ์ 1000 แถวต่อ query (hard cap — range/limit ใหญ่ก็ไม่ทะลุ).
+ * ฟังก์ชันนี้วนดึงทีละ 1000 จนครบ สำหรับการรวมยอด (aggregation) ที่ทำใน JS.
+ * makeQuery ต้องคืน query builder "ใหม่" ทุกครั้ง (ใส่ filter ครบแล้ว ยังไม่ await).
+ * ตัวอย่าง: await fetchAllRows(() => supabase.from('Jobs_Main').select('...').gte(...))
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function fetchAllRows<T = any>(makeQuery: () => any, pageSize = 1000): Promise<T[]> {
+    const all: T[] = []
+    let from = 0
+    // กันลูปไม่รู้จบ (สูงสุด ~200k แถว)
+    for (let i = 0; i < 200; i++) {
+        const { data, error } = await makeQuery().range(from, from + pageSize - 1)
+        if (error || !data || data.length === 0) break
+        all.push(...(data as T[]))
+        if (data.length < pageSize) break
+        from += pageSize
+    }
+    return all
+}
+
 // Revenue-generating completed statuses
 export const REVENUE_STATUSES = [
     'Completed', 'Delivered', 'Finished', 'Closed', 'Complete', 'Success', 'Done', 'Finish', 'Arrived', 'Arrived Destination',

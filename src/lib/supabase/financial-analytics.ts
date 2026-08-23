@@ -10,7 +10,8 @@ import {
     formatDateSafe,
     getEffectiveBranchId,
     getThaiMonthBoundaries,
-    getThaiNow
+    getThaiNow,
+    fetchAllRows
 } from './analytics-helpers'
 import { CO2_COEFFICIENTS } from '../utils/esg-utils'
 import { getCarbonFactors } from '@/lib/actions/carbon-factors'
@@ -101,21 +102,18 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         
         // Manual fallback: Fetch Current & Previous for Comparison
         const fetchRange = async (start: string, end: string) => {
-            let query = supabase
-                .from('Jobs_Main')
-                .select('Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status, Plan_Date, Est_Distance_KM, Loaded_Qty')
-                .gte('Plan_Date', start)
-                .lte('Plan_Date', end)
-            
-            if (finalCustomerId) query = query.eq('Customer_ID', finalCustomerId)
-            if (effectiveBranchId) {
-                query = query.ilike('Branch_ID', effectiveBranchId)
-            }
-            if (customerNames && customerNames.length > 0) query = query.in('Customer_Name', customerNames)
-            
-            const { data, error } = await query
-            if (error) console.error('[DEBUG] fetchRange Error:', error)
-            return data || []
+            // page ครบทุกแถว (กัน cap 1000 ทำให้ยอดตกหล่นเมื่องาน > 1000)
+            return fetchAllRows(() => {
+                let query = supabase
+                    .from('Jobs_Main')
+                    .select('Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status, Plan_Date, Est_Distance_KM, Loaded_Qty')
+                    .gte('Plan_Date', start)
+                    .lte('Plan_Date', end)
+                if (finalCustomerId) query = query.eq('Customer_ID', finalCustomerId)
+                if (effectiveBranchId) query = query.ilike('Branch_ID', effectiveBranchId)
+                if (customerNames && customerNames.length > 0) query = query.in('Customer_Name', customerNames)
+                return query
+            })
         }
 
         const [currJobs, prevJobs] = await Promise.all([
@@ -839,23 +837,21 @@ export async function getTopCustomers(startDate?: string, endDate?: string, bran
     const effectiveBranchId = await getEffectiveBranchId(branchId)
     const customerId = await getCustomerId()
 
-    let query = supabase
-        .from('Jobs_Main')
-        .select('Customer_Name, Price_Cust_Total')
-        .in('Job_Status', REVENUE_STATUSES)
-    
     const isCust = await getCustomerId() || await isCustomer()
-    
-    if (customerId) query = query.eq('Customer_ID', customerId)
-    else if (isCust) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
-    else if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
-
     const sDate = formatDateSafe(startDate)
     const eDate = formatDateSafe(endDate)
-    if (sDate) query = query.gte('Plan_Date', sDate)
-    if (eDate) query = query.lte('Plan_Date', eDate)
-
-    const { data: jobs } = await query
+    const jobs = await fetchAllRows(() => {
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Customer_Name, Price_Cust_Total')
+            .in('Job_Status', REVENUE_STATUSES)
+        if (customerId) query = query.eq('Customer_ID', customerId)
+        else if (isCust) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
+        else if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+        if (sDate) query = query.gte('Plan_Date', sDate)
+        if (eDate) query = query.lte('Plan_Date', eDate)
+        return query
+    })
     const customerStats: Record<string, { name: string, revenue: number, jobCount: number }> = {}
 
     jobs?.forEach((job: { Customer_Name?: string; Price_Cust_Total?: number | string }) => {
@@ -875,13 +871,14 @@ export async function getBranchPerformance(startDate?: string, endDate?: string)
     const { data: branches } = await supabase.from('Master_Branches').select('Branch_ID, Branch_Name')
     if (!branches) return []
 
-    let query = supabase.from('Jobs_Main').select('Branch_ID, Price_Cust_Total, Cost_Driver_Total').in('Job_Status', REVENUE_STATUSES)
     const sDate = formatDateSafe(startDate)
     const eDate = formatDateSafe(endDate)
-    if (sDate) query = query.gte('Plan_Date', sDate)
-    if (eDate) query = query.lte('Plan_Date', eDate)
-
-    const { data: jobs } = await query
+    const jobs = await fetchAllRows(() => {
+        let query = supabase.from('Jobs_Main').select('Branch_ID, Price_Cust_Total, Cost_Driver_Total').in('Job_Status', REVENUE_STATUSES)
+        if (sDate) query = query.gte('Plan_Date', sDate)
+        if (eDate) query = query.lte('Plan_Date', eDate)
+        return query
+    })
     return branches.map((branch: { Branch_ID: string; Branch_Name: string }) => {
         const branchJobs = jobs?.filter((j: { Job_Status?: string | null, Price_Cust_Total?: number | null, Cost_Driver_Total?: number | null, Price_Cust_Extra?: number | null, Cost_Driver_Extra?: number | null, Plan_Date?: string | null, Est_Distance_KM?: number | null, Loaded_Qty?: number | null, Weight_Kg?: number | null, Volume_Cbm?: number | null, Vehicle_Type?: string | null, Customer_Name?: string | null, Branch_ID?: string | null, Vehicle_Plate?: string | null }) => j.Branch_ID === branch.Branch_ID) || []
         const revenue = branchJobs.reduce((sum: number, j: { Price_Cust_Total?: string | number, Cost_Driver_Total?: string | number }) => sum + (Number(j.Price_Cust_Total) || 0), 0)
@@ -896,12 +893,13 @@ export async function getSubcontractorPerformance(startDate?: string, endDate?: 
     const sDate = formatDateSafe(startDate)
     const eDate = formatDateSafe(endDate)
 
-    let query = supabase.from('Jobs_Main').select('Price_Cust_Total, Cost_Driver_Total, Sub_ID').in('Job_Status', REVENUE_STATUSES)
-    if (sDate) query = query.gte('Plan_Date', sDate)
-    if (eDate) query = query.lte('Plan_Date', eDate)
-    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
-
-    const { data: jobs } = await query
+    const jobs = await fetchAllRows(() => {
+        let query = supabase.from('Jobs_Main').select('Price_Cust_Total, Cost_Driver_Total, Sub_ID').in('Job_Status', REVENUE_STATUSES)
+        if (sDate) query = query.gte('Plan_Date', sDate)
+        if (eDate) query = query.lte('Plan_Date', eDate)
+        if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+        return query
+    })
     const stats = { internal: { revenue: 0, cost: 0, count: 0 }, subcontractor: { revenue: 0, cost: 0, count: 0 } }
 
     jobs?.forEach((job: { Price_Cust_Total?: number | string; Cost_Driver_Total?: number | string; Sub_ID?: string }) => {
@@ -933,12 +931,13 @@ export async function getRouteEfficiency(startDate?: string, endDate?: string, b
     const sDate = formatDateSafe(startDate)
     const eDate = formatDateSafe(endDate)
 
-    let query = supabase.from('Jobs_Main').select('Route_Name, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Est_Distance_KM').in('Job_Status', REVENUE_STATUSES)
-    if (sDate) query = query.gte('Plan_Date', sDate)
-    if (eDate) query = query.lte('Plan_Date', eDate)
-    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
-
-    const { data: jobs } = await query
+    const jobs = await fetchAllRows(() => {
+        let query = supabase.from('Jobs_Main').select('Route_Name, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Est_Distance_KM').in('Job_Status', REVENUE_STATUSES)
+        if (sDate) query = query.gte('Plan_Date', sDate)
+        if (eDate) query = query.lte('Plan_Date', eDate)
+        if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+        return query
+    })
     const routeStats: Record<string, { route: string; revenue: number; cost: number; count: number; extra: number; totalKm: number }> = {}
 
     jobs?.forEach((job: { Route_Name?: string; Price_Cust_Total?: number | string; Cost_Driver_Total?: number | string; Price_Cust_Extra?: number | string; Cost_Driver_Extra?: number | string; Est_Distance_KM?: number | string }) => {
@@ -1043,10 +1042,11 @@ export async function getRevenueForecast(branchId?: string): Promise<{ month: st
         const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1)
         const sixMonthsAgoStr = formatDateSafe(sixMonthsAgo)!
         
-        let query = supabase.from('Jobs_Main').select('Price_Cust_Total, Plan_Date').gte('Plan_Date', sixMonthsAgoStr).in('Job_Status', REVENUE_STATUSES)
-        if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
-
-        const { data: history } = await query
+        const history = await fetchAllRows(() => {
+            let query = supabase.from('Jobs_Main').select('Price_Cust_Total, Plan_Date').gte('Plan_Date', sixMonthsAgoStr).in('Job_Status', REVENUE_STATUSES)
+            if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+            return query
+        })
         if (!history) return []
 
         const monthlyData: Record<string, number> = {}
@@ -1076,16 +1076,16 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
     const effectiveBranchId = await getEffectiveBranchId(branchId)
     const sDate = formatDateSafe(startDate); const eDate = formatDateSafe(endDate)
 
-    let query = supabase.from('Jobs_Main').select('Vehicle_Plate, Price_Cust_Total, Cost_Driver_Total, Est_Distance_KM').in('Job_Status', REVENUE_STATUSES)
-    
-    if (customerId) query = query.eq('Customer_ID', customerId)
-    else if (await isCustomer()) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
-    else if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
-
-    if (sDate) query = query.gte('Plan_Date', sDate)
-    if (eDate) query = query.lte('Plan_Date', eDate)
-
-    const { data: jobs } = await query
+    const isCust = await isCustomer()
+    const jobs = await fetchAllRows(() => {
+        let query = supabase.from('Jobs_Main').select('Vehicle_Plate, Price_Cust_Total, Cost_Driver_Total, Est_Distance_KM').in('Job_Status', REVENUE_STATUSES)
+        if (customerId) query = query.eq('Customer_ID', customerId)
+        else if (isCust) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
+        else if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+        if (sDate) query = query.gte('Plan_Date', sDate)
+        if (eDate) query = query.lte('Plan_Date', eDate)
+        return query
+    })
     const stats: Record<string, { plate: string; revenue: number; driverCost: number; fuelCost: number; maintenanceCost: number; totalKm: number; count: number; predictedFuel: number; predictedMaintenance: number; netProfit: number }> = {}
     jobs?.forEach((j: { Job_Status?: string | null, Price_Cust_Total?: number | null, Cost_Driver_Total?: number | null, Price_Cust_Extra?: number | null, Cost_Driver_Extra?: number | null, Plan_Date?: string | null, Est_Distance_KM?: number | null, Loaded_Qty?: number | null, Weight_Kg?: number | null, Volume_Cbm?: number | null, Vehicle_Type?: string | null, Customer_Name?: string | null, Branch_ID?: string | null, Vehicle_Plate?: string | null }) => {
         const p = j.Vehicle_Plate || 'Unknown'
@@ -1122,23 +1122,22 @@ export async function getProfitHeatmapData(startDate?: string, endDate?: string,
     const sDate = formatDateSafe(startDate) || formatDateSafe(currentStart)
     const eDate = formatDateSafe(endDate) || formatDateSafe(currentEnd)
 
-    let query = supabase
-        .from('Jobs_Main')
-        .select('Job_ID, Job_Status, Origin_Location, Dest_Location, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, original_destinations_json, original_origins_json')
-        .in('Job_Status', REVENUE_STATUSES)
-    
-    if (finalCustomerId) query = query.eq('Customer_ID', finalCustomerId)
-    else if (await isCustomer()) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
-    
-    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
-
-    if (sDate) query = query.gte('Plan_Date', sDate)
-    if (eDate) query = query.lte('Plan_Date', eDate)
-
+    const isCustHeat = await isCustomer()
     const { hasPermission } = await import("@/lib/permissions")
     const canViewProfit = await hasPermission('financial.view_profit')
 
-    const { data } = await query
+    const data = await fetchAllRows(() => {
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Job_ID, Job_Status, Origin_Location, Dest_Location, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, original_destinations_json, original_origins_json')
+            .in('Job_Status', REVENUE_STATUSES)
+        if (finalCustomerId) query = query.eq('Customer_ID', finalCustomerId)
+        else if (isCustHeat) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
+        if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+        if (sDate) query = query.gte('Plan_Date', sDate)
+        if (eDate) query = query.lte('Plan_Date', eDate)
+        return query
+    })
     
     // Process and normalize profit including extras
     return (data || []).map((j: { Job_Status?: string | null, Price_Cust_Total?: number | null, Cost_Driver_Total?: number | null, Price_Cust_Extra?: number | null, Cost_Driver_Extra?: number | null, Plan_Date?: string | null, Est_Distance_KM?: number | null, Loaded_Qty?: number | null, Weight_Kg?: number | null, Volume_Cbm?: number | null, Vehicle_Type?: string | null, Customer_Name?: string | null, Branch_ID?: string | null, Vehicle_Plate?: string | null }) => ({
