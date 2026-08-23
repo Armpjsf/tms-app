@@ -27,7 +27,9 @@ export async function getAllBranches() {
     let query = supabase
 
       .from('Master_Branches')
-      .select('Branch_ID, Branch_Name, Email, Sender_Name, Address, Phone, Smtp_Host, Smtp_User, Smtp_Pass')
+      // NOTE: ไม่ select Smtp_* เพราะคอลัมน์ยังไม่มีในตาราง (ทำให้ทั้ง query พัง → dropdown สาขาว่าง)
+      // per-branch SMTP override ทำใน email-actions แยก (มี fallback อยู่แล้ว)
+      .select('Branch_ID, Branch_Name, Email, Sender_Name, Address, Phone')
     
     // STRICT ISOLATION: Non-SuperAdmin users (Admin, Staff, etc.) 
     // are restricted to their assigned branch.
