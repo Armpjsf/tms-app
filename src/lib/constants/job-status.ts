@@ -73,6 +73,11 @@ export const isPending = (s: string | null | undefined) => has(PENDING_STATUSES,
 export const isAssigned = (s: string | null | undefined) => has(ASSIGNED_STATUSES, String(s ?? '').trim())
 export const isInTransit = (s: string | null | undefined) => has(IN_TRANSIT_STATUSES, String(s ?? '').trim())
 export const isCompleted = (s: string | null | undefined) => has(COMPLETED_STATUSES, String(s ?? '').trim())
+// ส่งสำเร็จ "หรือเลยจากนั้น" (ตรวจแล้ว/วางบิล/จ่ายแล้ว) — ใช้ตอนนับ "จัดส่งสำเร็จ" ใน analytics/แดชบอร์ด
+export const isDeliveredOrSettled = (s: string | null | undefined) => {
+  const t = String(s ?? '').trim()
+  return has(COMPLETED_STATUSES, t) || has(SETTLED_STATUSES, t)
+}
 export const isCancelled = (s: string | null | undefined) => has(CANCELLED_STATUSES, String(s ?? '').trim())
 export const isActive = (s: string | null | undefined) => has(ACTIVE_STATUSES, String(s ?? '').trim())
 export const isTerminal = (s: string | null | undefined) => has(TERMINAL_STATUSES, String(s ?? '').trim())

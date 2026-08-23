@@ -5,6 +5,7 @@ import { logActivity } from '@/lib/supabase/logs'
 import { getDriverSession } from '@/lib/auth-utils'
 import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions"
 import { todayTH } from "@/lib/utils/date-th"
+import { isDeliveredOrSettled } from "@/lib/constants/job-status"
  
 export type JobAssignment = {
   Vehicle_Type: string
@@ -760,7 +761,8 @@ export async function getWeeklyJobStats(branchId?: string) {
         const dateStr = job.Plan_Date as string // Assuming Plan_Date is string YYYY-MM-DD
         if (dailyStats[dateStr]) {
             dailyStats[dateStr].total += 1
-            if (job.Job_Status && ['Delivered', 'Completed'].includes(job.Job_Status)) {
+            // "จัดส่งสำเร็จ" = ส่งเสร็จหรือเลยจากนั้น (Delivered/Completed + Verified/Billed/Paid)
+            if (isDeliveredOrSettled(job.Job_Status)) {
                 dailyStats[dateStr].completed += 1
             }
         }

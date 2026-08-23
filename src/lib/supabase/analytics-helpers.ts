@@ -17,7 +17,10 @@ export const REVENUE_STATUSES = [
     'Completed', 'Delivered', 'Finished', 'Closed', 'Complete', 'Success', 'Done', 'Finish', 'Arrived', 'Arrived Destination',
     'completed', 'delivered', 'finished', 'closed', 'complete', 'success', 'done', 'finish', 'arrived',
     'เสร็จสิ้น', 'เรียบร้อย', 'ส่งสำเร็จ', 'ปิดงาน', 'สำเร็จ', 'ถึงที่หมาย', 'ถึงจุดหมาย', 'ถึงที่ส่ง', 'จบงาน',
-    'Verified', 'Verified Jobs', 'Verified Success', 'ยืนยันแล้ว', 'ตรวจสอบแล้ว'
+    'Verified', 'Verified Jobs', 'Verified Success', 'ยืนยันแล้ว', 'ตรวจสอบแล้ว',
+    // สถานะหลังจบงาน (วางบิล/จ่ายแล้ว) — งานส่งสำเร็จแล้ว ต้องนับเป็นรายได้/จบงานด้วย
+    // (เดิมตกหล่น ทำให้งานที่จ่ายเงินคนขับแล้วหลุดจากรายได้+กราฟทั้งหมด)
+    'Billed', 'Paid', 'billed', 'paid', 'วางบิลแล้ว', 'วางบิล', 'จ่ายแล้ว', 'ชำระแล้ว', 'จ่ายเงินแล้ว'
 ]
 
 // "In-progress" statuses for pipeline revenue

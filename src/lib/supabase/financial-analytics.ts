@@ -189,6 +189,7 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             if (d !== 'Unknown') {
                 if (!trendMap[d]) trendMap[d] = { total: 0, completed: 0, revenue: 0, cost: 0 }
                 trendMap[d].total++
+                // REVENUE_STATUSES รวม Verified/Billed/Paid แล้ว → นับสำเร็จ + รายได้ตรงกัน
                 if (REVENUE_STATUSES.includes(j.Job_Status || '')) {
                     trendMap[d].completed++
                     trendMap[d].revenue += (Number(j.Price_Cust_Total) || 0)
