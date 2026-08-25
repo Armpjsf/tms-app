@@ -141,12 +141,21 @@ export async function getMessageContent(messageId: string, botIndex: BotIndex = 
  * Sends a reply message to a LINE user via the given bot (default bot 1).
  * Replies must go back through the same bot that received the message.
  */
-export async function replyToUser(replyToken: string, text: string, botIndex: BotIndex = 1) {
+export async function replyToUser(
+  replyToken: string,
+  messageOrText: string | Record<string, unknown> | Array<Record<string, unknown>>,
+  botIndex: BotIndex = 1
+) {
   try {
     const client = getLineClient(botIndex);
+    const messages: any = typeof messageOrText === 'string'
+      ? [{ type: 'text', text: messageOrText }]
+      : Array.isArray(messageOrText)
+        ? messageOrText
+        : [messageOrText];
     await client.replyMessage({
       replyToken,
-      messages: [{ type: 'text', text }]
+      messages
     });
     return { success: true };
   } catch (error) {

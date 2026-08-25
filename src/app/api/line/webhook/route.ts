@@ -408,7 +408,7 @@ export async function POST(req: NextRequest) {
         // Bot-scoped wrappers: replies / media fetches / conversational pushes must
         // go through the SAME bot that received the event. These shadow the imports
         // so every existing call site is automatically routed to the right bot.
-        const replyToUser = (replyToken: string, text: string) => _replyToUser(replyToken, text, botIndex)
+        const replyToUser = (replyToken: string, textOrMsg: string | Record<string, unknown> | Array<Record<string, unknown>>) => _replyToUser(replyToken, textOrMsg, botIndex)
         const getMessageContent = (messageId: string) => _getMessageContent(messageId, botIndex)
         const pushToUser = (to: string, text: string) => _pushToUser(to, text, botIndex)
 
@@ -442,6 +442,116 @@ export async function POST(req: NextRequest) {
             const branchId = boundAdmin?.Branch_ID || undefined
 
             // ─────────────────────────────────────────────────────────────
+            // POSTBACK EVENT (Button Clicks / Quick Replies)
+            // ─────────────────────────────────────────────────────────────
+            if (event.type === 'postback') {
+                const postbackData = event.postback?.data || ''
+                const params = new URLSearchParams(postbackData)
+                const action = params.get('action')
+                const mode = params.get('mode') as 'backlog' | 'today' | null
+
+                const isAdminUser = !!boundAdmin && [1, 2].includes(Number(boundAdmin.Role_ID))
+                const isSuper = !!boundAdmin && Number(boundAdmin.Role_ID) === 1
+                const adminBranch = boundAdmin?.Branch_ID
+                const scopeLabel = isSuper ? 'ทุกสาขา' : `สาขา ${adminBranch}`
+                const CLOSED = ['Completed', 'Complete', 'Delivered', 'Verified', 'Billed', 'Paid', 'Cancelled', 'Draft', 'Rejected']
+                const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+
+                const scopedOpen = (m: 'backlog' | 'today') => {
+                    let q = supabase
+                        .from('Jobs_Main')
+                        .select('Job_ID, Customer_Name, Driver_Name, Job_Status, Plan_Date')
+                        .not('Job_Status', 'in', `(${CLOSED.join(',')})`)
+                    if (m === 'backlog') q = q.lt('Plan_Date', today)
+                    else q = q.eq('Plan_Date', today)
+                    if (!isSuper && adminBranch) q = q.eq('Branch_ID', adminBranch)
+                    return q.order('Plan_Date', { ascending: true }).limit(100)
+                }
+
+                const botCloseJob = async (jobId: string): Promise<boolean> => {
+                    const { data: cur } = await supabase.from('Jobs_Main').select('Notes').eq('Job_ID', jobId).single()
+                    const stamp = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
+                    const note = `[ปิดโดยแอดมิน ${boundAdmin?.Name || boundAdmin?.Username} ผ่าน LINE ${stamp} — ไม่มี POD]`
+                    const { error } = await supabase
+                        .from('Jobs_Main')
+                        .update({ Job_Status: 'Completed', Notes: cur?.Notes ? `${cur.Notes}\n${note}` : note })
+                        .eq('Job_ID', jobId)
+                    return !error
+                }
+
+                if (action === 'REQUEST_CONFIRM' && mode) {
+                    if (!isAdminUser) {
+                        await replyToUser(replyToken, '❌ คำสั่งนี้สำหรับแอดมินเท่านั้น')
+                        continue
+                    }
+                    const label = mode === 'backlog' ? 'งานค้างส่ง (ย้อนหลัง)' : 'งานวันนี้'
+                    const confirmWord = mode === 'backlog' ? 'ยืนยันปิดทั้งหมด' : 'ยืนยันปิดงานวันนี้'
+                    let cq = supabase.from('Jobs_Main').select('*', { count: 'exact', head: true })
+                        .not('Job_Status', 'in', `(${CLOSED.join(',')})`)
+                    cq = mode === 'backlog' ? cq.lt('Plan_Date', today) : cq.eq('Plan_Date', today)
+                    if (!isSuper && adminBranch) cq = cq.eq('Branch_ID', adminBranch)
+                    const { count } = await cq
+                    if (!count || count === 0) {
+                        await replyToUser(replyToken, `✅ ไม่มี${label}ให้ปิด (${scopeLabel})`)
+                        continue
+                    }
+                    await replyToUser(replyToken, {
+                        type: 'text',
+                        text: `⚠️ จะปิด${label}ทั้งหมด ${count} งาน (${scopeLabel}) แบบไม่มี POD\n\n👇 กรุณากดยืนยันที่ปุ่มด้านล่าง หรือพิมพ์ "${confirmWord}"`,
+                        quickReply: {
+                            items: [
+                                {
+                                    type: 'action',
+                                    action: {
+                                        type: 'postback',
+                                        label: `✅ ${confirmWord}`,
+                                        data: `action=CLOSE_ALL&mode=${mode}`,
+                                        displayText: confirmWord
+                                    }
+                                },
+                                {
+                                    type: 'action',
+                                    action: {
+                                        type: 'postback',
+                                        label: '❌ ยกเลิก',
+                                        data: 'action=CANCEL_CLOSE',
+                                        displayText: 'ยกเลิก'
+                                    }
+                                }
+                            ]
+                        }
+                    })
+                    continue
+                }
+
+                if (action === 'CLOSE_ALL' && mode) {
+                    if (!isAdminUser) {
+                        await replyToUser(replyToken, '❌ คำสั่งนี้สำหรับแอดมินเท่านั้น')
+                        continue
+                    }
+                    const label = mode === 'backlog' ? 'งานค้างส่ง (ย้อนหลัง)' : 'งานวันนี้'
+                    const { data: rows } = await scopedOpen(mode)
+                    if (!rows || rows.length === 0) {
+                        await replyToUser(replyToken, `✅ ไม่มี${label}ให้ปิด (${scopeLabel})`)
+                        continue
+                    }
+                    let ok = 0, fail = 0
+                    for (const j of rows) {
+                        if (await botCloseJob(j.Job_ID)) ok++; else fail++
+                    }
+                    await replyToUser(replyToken,
+                        `✅ ปิด${label}แล้ว ${ok} งาน${fail ? ` (ล้มเหลว ${fail})` : ''} (${scopeLabel})\n` +
+                        `หมายเหตุ: ปิดแบบไม่มี POD — บันทึกไว้ในหมายเหตุงานแล้ว`)
+                    continue
+                }
+
+                if (action === 'CANCEL_CLOSE') {
+                    await replyToUser(replyToken, '❌ ยกเลิกการปิดงานเรียบร้อยแล้วครับ')
+                    continue
+                }
+            }
+
+            // ─────────────────────────────────────────────────────────────
             // TEXT MESSAGE
             // ─────────────────────────────────────────────────────────────
             if (event.type === 'message' && event.message?.type === 'text') {
@@ -455,7 +565,11 @@ export async function POST(req: NextRequest) {
                 //    "ปิดงาน <id>" → force-close one job (no POD, tagged in Notes)
                 //    "ปิดงานทั้งหมด" → confirm, then "ยืนยันปิดทั้งหมด" closes the backlog
                 {
-                    const JOB_CMD = ['งานค้างส่ง', 'งานค้าง', 'งานไม่จบ', 'ปิดงานทั้งหมด', 'ยืนยันปิดทั้งหมด', 'ปิดงานวันนี้ทั้งหมด', 'ยืนยันปิดงานวันนี้']
+                    const JOB_CMD = [
+                        'งานค้างส่ง', 'งานค้าง', 'งานไม่จบ',
+                        'ปิดงานทั้งหมด', 'ยืนยันปิดทั้งหมด', 'ยืนยันปิดงานทั้งหมด',
+                        'ปิดงานวันนี้ทั้งหมด', 'ปิดงานวันนี้', 'ยืนยันปิดงานวันนี้', 'ยืนยันปิดงานวันนี้ทั้งหมด', 'ยืนยันปิดวันนี้'
+                    ]
                     const isJobCmd = JOB_CMD.includes(rawText) || /^ปิดงาน\s+\S+/i.test(rawText)
                     if (isJobCmd) {
                         const isAdminUser = !!boundAdmin && [1, 2].includes(Number(boundAdmin.Role_ID))
@@ -510,9 +624,24 @@ export async function POST(req: NextRequest) {
                                 continue
                             }
                             const more = rows.length >= 100 ? '\n… (แสดง 100 รายการแรก)' : ''
-                            await replyToUser(replyToken,
-                                `📋 งานค้างส่ง (ย้อนหลัง) ${rows.length} งาน (${scopeLabel})\n\n${fmtList(rows)}${more}\n\n` +
-                                `▶️ ปิดทีละงาน: พิมพ์  ปิดงาน [เลขงาน]\n▶️ ปิดทั้งหมด: พิมพ์  ปิดงานทั้งหมด`)
+                            await replyToUser(replyToken, {
+                                type: 'text',
+                                text: `📋 งานค้างส่ง (ย้อนหลัง) ${rows.length} งาน (${scopeLabel})\n\n${fmtList(rows)}${more}\n\n` +
+                                    `▶️ ปิดทีละงาน: พิมพ์  ปิดงาน [เลขงาน]\n▶️ ปิดทั้งหมด: กดปุ่มด้านล่าง หรือพิมพ์ ปิดงานทั้งหมด`,
+                                quickReply: {
+                                    items: [
+                                        {
+                                            type: 'action',
+                                            action: {
+                                                type: 'postback',
+                                                label: '⚡ ปิดงานทั้งหมด',
+                                                data: 'action=REQUEST_CONFIRM&mode=backlog',
+                                                displayText: 'ปิดงานทั้งหมด'
+                                            }
+                                        }
+                                    ]
+                                }
+                            })
                             continue
                         }
 
@@ -524,9 +653,24 @@ export async function POST(req: NextRequest) {
                                 continue
                             }
                             const more = rows.length >= 100 ? '\n… (แสดง 100 รายการแรก)' : ''
-                            await replyToUser(replyToken,
-                                `📋 งานไม่จบวันนี้ ${rows.length} งาน (${scopeLabel})\n\n${fmtList(rows)}${more}\n\n` +
-                                `▶️ ปิดทีละงาน: พิมพ์  ปิดงาน [เลขงาน]\n▶️ ปิดวันนี้ทั้งหมด: พิมพ์  ปิดงานวันนี้ทั้งหมด`)
+                            await replyToUser(replyToken, {
+                                type: 'text',
+                                text: `📋 งานไม่จบวันนี้ ${rows.length} งาน (${scopeLabel})\n\n${fmtList(rows)}${more}\n\n` +
+                                    `▶️ ปิดทีละงาน: พิมพ์  ปิดงาน [เลขงาน]\n▶️ ปิดวันนี้ทั้งหมด: กดปุ่มด้านล่าง หรือพิมพ์ ปิดงานวันนี้ทั้งหมด`,
+                                quickReply: {
+                                    items: [
+                                        {
+                                            type: 'action',
+                                            action: {
+                                                type: 'postback',
+                                                label: '⚡ ปิดงานวันนี้ทั้งหมด',
+                                                data: 'action=REQUEST_CONFIRM&mode=today',
+                                                displayText: 'ปิดงานวันนี้ทั้งหมด'
+                                            }
+                                        }
+                                    ]
+                                }
+                            })
                             continue
                         }
 
@@ -542,9 +686,32 @@ export async function POST(req: NextRequest) {
                                 await replyToUser(replyToken, `✅ ไม่มี${label}ให้ปิด (${scopeLabel})`)
                                 return
                             }
-                            await replyToUser(replyToken,
-                                `⚠️ จะปิด${label}ทั้งหมด ${count} งาน (${scopeLabel}) แบบไม่มี POD\n` +
-                                `ยืนยันโดยพิมพ์:  ${confirmWord}`)
+                            await replyToUser(replyToken, {
+                                type: 'text',
+                                text: `⚠️ จะปิด${label}ทั้งหมด ${count} งาน (${scopeLabel}) แบบไม่มี POD\n\n👇 กรุณากดยืนยันที่ปุ่มด้านล่าง หรือพิมพ์ "${confirmWord}"`,
+                                quickReply: {
+                                    items: [
+                                        {
+                                            type: 'action',
+                                            action: {
+                                                type: 'postback',
+                                                label: `✅ ${confirmWord}`,
+                                                data: `action=CLOSE_ALL&mode=${mode}`,
+                                                displayText: confirmWord
+                                            }
+                                        },
+                                        {
+                                            type: 'action',
+                                            action: {
+                                                type: 'postback',
+                                                label: '❌ ยกเลิก',
+                                                data: 'action=CANCEL_CLOSE',
+                                                displayText: 'ยกเลิก'
+                                            }
+                                        }
+                                    ]
+                                }
+                            })
                         }
                         const doCloseAll = async (mode: 'backlog' | 'today', label: string) => {
                             const { data: rows } = await scopedOpen(mode)
@@ -565,15 +732,15 @@ export async function POST(req: NextRequest) {
                         if (rawText === 'ปิดงานทั้งหมด') {
                             await askConfirm('backlog', 'งานค้างส่ง (ย้อนหลัง)', 'ยืนยันปิดทั้งหมด'); continue
                         }
-                        if (rawText === 'ยืนยันปิดทั้งหมด') {
+                        if (rawText === 'ยืนยันปิดทั้งหมด' || rawText === 'ยืนยันปิดงานทั้งหมด') {
                             await doCloseAll('backlog', 'งานค้างส่ง (ย้อนหลัง)'); continue
                         }
 
                         // CLOSE ALL — today only (matches "งานไม่จบ")
-                        if (rawText === 'ปิดงานวันนี้ทั้งหมด') {
+                        if (rawText === 'ปิดงานวันนี้ทั้งหมด' || rawText === 'ปิดงานวันนี้') {
                             await askConfirm('today', 'งานวันนี้', 'ยืนยันปิดงานวันนี้'); continue
                         }
-                        if (rawText === 'ยืนยันปิดงานวันนี้') {
+                        if (rawText === 'ยืนยันปิดงานวันนี้' || rawText === 'ยืนยันปิดงานวันนี้ทั้งหมด' || rawText === 'ยืนยันปิดวันนี้') {
                             await doCloseAll('today', 'งานวันนี้'); continue
                         }
 
