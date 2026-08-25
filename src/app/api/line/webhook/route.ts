@@ -455,7 +455,7 @@ export async function POST(req: NextRequest) {
                 //    "ปิดงาน <id>" → force-close one job (no POD, tagged in Notes)
                 //    "ปิดงานทั้งหมด" → confirm, then "ยืนยันปิดทั้งหมด" closes the backlog
                 {
-                    const JOB_CMD = ['งานค้างส่ง', 'งานค้าง', 'งานไม่จบ', 'ปิดงานทั้งหมด', 'ยืนยันปิดทั้งหมด']
+                    const JOB_CMD = ['งานค้างส่ง', 'งานค้าง', 'งานไม่จบ', 'ปิดงานทั้งหมด', 'ยืนยันปิดทั้งหมด', 'ปิดงานวันนี้ทั้งหมด', 'ยืนยันปิดงานวันนี้']
                     const isJobCmd = JOB_CMD.includes(rawText) || /^ปิดงาน\s+\S+/i.test(rawText)
                     if (isJobCmd) {
                         const isAdminUser = !!boundAdmin && [1, 2].includes(Number(boundAdmin.Role_ID))
@@ -509,9 +509,9 @@ export async function POST(req: NextRequest) {
                                 await replyToUser(replyToken, `✅ ไม่มีงานค้างส่ง (${scopeLabel})`)
                                 continue
                             }
-                            const more = rows.length >= 50 ? '\n… (แสดง 50 รายการแรก)' : ''
+                            const more = rows.length >= 100 ? '\n… (แสดง 100 รายการแรก)' : ''
                             await replyToUser(replyToken,
-                                `📋 งานค้างส่ง ${rows.length} งาน (${scopeLabel})\n\n${fmtList(rows)}${more}\n\n` +
+                                `📋 งานค้างส่ง (ย้อนหลัง) ${rows.length} งาน (${scopeLabel})\n\n${fmtList(rows)}${more}\n\n` +
                                 `▶️ ปิดทีละงาน: พิมพ์  ปิดงาน [เลขงาน]\n▶️ ปิดทั้งหมด: พิมพ์  ปิดงานทั้งหมด`)
                             continue
                         }
@@ -523,45 +523,58 @@ export async function POST(req: NextRequest) {
                                 await replyToUser(replyToken, `✅ ไม่มีงานค้างของวันนี้ (${scopeLabel})`)
                                 continue
                             }
-                            const more = rows.length >= 50 ? '\n… (แสดง 50 รายการแรก)' : ''
+                            const more = rows.length >= 100 ? '\n… (แสดง 100 รายการแรก)' : ''
                             await replyToUser(replyToken,
                                 `📋 งานไม่จบวันนี้ ${rows.length} งาน (${scopeLabel})\n\n${fmtList(rows)}${more}\n\n` +
-                                `▶️ ปิดทีละงาน: พิมพ์  ปิดงาน [เลขงาน]`)
+                                `▶️ ปิดทีละงาน: พิมพ์  ปิดงาน [เลขงาน]\n▶️ ปิดวันนี้ทั้งหมด: พิมพ์  ปิดงานวันนี้ทั้งหมด`)
                             continue
                         }
 
-                        // CLOSE ALL (backlog + today) — ask to confirm first. Includes
-                        // today so tomorrow's jobs aren't blocked by leftover open jobs.
-                        if (rawText === 'ปิดงานทั้งหมด') {
+                        // Shared confirm/execute for a mass close, kept separate for
+                        // backlog vs today so the action always matches the list viewed.
+                        const askConfirm = async (mode: 'backlog' | 'today', label: string, confirmWord: string) => {
                             let cq = supabase.from('Jobs_Main').select('*', { count: 'exact', head: true })
-                                .not('Job_Status', 'in', `(${CLOSED.join(',')})`).lte('Plan_Date', today)
+                                .not('Job_Status', 'in', `(${CLOSED.join(',')})`)
+                            cq = mode === 'backlog' ? cq.lt('Plan_Date', today) : cq.eq('Plan_Date', today)
                             if (!isSuper && adminBranch) cq = cq.eq('Branch_ID', adminBranch)
                             const { count } = await cq
                             if (!count || count === 0) {
-                                await replyToUser(replyToken, `✅ ไม่มีงานค้างให้ปิด (${scopeLabel})`)
-                                continue
+                                await replyToUser(replyToken, `✅ ไม่มี${label}ให้ปิด (${scopeLabel})`)
+                                return
                             }
                             await replyToUser(replyToken,
-                                `⚠️ จะปิดงานค้าง (ย้อนหลัง+วันนี้) ทั้งหมด ${count} งาน (${scopeLabel}) แบบไม่มี POD\n` +
-                                `ยืนยันโดยพิมพ์:  ยืนยันปิดทั้งหมด`)
-                            continue
+                                `⚠️ จะปิด${label}ทั้งหมด ${count} งาน (${scopeLabel}) แบบไม่มี POD\n` +
+                                `ยืนยันโดยพิมพ์:  ${confirmWord}`)
                         }
-
-                        // CONFIRM CLOSE ALL (backlog + today)
-                        if (rawText === 'ยืนยันปิดทั้งหมด') {
-                            const { data: rows } = await scopedOpen('all')
+                        const doCloseAll = async (mode: 'backlog' | 'today', label: string) => {
+                            const { data: rows } = await scopedOpen(mode)
                             if (!rows || rows.length === 0) {
-                                await replyToUser(replyToken, `✅ ไม่มีงานค้างให้ปิด (${scopeLabel})`)
-                                continue
+                                await replyToUser(replyToken, `✅ ไม่มี${label}ให้ปิด (${scopeLabel})`)
+                                return
                             }
                             let ok = 0, fail = 0
                             for (const j of rows) {
                                 if (await botCloseJob(j.Job_ID)) ok++; else fail++
                             }
                             await replyToUser(replyToken,
-                                `✅ ปิดงานแล้ว ${ok} งาน${fail ? ` (ล้มเหลว ${fail})` : ''} (${scopeLabel})\n` +
+                                `✅ ปิด${label}แล้ว ${ok} งาน${fail ? ` (ล้มเหลว ${fail})` : ''} (${scopeLabel})\n` +
                                 `หมายเหตุ: ปิดแบบไม่มี POD — บันทึกไว้ในหมายเหตุงานแล้ว`)
-                            continue
+                        }
+
+                        // CLOSE ALL — backlog only (matches "งานค้างส่ง")
+                        if (rawText === 'ปิดงานทั้งหมด') {
+                            await askConfirm('backlog', 'งานค้างส่ง (ย้อนหลัง)', 'ยืนยันปิดทั้งหมด'); continue
+                        }
+                        if (rawText === 'ยืนยันปิดทั้งหมด') {
+                            await doCloseAll('backlog', 'งานค้างส่ง (ย้อนหลัง)'); continue
+                        }
+
+                        // CLOSE ALL — today only (matches "งานไม่จบ")
+                        if (rawText === 'ปิดงานวันนี้ทั้งหมด') {
+                            await askConfirm('today', 'งานวันนี้', 'ยืนยันปิดงานวันนี้'); continue
+                        }
+                        if (rawText === 'ยืนยันปิดงานวันนี้') {
+                            await doCloseAll('today', 'งานวันนี้'); continue
                         }
 
                         // CLOSE ONE: "ปิดงาน <id>"
@@ -694,7 +707,8 @@ export async function POST(req: NextRequest) {
                         '  - งานค้างส่ง — งานค้างย้อนหลัง',
                         '  - งานไม่จบ — งานวันนี้ที่ยังไม่เสร็จ',
                         '  - ปิดงาน [เลขงาน] — ปิดทีละงาน',
-                        '  - ปิดงานทั้งหมด — ปิดงานค้าง ย้อนหลัง+วันนี้ (มีขั้นยืนยัน)',
+                        '  - ปิดงานทั้งหมด — ปิดงานค้างส่ง ย้อนหลัง (ยืนยัน)',
+                        '  - ปิดงานวันนี้ทั้งหมด — ปิดงานวันนี้ (ยืนยัน)',
                         '',
                         '🤖 AI (ผูกบัญชีแล้ว)',
                         '  ถามได้อิสระ เช่น "มีใครลามั่ง", "กำไรดีไหม"',
