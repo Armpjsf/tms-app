@@ -490,6 +490,24 @@ export function JobDialog({
     const populateFromJob = (targetJob: Job) => {
       const masterRoute = routes.find(r => r.Route_Name === targetJob.Route_Name)
 
+      // Name → coordinate map from the location master (Master_Routes mirrors
+      // Master_Locations). Lets the edit form auto-fill a stop's Lat/Lng from
+      // the master when the job's JSON left them blank — the Customers-only
+      // fallback below misses locations that live in the location master.
+      const locCoordByName = new Map<string, { lat: string; lng: string }>()
+      const addLoc = (name: unknown, lat: unknown, lng: unknown) => {
+        const key = String(name ?? '').trim().toLowerCase()
+        if (!key) return
+        if (lat != null && lng != null && String(lat) !== '' && String(lng) !== '' && !locCoordByName.has(key)) {
+          locCoordByName.set(key, { lat: String(lat), lng: String(lng) })
+        }
+      }
+      for (const r of routes) {
+        addLoc(r.Origin, r.Origin_Lat, r.Origin_Lon)
+        addLoc(r.Destination, r.Dest_Lat, r.Dest_Lon)
+      }
+      const coordFromMaster = (name: unknown) => locCoordByName.get(String(name ?? '').trim().toLowerCase())
+
       // A. Sync Origins
       const rawOrigins = (targetJob.origins || targetJob.original_origins_json)
       let parsedOrigins = parseJson(rawOrigins, []) as LocationPoint[]
@@ -509,11 +527,15 @@ export function JobDialog({
             parsedOrigins = [{ name: '', lat: '', lng: '' }]
         }
       }
-      setOrigins(parsedOrigins.map(o => ({
-        name: o.name || '',
-        lat: o.lat !== null && o.lat !== undefined ? String(o.lat) : '',
-        lng: o.lng !== null && o.lng !== undefined ? String(o.lng) : ''
-      })))
+      setOrigins(parsedOrigins.map(o => {
+        let lat = o.lat !== null && o.lat !== undefined ? String(o.lat) : ''
+        let lng = o.lng !== null && o.lng !== undefined ? String(o.lng) : ''
+        if ((!lat || !lng) && o.name) {
+          const hit = coordFromMaster(o.name)
+          if (hit) { lat = hit.lat; lng = hit.lng }
+        }
+        return { name: o.name || '', lat, lng }
+      }))
 
       // B. Sync Destinations
       const rawDestinations = (targetJob.destinations || targetJob.original_destinations_json)
@@ -549,13 +571,21 @@ export function JobDialog({
         let lat = d.lat !== null && d.lat !== undefined ? String(d.lat) : ''
         let lng = d.lng !== null && d.lng !== undefined ? String(d.lng) : ''
         if ((!lat || !lng) && d.name) {
-          const matchedCust = customers.find(c => 
-            c.Customer_Name?.trim().toLowerCase() === d.name?.trim().toLowerCase()
-          )
-          const custRecord = matchedCust as any
-          if (custRecord?.Lat && custRecord?.Lng) {
-            lat = String(custRecord.Lat)
-            lng = String(custRecord.Lng)
+          // Prefer the location master (covers non-customer stops like DCs),
+          // then fall back to the Customers master.
+          const fromMaster = coordFromMaster(d.name)
+          if (fromMaster) {
+            lat = fromMaster.lat
+            lng = fromMaster.lng
+          } else {
+            const matchedCust = customers.find(c =>
+              c.Customer_Name?.trim().toLowerCase() === d.name?.trim().toLowerCase()
+            )
+            const custRecord = matchedCust as any
+            if (custRecord?.Lat && custRecord?.Lng) {
+              lat = String(custRecord.Lat)
+              lng = String(custRecord.Lng)
+            }
           }
         }
         return {
