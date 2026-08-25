@@ -448,6 +448,154 @@ export async function POST(req: NextRequest) {
                 const rawText = (event.message.text || '').trim()
                 const text = rawText.toUpperCase()
 
+                // ── ADMIN: close/list jobs from LINE (holiday助け for elderly
+                //    drivers who can't operate the app). Free reply, no push.
+                //    "งานค้างส่ง"  → backlog: past-date unclosed jobs
+                //    "งานไม่จบ"    → today's unclosed jobs
+                //    "ปิดงาน <id>" → force-close one job (no POD, tagged in Notes)
+                //    "ปิดงานทั้งหมด" → confirm, then "ยืนยันปิดทั้งหมด" closes the backlog
+                {
+                    const JOB_CMD = ['งานค้างส่ง', 'งานค้าง', 'งานไม่จบ', 'ปิดงานทั้งหมด', 'ยืนยันปิดทั้งหมด']
+                    const isJobCmd = JOB_CMD.includes(rawText) || /^ปิดงาน\s+\S+/i.test(rawText)
+                    if (isJobCmd) {
+                        const isAdminUser = !!boundAdmin && [1, 2].includes(Number(boundAdmin.Role_ID))
+                        const isSuper = !!boundAdmin && Number(boundAdmin.Role_ID) === 1
+                        if (!isAdminUser) {
+                            await replyToUser(replyToken, '❌ คำสั่งนี้สำหรับแอดมินเท่านั้น')
+                            continue
+                        }
+
+                        const CLOSED = ['Completed', 'Complete', 'Delivered', 'Verified', 'Billed', 'Paid', 'Cancelled', 'Draft', 'Rejected']
+                        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+                        const adminBranch = boundAdmin?.Branch_ID
+                        const scopeLabel = isSuper ? 'ทุกสาขา' : `สาขา ${adminBranch}`
+
+                        // backlog = ย้อนหลัง (< วันนี้) · today = วันนี้ · all = ย้อนหลัง+วันนี้ (<= วันนี้)
+                        const scopedOpen = (mode: 'backlog' | 'today' | 'all') => {
+                            let q = supabase
+                                .from('Jobs_Main')
+                                .select('Job_ID, Customer_Name, Driver_Name, Job_Status, Plan_Date')
+                                .not('Job_Status', 'in', `(${CLOSED.join(',')})`)
+                            if (mode === 'backlog') q = q.lt('Plan_Date', today)
+                            else if (mode === 'today') q = q.eq('Plan_Date', today)
+                            else q = q.lte('Plan_Date', today)
+                            if (!isSuper && adminBranch) q = q.eq('Branch_ID', adminBranch)
+                            return q.order('Plan_Date', { ascending: true }).limit(100)
+                        }
+
+                        const fmtList = (rows: Array<{ Job_ID: string; Customer_Name?: string | null; Driver_Name?: string | null; Job_Status?: string | null; Plan_Date?: string | null }>) =>
+                            rows.map((j, i) =>
+                                `${i + 1}. #${String(j.Job_ID).slice(-6).toUpperCase()} • ${j.Customer_Name || '-'} • ${j.Driver_Name || 'ไม่มีคนขับ'} • ${j.Job_Status} (${j.Plan_Date || '-'})`
+                            ).join('\n')
+
+                        // Force-close one job: direct update (bypasses POD guard), tag in
+                        // Notes for audit, and DO NOT push a late "delivered" LINE to the
+                        // customer (avoids confusing back-dated notifications + quota burn).
+                        const botCloseJob = async (jobId: string): Promise<boolean> => {
+                            const { data: cur } = await supabase.from('Jobs_Main').select('Notes').eq('Job_ID', jobId).single()
+                            const stamp = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
+                            const note = `[ปิดโดยแอดมิน ${boundAdmin?.Name || boundAdmin?.Username} ผ่าน LINE ${stamp} — ไม่มี POD]`
+                            const { error } = await supabase
+                                .from('Jobs_Main')
+                                .update({ Job_Status: 'Completed', Notes: cur?.Notes ? `${cur.Notes}\n${note}` : note })
+                                .eq('Job_ID', jobId)
+                            return !error
+                        }
+
+                        // LIST: backlog
+                        if (rawText === 'งานค้างส่ง' || rawText === 'งานค้าง') {
+                            const { data: rows } = await scopedOpen('backlog')
+                            if (!rows || rows.length === 0) {
+                                await replyToUser(replyToken, `✅ ไม่มีงานค้างส่ง (${scopeLabel})`)
+                                continue
+                            }
+                            const more = rows.length >= 50 ? '\n… (แสดง 50 รายการแรก)' : ''
+                            await replyToUser(replyToken,
+                                `📋 งานค้างส่ง ${rows.length} งาน (${scopeLabel})\n\n${fmtList(rows)}${more}\n\n` +
+                                `▶️ ปิดทีละงาน: พิมพ์  ปิดงาน [เลขงาน]\n▶️ ปิดทั้งหมด: พิมพ์  ปิดงานทั้งหมด`)
+                            continue
+                        }
+
+                        // LIST: today's unfinished
+                        if (rawText === 'งานไม่จบ') {
+                            const { data: rows } = await scopedOpen('today')
+                            if (!rows || rows.length === 0) {
+                                await replyToUser(replyToken, `✅ ไม่มีงานค้างของวันนี้ (${scopeLabel})`)
+                                continue
+                            }
+                            const more = rows.length >= 50 ? '\n… (แสดง 50 รายการแรก)' : ''
+                            await replyToUser(replyToken,
+                                `📋 งานไม่จบวันนี้ ${rows.length} งาน (${scopeLabel})\n\n${fmtList(rows)}${more}\n\n` +
+                                `▶️ ปิดทีละงาน: พิมพ์  ปิดงาน [เลขงาน]`)
+                            continue
+                        }
+
+                        // CLOSE ALL (backlog + today) — ask to confirm first. Includes
+                        // today so tomorrow's jobs aren't blocked by leftover open jobs.
+                        if (rawText === 'ปิดงานทั้งหมด') {
+                            let cq = supabase.from('Jobs_Main').select('*', { count: 'exact', head: true })
+                                .not('Job_Status', 'in', `(${CLOSED.join(',')})`).lte('Plan_Date', today)
+                            if (!isSuper && adminBranch) cq = cq.eq('Branch_ID', adminBranch)
+                            const { count } = await cq
+                            if (!count || count === 0) {
+                                await replyToUser(replyToken, `✅ ไม่มีงานค้างให้ปิด (${scopeLabel})`)
+                                continue
+                            }
+                            await replyToUser(replyToken,
+                                `⚠️ จะปิดงานค้าง (ย้อนหลัง+วันนี้) ทั้งหมด ${count} งาน (${scopeLabel}) แบบไม่มี POD\n` +
+                                `ยืนยันโดยพิมพ์:  ยืนยันปิดทั้งหมด`)
+                            continue
+                        }
+
+                        // CONFIRM CLOSE ALL (backlog + today)
+                        if (rawText === 'ยืนยันปิดทั้งหมด') {
+                            const { data: rows } = await scopedOpen('all')
+                            if (!rows || rows.length === 0) {
+                                await replyToUser(replyToken, `✅ ไม่มีงานค้างให้ปิด (${scopeLabel})`)
+                                continue
+                            }
+                            let ok = 0, fail = 0
+                            for (const j of rows) {
+                                if (await botCloseJob(j.Job_ID)) ok++; else fail++
+                            }
+                            await replyToUser(replyToken,
+                                `✅ ปิดงานแล้ว ${ok} งาน${fail ? ` (ล้มเหลว ${fail})` : ''} (${scopeLabel})\n` +
+                                `หมายเหตุ: ปิดแบบไม่มี POD — บันทึกไว้ในหมายเหตุงานแล้ว`)
+                            continue
+                        }
+
+                        // CLOSE ONE: "ปิดงาน <id>"
+                        const m = rawText.match(/^ปิดงาน\s+(\S+)/i)
+                        if (m) {
+                            const key = m[1].trim().toUpperCase().replace(/^#/, '')
+                            let q = supabase
+                                .from('Jobs_Main')
+                                .select('Job_ID, Customer_Name, Job_Status, Plan_Date')
+                                .not('Job_Status', 'in', `(${CLOSED.join(',')})`)
+                                .ilike('Job_ID', `%${key}%`)
+                                .limit(5)
+                            if (!isSuper && adminBranch) q = q.eq('Branch_ID', adminBranch)
+                            const { data: matches } = await q
+                            if (!matches || matches.length === 0) {
+                                await replyToUser(replyToken, `❌ ไม่พบงานค้างที่ตรงกับ "${key}" (${scopeLabel})\nพิมพ์  งานค้างส่ง  เพื่อดูรายการ`)
+                                continue
+                            }
+                            if (matches.length > 1) {
+                                await replyToUser(replyToken,
+                                    `พบหลายงานที่ตรงกับ "${key}" — ระบุให้ชัดขึ้น:\n` +
+                                    matches.map(j => `• #${String(j.Job_ID).slice(-6).toUpperCase()} • ${j.Customer_Name || '-'}`).join('\n'))
+                                continue
+                            }
+                            const target = matches[0]
+                            const done = await botCloseJob(target.Job_ID)
+                            await replyToUser(replyToken, done
+                                ? `✅ ปิดงาน #${String(target.Job_ID).slice(-6).toUpperCase()} (${target.Customer_Name || '-'}) แล้ว — ไม่มี POD (บันทึกในหมายเหตุ)`
+                                : `❌ ปิดงาน #${String(target.Job_ID).slice(-6).toUpperCase()} ไม่สำเร็จ ลองใหม่อีกครั้ง`)
+                            continue
+                        }
+                    }
+                }
+
                 // --- IP APPROVAL COMMAND FROM LINE ---
                 if (text.startsWith('อนุมัติ IP ') || text.startsWith('บล็อก IP ') || text.startsWith('APPROVE IP ') || text.startsWith('BLOCK IP ')) {
                     const isSuperAdmin = boundAdmin && (
@@ -541,6 +689,12 @@ export async function POST(req: NextRequest) {
                         '  - ค่าน้ำมัน',
                         '  - คนขับลา',
                         '  - JOB-[เลขงาน] — เช็คสถานะงาน',
+                        '',
+                        '🛠️ ปิดงานแทน (Admin — วันหยุด/ช่วยคนขับ)',
+                        '  - งานค้างส่ง — งานค้างย้อนหลัง',
+                        '  - งานไม่จบ — งานวันนี้ที่ยังไม่เสร็จ',
+                        '  - ปิดงาน [เลขงาน] — ปิดทีละงาน',
+                        '  - ปิดงานทั้งหมด — ปิดงานค้าง ย้อนหลัง+วันนี้ (มีขั้นยืนยัน)',
                         '',
                         '🤖 AI (ผูกบัญชีแล้ว)',
                         '  ถามได้อิสระ เช่น "มีใครลามั่ง", "กำไรดีไหม"',
