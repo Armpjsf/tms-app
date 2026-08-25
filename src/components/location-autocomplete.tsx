@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { MapPin } from "lucide-react"
+import { MapPin, AlertTriangle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
@@ -56,6 +56,15 @@ export function LocationAutocomplete({
     setQuery(value || "")
   }, [value])
 
+  // Nudge (data-quality ladder step 2–3): the typed name is not an exact match
+  // in the location master, so saving it creates a brand-new (possibly duplicate)
+  // location. We warn but never block — picking an existing entry is just made
+  // the obviously easier path.
+  const trimmed = (query || "").trim()
+  const isNewLocation =
+    trimmed.length > 0 &&
+    !locations.some((loc) => (loc || "").trim().toLowerCase() === trimmed.toLowerCase())
+
   const handleSelect = (location: string) => {
     onChange(location)
     setQuery(location)
@@ -80,6 +89,15 @@ export function LocationAutocomplete({
           className={cn("bg-muted border-border text-foreground font-black placeholder:text-muted-foreground placeholder:font-bold", className)}
         />
       </div>
+
+      {/* Warn when the current text isn't a known location — nudges reuse over
+          creating duplicates (and avoids coord-less stops that drop from ESG). */}
+      {isNewLocation && (
+        <div className="mt-1 flex items-center gap-1.5 text-amber-600 dark:text-amber-500 text-sm font-bold">
+          <AlertTriangle size={14} className="flex-shrink-0" />
+          <span>สถานที่ใหม่ (ยังไม่มีในระบบ) — เลือกจากรายการเพื่อเลี่ยงข้อมูลซ้ำ</span>
+        </div>
+      )}
 
       {open && (
         <div className="absolute z-[9999] w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">

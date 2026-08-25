@@ -536,7 +536,7 @@ export async function getDriverJobs(
     
     let query = supabase
       .from('Jobs_Main')
-      .select('Job_ID, Customer_Name, Job_Status, Pickup_Date:Plan_Date, Delivery_Date, Plan_Date, Origin_Location, Dest_Location, Route_Name, Show_Price_To_Driver, Cost_Driver_Total, Total_Drop, Signature_Url, Photo_Proof_Url')
+      .select('Job_ID, Customer_Name, Job_Status, Pickup_Date:Plan_Date, Delivery_Date, Plan_Date, Created_At, Origin_Location, Dest_Location, Route_Name, Show_Price_To_Driver, Cost_Driver_Total, Total_Drop, Signature_Url, Photo_Proof_Url')
       .eq('Driver_ID', driverId)
 
     // Filter out drafts - driver shouldn't see them yet

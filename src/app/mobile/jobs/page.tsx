@@ -34,9 +34,26 @@ async function JobsContent({ driverId, searchParams }: { driverId: string, searc
           // Keep active jobs regardless of date
           if (j.Job_Status !== 'Completed' && j.Job_Status !== 'Cancelled' && j.Job_Status !== 'Verified' && j.Job_Status !== 'Rejected') return true;
           // Keep completed jobs ONLY if a date filter was explicitly selected, or it's today/future
-          if (dateFrom || dateTo) return true; 
+          if (dateFrom || dateTo) return true;
           return j.Plan_Date && j.Plan_Date >= today
       })
+
+      // One job at a time: hide QUEUED open jobs so the driver only sees the
+      // current (oldest open) job until it's closed (POD submitted). History
+      // (completed/cancelled/verified) still shows. Mirrors the dashboard lock.
+      const CLOSED = ['Completed', 'Complete', 'Delivered', 'Cancelled', 'Verified', 'Rejected', 'Billed', 'Paid']
+      const openJobs = displayJobs.filter(j => !CLOSED.includes(j.Job_Status || ''))
+      if (openJobs.length > 1) {
+          const currentOpen = [...openJobs].sort((a, b) => {
+              const pa = a.Plan_Date || '', pb = b.Plan_Date || ''
+              if (pa !== pb) return pa < pb ? -1 : 1
+              const ca = (a as { Created_At?: string }).Created_At || ''
+              const cb = (b as { Created_At?: string }).Created_At || ''
+              return ca < cb ? -1 : ca > cb ? 1 : 0
+          })[0]
+          const hiddenIds = new Set(openJobs.filter(j => j.Job_ID !== currentOpen.Job_ID).map(j => j.Job_ID))
+          displayJobs = displayJobs.filter(j => !hiddenIds.has(j.Job_ID))
+      }
   }
 
   return (

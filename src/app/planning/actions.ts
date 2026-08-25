@@ -81,6 +81,12 @@ import { calculateJobPrice } from "@/services/pricing-engine"
 export async function createJob(data: JobFormData) {
   const supabase = createAdminClient()
 
+  // Data-quality guard (server-side, defense in depth): delivery date must not
+  // precede pickup date. Dates are 'YYYY-MM-DD' so string compare is chronological.
+  if (data.Plan_Date && data.Delivery_Date && data.Delivery_Date < data.Plan_Date) {
+    return { success: false, message: `วันที่ส่ง (${data.Delivery_Date}) ก่อนวันที่รับ (${data.Plan_Date}) — ตรวจสอบวันรับ/วันส่ง` }
+  }
+
   // Auto-assign Branch_ID if missing
   if (!data.Branch_ID || data.Branch_ID === 'All') {
     const fixedBranchId = await getFixedUserBranchId()
@@ -124,6 +130,26 @@ export async function createJob(data: JobFormData) {
       .single()
     if (!vehicleErr && vehicle) subId = vehicle.Sub_ID || null
     else if (vehicleErr) console.warn('[createJob] Vehicle lookup failed:', vehicleErr.message)
+  }
+
+  // Data-quality guard: cap unclosed jobs per driver. A driver may hold at most
+  // MAX_OPEN_JOBS_PER_DRIVER jobs that aren't closed yet (POD submitted); the app
+  // shows one at a time and queues the next. Beyond that, block the admin so work
+  // doesn't pile up on one driver. Only counts real assigned work (skips drafts).
+  const MAX_OPEN_JOBS_PER_DRIVER = 2
+  const CLOSED_JOB_STATUSES = ['Completed', 'Complete', 'Delivered', 'Verified', 'Billed', 'Paid', 'Cancelled', 'Draft', 'Rejected']
+  if (data.Driver_ID && data.Job_Status !== 'Draft') {
+    const { count: openCount } = await supabase
+      .from('Jobs_Main')
+      .select('*', { count: 'exact', head: true })
+      .eq('Driver_ID', data.Driver_ID)
+      .not('Job_Status', 'in', `(${CLOSED_JOB_STATUSES.join(',')})`)
+    if ((openCount || 0) >= MAX_OPEN_JOBS_PER_DRIVER) {
+      return {
+        success: false,
+        message: `คนขับ ${driverName || data.Driver_ID} มีงานค้างอยู่ ${openCount} งาน (ยังไม่ปิด) — ให้ปิดงานเดิมก่อนจึงจะมอบงานใหม่ได้`,
+      }
+    }
   }
 
   // Get Pricing from Engine
@@ -915,6 +941,35 @@ export async function createBulkJobs(
 
   const newJobs = jobsMainData.filter(j => !existingIds.has(j.Job_ID as string))
   const updateJobs = jobsMainData.filter(j => existingIds.has(j.Job_ID as string))
+
+  // Data-quality guard: cap unclosed jobs per driver (existing open + this batch).
+  // A driver may hold at most MAX_OPEN_JOBS_PER_DRIVER jobs that aren't closed
+  // (POD submitted); the app shows one at a time and queues the next. Beyond that
+  // we block so work doesn't pile up on one driver. Skips drafts.
+  {
+    const MAX_OPEN_JOBS_PER_DRIVER = 2
+    const CLOSED_JOB_STATUSES = ['Completed', 'Complete', 'Delivered', 'Verified', 'Billed', 'Paid', 'Cancelled', 'Draft', 'Rejected']
+    const batchByDriver = new Map<string, number>()
+    for (const j of newJobs) {
+      const did = (j.Driver_ID as string) || ''
+      if (!did || j.Job_Status === 'Draft') continue
+      batchByDriver.set(did, (batchByDriver.get(did) || 0) + 1)
+    }
+    for (const [did, batchCount] of batchByDriver) {
+      const { count: openCount } = await supabase
+        .from('Jobs_Main')
+        .select('*', { count: 'exact', head: true })
+        .eq('Driver_ID', did)
+        .not('Job_Status', 'in', `(${CLOSED_JOB_STATUSES.join(',')})`)
+      if ((openCount || 0) + batchCount > MAX_OPEN_JOBS_PER_DRIVER) {
+        const dName = driverMap.get(did)?.Driver_Name || did
+        return {
+          success: false,
+          message: `คนขับ ${dName} มีงานค้างอยู่ ${openCount} งาน (ยังไม่ปิด) — รับได้สูงสุด ${MAX_OPEN_JOBS_PER_DRIVER} งาน ให้ปิดงานเดิมก่อนจึงจะมอบงานใหม่ได้`,
+        }
+      }
+    }
+  }
 
   // Insert new jobs only (no silent overwrite)
   if (newJobs.length > 0) {

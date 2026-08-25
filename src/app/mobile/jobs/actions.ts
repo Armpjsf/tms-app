@@ -109,6 +109,40 @@ export async function updateJobStatus(
   try {
     const supabase = createAdminClient()
 
+    // 0. One-job-at-a-time guard (driver path only — admins on web are not
+    // affected). Block STARTING/advancing a queued job while an OLDER job of the
+    // same driver is still open (not closed via POD). Keeps the driver working in
+    // order; closing the current job clears the block.
+    const START_WORK_STATUSES = ['Accepted', 'Arrived Pickup', 'Picked Up', 'In Transit', 'In Progress', 'Arrived Dropoff']
+    if (START_WORK_STATUSES.includes(status)) {
+      const CLOSED_JOB_STATUSES = ['Completed', 'Complete', 'Delivered', 'Verified', 'Billed', 'Paid', 'Cancelled', 'Draft', 'Rejected']
+      const { data: thisJob } = await supabase
+        .from('Jobs_Main')
+        .select('Driver_ID, Plan_Date, Created_At')
+        .eq('Job_ID', jobId)
+        .single()
+      const did = driverId || thisJob?.Driver_ID
+      if (did && thisJob) {
+        const { data: openJobs } = await supabase
+          .from('Jobs_Main')
+          .select('Job_ID, Plan_Date, Created_At')
+          .eq('Driver_ID', did)
+          .not('Job_Status', 'in', `(${CLOSED_JOB_STATUSES.join(',')})`)
+        const isOlder = (a: { Plan_Date?: string | null; Created_At?: string | null }) => {
+          const pa = a.Plan_Date || '', pb = thisJob.Plan_Date || ''
+          if (pa !== pb) return pa < pb
+          return (a.Created_At || '') < (thisJob.Created_At || '')
+        }
+        const older = (openJobs || []).find((j: { Job_ID: string; Plan_Date?: string | null; Created_At?: string | null }) => j.Job_ID !== jobId && isOlder(j))
+        if (older) {
+          return {
+            success: false,
+            message: `ยังมีงานก่อนหน้า (#${String(older.Job_ID).slice(-6).toUpperCase()}) ที่ยังไม่ปิด — ปิดงานนั้นให้เสร็จก่อนจึงจะเริ่มงานนี้ได้`,
+          }
+        }
+      }
+    }
+
     // 1. Transition Job Status using Machine
     const transition = await transitionJobStatus(jobId, status as import("@/services/job-status-machine").JobStatus, {
         userId: driverId,

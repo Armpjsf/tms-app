@@ -1066,6 +1066,12 @@ export function JobDialog({
       errors.push(t('jobs.dialog.stop_single_only'))
     }
 
+    // วันที่ส่งต้องไม่ก่อนวันที่รับ (บล็อกตรรกะที่เป็นไปไม่ได้ เช่น รับ 25 ส่ง 24)
+    // เทียบสตริง YYYY-MM-DD ได้ตรงๆ เพราะเรียงตามลำดับเวลาอยู่แล้ว
+    if (formData.Plan_Date && formData.Delivery_Date && formData.Delivery_Date < formData.Plan_Date) {
+      errors.push('วันที่ส่งต้องไม่ก่อนวันที่รับ — ตรวจสอบวันรับ/วันส่ง')
+    }
+
     // Check assignments - Relaxed for bidding system (Optional driver/vehicle)
     return errors
   }
