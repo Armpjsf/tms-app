@@ -133,8 +133,10 @@ export async function createJob(data: JobFormData) {
       Sub_ID: subId
   })
 
-  // Ensure distance is populated server-side (OSRM + Haversine fallback) so it
-  // never depends on the flaky client-side calculation completing before save.
+  // Fill coordinates from the location master, then ensure distance is populated
+  // server-side (OSRM + Haversine fallback) so it never depends on the flaky
+  // client-side calculation completing before save.
+  await hydrateJobCoordinates(data)
   data.Est_Distance_KM = await resolveJobDistance(data)
 
   // Attempt 1
@@ -262,6 +264,98 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
       Created_At: new Date().toISOString(),
       job_type: data.job_type || 'normal',
       chassis_plate: data.chassis_plate || null
+  }
+}
+
+/**
+ * Fill in a job's coordinates from the location master before distance is
+ * resolved (ESG forward-correctness — Phase 1, Fix 1).
+ *
+ * The problem: jobs were saved with a location NAME but null Pickup/Delivery
+ * lat-lon, even though Master_Locations already holds coordinates for that name.
+ * Those coord-less jobs drop out of the ESG carbon calculation. Since the master
+ * is fully geocoded, a name → coordinate lookup at creation/import time recovers
+ * the vast majority of them.
+ *
+ * Mutates `data` in place: fills Pickup_Lat/Lon and Delivery_Lat/Lon when
+ * missing, and back-fills any missing lat/lng inside the multi-drop JSON arrays.
+ * Best-effort and non-throwing — a lookup failure must never block job save.
+ */
+async function hydrateJobCoordinates(data: Partial<JobFormData>): Promise<void> {
+  try {
+    const hasCoord = (lat: unknown, lon: unknown) =>
+      Number(lat) !== 0 && !Number.isNaN(Number(lat)) &&
+      Number(lon) !== 0 && !Number.isNaN(Number(lon))
+
+    // Collect every location name that still needs coordinates.
+    const wanted = new Set<string>()
+    const addName = (n: unknown) => {
+      const name = String(n ?? '').trim()
+      if (name) wanted.add(name)
+    }
+
+    const pickupMissing = !hasCoord(data.Pickup_Lat, data.Pickup_Lon)
+    const deliveryMissing = !hasCoord(data.Delivery_Lat, data.Delivery_Lon)
+    if (pickupMissing) addName(data.Origin_Location)
+    if (deliveryMissing) addName(data.Dest_Location)
+
+    const origins = parseIfString(data.original_origins_json as string)
+    const dests = parseIfString(data.original_destinations_json as string)
+    const collectJsonNames = (arr: unknown) => {
+      if (!Array.isArray(arr)) return
+      for (const p of arr) {
+        const o = p as { name?: unknown; lat?: unknown; lng?: unknown }
+        if (!hasCoord(o?.lat, o?.lng)) addName(o?.name)
+      }
+    }
+    collectJsonNames(origins)
+    collectJsonNames(dests)
+
+    if (wanted.size === 0) return
+
+    // One batch lookup, matched case-insensitively.
+    const supabase = createAdminClient()
+    const { data: locs } = await supabase
+      .from('Master_Locations')
+      .select('Name, Lat, Lon')
+      .in('Name', Array.from(wanted))
+
+    const byName = new Map<string, { lat: number; lon: number }>()
+    for (const l of locs || []) {
+      const key = String(l.Name || '').trim().toLowerCase()
+      if (key && hasCoord(l.Lat, l.Lon)) byName.set(key, { lat: Number(l.Lat), lon: Number(l.Lon) })
+    }
+    if (byName.size === 0) return
+
+    const lookup = (n: unknown) => byName.get(String(n ?? '').trim().toLowerCase())
+
+    // Single-leg Pickup/Delivery
+    if (pickupMissing) {
+      const hit = lookup(data.Origin_Location)
+      if (hit) { data.Pickup_Lat = hit.lat; data.Pickup_Lon = hit.lon }
+    }
+    if (deliveryMissing) {
+      const hit = lookup(data.Dest_Location)
+      if (hit) { data.Delivery_Lat = hit.lat; data.Delivery_Lon = hit.lon }
+    }
+
+    // Multi-drop JSON arrays — back-fill missing coords by point name.
+    const fillArray = (arr: unknown): boolean => {
+      if (!Array.isArray(arr)) return false
+      let changed = false
+      for (const p of arr) {
+        const o = p as { name?: unknown; lat?: unknown; lng?: unknown }
+        if (!hasCoord(o?.lat, o?.lng)) {
+          const hit = lookup(o?.name)
+          if (hit) { o.lat = hit.lat; o.lng = hit.lon; changed = true }
+        }
+      }
+      return changed
+    }
+    if (fillArray(origins)) data.original_origins_json = origins
+    if (fillArray(dests)) data.original_destinations_json = dests
+  } catch (err) {
+    console.warn('[hydrateJobCoordinates] non-fatal:', err instanceof Error ? err.message : err)
   }
 }
 
@@ -775,12 +869,20 @@ export async function createBulkJobs(
         }
     }
     const roundInfo = j.Round ? `[รอบ: ${j.Round}] ` : ''
-    // Ensure distance is populated on import too (file column / Master route
-    // may be missing) using the same OSRM + Haversine resolver as manual entry.
+    // Fill coords from the location master, then ensure distance is populated on
+    // import too (file column / Master route may be missing) using the same
+    // OSRM + Haversine resolver as manual entry.
+    await hydrateJobCoordinates(j)
     const estDistance = await resolveJobDistance(j)
     return {
       ...j,
       Price_Cust_Total: total,
+      Pickup_Lat: j.Pickup_Lat ?? null,
+      Pickup_Lon: j.Pickup_Lon ?? null,
+      Delivery_Lat: j.Delivery_Lat ?? null,
+      Delivery_Lon: j.Delivery_Lon ?? null,
+      original_origins_json: j.original_origins_json,
+      original_destinations_json: j.original_destinations_json,
       Est_Distance_KM: estDistance,
       Notes: j.Notes ? (j.Notes.startsWith('[รอบ:') ? j.Notes : `${roundInfo}${j.Notes}`) : (j.Round ? `[รอบ: ${j.Round}]` : j.Notes)
     }

@@ -292,9 +292,24 @@ export async function ensureJobLocations(
       const lower = name.toLowerCase()
       // มีชื่อตรงอยู่แล้ว (ไม่สนสาขา เพื่อเลี่ยง unique conflict + ใช้ข้อมูลเดิมได้)
       if (existLower.includes(lower)) continue
+
+      // Geocode immediately so the new location is created WITH coordinates
+      // (ESG forward-correctness — Fix 2). Best-effort: if geocoding fails the
+      // row is still created coord-less and surfaced to admins to backfill.
+      let lat: number | null = null
+      let lon: number | null = null
+      try {
+        const { geocodeAddress } = await import('@/lib/ai/geocoding')
+        const geo = await geocodeAddress(name)
+        if (geo && Number.isFinite(geo.lat) && Number.isFinite(geo.lng)) {
+          lat = geo.lat
+          lon = geo.lng
+        }
+      } catch { /* geocoder unavailable → leave coords null */ }
+
       const { error } = await supabase
         .from('Master_Locations')
-        .insert({ Name: name, Branch_ID: branchId || 'HQ' })
+        .insert({ Name: name, Branch_ID: branchId || 'HQ', Lat: lat, Lon: lon })
       if (!error) { created.push(name); existLower.push(lower) }
     }
     return created
