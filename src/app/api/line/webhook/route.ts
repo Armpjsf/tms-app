@@ -288,12 +288,15 @@ async function callGeminiMultimodal(
     systemPrompt: string,
     prompt: string,
     mimeType: string,
-    data: Buffer
+    data: Buffer,
+    // Callers that need accurate OCR (e.g. fuel receipts) can request a stronger
+    // model; the default lite model is fine for classification / rough extraction.
+    modelOverride?: string
 ): Promise<string | null> {
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
     if (!apiKey) return null
 
-    const modelName = "gemini-3.1-flash-lite"
+    const modelName = modelOverride || "gemini-3.1-flash-lite"
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`
     const tools = [{ function_declarations: geminiToolDefinitions }]
     
@@ -350,6 +353,46 @@ async function callGeminiMultimodal(
         console.error('[Line Multimodal Error]', err)
         return null
     }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Snap an OCR'd license plate to a real fleet plate.
+// Thai plate OCR is unreliable on the Thai consonants (ฒ/ม/ต, ว/จ look alike),
+// but the DIGITS (e.g. 2502) read accurately — so we match the OCR result against
+// Master_Vehicles and prefer the registered plate. Returns matched=false when we
+// can't confidently resolve it, so the caller can flag it for the admin to check.
+// ─────────────────────────────────────────────────────────────────
+async function resolveFleetPlate(
+    supabase: ReturnType<typeof createAdminClient>,
+    ocrPlate: string
+): Promise<{ plate: string; matched: boolean }> {
+    const raw = String(ocrPlate || '').replace(/\s+/g, '').trim()
+    if (!raw) return { plate: '', matched: false }
+    try {
+        const { data } = await supabase.from('Master_Vehicles').select('Vehicle_Plate')
+        const plates = (data || [])
+            .map((v: { Vehicle_Plate?: string | null }) => String(v.Vehicle_Plate || '').trim())
+            .filter(Boolean)
+        const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase()
+        const digitsOf = (s: string) => (s.match(/\d/g) || []).join('')
+
+        // 1. Exact (ignoring spaces/case)
+        const exact = plates.find(p => norm(p) === norm(raw))
+        if (exact) return { plate: exact, matched: true }
+
+        // 2. Unique match by digit signature (the reliably-OCR'd part)
+        const rawDigits = digitsOf(raw)
+        if (rawDigits.length >= 3) {
+            const byDigits = plates.filter(p => digitsOf(p) === rawDigits)
+            if (byDigits.length === 1) return { plate: byDigits[0], matched: true }
+            // Tie-break by first character (usually a digit, reliably read)
+            if (byDigits.length > 1) {
+                const byFirst = byDigits.filter(p => norm(p)[0] === norm(raw)[0])
+                if (byFirst.length === 1) return { plate: byFirst[0], matched: true }
+            }
+        }
+    } catch { /* fall through to raw */ }
+    return { plate: raw, matched: false }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -2129,7 +2172,8 @@ export async function POST(req: NextRequest) {
                                 "You are a helpful logistics AI coordinator.",
                                 classPrompt,
                                 mimeType,
-                                buffer
+                                buffer,
+                                'gemini-3.1-flash' // stronger model for receipt OCR accuracy
                             )
                             if (classResText) {
                                 const cleanJson = classResText.replace(/```json/g, '').replace(/```/g, '').trim()
@@ -2151,11 +2195,15 @@ export async function POST(req: NextRequest) {
                             const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
                             const logId = `FUEL-${dateStr}-${randomSuffix}`
 
+                            // Snap OCR plate to a fleet vehicle; fall back to the
+                            // driver's own registered plate (most reliable for drivers).
+                            const dPlateRes = await resolveFleetPlate(supabase, String(extracted.vehiclePlate || ''))
+                            const driverPlate = dPlateRes.matched ? dPlateRes.plate : (boundDriver.Vehicle_Plate || dPlateRes.plate || null)
                             await supabase.from('Fuel_Logs').insert({
                                 Log_ID: logId,
                                 Date_Time: extracted.dateTime || new Date().toISOString(),
                                 Driver_ID: boundDriver.Driver_ID,
-                                Vehicle_Plate: extracted.vehiclePlate || boundDriver.Vehicle_Plate || null,
+                                Vehicle_Plate: driverPlate,
                                 Liters: Number(extracted.liters) || 0,
                                 Price_Total: Number(extracted.priceTotal) || 0,
                                 Odometer: extracted.odometer != null ? Number(extracted.odometer) : null,
@@ -2165,7 +2213,7 @@ export async function POST(req: NextRequest) {
                                 Status: 'Pending'
                             })
 
-                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n📍 สถานี: ${extracted.stationName || 'ไม่ระบุ'}\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${extracted.vehiclePlate || boundDriver.Vehicle_Plate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
+                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n📍 สถานี: ${extracted.stationName || 'ไม่ระบุ'}\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
                             continue
                         }
 
@@ -2274,14 +2322,17 @@ export async function POST(req: NextRequest) {
                         `.trim()
                         let fuel: Record<string, unknown> = {}
                         try {
-                            const t = await callGeminiMultimodal('You are a logistics AI.', fuelPrompt, mimeType, buffer)
+                            const t = await callGeminiMultimodal('You are a logistics AI.', fuelPrompt, mimeType, buffer, 'gemini-3.1-flash')
                             if (t) fuel = JSON.parse(t.replace(/```json/g, '').replace(/```/g, '').trim())
                         } catch { /* not fuel */ }
 
                         if (fuel.isFuel) {
                             const uploadRes = await uploadFileToSupabase(buffer, `fuel_${Date.now()}.jpg`, 'image/jpeg', 'Fuel_Photos')
+                            // Snap the OCR'd plate to a real fleet vehicle (OCR misreads
+                            // Thai consonants; digits are reliable → match on those).
+                            const plateRes = await resolveFleetPlate(supabase, String(fuel.vehiclePlate || ''))
                             const args: Record<string, unknown> = {
-                                plate: fuel.vehiclePlate || '',
+                                plate: plateRes.plate,
                                 liters: Number(fuel.liters) || 0,
                                 price: Number(fuel.priceTotal) || 0,
                                 odometer: fuel.odometer != null ? Number(fuel.odometer) : undefined,
@@ -2292,7 +2343,11 @@ export async function POST(req: NextRequest) {
                             }
                             await savePendingAction(userId, 'create_fuel_log', args)
                             const meta = buildPendingAction('create_fuel_log', args)
-                            const plateNote = args.plate ? '' : '\n\n⚠️ ไม่พบทะเบียนบนใบเสร็จ (บันทึกได้แต่ควรระบุทะเบียนในระบบภายหลัง)'
+                            const plateNote = !args.plate
+                                ? '\n\n⚠️ ไม่พบทะเบียนบนใบเสร็จ — โปรดระบุ/แก้ทะเบียนก่อนยืนยัน'
+                                : (!plateRes.matched
+                                    ? `\n\n⚠️ ทะเบียน "${args.plate}" อ่านจากบิลแต่ไม่ตรงรถในระบบ — โปรดตรวจก่อนยืนยัน`
+                                    : '')
                             await replyToUser(replyToken, {
                                 type: 'text',
                                 text: `${meta.title}\n\n${meta.summary}${plateNote}\n\n👇 กดยืนยันเพื่อบันทึก`,
