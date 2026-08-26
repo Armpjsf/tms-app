@@ -237,8 +237,9 @@ export default function LeafletMap({
       {routeHistory.length > 0 && <FitBounds positions={routeHistory} />}
 
       <TileLayer
-        attribution='&copy; Google Maps'
-        url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+        attribution='&copy; OpenStreetMap contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        maxZoom={19}
       />
 
       {showHeatmap && profitPoints.length > 0 && (

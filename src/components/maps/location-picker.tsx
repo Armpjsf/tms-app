@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Loader2, MapPin, Search as SearchIcon, Check, Crosshair, Sparkles, Navigation, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { searchLocationWithAI, resolveGoogleMapsUrl, reverseGeocode as serverReverseGeocode } from '@/lib/ai/geocoding'
+import { searchPlacesGoogle, searchLocationWithAI, resolveGoogleMapsUrl, reverseGeocode as serverReverseGeocode } from '@/lib/ai/geocoding'
 
 // Thailand centroid — default view when no point is chosen yet.
 const TH_CENTER: [number, number] = [13.7563, 100.5018]
@@ -57,7 +57,7 @@ type Suggestion = {
   address?: string
   lat: number
   lng: number
-  source?: 'ai' | 'coordinate' | 'google_maps' | 'osm'
+  source?: 'ai' | 'coordinate' | 'google_maps' | 'google' | 'osm'
 }
 
 export type PickedLocation = { name: string; lat: number; lng: number }
@@ -238,6 +238,9 @@ export default function LocationPicker({
       try {
         const results: Suggestion[] = []
 
+        // 3.0 Google Places (New) — most accurate, shown first
+        const googleSearchPromise = searchPlacesGoogle(q).catch(() => [])
+
         // 3.1 AI Geocoding Search (Gemini) — Prioritize business/company/factory results
         const aiSearchPromise = searchLocationWithAI(q).catch(() => [])
 
@@ -250,9 +253,22 @@ export default function LocationPicker({
           .then((res) => (res.ok ? res.json() : null))
           .catch(() => null)
 
-        const [aiResults, photonData] = await Promise.all([aiSearchPromise, photonPromise])
+        const [googleResults, aiResults, photonData] = await Promise.all([googleSearchPromise, aiSearchPromise, photonPromise])
 
-        // Add AI results first (with ✨ AI Badge)
+        // Add Google Places results first (most accurate)
+        if (googleResults && googleResults.length > 0) {
+          for (const item of googleResults) {
+            results.push({
+              label: item.name,
+              address: item.address,
+              lat: item.lat,
+              lng: item.lng,
+              source: item.source || 'google',
+            })
+          }
+        }
+
+        // Add AI results next (with ✨ AI Badge)
         if (aiResults && aiResults.length > 0) {
           for (const item of aiResults) {
             results.push({
@@ -445,7 +461,7 @@ export default function LocationPicker({
         <div className="relative mt-3 h-[380px] w-full">
           <MapContainer center={point || TH_CENTER} zoom={point ? 15 : 6} style={{ height: '100%', width: '100%' }} className="z-0">
             <InvalidateOnMount />
-            <TileLayer attribution="&copy; Google Maps" url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}" />
+            <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} />
             <ClickCapture onPick={pickOnMap} />
             <RecenterOnPoint point={point} />
             {point && (

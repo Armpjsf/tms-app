@@ -9,11 +9,17 @@
  */
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const TH_BOUNDS = { minLat: 5.5, maxLat: 20.6, minLng: 97.3, maxLng: 105.7 };
+const inThailand = (lat: number, lng: number) =>
+  lat >= TH_BOUNDS.minLat && lat <= TH_BOUNDS.maxLat &&
+  lng >= TH_BOUNDS.minLng && lng <= TH_BOUNDS.maxLng;
+
 export type GeocodeResult = {
   lat: number
   lng: number
   display_name: string
-  source?: 'coordinate' | 'google_maps' | 'ai' | 'osm'
+  source?: 'coordinate' | 'google_maps' | 'google' | 'ai' | 'osm'
 }
 
 export type AILocationResult = {
@@ -21,7 +27,121 @@ export type AILocationResult = {
   address: string
   lat: number
   lng: number
-  source: 'ai' | 'coordinate' | 'google_maps'
+  source: 'ai' | 'coordinate' | 'google_maps' | 'google'
+}
+
+/**
+ * Google Places API (New) — Text Search for Thai businesses/factories/POIs.
+ * Runs server-side only (key never reaches the browser). Capped at 200/day
+ * in the Cloud console, so it can never generate a bill; on failure/over-quota
+ * it returns [] and callers fall through to Gemini AI / OSM.
+ */
+export async function searchPlacesGoogle(query: string): Promise<AILocationResult[]> {
+  const clean = query.trim();
+  if (!GOOGLE_MAPS_API_KEY || clean.length < 2) return [];
+
+  try {
+    const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location",
+      },
+      body: JSON.stringify({
+        textQuery: clean,
+        languageCode: "th",
+        regionCode: "TH",
+        maxResultCount: 5,
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    if (!res.ok) return [];
+
+    const data = (await res.json()) as {
+      places?: {
+        displayName?: { text?: string };
+        formattedAddress?: string;
+        location?: { latitude?: number; longitude?: number };
+      }[];
+    };
+
+    const results: AILocationResult[] = [];
+    for (const p of data.places ?? []) {
+      const lat = p.location?.latitude;
+      const lng = p.location?.longitude;
+      if (typeof lat !== "number" || typeof lng !== "number" || !inThailand(lat, lng)) continue;
+      results.push({
+        name: p.displayName?.text || clean,
+        address: p.formattedAddress || "",
+        lat: Number(lat.toFixed(6)),
+        lng: Number(lng.toFixed(6)),
+        source: "google",
+      });
+    }
+    return results;
+  } catch (err) {
+    console.warn("[searchPlacesGoogle] failed:", err);
+    return [];
+  }
+}
+
+/**
+ * Google Geocoding API — address → coordinates (forward geocode), Thailand only.
+ * Server-side, capped 300/day. Returns null on failure so callers fall back.
+ */
+async function geocodeGoogle(address: string): Promise<GeocodeResult | null> {
+  if (!GOOGLE_MAPS_API_KEY) return null;
+  try {
+    const url =
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}` +
+      `&language=th&region=th&components=country:TH&key=${GOOGLE_MAPS_API_KEY}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      status?: string;
+      results?: { formatted_address?: string; geometry?: { location?: { lat?: number; lng?: number } } }[];
+    };
+    if (data.status !== "OK" || !data.results?.length) return null;
+    const first = data.results[0];
+    const lat = first.geometry?.location?.lat;
+    const lng = first.geometry?.location?.lng;
+    if (typeof lat !== "number" || typeof lng !== "number" || !inThailand(lat, lng)) return null;
+    return {
+      lat: Number(lat.toFixed(6)),
+      lng: Number(lng.toFixed(6)),
+      display_name: first.formatted_address || address,
+      source: "google",
+    };
+  } catch (err) {
+    console.warn("[geocodeGoogle] failed:", err);
+    return null;
+  }
+}
+
+/**
+ * Google reverse geocode — coordinates → Thai address. Server-side, capped.
+ */
+async function reverseGeocodeGoogle(lat: number, lng: number): Promise<string | null> {
+  if (!GOOGLE_MAPS_API_KEY) return null;
+  try {
+    const url =
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}` +
+      `&language=th&key=${GOOGLE_MAPS_API_KEY}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      status?: string;
+      results?: { formatted_address?: string }[];
+    };
+    if (data.status !== "OK") return null;
+    const label = data.results?.[0]?.formatted_address?.trim();
+    return label || null;
+  } catch (err) {
+    console.warn("[reverseGeocodeGoogle] failed:", err);
+    return null;
+  }
 }
 
 /**
@@ -243,6 +363,20 @@ export async function geocodeAddress(address: string, context?: string): Promise
     }
   }
 
+  // 1. Google first: Places (New) for named POIs, then Geocoding for addresses.
+  const places = await searchPlacesGoogle(cleanAddress);
+  if (places.length > 0) {
+    const top = places[0];
+    return {
+      lat: top.lat,
+      lng: top.lng,
+      display_name: top.address ? `${top.name}, ${top.address}` : top.name,
+      source: 'google',
+    };
+  }
+  const googleGeo = await geocodeGoogle(cleanAddress);
+  if (googleGeo) return googleGeo;
+
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const performSearch = async (query: string) => {
@@ -331,6 +465,11 @@ export async function geocodeAddress(address: string, context?: string): Promise
  */
 export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
   if (lat == null || lng == null || isNaN(Number(lat)) || isNaN(Number(lng))) return null;
+
+  // Google reverse geocode first, then Nominatim fallback.
+  const googleLabel = await reverseGeocodeGoogle(lat, lng);
+  if (googleLabel) return googleLabel;
+
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=th`;
     const res = await fetch(url, {
