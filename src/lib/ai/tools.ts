@@ -342,6 +342,11 @@ export const aiToolExecutors = {
     const supabase = createAdminClient()
     const planDate = args.planDate || todayTH()
 
+    // Guard: delivery date must not be before pickup/plan date.
+    if (args.deliveryDate && args.deliveryDate < planDate) {
+        return { success: false, error: `วันส่ง (${args.deliveryDate}) อยู่ก่อนวันรับ (${planDate}) ไม่ได้ครับ` }
+    }
+
     // Resolve Customer_ID by name (best-effort) so the job links to the master
     let customerId: string | null = null
     if (args.customerName) {
@@ -652,6 +657,18 @@ export const aiToolExecutors = {
     if (args.destination != null) patch.Dest_Location = args.destination
     if (args.notes != null) patch.Notes = args.notes
     if (Object.keys(patch).length === 0) return { success: false, error: 'ไม่มีข้อมูลที่จะแก้ไข' }
+
+    // Guard: after applying the patch, delivery date must not precede plan date.
+    if (args.planDate != null || args.deliveryDate != null) {
+        const { data: cur } = await supabase.from('Jobs_Main')
+            .select('Plan_Date, Delivery_Date').eq('Job_ID', args.jobId).maybeSingle()
+        const finalPlan = args.planDate ?? cur?.Plan_Date
+        const finalDelivery = args.deliveryDate ?? cur?.Delivery_Date
+        if (finalPlan && finalDelivery && finalDelivery < finalPlan) {
+            return { success: false, error: `วันส่ง (${finalDelivery}) อยู่ก่อนวันรับ (${finalPlan}) ไม่ได้ครับ` }
+        }
+    }
+
     const { data, error } = await supabase.from('Jobs_Main')
         .update(patch).eq('Job_ID', args.jobId).select().single()
     return error ? { success: false, error: error.message } : { success: true, data }
