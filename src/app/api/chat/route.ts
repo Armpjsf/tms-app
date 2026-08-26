@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { createAdminClient } from '@/utils/supabase/server'
 import { aiToolExecutors, buildPendingAction, executeWriteTool, writeToolDeclarations } from '@/lib/ai/tools'
+import { undoLastAction } from '@/lib/ai/audit-log'
 import { getUserBranchId } from '@/lib/permissions'
 import {
     REVENUE_STATUSES,
@@ -753,6 +754,14 @@ export async function POST(req: NextRequest) {
         // Only admin/staff (roleId <= 5) may execute write actions.
         const canWrite = typeof session.roleId === 'number' && session.roleId <= 5
 
+        // ── Undo the last AI-created record ───────────────────────────
+        const undoWords = ['ยกเลิกรายการล่าสุด', 'ย้อนกลับล่าสุด', 'ยกเลิกล่าสุด', 'ย้อนรายการล่าสุด']
+        const trimmedMsg = typeof message === 'string' ? message.trim() : ''
+        if (canWrite && (undoWords.includes(trimmedMsg) || trimmedMsg.toLowerCase() === 'undo')) {
+            const undo = await undoLastAction(session.username)
+            return NextResponse.json({ response: undo.message })
+        }
+
         // ── Confirmed action execution ────────────────────────────────
         // The UI calls back with { confirm: { name, args } } after the user
         // approves the pending action from a previous turn.
@@ -764,7 +773,9 @@ export async function POST(req: NextRequest) {
             // Inject the admin's branch as a default when the tool didn't set one.
             const args: Record<string, unknown> = { ...(confirm.args || {}) }
             if (branchId && (args.branchId == null || args.branchId === '')) args.branchId = branchId
-            const response = await executeWriteTool(confirm.name, args, session.roleId as number)
+            const response = await executeWriteTool(confirm.name, args, session.roleId as number, {
+                actor: session.username, channel: 'chat',
+            })
             return NextResponse.json({ response })
         }
 

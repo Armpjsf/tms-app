@@ -3,6 +3,7 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { replyToUser as _replyToUser, resolveWebhookBot, getMessageContent as _getMessageContent, pushToUser as _pushToUser, pushToCustomerActive } from '@/lib/integrations/line'
 import { aiToolExecutors, geminiToolDefinitions, isWriteTool, buildPendingAction, executeWriteTool } from '@/lib/ai/tools'
 import { savePendingAction, popPendingAction } from '@/lib/ai/pending-actions'
+import { undoLastAction } from '@/lib/ai/audit-log'
 import { uploadFileToSupabase } from '@/lib/actions/supabase-upload'
 import { getDetailedDriverAnalytics } from '@/lib/supabase/fleet-analytics'
 import { transitionJobStatus } from "@/services/job-status-machine"
@@ -1862,8 +1863,17 @@ export async function POST(req: NextRequest) {
                     const adminBranch = boundAdmin.Branch_ID
                     const args: Record<string, unknown> = { ...pending.args }
                     if (adminBranch && (args.branchId == null || args.branchId === '')) args.branchId = adminBranch
-                    const resultText = await executeWriteTool(pending.name, args, Number(boundAdmin.Role_ID))
+                    const resultText = await executeWriteTool(pending.name, args, Number(boundAdmin.Role_ID), {
+                        actor: userId, channel: 'line',
+                    })
                     await replyToUser(replyToken, resultText)
+                    continue
+                }
+
+                // 4c. Undo the last AI-created record (admins only)
+                if (boundAdmin && ['ยกเลิกรายการล่าสุด', 'ย้อนกลับล่าสุด', 'ยกเลิกล่าสุด', 'ย้อนรายการล่าสุด', 'undo'].includes(rawText.toLowerCase())) {
+                    const undo = await undoLastAction(userId)
+                    await replyToUser(replyToken, undo.message)
                     continue
                 }
 

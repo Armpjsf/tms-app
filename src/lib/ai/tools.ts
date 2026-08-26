@@ -13,6 +13,7 @@ import { getFleetHealthAlerts } from "@/lib/supabase/fleet-health"
 import { getWorkforceAnalytics } from "@/lib/supabase/workforce-analytics"
 import { createAdminClient } from '@/utils/supabase/server'
 import { geocodeAddress } from '@/lib/ai/geocoding'
+import { logAction, type ActionRef } from '@/lib/ai/audit-log'
 
 /**
  * Tool Executors - all system data accessible to the AI
@@ -584,6 +585,119 @@ export const aiToolExecutors = {
     }).select().single()
     return error ? { success: false, error: error.message } : { success: true, data }
   },
+
+  // ---- ASSIGN DRIVER (มอบหมายงาน↔คนขับ/รถ) ----
+  assign_driver: async (args: {
+    jobId: string,
+    driverName?: string,
+    driverId?: string,
+    vehiclePlate?: string,
+  }) => {
+    const supabase = createAdminClient()
+    let driverId: string | null = null
+    let driverName: string | null = null
+    let plate: string | null = args.vehiclePlate || null
+    let vehicleType: string | null = null
+    let subId: string | null = null
+
+    if (args.driverId || args.driverName) {
+        let q = supabase.from('Master_Drivers')
+            .select('Driver_ID, Driver_Name, Vehicle_Plate, Vehicle_Type, Sub_ID').limit(1)
+        q = args.driverId ? q.eq('Driver_ID', args.driverId) : q.ilike('Driver_Name', `%${args.driverName}%`)
+        const { data: d } = await q.maybeSingle()
+        if (!d) return { success: false, error: `ไม่พบคนขับ "${args.driverName || args.driverId}"` }
+        driverId = d.Driver_ID
+        driverName = d.Driver_Name
+        plate = plate || d.Vehicle_Plate || null
+        vehicleType = d.Vehicle_Type || null
+        subId = d.Sub_ID || null
+    }
+
+    const { data, error } = await supabase.from('Jobs_Main').update({
+        Driver_ID: driverId,
+        Driver_Name: driverName,
+        Vehicle_Plate: plate,
+        ...(vehicleType ? { Vehicle_Type: vehicleType } : {}),
+        ...(subId ? { Sub_ID: subId } : {}),
+        Job_Status: 'Assigned',
+    }).eq('Job_ID', args.jobId).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data }
+  },
+
+  // ---- UPDATE JOB STATUS ----
+  update_job_status: async (args: { jobId: string, status: string }) => {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase.from('Jobs_Main')
+        .update({ Job_Status: args.status })
+        .eq('Job_ID', args.jobId).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data }
+  },
+
+  // ---- UPDATE JOB (แก้ราคา/วันที่/สถานที่/หมายเหตุ) ----
+  update_job: async (args: {
+    jobId: string,
+    planDate?: string,
+    deliveryDate?: string,
+    price?: number,
+    origin?: string,
+    destination?: string,
+    notes?: string,
+  }) => {
+    const supabase = createAdminClient()
+    const patch: Record<string, unknown> = {}
+    if (args.planDate != null) patch.Plan_Date = args.planDate
+    if (args.deliveryDate != null) patch.Delivery_Date = args.deliveryDate
+    if (args.price != null) patch.Price_Cust_Total = args.price
+    if (args.origin != null) patch.Origin_Location = args.origin
+    if (args.destination != null) patch.Dest_Location = args.destination
+    if (args.notes != null) patch.Notes = args.notes
+    if (Object.keys(patch).length === 0) return { success: false, error: 'ไม่มีข้อมูลที่จะแก้ไข' }
+    const { data, error } = await supabase.from('Jobs_Main')
+        .update(patch).eq('Job_ID', args.jobId).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data }
+  },
+
+  // ---- UPDATE DRIVER ----
+  update_driver: async (args: {
+    nameOrId: string,
+    phone?: string,
+    status?: string,
+    vehiclePlate?: string,
+  }) => {
+    const supabase = createAdminClient()
+    // Resolve target by Driver_ID or name.
+    const { data: d } = await supabase.from('Master_Drivers')
+        .select('Driver_ID')
+        .or(`Driver_ID.eq.${args.nameOrId},Driver_Name.ilike.%${args.nameOrId}%`)
+        .limit(1).maybeSingle()
+    if (!d) return { success: false, error: `ไม่พบคนขับ "${args.nameOrId}"` }
+    const patch: Record<string, unknown> = {}
+    if (args.phone != null) patch.Mobile_No = args.phone
+    if (args.status != null) patch.Active_Status = args.status
+    if (args.vehiclePlate != null) patch.Vehicle_Plate = args.vehiclePlate
+    if (Object.keys(patch).length === 0) return { success: false, error: 'ไม่มีข้อมูลที่จะแก้ไข' }
+    const { data, error } = await supabase.from('Master_Drivers')
+        .update(patch).eq('Driver_ID', d.Driver_ID).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data }
+  },
+
+  // ---- UPDATE VEHICLE ----
+  update_vehicle: async (args: {
+    plate: string,
+    status?: string,
+    vehicleType?: string,
+    subId?: string,
+  }) => {
+    const supabase = createAdminClient()
+    const patch: Record<string, unknown> = {}
+    if (args.status != null) patch.Active_Status = args.status
+    if (args.vehicleType != null) patch.Vehicle_Type = args.vehicleType
+    if (args.subId != null) patch.Sub_ID = args.subId
+    if (Object.keys(patch).length === 0) return { success: false, error: 'ไม่มีข้อมูลที่จะแก้ไข' }
+    const { data, error } = await supabase.from('Master_Vehicles')
+        .update(patch).eq('Vehicle_Plate', args.plate).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data }
+  },
 } as unknown as Record<string, AIToolExecutor>
 
 /**
@@ -600,6 +714,8 @@ type WriteToolMeta = {
   summarize: (a: Record<string, unknown>) => string
   formatSuccess: (data: Record<string, unknown>, result?: Record<string, unknown>) => string
   cancelMessage: string
+  /** For create actions: how to locate the created row so it can be undone. */
+  undoRef?: (data: Record<string, unknown>) => ActionRef | null
 }
 
 const S = (v: unknown) => (v === undefined || v === null || v === '') ? null : String(v)
@@ -629,6 +745,7 @@ export const writeToolMeta: Record<string, WriteToolMeta> = {
       S(d.Job_Status) ? `สถานะ: ${S(d.Job_Status)}` : null,
     ),
     cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้สร้างงาน',
+    undoRef: (d) => d.Job_ID ? { table: 'Jobs_Main', pk: { Job_ID: d.Job_ID } } : null,
   },
   create_driver: {
     confirmTitle: 'ยืนยันการเพิ่มคนขับใหม่?',
@@ -646,6 +763,7 @@ export const writeToolMeta: Record<string, WriteToolMeta> = {
       S(d.Mobile_No) ? `เบอร์: ${S(d.Mobile_No)}` : null,
     ),
     cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้เพิ่มคนขับ',
+    undoRef: (d) => d.Driver_ID ? { table: 'Master_Drivers', pk: { Driver_ID: d.Driver_ID } } : null,
   },
   create_vehicle: {
     confirmTitle: 'ยืนยันการเพิ่มรถ/ทะเบียนใหม่?',
@@ -663,6 +781,7 @@ export const writeToolMeta: Record<string, WriteToolMeta> = {
       `ประเภท: ${S(d.Vehicle_Type) ?? '-'}`,
     ),
     cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้เพิ่มรถ',
+    undoRef: (d) => d.Vehicle_Plate ? { table: 'Master_Vehicles', pk: { Vehicle_Plate: d.Vehicle_Plate } } : null,
   },
   create_location: {
     confirmTitle: 'ยืนยันการเพิ่มสถานที่ใหม่?',
@@ -680,6 +799,7 @@ export const writeToolMeta: Record<string, WriteToolMeta> = {
       r?.geocoded ? `พิกัด: ${S(d.Lat)}, ${S(d.Lon)} ✓` : `⚠️ ยังหาพิกัดไม่ได้ — ระบบทำเครื่องหมายไว้ให้แก้ทีหลัง`,
     ),
     cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้เพิ่มสถานที่',
+    undoRef: (d) => d.Name ? { table: 'Master_Locations', pk: { Name: d.Name } } : null,
   },
   create_customer: {
     confirmTitle: 'ยืนยันการเพิ่มลูกค้าใหม่?',
@@ -696,6 +816,7 @@ export const writeToolMeta: Record<string, WriteToolMeta> = {
       `ชื่อ: ${S(d.Customer_Name) ?? '-'}`,
     ),
     cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้เพิ่มลูกค้า',
+    undoRef: (d) => d.Customer_ID ? { table: 'Master_Customers', pk: { Customer_ID: d.Customer_ID } } : null,
   },
   create_fuel_log: {
     confirmTitle: 'ยืนยันการบันทึกเติมน้ำมัน?',
@@ -721,6 +842,72 @@ export const writeToolMeta: Record<string, WriteToolMeta> = {
     formatSuccess: () => `✅ บันทึกรายการเคลมเรียบร้อยครับ`,
     cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้บันทึกเคลม',
   },
+  assign_driver: {
+    confirmTitle: 'ยืนยันการมอบหมายคนขับ?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• งาน: ${S(a.jobId) ?? '-'}`,
+      `• คนขับ: ${S(a.driverName) ?? S(a.driverId) ?? '-'}`,
+      S(a.vehiclePlate) ? `• ทะเบียน: ${S(a.vehiclePlate)}` : null,
+    ),
+    formatSuccess: (d) => bullets(
+      `✅ มอบหมายงานสำเร็จ`,
+      `งาน: ${S(d.Job_ID) ?? '-'}`,
+      `คนขับ: ${S(d.Driver_Name) ?? '-'}`,
+      S(d.Vehicle_Plate) ? `ทะเบียน: ${S(d.Vehicle_Plate)}` : null,
+      `สถานะ: ${S(d.Job_Status) ?? '-'}`,
+    ),
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้มอบหมายงาน',
+  },
+  update_job_status: {
+    confirmTitle: 'ยืนยันการเปลี่ยนสถานะงาน?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• งาน: ${S(a.jobId) ?? '-'}`,
+      `• สถานะใหม่: ${S(a.status) ?? '-'}`,
+    ),
+    formatSuccess: (d) => `✅ เปลี่ยนสถานะงาน ${S(d.Job_ID) ?? ''} เป็น "${S(d.Job_Status) ?? ''}" เรียบร้อยครับ`,
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้เปลี่ยนสถานะ',
+  },
+  update_job: {
+    confirmTitle: 'ยืนยันการแก้ไขงาน?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• งาน: ${S(a.jobId) ?? '-'}`,
+      S(a.planDate) ? `• วันวางแผน: ${S(a.planDate)}` : null,
+      S(a.deliveryDate) ? `• วันส่ง: ${S(a.deliveryDate)}` : null,
+      a.price != null ? `• ราคา: ฿${Number(a.price).toLocaleString()}` : null,
+      S(a.origin) ? `• ต้นทาง: ${S(a.origin)}` : null,
+      S(a.destination) ? `• ปลายทาง: ${S(a.destination)}` : null,
+      S(a.notes) ? `• หมายเหตุ: ${S(a.notes)}` : null,
+    ),
+    formatSuccess: (d) => `✅ แก้ไขงาน ${S(d.Job_ID) ?? ''} เรียบร้อยครับ`,
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้แก้ไขงาน',
+  },
+  update_driver: {
+    confirmTitle: 'ยืนยันการแก้ไขข้อมูลคนขับ?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• คนขับ: ${S(a.nameOrId) ?? '-'}`,
+      S(a.phone) ? `• เบอร์ใหม่: ${S(a.phone)}` : null,
+      S(a.status) ? `• สถานะ: ${S(a.status)}` : null,
+      S(a.vehiclePlate) ? `• ทะเบียน: ${S(a.vehiclePlate)}` : null,
+    ),
+    formatSuccess: (d) => `✅ แก้ไขข้อมูลคนขับ ${S(d.Driver_Name) ?? ''} เรียบร้อยครับ`,
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้แก้ไขคนขับ',
+  },
+  update_vehicle: {
+    confirmTitle: 'ยืนยันการแก้ไขข้อมูลรถ?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• ทะเบียน: ${S(a.plate) ?? '-'}`,
+      S(a.status) ? `• สถานะ: ${S(a.status)}` : null,
+      S(a.vehicleType) ? `• ประเภทรถ: ${S(a.vehicleType)}` : null,
+      S(a.subId) ? `• รถร่วม (Sub_ID): ${S(a.subId)}` : null,
+    ),
+    formatSuccess: (d) => `✅ แก้ไขข้อมูลรถ ${S(d.Vehicle_Plate) ?? ''} เรียบร้อยครับ`,
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้แก้ไขรถ',
+  },
 }
 
 /** Is this tool a write action requiring confirmation? */
@@ -745,17 +932,32 @@ export async function executeWriteTool(
   name: string,
   args: Record<string, unknown>,
   roleId: number,
+  ctx?: { actor?: string; channel?: 'chat' | 'line' },
 ): Promise<string> {
   const meta = writeToolMeta[name]
   if (!meta) return 'ไม่รู้จักคำสั่งนี้ครับ'
   if (roleId > meta.minRole) return '⛔ บัญชีนี้ไม่มีสิทธิ์ทำรายการนี้ครับ'
   const executor = aiToolExecutors[name]
   if (!executor) return 'ไม่รู้จักคำสั่งนี้ครับ'
+
   const result = (await executor(args)) as unknown as Record<string, unknown>
-  if (result?.success) {
-    return meta.formatSuccess((result.data as Record<string, unknown>) || {}, result)
-  }
-  return `❌ ทำรายการไม่สำเร็จ: ${result?.error || 'unknown error'}`
+  const success = !!result?.success
+  const data = (result?.data as Record<string, unknown>) || {}
+  const message = success
+    ? meta.formatSuccess(data, result)
+    : `❌ ทำรายการไม่สำเร็จ: ${result?.error || 'unknown error'}`
+
+  await logAction({
+    actor: ctx?.actor,
+    channel: ctx?.channel,
+    actionName: name,
+    args,
+    success,
+    resultRef: success && meta.undoRef ? meta.undoRef(data) : null,
+    message,
+  })
+
+  return message
 }
 
 /**
@@ -872,6 +1074,77 @@ export const geminiToolDefinitions = [
                 address: { type: "string", description: "ที่อยู่" }
             },
             required: ["name"]
+        }
+    },
+    {
+        name: "assign_driver",
+        description: "มอบหมายคนขับ (และรถ) ให้กับงาน แล้วตั้งสถานะเป็น Assigned",
+        parameters: {
+            type: "object",
+            properties: {
+                jobId: { type: "string", description: "รหัสงาน" },
+                driverName: { type: "string", description: "ชื่อคนขับ" },
+                driverId: { type: "string", description: "รหัสคนขับ" },
+                vehiclePlate: { type: "string", description: "ทะเบียนรถ (ถ้าต้องการระบุเอง)" }
+            },
+            required: ["jobId"]
+        }
+    },
+    {
+        name: "update_job_status",
+        description: "เปลี่ยนสถานะของงาน (เช่น New, Assigned, In Transit, Completed, Cancelled)",
+        parameters: {
+            type: "object",
+            properties: {
+                jobId: { type: "string", description: "รหัสงาน" },
+                status: { type: "string", description: "สถานะใหม่" }
+            },
+            required: ["jobId", "status"]
+        }
+    },
+    {
+        name: "update_job",
+        description: "แก้ไขรายละเอียดงาน (ราคา/วันที่/ต้นทาง/ปลายทาง/หมายเหตุ)",
+        parameters: {
+            type: "object",
+            properties: {
+                jobId: { type: "string", description: "รหัสงาน" },
+                planDate: { type: "string", description: "วันวางแผน YYYY-MM-DD" },
+                deliveryDate: { type: "string", description: "วันส่ง YYYY-MM-DD" },
+                price: { type: "number", description: "ราคาลูกค้า (บาท)" },
+                origin: { type: "string", description: "ต้นทาง" },
+                destination: { type: "string", description: "ปลายทาง" },
+                notes: { type: "string", description: "หมายเหตุ" }
+            },
+            required: ["jobId"]
+        }
+    },
+    {
+        name: "update_driver",
+        description: "แก้ไขข้อมูลคนขับ (เบอร์โทร/สถานะ/ทะเบียนประจำ)",
+        parameters: {
+            type: "object",
+            properties: {
+                nameOrId: { type: "string", description: "ชื่อหรือรหัสคนขับ" },
+                phone: { type: "string", description: "เบอร์โทรใหม่" },
+                status: { type: "string", description: "สถานะ (Active/Inactive)" },
+                vehiclePlate: { type: "string", description: "ทะเบียนรถประจำตัวใหม่" }
+            },
+            required: ["nameOrId"]
+        }
+    },
+    {
+        name: "update_vehicle",
+        description: "แก้ไขข้อมูลรถ (สถานะ/ประเภท/รถร่วม)",
+        parameters: {
+            type: "object",
+            properties: {
+                plate: { type: "string", description: "ทะเบียนรถ" },
+                status: { type: "string", description: "สถานะ (Active/Inactive)" },
+                vehicleType: { type: "string", description: "ประเภทรถ" },
+                subId: { type: "string", description: "รหัสรถร่วม (Sub_ID)" }
+            },
+            required: ["plate"]
         }
     },
     {
