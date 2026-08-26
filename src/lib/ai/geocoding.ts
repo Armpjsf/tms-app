@@ -53,6 +53,14 @@ export async function searchPlacesGoogle(query: string): Promise<AILocationResul
         languageCode: "th",
         regionCode: "TH",
         maxResultCount: 5,
+        // Force results inside Thailand — the server may run outside TH (Vercel),
+        // so IP-based bias would otherwise return foreign matches.
+        locationRestriction: {
+          rectangle: {
+            low: { latitude: TH_BOUNDS.minLat, longitude: TH_BOUNDS.minLng },
+            high: { latitude: TH_BOUNDS.maxLat, longitude: TH_BOUNDS.maxLng },
+          },
+        },
       }),
       signal: AbortSignal.timeout(6000),
     });
