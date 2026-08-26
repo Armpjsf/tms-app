@@ -13,6 +13,23 @@ export async function GET() {
     keyPrefix: key.slice(0, 4), // "AIza" expected
   }
 
+  // Raw call to see the exact HTTP status / error body from Google.
+  try {
+    const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location",
+      },
+      body: JSON.stringify({ textQuery: "formica", languageCode: "th", regionCode: "TH", maxResultCount: 3 }),
+    })
+    info.rawStatus = res.status
+    info.rawBody = await res.text()
+  } catch (err) {
+    info.rawError = String(err)
+  }
+
   try {
     const results = await searchPlacesGoogle("formica")
     info.placesCount = results.length
