@@ -440,15 +440,28 @@ export async function POST(req: NextRequest) {
             if (!replyToken || !targetId) continue
 
             // ── Identify user ──────────────────────────────────────────────
+            // Drivers/admins bind their PERSONAL Line_User_ID, so identify them by
+            // the individual sender (event.source.userId) — this is present in group
+            // chats too when the sender has added the bot as a friend, letting admin
+            // commands (e.g. fuel-receipt OCR + confirm) work inside a LINE group.
+            // Customers bind at the group level, so keep that lookup on targetId.
+            const personId = userId || targetId
+            const inGroup = !!groupId
             const [custRes, drivRes, userRes] = await Promise.all([
                 supabase.from('Master_Customers').select('Customer_ID, Customer_Name').eq(custLineIdField, targetId).limit(1),
-                supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate, Branch_ID').eq('Line_User_ID', targetId).limit(1),
-                supabase.from('Master_Users').select('Username, Name, Role, Role_ID, Branch_ID').eq('Line_User_ID', targetId).limit(1),
+                supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate, Branch_ID').eq('Line_User_ID', personId).limit(1),
+                supabase.from('Master_Users').select('Username, Name, Role, Role_ID, Branch_ID').eq('Line_User_ID', personId).limit(1),
             ])
 
             const boundCustomer = custRes.data?.[0] || null
             const boundDriver = drivRes.data?.[0] || null
-            const boundAdmin = userRes.data?.[0] || null
+            const resolvedAdmin = userRes.data?.[0] || null
+            // Admins act on commands / AI ONLY in 1:1 chats — group chats are shared
+            // with drivers (and customers), so keep internal admin powers out of them.
+            // `adminFuel` is the ONE exception: the fuel-receipt OCR + its confirm are
+            // allowed in groups so admins can log refuels there too.
+            const boundAdmin = inGroup ? null : resolvedAdmin
+            const adminFuel = resolvedAdmin
 
             const userName = boundAdmin?.Name || boundDriver?.Driver_Name || boundCustomer?.Customer_Name || (groupId ? 'ไลน์กลุ่ม' : 'ผู้ใช้')
             const branchId = boundAdmin?.Branch_ID || undefined
@@ -1848,7 +1861,10 @@ export async function POST(req: NextRequest) {
                 // 4b. AI write-action confirm / cancel (admins only)
                 //     After an AI write action is proposed, the admin taps the
                 //     button (or types the word) to run or discard it.
-                if (boundAdmin && (rawText === 'ยืนยันคำสั่ง' || rawText === 'ยกเลิกคำสั่ง')) {
+                // Confirm/cancel a pending action. Uses adminFuel so it also works in
+                // group chats — but there it's restricted to fuel logs only (other
+                // admin write-actions can't even be created in a group).
+                if (adminFuel && (rawText === 'ยืนยันคำสั่ง' || rawText === 'ยกเลิกคำสั่ง')) {
                     const pending = await popPendingAction(userId)
                     if (!pending) {
                         await replyToUser(replyToken, 'ไม่พบคำสั่งที่รอยืนยัน (อาจหมดเวลาแล้ว) กรุณาสั่งใหม่อีกครั้งครับ')
@@ -1859,11 +1875,16 @@ export async function POST(req: NextRequest) {
                         await replyToUser(replyToken, meta.cancelMessage)
                         continue
                     }
+                    // In a group, only the fuel log may be confirmed (safety).
+                    if (inGroup && pending.name !== 'create_fuel_log') {
+                        await replyToUser(replyToken, 'ในกลุ่มไลน์ยืนยันได้เฉพาะการบันทึกเติมน้ำมันครับ — คำสั่งอื่นให้ทำในแชทส่วนตัว')
+                        continue
+                    }
                     // Inject the admin's branch as a default, then execute.
-                    const adminBranch = boundAdmin.Branch_ID
+                    const adminBranch = adminFuel.Branch_ID
                     const args: Record<string, unknown> = { ...pending.args }
                     if (adminBranch && (args.branchId == null || args.branchId === '')) args.branchId = adminBranch
-                    const resultText = await executeWriteTool(pending.name, args, Number(boundAdmin.Role_ID), {
+                    const resultText = await executeWriteTool(pending.name, args, Number(adminFuel.Role_ID), {
                         actor: userId, channel: 'line',
                     })
                     await replyToUser(replyToken, resultText)
@@ -1947,7 +1968,8 @@ export async function POST(req: NextRequest) {
             // IMAGE / FILE MESSAGE (Order Extraction & Analysis)
             // ─────────────────────────────────────────────────────────────
             if (event.type === 'message' && (event.message?.type === 'image' || event.message?.type === 'file')) {
-                if (!boundAdmin && !boundDriver && !boundCustomer) continue
+                // adminFuel included so an admin's fuel receipt is processed in groups too
+                if (!boundAdmin && !boundDriver && !boundCustomer && !adminFuel) continue
 
                 try {
                     const messageId = event.message.id
@@ -2228,7 +2250,7 @@ export async function POST(req: NextRequest) {
                     // ── Admin fuel-receipt OCR → confirm create_fuel_log ─────────────────────────────
                     // Admins can snap a fuel receipt for ANY vehicle; we extract
                     // the details and ask for a confirm button before saving.
-                    if (boundAdmin && event.message.type === 'image') {
+                    if (adminFuel && event.message.type === 'image') {
                         const fuelPrompt = `
                         Analyze this image. If it is a fuel purchase receipt / gas station invoice, return JSON ONLY:
                         {
@@ -2258,7 +2280,7 @@ export async function POST(req: NextRequest) {
                                 station: fuel.stationName || '',
                                 dateTime: fuel.dateTime || undefined,
                                 photoUrl: uploadRes.directLink,
-                                branchId: boundAdmin.Branch_ID || undefined,
+                                branchId: adminFuel.Branch_ID || undefined,
                             }
                             await savePendingAction(userId, 'create_fuel_log', args)
                             const meta = buildPendingAction('create_fuel_log', args)
@@ -2276,6 +2298,11 @@ export async function POST(req: NextRequest) {
                             continue
                         }
                     }
+
+                    // In a group, only the fuel receipt is handled (above). A non-fuel
+                    // image from an admin should not trigger a generic AI reply to the
+                    // whole group — skip silently.
+                    if (!boundAdmin && !boundDriver && !boundCustomer) continue
 
                     // ── Admin / Customer / Standard Vision Fallback ──────────────────────────────────
                     const userRole = boundAdmin ? 'Admin' : (boundDriver ? 'Driver' : 'Customer')
