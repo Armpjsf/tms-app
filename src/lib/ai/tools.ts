@@ -12,6 +12,7 @@ import { getFuelAnalytics } from "@/lib/supabase/fuel-analytics"
 import { getFleetHealthAlerts } from "@/lib/supabase/fleet-health"
 import { getWorkforceAnalytics } from "@/lib/supabase/workforce-analytics"
 import { createAdminClient } from '@/utils/supabase/server'
+import { geocodeAddress } from '@/lib/ai/geocoding'
 
 /**
  * Tool Executors - all system data accessible to the AI
@@ -483,7 +484,279 @@ export const aiToolExecutors = {
     }).select().single()
     return error ? { success: false, error: error.message } : { success: true, data }
   },
+
+  // ---- CREATE DRIVER ----
+  create_driver: async (args: {
+    name: string,
+    phone?: string,
+    vehiclePlate?: string,
+    vehicleType?: string,
+    branchId?: string,
+  }) => {
+    const supabase = createAdminClient()
+    const driverId = `DRV-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`
+    const { data, error } = await supabase.from('Master_Drivers').insert({
+        Driver_ID: driverId,
+        Driver_Name: args.name,
+        Mobile_No: args.phone || null,
+        Role: 'Driver',
+        Vehicle_Plate: args.vehiclePlate || null,
+        Vehicle_Type: args.vehicleType || null,
+        Active_Status: 'Active',
+        Branch_ID: args.branchId || null,
+    }).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data }
+  },
+
+  // ---- CREATE VEHICLE ----
+  create_vehicle: async (args: {
+    plate: string,
+    vehicleType?: string,
+    brand?: string,
+    model?: string,
+    subId?: string,
+    branchId?: string,
+  }) => {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase.from('Master_Vehicles').insert({
+        Vehicle_Plate: args.plate,
+        Vehicle_Type: args.vehicleType || '4-Wheel',
+        Brand: args.brand || null,
+        Model: args.model || null,
+        Sub_ID: args.subId || null,
+        Active_Status: 'Active',
+        Branch_ID: args.branchId || null,
+    }).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data }
+  },
+
+  // ---- CREATE LOCATION (auto-geocode via Google) ----
+  create_location: async (args: {
+    name: string,
+    address?: string,
+    phone?: string,
+    mapLink?: string,
+    branchId?: string,
+  }) => {
+    const supabase = createAdminClient()
+
+    // Resolve coordinates: prefer an explicit map link, else geocode name/address.
+    let lat: number | null = null
+    let lon: number | null = null
+    const geoQuery = args.mapLink || args.address || args.name
+    try {
+        const geo = await geocodeAddress(geoQuery, args.address)
+        if (geo) { lat = geo.lat; lon = geo.lng }
+    } catch { /* leave null → flagged incomplete */ }
+
+    const { data, error } = await supabase.from('Master_Locations').insert({
+        Name: args.name,
+        Lat: lat,
+        Lon: lon,
+        Phone: args.phone || null,
+        Map_Link: args.mapLink || null,
+        Address: args.address || null,
+        Branch_ID: args.branchId || 'HQ',
+        Is_Incomplete: lat === null,
+    }).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data, geocoded: lat !== null }
+  },
+
+  // ---- CREATE CUSTOMER ----
+  create_customer: async (args: {
+    name: string,
+    contactPerson?: string,
+    phone?: string,
+    address?: string,
+    branchId?: string,
+  }) => {
+    const supabase = createAdminClient()
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+    const customerId = `CUST-${dateStr}-${Math.floor(Math.random() * 1000)}`
+    const { data, error } = await supabase.from('Master_Customers').insert({
+        Customer_ID: customerId,
+        Customer_Name: args.name,
+        Contact_Person: args.contactPerson || null,
+        Phone: args.phone || null,
+        Address: args.address || null,
+        Branch_ID: args.branchId || 'HQ',
+        Credit_Term: 30,
+    }).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data }
+  },
 } as unknown as Record<string, AIToolExecutor>
+
+/**
+ * Write-tool registry — single source of truth for confirm UX + result text.
+ *
+ * Any tool listed here is a "write" action: the assistant must show a confirm
+ * card/button before running it, and only roleId <= minRole may execute it.
+ * Adding a new write tool = add an executor above + declaration below + an
+ * entry here. The chat/LINE routes read this generically — no route edits.
+ */
+type WriteToolMeta = {
+  confirmTitle: string
+  minRole: number
+  summarize: (a: Record<string, unknown>) => string
+  formatSuccess: (data: Record<string, unknown>, result?: Record<string, unknown>) => string
+  cancelMessage: string
+}
+
+const S = (v: unknown) => (v === undefined || v === null || v === '') ? null : String(v)
+const bullets = (...lines: (string | null)[]) => lines.filter(Boolean).join('\n')
+
+export const writeToolMeta: Record<string, WriteToolMeta> = {
+  create_job: {
+    confirmTitle: 'ยืนยันการสร้างงานใหม่?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• ลูกค้า: ${S(a.customerName) ?? '-'}`,
+      `• วันวางแผน: ${S(a.planDate) ?? 'วันนี้'}`,
+      (S(a.origin) || S(a.destination)) ? `• เส้นทาง: ${S(a.origin) ?? '?'} → ${S(a.destination) ?? '?'}` : (S(a.routeName) ? `• เส้นทาง: ${S(a.routeName)}` : null),
+      a.price != null ? `• ราคา: ฿${Number(a.price).toLocaleString()}` : null,
+      S(a.driverName) ? `• คนขับ: ${S(a.driverName)}` : null,
+      S(a.vehiclePlate) ? `• ทะเบียน: ${S(a.vehiclePlate)}` : null,
+      S(a.vehicleType) ? `• ประเภทรถ: ${S(a.vehicleType)}` : null,
+      S(a.notes) ? `• หมายเหตุ: ${S(a.notes)}` : null,
+    ),
+    formatSuccess: (d) => bullets(
+      `✅ สร้างงานสำเร็จ`,
+      `รหัสงาน: ${S(d.Job_ID) ?? '-'}`,
+      `ลูกค้า: ${S(d.Customer_Name) ?? '-'}`,
+      `วันวางแผน: ${S(d.Plan_Date) ?? '-'}`,
+      S(d.Driver_Name) ? `คนขับ: ${S(d.Driver_Name)}` : null,
+      S(d.Vehicle_Plate) ? `ทะเบียน: ${S(d.Vehicle_Plate)}` : null,
+      S(d.Job_Status) ? `สถานะ: ${S(d.Job_Status)}` : null,
+    ),
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้สร้างงาน',
+  },
+  create_driver: {
+    confirmTitle: 'ยืนยันการเพิ่มคนขับใหม่?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• ชื่อคนขับ: ${S(a.name) ?? '-'}`,
+      S(a.phone) ? `• เบอร์โทร: ${S(a.phone)}` : null,
+      S(a.vehiclePlate) ? `• ทะเบียนประจำ: ${S(a.vehiclePlate)}` : null,
+      S(a.vehicleType) ? `• ประเภทรถ: ${S(a.vehicleType)}` : null,
+    ),
+    formatSuccess: (d) => bullets(
+      `✅ เพิ่มคนขับสำเร็จ`,
+      `รหัส: ${S(d.Driver_ID) ?? '-'}`,
+      `ชื่อ: ${S(d.Driver_Name) ?? '-'}`,
+      S(d.Mobile_No) ? `เบอร์: ${S(d.Mobile_No)}` : null,
+    ),
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้เพิ่มคนขับ',
+  },
+  create_vehicle: {
+    confirmTitle: 'ยืนยันการเพิ่มรถ/ทะเบียนใหม่?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• ทะเบียน: ${S(a.plate) ?? '-'}`,
+      `• ประเภทรถ: ${S(a.vehicleType) ?? '4-Wheel'}`,
+      S(a.brand) ? `• ยี่ห้อ: ${S(a.brand)}` : null,
+      S(a.model) ? `• รุ่น: ${S(a.model)}` : null,
+      S(a.subId) ? `• รถร่วม (Sub_ID): ${S(a.subId)}` : null,
+    ),
+    formatSuccess: (d) => bullets(
+      `✅ เพิ่มรถสำเร็จ`,
+      `ทะเบียน: ${S(d.Vehicle_Plate) ?? '-'}`,
+      `ประเภท: ${S(d.Vehicle_Type) ?? '-'}`,
+    ),
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้เพิ่มรถ',
+  },
+  create_location: {
+    confirmTitle: 'ยืนยันการเพิ่มสถานที่ใหม่?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• ชื่อสถานที่: ${S(a.name) ?? '-'}`,
+      S(a.address) ? `• ที่อยู่: ${S(a.address)}` : null,
+      S(a.mapLink) ? `• ลิงก์แผนที่: ${S(a.mapLink)}` : null,
+      S(a.phone) ? `• เบอร์โทร: ${S(a.phone)}` : null,
+      `\n(ระบบจะหาพิกัดให้อัตโนมัติด้วย Google Maps)`,
+    ),
+    formatSuccess: (d, r) => bullets(
+      `✅ เพิ่มสถานที่สำเร็จ`,
+      `ชื่อ: ${S(d.Name) ?? '-'}`,
+      r?.geocoded ? `พิกัด: ${S(d.Lat)}, ${S(d.Lon)} ✓` : `⚠️ ยังหาพิกัดไม่ได้ — ระบบทำเครื่องหมายไว้ให้แก้ทีหลัง`,
+    ),
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้เพิ่มสถานที่',
+  },
+  create_customer: {
+    confirmTitle: 'ยืนยันการเพิ่มลูกค้าใหม่?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• ชื่อลูกค้า: ${S(a.name) ?? '-'}`,
+      S(a.contactPerson) ? `• ผู้ติดต่อ: ${S(a.contactPerson)}` : null,
+      S(a.phone) ? `• เบอร์โทร: ${S(a.phone)}` : null,
+      S(a.address) ? `• ที่อยู่: ${S(a.address)}` : null,
+    ),
+    formatSuccess: (d) => bullets(
+      `✅ เพิ่มลูกค้าสำเร็จ`,
+      `รหัส: ${S(d.Customer_ID) ?? '-'}`,
+      `ชื่อ: ${S(d.Customer_Name) ?? '-'}`,
+    ),
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้เพิ่มลูกค้า',
+  },
+  create_fuel_log: {
+    confirmTitle: 'ยืนยันการบันทึกเติมน้ำมัน?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• ทะเบียน: ${S(a.plate) ?? '-'}`,
+      `• ปริมาณ: ${S(a.liters) ?? '-'} ลิตร`,
+      `• ราคารวม: ฿${a.price != null ? Number(a.price).toLocaleString() : '-'}`,
+      S(a.station) ? `• ปั๊ม: ${S(a.station)}` : null,
+      a.odometer != null ? `• เลขไมล์: ${Number(a.odometer).toLocaleString()}` : null,
+    ),
+    formatSuccess: () => `✅ บันทึกการเติมน้ำมันเรียบร้อยครับ`,
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้บันทึกน้ำมัน',
+  },
+  create_damage_report: {
+    confirmTitle: 'ยืนยันการแจ้งเคลม/ความเสียหาย?',
+    minRole: 5,
+    summarize: (a) => bullets(
+      `• งาน: ${S(a.jobId) ?? '-'}`,
+      `• รายละเอียด: ${S(a.description) ?? '-'}`,
+      a.estimatedCost != null ? `• มูลค่าประเมิน: ฿${Number(a.estimatedCost).toLocaleString()}` : null,
+    ),
+    formatSuccess: () => `✅ บันทึกรายการเคลมเรียบร้อยครับ`,
+    cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้บันทึกเคลม',
+  },
+}
+
+/** Is this tool a write action requiring confirmation? */
+export function isWriteTool(name: string): boolean {
+  return name in writeToolMeta
+}
+
+/** Build the confirm-card payload the UI renders for a pending write action. */
+export function buildPendingAction(name: string, args: Record<string, unknown>) {
+  const meta = writeToolMeta[name]
+  return {
+    name,
+    args,
+    title: meta?.confirmTitle ?? 'ยืนยันการดำเนินการ?',
+    summary: meta ? meta.summarize(args) : JSON.stringify(args),
+    cancelMessage: meta?.cancelMessage ?? 'ยกเลิกแล้วครับ',
+  }
+}
+
+/** Execute a confirmed write action and return a Thai result message. */
+export async function executeWriteTool(
+  name: string,
+  args: Record<string, unknown>,
+  roleId: number,
+): Promise<string> {
+  const meta = writeToolMeta[name]
+  if (!meta) return 'ไม่รู้จักคำสั่งนี้ครับ'
+  if (roleId > meta.minRole) return '⛔ บัญชีนี้ไม่มีสิทธิ์ทำรายการนี้ครับ'
+  const executor = aiToolExecutors[name]
+  if (!executor) return 'ไม่รู้จักคำสั่งนี้ครับ'
+  const result = (await executor(args)) as unknown as Record<string, unknown>
+  if (result?.success) {
+    return meta.formatSuccess((result.data as Record<string, unknown>) || {}, result)
+  }
+  return `❌ ทำรายการไม่สำเร็จ: ${result?.error || 'unknown error'}`
+}
 
 /**
  * Gemini Tool Definitions (Function Declarations)
@@ -530,13 +803,103 @@ export const geminiToolDefinitions = [
             type: "object",
             properties: {
                 customerName: { type: "string", description: "ชื่อลูกค้า" },
-                planDate: { type: "string", description: "วันที่วางแผนงาน (YYYY-MM-DD)" },
-                routeName: { type: "string", description: "ชื่อเส้นทางหรือจุดส่งของ" },
+                planDate: { type: "string", description: "วันที่วางแผนงาน (YYYY-MM-DD) ถ้าไม่ระบุใช้วันนี้" },
+                deliveryDate: { type: "string", description: "วันที่ส่งของ (YYYY-MM-DD)" },
+                routeName: { type: "string", description: "ชื่อเส้นทาง" },
+                origin: { type: "string", description: "ต้นทาง/จุดรับของ" },
+                destination: { type: "string", description: "ปลายทาง/จุดส่งของ" },
                 price: { type: "number", description: "ราคาค่าขนส่ง" },
                 notes: { type: "string", description: "หมายเหตุเพิ่มเติม" },
-                vehicleType: { type: "string", description: "ประเภทรถที่ต้องการ (เช่น 4W, 6W, 10W)" }
+                vehicleType: { type: "string", description: "ประเภทรถที่ต้องการ (เช่น 4W, 6W, 10W)" },
+                driverName: { type: "string", description: "ชื่อคนขับที่จะมอบหมาย" },
+                vehiclePlate: { type: "string", description: "ทะเบียนรถ" }
             },
             required: ["customerName"]
+        }
+    },
+    {
+        name: "create_driver",
+        description: "เพิ่มคนขับใหม่เข้าระบบ",
+        parameters: {
+            type: "object",
+            properties: {
+                name: { type: "string", description: "ชื่อคนขับ" },
+                phone: { type: "string", description: "เบอร์โทรศัพท์" },
+                vehiclePlate: { type: "string", description: "ทะเบียนรถประจำตัว (ถ้ามี)" },
+                vehicleType: { type: "string", description: "ประเภทรถ (เช่น 4W, 6W, 10W)" }
+            },
+            required: ["name"]
+        }
+    },
+    {
+        name: "create_vehicle",
+        description: "เพิ่มรถ/ทะเบียนใหม่เข้าระบบ",
+        parameters: {
+            type: "object",
+            properties: {
+                plate: { type: "string", description: "ทะเบียนรถ" },
+                vehicleType: { type: "string", description: "ประเภทรถ (เช่น 4W, 6W, 10W)" },
+                brand: { type: "string", description: "ยี่ห้อรถ" },
+                model: { type: "string", description: "รุ่นรถ" },
+                subId: { type: "string", description: "รหัสรถร่วม (Sub_ID) ถ้าเป็นรถร่วม" }
+            },
+            required: ["plate"]
+        }
+    },
+    {
+        name: "create_location",
+        description: "เพิ่มสถานที่/จุดรับส่งใหม่ (ระบบจะหาพิกัดให้อัตโนมัติด้วย Google Maps จากชื่อ/ที่อยู่/ลิงก์แผนที่)",
+        parameters: {
+            type: "object",
+            properties: {
+                name: { type: "string", description: "ชื่อสถานที่" },
+                address: { type: "string", description: "ที่อยู่เต็ม" },
+                mapLink: { type: "string", description: "ลิงก์ Google Maps (ถ้ามี จะแม่นที่สุด)" },
+                phone: { type: "string", description: "เบอร์โทรติดต่อ" }
+            },
+            required: ["name"]
+        }
+    },
+    {
+        name: "create_customer",
+        description: "เพิ่มลูกค้าใหม่เข้าระบบ",
+        parameters: {
+            type: "object",
+            properties: {
+                name: { type: "string", description: "ชื่อลูกค้า/บริษัท" },
+                contactPerson: { type: "string", description: "ชื่อผู้ติดต่อ" },
+                phone: { type: "string", description: "เบอร์โทรศัพท์" },
+                address: { type: "string", description: "ที่อยู่" }
+            },
+            required: ["name"]
+        }
+    },
+    {
+        name: "create_fuel_log",
+        description: "บันทึกการเติมน้ำมันของรถ",
+        parameters: {
+            type: "object",
+            properties: {
+                plate: { type: "string", description: "ทะเบียนรถ" },
+                liters: { type: "number", description: "จำนวนลิตร" },
+                price: { type: "number", description: "ราคารวม (บาท)" },
+                odometer: { type: "number", description: "เลขไมล์" },
+                station: { type: "string", description: "ชื่อปั๊ม" }
+            },
+            required: ["plate", "liters", "price"]
+        }
+    },
+    {
+        name: "create_damage_report",
+        description: "บันทึกรายการเคลม/ความเสียหายของงาน",
+        parameters: {
+            type: "object",
+            properties: {
+                jobId: { type: "string", description: "รหัสงาน" },
+                description: { type: "string", description: "รายละเอียดความเสียหาย" },
+                estimatedCost: { type: "number", description: "มูลค่าประเมิน (บาท)" }
+            },
+            required: ["jobId", "description"]
         }
     },
     {
@@ -583,3 +946,12 @@ export const geminiToolDefinitions = [
         parameters: { type: "object", properties: {} }
     }
 ]
+
+/**
+ * Function declarations for the WRITE tools (everything in writeToolMeta),
+ * fed to Gemini so it can trigger these actions. The chat route keeps its own
+ * richer create_job declaration, so this list excludes create_job.
+ */
+export const writeToolDeclarations = geminiToolDefinitions.filter(
+    (d) => (d.name in writeToolMeta) && d.name !== 'create_job'
+)

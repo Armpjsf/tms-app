@@ -228,7 +228,7 @@ export default function LocationPicker({
       return
     }
 
-    // 3. Debounced Search: AI POI Search + OpenStreetMap
+    // 3. Fast Debounced Search: Google Places first (instant), with OSM/AI fallback
     debounceRef.current = setTimeout(async () => {
       abortRef.current?.abort()
       const ctrl = new AbortController()
@@ -238,24 +238,11 @@ export default function LocationPicker({
       try {
         const results: Suggestion[] = []
 
-        // 3.0 Google Places (New) — most accurate, shown first
-        const googleSearchPromise = searchPlacesGoogle(q).catch(() => [])
+        // 3.0 Google Places (New) — most accurate & fastest
+        const googleResults = await searchPlacesGoogle(q).catch(() => [])
 
-        // 3.1 AI Geocoding Search (Gemini) — Prioritize business/company/factory results
-        const aiSearchPromise = searchLocationWithAI(q).catch(() => [])
+        if (ctrl.signal.aborted) return
 
-        // 3.2 Photon OSM Search
-        const bbox = `${TH_BBOX.minLon},${TH_BBOX.minLat},${TH_BBOX.maxLon},${TH_BBOX.maxLat}`
-        const photonUrl =
-          `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lang=default` +
-          `&lat=${TH_CENTER[0]}&lon=${TH_CENTER[1]}&bbox=${bbox}`
-        const photonPromise = fetch(photonUrl, { signal: ctrl.signal })
-          .then((res) => (res.ok ? res.json() : null))
-          .catch(() => null)
-
-        const [googleResults, aiResults, photonData] = await Promise.all([googleSearchPromise, aiSearchPromise, photonPromise])
-
-        // Add Google Places results first (most accurate)
         if (googleResults && googleResults.length > 0) {
           for (const item of googleResults) {
             results.push({
@@ -266,22 +253,22 @@ export default function LocationPicker({
               source: item.source || 'google',
             })
           }
+          setSuggestions(results.slice(0, 8))
+          setShowList(true)
+          setSearching(false)
+          return
         }
 
-        // Add AI results next (with ✨ AI Badge)
-        if (aiResults && aiResults.length > 0) {
-          for (const item of aiResults) {
-            results.push({
-              label: item.name,
-              address: item.address,
-              lat: item.lat,
-              lng: item.lng,
-              source: item.source || 'ai',
-            })
-          }
-        }
+        // 3.1 Photon OSM Search (Fast fallback)
+        const bbox = `${TH_BBOX.minLon},${TH_BBOX.minLat},${TH_BBOX.maxLon},${TH_BBOX.maxLat}`
+        const photonUrl =
+          `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lang=default` +
+          `&lat=${TH_CENTER[0]}&lon=${TH_CENTER[1]}&bbox=${bbox}`
+        const photonRes = await fetch(photonUrl, { signal: ctrl.signal }).catch(() => null)
+        const photonData = photonRes && photonRes.ok ? await photonRes.json().catch(() => null) : null
 
-        // Add Photon results
+        if (ctrl.signal.aborted) return
+
         if (photonData?.features) {
           const feats: PhotonFeature[] = photonData.features
           const osmItems = feats
@@ -301,8 +288,31 @@ export default function LocationPicker({
           }
         }
 
-        // Fallback to Nominatim if needed
-        if (results.length < 2) {
+        if (results.length > 0) {
+          setSuggestions(results.slice(0, 8))
+          setShowList(true)
+          setSearching(false)
+          return
+        }
+
+        // 3.2 AI Geocoding Search (Gemini) — Only if Google and OSM found nothing
+        const aiResults = await searchLocationWithAI(q).catch(() => [])
+        if (ctrl.signal.aborted) return
+
+        if (aiResults && aiResults.length > 0) {
+          for (const item of aiResults) {
+            results.push({
+              label: item.name,
+              address: item.address,
+              lat: item.lat,
+              lng: item.lng,
+              source: item.source || 'ai',
+            })
+          }
+        }
+
+        // Fallback to Nominatim if still empty
+        if (results.length === 0) {
           try {
             const nres = await fetch(
               `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=th&accept-language=th&addressdetails=1`,
@@ -327,14 +337,18 @@ export default function LocationPicker({
           }
         }
 
-        setSuggestions(results.slice(0, 8))
-        setShowList(true)
+        if (!ctrl.signal.aborted) {
+          setSuggestions(results.slice(0, 8))
+          setShowList(true)
+        }
       } catch {
         /* ignore */
       } finally {
-        setSearching(false)
+        if (!ctrl.signal.aborted) {
+          setSearching(false)
+        }
       }
-    }, 400)
+    }, 250)
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)

@@ -9,7 +9,7 @@
  */
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const getGoogleMapsApiKey = () => process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 const TH_BOUNDS = { minLat: 5.5, maxLat: 20.6, minLng: 97.3, maxLng: 105.7 };
 const inThailand = (lat: number, lng: number) =>
   lat >= TH_BOUNDS.minLat && lat <= TH_BOUNDS.maxLat &&
@@ -38,14 +38,15 @@ export type AILocationResult = {
  */
 export async function searchPlacesGoogle(query: string): Promise<AILocationResult[]> {
   const clean = query.trim();
-  if (!GOOGLE_MAPS_API_KEY || clean.length < 2) return [];
+  const apiKey = getGoogleMapsApiKey();
+  if (!apiKey || clean.length < 2) return [];
 
   try {
     const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+        "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location",
       },
       body: JSON.stringify({
@@ -62,7 +63,7 @@ export async function searchPlacesGoogle(query: string): Promise<AILocationResul
           },
         },
       }),
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(4000),
     });
 
     if (!res.ok) return [];
@@ -100,12 +101,13 @@ export async function searchPlacesGoogle(query: string): Promise<AILocationResul
  * Server-side, capped 300/day. Returns null on failure so callers fall back.
  */
 async function geocodeGoogle(address: string): Promise<GeocodeResult | null> {
-  if (!GOOGLE_MAPS_API_KEY) return null;
+  const apiKey = getGoogleMapsApiKey();
+  if (!apiKey) return null;
   try {
     const url =
       `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}` +
-      `&language=th&region=th&components=country:TH&key=${GOOGLE_MAPS_API_KEY}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      `&language=th&region=th&components=country:TH&key=${apiKey}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
     if (!res.ok) return null;
     const data = (await res.json()) as {
       status?: string;
@@ -132,12 +134,13 @@ async function geocodeGoogle(address: string): Promise<GeocodeResult | null> {
  * Google reverse geocode — coordinates → Thai address. Server-side, capped.
  */
 async function reverseGeocodeGoogle(lat: number, lng: number): Promise<string | null> {
-  if (!GOOGLE_MAPS_API_KEY) return null;
+  const apiKey = getGoogleMapsApiKey();
+  if (!apiKey) return null;
   try {
     const url =
       `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}` +
-      `&language=th&key=${GOOGLE_MAPS_API_KEY}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      `&language=th&key=${apiKey}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
     if (!res.ok) return null;
     const data = (await res.json()) as {
       status?: string;

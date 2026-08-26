@@ -77,7 +77,7 @@ function MarkdownLite({ text }: { text: string }) {
     return <div className="space-y-1.5">{blocks}</div>
 }
 
-type PendingAction = { name: string; args: Record<string, unknown>; summary: string }
+type PendingAction = { name: string; args: Record<string, unknown>; summary: string; title?: string; cancelMessage?: string }
 const ACTION_SENTINEL = "@@ACTION@@"
 
 export function GlobalAIAssistant() {
@@ -195,8 +195,9 @@ export function GlobalAIAssistant() {
     }
 
     const cancelAction = () => {
+        const msg = pendingAction?.cancelMessage || "ยกเลิกแล้วครับ"
         setPendingAction(null)
-        setMessages(prev => [...prev, { role: 'bot', content: "ยกเลิกแล้วครับ ไม่ได้สร้างงาน" }])
+        setMessages(prev => [...prev, { role: 'bot', content: msg }])
     }
 
     return (
@@ -303,7 +304,7 @@ export function GlobalAIAssistant() {
                                                     <Bot size={16} />
                                                 </div>
                                                 <div className="max-w-[85%] bg-primary/5 border border-primary/30 p-4 rounded-2xl rounded-tl-none space-y-3 shadow-sm">
-                                                    <p className="text-sm font-black text-primary">ยืนยันการสร้างงานใหม่?</p>
+                                                    <p className="text-sm font-black text-primary">{pendingAction.title || "ยืนยันการดำเนินการ?"}</p>
                                                     <pre className="text-sm font-medium whitespace-pre-wrap leading-relaxed text-foreground font-sans">{pendingAction.summary}</pre>
                                                     <div className="flex gap-2 pt-1">
                                                         <button onClick={confirmAction} disabled={loading} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50">✅ ยืนยัน</button>

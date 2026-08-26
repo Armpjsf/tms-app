@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/server'
 import { replyToUser as _replyToUser, resolveWebhookBot, getMessageContent as _getMessageContent, pushToUser as _pushToUser, pushToCustomerActive } from '@/lib/integrations/line'
-import { aiToolExecutors, geminiToolDefinitions } from '@/lib/ai/tools'
+import { aiToolExecutors, geminiToolDefinitions, isWriteTool, buildPendingAction, executeWriteTool } from '@/lib/ai/tools'
+import { savePendingAction, popPendingAction } from '@/lib/ai/pending-actions'
 import { uploadFileToSupabase } from '@/lib/actions/supabase-upload'
 import { getDetailedDriverAnalytics } from '@/lib/supabase/fleet-analytics'
 import { transitionJobStatus } from "@/services/job-status-machine"
@@ -183,10 +184,11 @@ function splitLineMessage(text: string, maxLen = 1900): string[] {
 // Direct REST call to Gemini (Supports Function Calling)
 // ─────────────────────────────────────────────────────────────────
 async function callGemini(
-    systemPrompt: string, 
-    userMessage: string, 
-    history: Record<string, unknown>[] = []
-): Promise<{ text: string | null, error: string }> {
+    systemPrompt: string,
+    userMessage: string,
+    history: Record<string, unknown>[] = [],
+    allowWrite = false,
+): Promise<{ text: string | null, error: string, pendingAction?: { name: string, args: Record<string, unknown> } }> {
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
     if (!apiKey) return { text: null, error: 'NO_API_KEY' }
 
@@ -223,7 +225,16 @@ async function callGemini(
                 if (part.functionCall) {
                     const { name, args } = part.functionCall
                     console.log(`[AI Tool] Executing: ${name}`, args)
-                    
+
+                    // Write actions never run inline — hand them back for a
+                    // confirm button. Non-admins get a permission message instead.
+                    if (isWriteTool(name)) {
+                        if (!allowWrite) {
+                            return { text: '⛔ คำสั่งนี้ต้องเป็นแอดมินเท่านั้นครับ', error: '' }
+                        }
+                        return { text: null, error: '', pendingAction: { name, args: (args || {}) as Record<string, unknown> } }
+                    }
+
                     const executor = aiToolExecutors[name]
                     let result
                     if (executor) {
@@ -1833,11 +1844,53 @@ export async function POST(req: NextRequest) {
                     }
                 }
 
+                // 4b. AI write-action confirm / cancel (admins only)
+                //     After an AI write action is proposed, the admin taps the
+                //     button (or types the word) to run or discard it.
+                if (boundAdmin && (rawText === 'ยืนยันคำสั่ง' || rawText === 'ยกเลิกคำสั่ง')) {
+                    const pending = await popPendingAction(userId)
+                    if (!pending) {
+                        await replyToUser(replyToken, 'ไม่พบคำสั่งที่รอยืนยัน (อาจหมดเวลาแล้ว) กรุณาสั่งใหม่อีกครั้งครับ')
+                        continue
+                    }
+                    if (rawText === 'ยกเลิกคำสั่ง') {
+                        const meta = buildPendingAction(pending.name, pending.args)
+                        await replyToUser(replyToken, meta.cancelMessage)
+                        continue
+                    }
+                    // Inject the admin's branch as a default, then execute.
+                    const adminBranch = boundAdmin.Branch_ID
+                    const args: Record<string, unknown> = { ...pending.args }
+                    if (adminBranch && (args.branchId == null || args.branchId === '')) args.branchId = adminBranch
+                    const resultText = await executeWriteTool(pending.name, args, Number(boundAdmin.Role_ID))
+                    await replyToUser(replyToken, resultText)
+                    continue
+                }
+
                 // 5. AI fallback (bound users only)
                 if (boundAdmin || boundDriver || boundCustomer) {
                     const userRole = boundAdmin ? 'Admin' : (boundDriver ? 'Driver' : 'Customer')
                     const systemPrompt = await buildAIContext(branchId, userName, userRole)
-                    const { text: aiResponse, error: aiError } = await callGemini(systemPrompt, rawText)
+                    const canWrite = !!boundAdmin && [1, 2].includes(Number(boundAdmin.Role_ID))
+                    const { text: aiResponse, error: aiError, pendingAction } = await callGemini(systemPrompt, rawText, [], canWrite)
+
+                    // Write action proposed → save it and ask for confirmation.
+                    if (pendingAction) {
+                        await savePendingAction(userId, pendingAction.name, pendingAction.args)
+                        const meta = buildPendingAction(pendingAction.name, pendingAction.args)
+                        await replyToUser(replyToken, {
+                            type: 'text',
+                            text: `${meta.title}\n\n${meta.summary}\n\n👇 กดยืนยันเพื่อดำเนินการ`,
+                            quickReply: {
+                                items: [
+                                    { type: 'action', action: { type: 'message', label: '✅ ยืนยัน', text: 'ยืนยันคำสั่ง' } },
+                                    { type: 'action', action: { type: 'message', label: 'ยกเลิก', text: 'ยกเลิกคำสั่ง' } },
+                                ],
+                            },
+                        })
+                        continue
+                    }
+
                     if (aiResponse) {
                         // LINE replyToken is single-use — use push for overflow parts
                         const parts = splitLineMessage(aiResponse)

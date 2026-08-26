@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { createAdminClient } from '@/utils/supabase/server'
-import { aiToolExecutors } from '@/lib/ai/tools'
+import { aiToolExecutors, buildPendingAction, executeWriteTool, writeToolDeclarations } from '@/lib/ai/tools'
 import { getUserBranchId } from '@/lib/permissions'
 import {
     REVENUE_STATUSES,
@@ -104,7 +104,7 @@ async function callGeminiStream(
         generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
     }
     if (enableTools) {
-        body.tools = [{ functionDeclarations: [CREATE_JOB_DECLARATION] }]
+        body.tools = [{ functionDeclarations: [CREATE_JOB_DECLARATION, ...writeToolDeclarations] }]
     }
 
     return fetch(url, {
@@ -648,21 +648,6 @@ const ACTION_SENTINEL = '@@ACTION@@'
 // Marks a deterministic visual payload (charts/tables) appended after the text.
 const VIZ_SENTINEL = '@@VIZ@@'
 
-function summarizeCreateJob(a: Record<string, unknown>): string {
-    const s = (v: unknown) => (v === undefined || v === null || v === '') ? null : String(v)
-    const lines = [
-        `• ลูกค้า: ${s(a.customerName) ?? '-'}`,
-        `• วันวางแผน: ${s(a.planDate) ?? 'วันนี้'}`,
-        (s(a.origin) || s(a.destination)) ? `• เส้นทาง: ${s(a.origin) ?? '?'} → ${s(a.destination) ?? '?'}` : (s(a.routeName) ? `• เส้นทาง: ${s(a.routeName)}` : null),
-        a.price != null ? `• ราคา: ฿${Number(a.price).toLocaleString()}` : null,
-        s(a.driverName) ? `• คนขับ: ${s(a.driverName)}` : null,
-        s(a.vehiclePlate) ? `• ทะเบียน: ${s(a.vehiclePlate)}` : null,
-        s(a.vehicleType) ? `• ประเภทรถ: ${s(a.vehicleType)}` : null,
-        s(a.notes) ? `• หมายเหตุ: ${s(a.notes)}` : null,
-    ].filter(Boolean)
-    return lines.join('\n')
-}
-
 // ─────────────────────────────────────────────────────────────────
 // Local LLM (Ollama) answer path. Streams a plain-text reply from a local
 // model and appends the same @@VIZ@@ visuals. No function-calling here, so
@@ -776,20 +761,11 @@ export async function POST(req: NextRequest) {
             if (!canWrite) {
                 return NextResponse.json({ response: '⛔ บัญชีนี้ไม่มีสิทธิ์สร้าง/แก้ไขข้อมูลครับ' })
             }
-            if (confirm.name === 'create_job') {
-                const result = await aiToolExecutors.create_job({ ...(confirm.args || {}), branchId })
-                if (result?.success) {
-                    const d = result.data as { Job_ID?: string; Customer_Name?: string; Plan_Date?: string; Driver_Name?: string; Vehicle_Plate?: string; Job_Status?: string }
-                    const extra = [
-                        d?.Driver_Name ? `คนขับ: ${d.Driver_Name}` : null,
-                        d?.Vehicle_Plate ? `ทะเบียน: ${d.Vehicle_Plate}` : null,
-                        d?.Job_Status ? `สถานะ: ${d.Job_Status}` : null,
-                    ].filter(Boolean).join('\n')
-                    return NextResponse.json({ response: `✅ สร้างงานสำเร็จ\nรหัสงาน: ${d?.Job_ID}\nลูกค้า: ${d?.Customer_Name}\nวันวางแผน: ${d?.Plan_Date}${extra ? '\n' + extra : ''}` })
-                }
-                return NextResponse.json({ response: `❌ สร้างงานไม่สำเร็จ: ${result?.error || 'unknown error'}` })
-            }
-            return NextResponse.json({ response: 'ไม่รู้จักคำสั่งนี้ครับ' })
+            // Inject the admin's branch as a default when the tool didn't set one.
+            const args: Record<string, unknown> = { ...(confirm.args || {}) }
+            if (branchId && (args.branchId == null || args.branchId === '')) args.branchId = branchId
+            const response = await executeWriteTool(confirm.name, args, session.roleId as number)
+            return NextResponse.json({ response })
         }
 
         // 1. Knowledge base (cached per branch for 45s) + RAG + on-demand metric
@@ -821,11 +797,7 @@ export async function POST(req: NextRequest) {
 
                 // Build a pending-action payload from a Gemini function call
                 const pendingActionText = (name: string, args: Record<string, unknown>) =>
-                    ACTION_SENTINEL + JSON.stringify({
-                        name,
-                        args,
-                        summary: name === 'create_job' ? summarizeCreateJob(args) : JSON.stringify(args),
-                    })
+                    ACTION_SENTINEL + JSON.stringify(buildPendingAction(name, args))
 
                 // Non-streaming callers: accumulate full text (or action) -> JSON
                 if (!wantStream) {
@@ -838,7 +810,7 @@ export async function POST(req: NextRequest) {
                         }
                     } catch { /* ignore */ }
                     if (action) {
-                        return NextResponse.json({ pendingAction: { ...action, summary: action.name === 'create_job' ? summarizeCreateJob(action.args) : '' } })
+                        return NextResponse.json({ pendingAction: buildPendingAction(action.name, action.args) })
                     }
                     if (!full) full = buildSafeResponse(message, kb, '')
                     return NextResponse.json({ response: full })
