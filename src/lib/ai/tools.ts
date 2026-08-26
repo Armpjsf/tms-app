@@ -461,16 +461,27 @@ export const aiToolExecutors = {
     liters: number,
     price: number,
     odometer?: number,
-    station?: string
+    station?: string,
+    dateTime?: string,
+    photoUrl?: string,
+    driverId?: string,
+    branchId?: string,
   }) => {
     const supabase = createAdminClient()
+    const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }).replace(/-/g, '')
+    const logId = `FUEL-${dateStr}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`
     const { data, error } = await supabase.from('Fuel_Logs').insert({
+        Log_ID: logId,
         Vehicle_Plate: args.plate,
         Liters: args.liters,
         Price_Total: args.price,
-        Odometer: args.odometer,
-        Station_Name: args.station,
-        Date_Time: new Date().toISOString()
+        Odometer: args.odometer ?? null,
+        Station_Name: args.station || 'ปั๊มน้ำมัน',
+        Date_Time: args.dateTime || new Date().toISOString(),
+        Photo_Url: args.photoUrl || null,
+        Driver_ID: args.driverId || null,
+        Branch_ID: args.branchId || null,
+        Status: 'Pending',
     }).select().single()
     return error ? { success: false, error: error.message } : { success: true, data }
   },

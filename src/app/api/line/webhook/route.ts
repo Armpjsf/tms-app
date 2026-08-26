@@ -2090,9 +2090,11 @@ export async function POST(req: NextRequest) {
                           "stationName": "Gas station name (if fuel receipt, e.g. PTT, Shell, Bangchak)",
                           "priceTotal": 1200.00,
                           "liters": 45.5,
+                          "odometer": 123456,
                           "vehiclePlate": "Vehicle license plate specified on receipt (if fuel receipt)",
                           "dateTime": "Refueling date and time in YYYY-MM-DDTHH:mm:ss format"
                         }
+                        (odometer = the vehicle mileage / เลขไมล์ if printed on the receipt, else omit)
                         `.trim()
 
                         let classification = 'other'
@@ -2131,13 +2133,14 @@ export async function POST(req: NextRequest) {
                                 Vehicle_Plate: extracted.vehiclePlate || boundDriver.Vehicle_Plate || null,
                                 Liters: Number(extracted.liters) || 0,
                                 Price_Total: Number(extracted.priceTotal) || 0,
+                                Odometer: extracted.odometer != null ? Number(extracted.odometer) : null,
                                 Station_Name: extracted.stationName || 'ปั๊มน้ำมัน',
                                 Photo_Url: uploadRes.directLink,
                                 Branch_ID: boundDriver.Branch_ID || null,
                                 Status: 'Pending'
                             })
 
-                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n📍 สถานี: ${extracted.stationName || 'ไม่ระบุ'}\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n🛻 ทะเบียน: ${extracted.vehiclePlate || boundDriver.Vehicle_Plate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
+                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n📍 สถานี: ${extracted.stationName || 'ไม่ระบุ'}\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${extracted.vehiclePlate || boundDriver.Vehicle_Plate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
                             continue
                         }
 
@@ -2219,6 +2222,58 @@ export async function POST(req: NextRequest) {
                                 await replyToUser(replyToken, `⚠️ ตรวจพบเป็นเอกสาร/ภาพการส่งมอบสินค้า แต่ขณะนี้คุณไม่มีงานที่กำลังดำเนินการอยู่ในระบบครับ\n\nโปรดตรวจสอบสถานะงานในระบบก่อนอัปโหลดรูปภาพครับ`)
                                 continue
                             }
+                        }
+                    }
+
+                    // ── Admin fuel-receipt OCR → confirm create_fuel_log ─────────────────────────────
+                    // Admins can snap a fuel receipt for ANY vehicle; we extract
+                    // the details and ask for a confirm button before saving.
+                    if (boundAdmin && event.message.type === 'image') {
+                        const fuelPrompt = `
+                        Analyze this image. If it is a fuel purchase receipt / gas station invoice, return JSON ONLY:
+                        {
+                          "isFuel": true,
+                          "stationName": "e.g. PTT, Shell, Bangchak",
+                          "priceTotal": 1200.00,
+                          "liters": 45.5,
+                          "odometer": 123456,
+                          "vehiclePlate": "license plate on the receipt if any",
+                          "dateTime": "YYYY-MM-DDTHH:mm:ss"
+                        }
+                        If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
+                        `.trim()
+                        let fuel: Record<string, unknown> = {}
+                        try {
+                            const t = await callGeminiMultimodal('You are a logistics AI.', fuelPrompt, mimeType, buffer)
+                            if (t) fuel = JSON.parse(t.replace(/```json/g, '').replace(/```/g, '').trim())
+                        } catch { /* not fuel */ }
+
+                        if (fuel.isFuel) {
+                            const uploadRes = await uploadFileToSupabase(buffer, `fuel_${Date.now()}.jpg`, 'image/jpeg', 'Fuel_Photos')
+                            const args: Record<string, unknown> = {
+                                plate: fuel.vehiclePlate || '',
+                                liters: Number(fuel.liters) || 0,
+                                price: Number(fuel.priceTotal) || 0,
+                                odometer: fuel.odometer != null ? Number(fuel.odometer) : undefined,
+                                station: fuel.stationName || '',
+                                dateTime: fuel.dateTime || undefined,
+                                photoUrl: uploadRes.directLink,
+                                branchId: boundAdmin.Branch_ID || undefined,
+                            }
+                            await savePendingAction(userId, 'create_fuel_log', args)
+                            const meta = buildPendingAction('create_fuel_log', args)
+                            const plateNote = args.plate ? '' : '\n\n⚠️ ไม่พบทะเบียนบนใบเสร็จ (บันทึกได้แต่ควรระบุทะเบียนในระบบภายหลัง)'
+                            await replyToUser(replyToken, {
+                                type: 'text',
+                                text: `${meta.title}\n\n${meta.summary}${plateNote}\n\n👇 กดยืนยันเพื่อบันทึก`,
+                                quickReply: {
+                                    items: [
+                                        { type: 'action', action: { type: 'message', label: '✅ ยืนยัน', text: 'ยืนยันคำสั่ง' } },
+                                        { type: 'action', action: { type: 'message', label: 'ยกเลิก', text: 'ยกเลิกคำสั่ง' } },
+                                    ],
+                                },
+                            })
+                            continue
                         }
                     }
 
