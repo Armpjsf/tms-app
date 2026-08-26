@@ -1980,9 +1980,11 @@ export async function POST(req: NextRequest) {
 
                     // ── Driver-specific Smart Photo Processing (ePOD & Fuel Receipts) ──────────────────
                     if (boundDriver && event.message.type === 'image') {
-                        // Check if the driver has an active state from our stateful flow
+                        // Check if the driver has an active state from our stateful flow.
+                        // In group chats we only accept fuel receipts (drivers are present
+                        // together), so the POD/state flow is 1:1 only.
                         const driverState = getDriverState(userId)
-                        if (driverState) {
+                        if (driverState && !inGroup) {
                             const jobId = driverState.jobId
                             const stateType = driverState.state
                             
@@ -2117,6 +2119,7 @@ export async function POST(req: NextRequest) {
                           "dateTime": "Refueling date and time in YYYY-MM-DDTHH:mm:ss format"
                         }
                         (odometer = the vehicle mileage / เลขไมล์ if printed on the receipt, else omit)
+                        For dateTime: read the date printed ON the receipt (a driver may send it days late). Thai receipts often use the Buddhist year (พ.ศ., e.g. 2568 = 2025) and dd/MM/yyyy — convert to Gregorian ISO. If no date is printed, return null (do NOT guess today).
                         `.trim()
 
                         let classification = 'other'
@@ -2165,6 +2168,10 @@ export async function POST(req: NextRequest) {
                             await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n📍 สถานี: ${extracted.stationName || 'ไม่ระบุ'}\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${extracted.vehiclePlate || boundDriver.Vehicle_Plate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
                             continue
                         }
+
+                        // In a group chat, drivers may only submit fuel receipts —
+                        // ignore POD/other images silently (no reply to the whole group).
+                        if (inGroup) continue
 
                         // 3. Handle Delivery Proof (ePOD)
                         if (classification === 'delivery_proof' || classification === 'other') {
@@ -2262,6 +2269,7 @@ export async function POST(req: NextRequest) {
                           "vehiclePlate": "license plate on the receipt if any",
                           "dateTime": "YYYY-MM-DDTHH:mm:ss"
                         }
+                        For dateTime: read the date printed ON the receipt (an admin may log it days late). Thai receipts often use the Buddhist year (พ.ศ., e.g. 2568 = 2025) and dd/MM/yyyy — convert to Gregorian ISO. If no date is printed, return null (do NOT guess today).
                         If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
                         `.trim()
                         let fuel: Record<string, unknown> = {}

@@ -855,6 +855,9 @@ export const writeToolMeta: Record<string, WriteToolMeta> = {
       `• ราคารวม: ฿${a.price != null ? Number(a.price).toLocaleString() : '-'}`,
       S(a.station) ? `• ปั๊ม: ${S(a.station)}` : null,
       a.odometer != null ? `• เลขไมล์: ${Number(a.odometer).toLocaleString()}` : null,
+      // วันที่เติมจากบิล (เผื่อส่งย้อนหลัง) — ถ้าอ่านจากบิลไม่ได้จะใช้วันนี้
+      a.dateTime ? `• วันที่เติม: ${String(a.dateTime).slice(0, 10)} (จากบิล)` : `• วันที่เติม: ไม่พบบนบิล — จะใช้วันนี้`,
+      a.photoUrl ? `• แนบรูปบิล: ✓ (เก็บในระบบแล้ว)` : null,
     ),
     formatSuccess: () => `✅ บันทึกการเติมน้ำมันเรียบร้อยครับ`,
     cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้บันทึกน้ำมัน',
