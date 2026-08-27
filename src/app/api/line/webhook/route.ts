@@ -2166,7 +2166,7 @@ export async function POST(req: NextRequest) {
                         Provide the result in the following JSON format ONLY, do not write markdown blocks or text other than the JSON:
                         {
                           "classification": "fuel_receipt" | "delivery_proof" | "other",
-                          "stationName": "Gas station name (if fuel receipt, e.g. PTT, Shell, Bangchak)",
+                          "stationName": "the EXACT station/shop name printed on the receipt (read the Thai company name at the top). If you cannot read it clearly, return null — do NOT guess and do NOT output a common brand you didn't actually read",
                           "priceTotal": 1200.00,
                           "liters": 45.5,
                           "odometer": 123456,
@@ -2322,7 +2322,7 @@ export async function POST(req: NextRequest) {
                         Analyze this image. If it is a fuel purchase receipt / gas station invoice, return JSON ONLY:
                         {
                           "isFuel": true,
-                          "stationName": "e.g. PTT, Shell, Bangchak",
+                          "stationName": "the EXACT station/shop name printed on the receipt (read the Thai company name at the top). If you cannot read it clearly, return null — do NOT guess and do NOT output a common brand you didn't actually read",
                           "priceTotal": 1200.00,
                           "liters": 45.5,
                           "odometer": 123456,
