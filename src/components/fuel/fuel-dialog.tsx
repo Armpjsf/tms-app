@@ -201,7 +201,9 @@ export function FuelDialog({
                                 Liter: result.liters?.toString() || prev.Liter,
                                 Price: result.pricePerLiter?.toString() || prev.Price,
                                 Total_Amount: result.totalAmount || prev.Total_Amount,
-                                Station_Name: result.stationName || prev.Station_Name
+                                Station_Name: result.stationName || prev.Station_Name,
+                                Mileage: result.mileage?.toString() || result.odometer?.toString() || prev.Mileage,
+                                Vehicle_Plate: result.plateNumber || prev.Vehicle_Plate
                             }))
                             toast.success(t('fuel.scan_success'))
                         } catch (err) {

@@ -2193,9 +2193,10 @@ Classify the image into one of three types:
 If it is a fuel receipt, strictly extract the exact information verbatim:
 - "stationName": EXACT full company name / registered name of the SELLER (ผู้ขาย / สถานีบริการ / ผู้ออกใบกำกับ) at the TOP header of the receipt (e.g. 'บริษัท ขวัญเมือง ปิโตรเลียม ดีเซลออยล์ จำกัด'). DO NOT confuse with customer info (ข้อมูลลูกค้า). Never invent or guess words.
 - "taxIdSeller": Seller 13-digit tax ID
-- "priceTotal": Total amount in THB (number)
-- "liters": Fuel quantity in liters (number)
-- "odometer": Vehicle odometer reading if printed (number)
+- "priceTotal": Total amount in THB (รวมเป็นเงิน, number)
+- "liters": Fuel quantity in liters (จำนวนลิตร, number)
+- "unitPrice": Price per liter in THB (ราคาต่อลิตร / ราคา/ลิตร, number, e.g. 38.70). If not printed, calculate priceTotal / liters.
+- "odometer": Vehicle odometer reading if printed (เลขไมล์, number)
 - "vehiclePlate": Vehicle registration plate (ทะเบียนรถ)
 - "dateTime": Date and time in ISO format YYYY-MM-DDTHH:mm:ss. Convert Buddhist year (e.g. 2569 -> 2026).
 
@@ -2206,6 +2207,7 @@ Provide JSON ONLY:
   "taxIdSeller": "13-digit tax ID or null",
   "priceTotal": 1200.00,
   "liters": 45.5,
+  "unitPrice": 38.70,
   "odometer": 123456,
   "vehiclePlate": "3ฒว2502",
   "dateTime": "YYYY-MM-DDTHH:mm:ss"
@@ -2253,13 +2255,18 @@ Provide JSON ONLY:
                             const driverPlate = dPlateRes.matched ? dPlateRes.plate : (boundDriver.Vehicle_Plate || dPlateRes.plate || null)
                             const stationName = (extracted.stationName as string)?.trim() || 'ปั๊มน้ำมัน'
 
+                            const total = Number(extracted.priceTotal) || 0
+                            const liters = Number(extracted.liters) || 0
+                            const unitPriceNum = Number(extracted.unitPrice) || (total > 0 && liters > 0 ? +(total / liters).toFixed(2) : 0)
+                            const unitPriceStr = unitPriceNum > 0 ? ` (฿${unitPriceNum.toFixed(2)}/ลิตร)` : ''
+
                             await supabase.from('Fuel_Logs').insert({
                                 Log_ID: logId,
                                 Date_Time: extracted.dateTime || new Date().toISOString(),
                                 Driver_ID: boundDriver.Driver_ID,
                                 Vehicle_Plate: driverPlate,
-                                Liters: Number(extracted.liters) || 0,
-                                Price_Total: Number(extracted.priceTotal) || 0,
+                                Liters: liters,
+                                Price_Total: total,
                                 Odometer: extracted.odometer != null ? Number(extracted.odometer) : null,
                                 Station_Name: stationName,
                                 Photo_Url: uploadRes.directLink,
@@ -2267,7 +2274,7 @@ Provide JSON ONLY:
                                 Status: 'Pending'
                             })
 
-                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n🏢 ปั๊ม: ${stationName}\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
+                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n🏢 ปั๊ม: ${stationName}\n💰 ยอดเงินรวม: ฿${total.toLocaleString()}\n⛽ จำนวนน้ำมัน: ${liters} ลิตร${unitPriceStr}\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
                             continue
                         }
 
@@ -2370,10 +2377,12 @@ If it is a fuel purchase receipt / gas station invoice, return JSON ONLY:
   "taxIdSeller": "13-digit tax ID of the seller or null",
   "priceTotal": 1200.00,
   "liters": 45.5,
+  "unitPrice": 38.70,
   "odometer": 123456,
   "vehiclePlate": "Vehicle license plate on receipt or null",
   "dateTime": "YYYY-MM-DDTHH:mm:ss"
 }
+(unitPrice = ราคาต่อลิตร / price per liter in THB. If not printed, calculate priceTotal / liters)
 For dateTime: read the date printed ON the receipt (an admin may log it days late). Thai receipts often use Buddhist year (พ.ศ., e.g. 2568 = 2025) and dd/MM/yyyy — convert to Gregorian ISO. If no date is printed, return null (do NOT guess today).
 If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
 `.trim()
@@ -2400,10 +2409,14 @@ If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
                             // Thai consonants; digits are reliable → match on those).
                             const plateRes = await resolveFleetPlate(supabase, String(fuel.vehiclePlate || ''))
                             const stationName = typeof fuel.stationName === 'string' && fuel.stationName.trim() ? fuel.stationName.trim() : ''
+                            const total = Number(fuel.priceTotal) || 0
+                            const liters = Number(fuel.liters) || 0
+                            const unitPrice = Number(fuel.unitPrice) || (total > 0 && liters > 0 ? +(total / liters).toFixed(2) : undefined)
                             const args: Record<string, unknown> = {
                                 plate: plateRes.plate,
-                                liters: Number(fuel.liters) || 0,
-                                price: Number(fuel.priceTotal) || 0,
+                                liters: liters,
+                                unitPrice: unitPrice,
+                                price: total,
                                 odometer: fuel.odometer != null ? Number(fuel.odometer) : undefined,
                                 station: stationName,
                                 dateTime: fuel.dateTime || undefined,

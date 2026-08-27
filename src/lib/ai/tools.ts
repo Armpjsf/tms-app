@@ -460,6 +460,7 @@ export const aiToolExecutors = {
     plate: string,
     liters: number,
     price: number,
+    unitPrice?: number,
     odometer?: number,
     station?: string,
     dateTime?: string,
@@ -849,16 +850,25 @@ export const writeToolMeta: Record<string, WriteToolMeta> = {
   create_fuel_log: {
     confirmTitle: 'ยืนยันการบันทึกเติมน้ำมัน?',
     minRole: 5,
-    summarize: (a) => bullets(
-      `• ทะเบียน: ${S(a.plate) ?? '-'}`,
-      `• ปริมาณ: ${S(a.liters) ?? '-'} ลิตร`,
-      `• ราคารวม: ฿${a.price != null ? Number(a.price).toLocaleString() : '-'}`,
-      S(a.station) ? `• ปั๊ม: ${S(a.station)}` : null,
-      a.odometer != null ? `• เลขไมล์: ${Number(a.odometer).toLocaleString()}` : null,
-      // วันที่เติมจากบิล (เผื่อส่งย้อนหลัง) — ถ้าอ่านจากบิลไม่ได้จะใช้วันนี้
-      a.dateTime ? `• วันที่เติม: ${String(a.dateTime).slice(0, 10)} (จากบิล)` : `• วันที่เติม: ไม่พบบนบิล — จะใช้วันนี้`,
-      a.photoUrl ? `• แนบรูปบิล: ✓ (เก็บในระบบแล้ว)` : null,
-    ),
+    summarize: (a) => {
+      const liters = a.liters != null ? Number(a.liters) : null
+      const totalPrice = a.price != null ? Number(a.price) : null
+      const unitPrice = a.unitPrice != null
+        ? Number(a.unitPrice)
+        : (totalPrice != null && liters != null && liters > 0 ? totalPrice / liters : null)
+
+      return bullets(
+        `• ทะเบียน: ${S(a.plate) ?? '-'}`,
+        `• ปริมาณ: ${liters != null ? liters.toLocaleString() : '-'} ลิตร`,
+        unitPrice != null ? `• ราคาต่อลิตร: ฿${unitPrice.toFixed(2)}` : null,
+        `• ราคารวม: ฿${totalPrice != null ? totalPrice.toLocaleString() : '-'}`,
+        S(a.station) ? `• ปั๊ม: ${S(a.station)}` : null,
+        a.odometer != null ? `• เลขไมล์: ${Number(a.odometer).toLocaleString()}` : null,
+        // วันที่เติมจากบิล (เผื่อส่งย้อนหลัง) — ถ้าอ่านจากบิลไม่ได้จะใช้วันนี้
+        a.dateTime ? `• วันที่เติม: ${String(a.dateTime).slice(0, 10)} (จากบิล)` : `• วันที่เติม: ไม่พบบนบิล — จะใช้วันนี้`,
+        a.photoUrl ? `• แนบรูปบิล: ✓ (เก็บในระบบแล้ว)` : null,
+      )
+    },
     formatSuccess: () => `✅ บันทึกการเติมน้ำมันเรียบร้อยครับ`,
     cancelMessage: 'ยกเลิกแล้วครับ ไม่ได้บันทึกน้ำมัน',
   },
@@ -1186,6 +1196,7 @@ export const geminiToolDefinitions = [
             properties: {
                 plate: { type: "string", description: "ทะเบียนรถ" },
                 liters: { type: "number", description: "จำนวนลิตร" },
+                unitPrice: { type: "number", description: "ราคาต่อลิตร (บาท/ลิตร)" },
                 price: { type: "number", description: "ราคารวม (บาท)" },
                 odometer: { type: "number", description: "เลขไมล์" },
                 station: { type: "string", description: "ชื่อปั๊ม" }

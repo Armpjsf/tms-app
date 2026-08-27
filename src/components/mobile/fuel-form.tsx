@@ -186,6 +186,18 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
             <div className="space-y-2">
                 <Label className="text-foreground">รูปใบเสร็จ / หน้าตู้</Label>
                 <CameraInput onImagesChange={(files) => setPhoto(files[0] || null)} maxImages={1} />
+                {photo && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleScan}
+                        disabled={scanning || loading}
+                        className="w-full h-11 mt-2 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 font-bold hover:bg-emerald-500/20 flex items-center justify-center gap-2"
+                    >
+                        {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-lg">⚡</span>}
+                        {scanning ? "กำลังสแกนด้วย AI..." : "สแกนใบเสร็จอัตโนมัติด้วย AI"}
+                    </Button>
+                )}
             </div>
         </CardContent>
     </Card>

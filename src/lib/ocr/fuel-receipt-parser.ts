@@ -1,4 +1,5 @@
 import Tesseract from 'tesseract.js';
+import { parseFuelReceiptWithAI } from '@/lib/ai/fuel-ocr';
 
 export interface ParsedReceipt {
   date?: string;
@@ -7,17 +8,39 @@ export interface ParsedReceipt {
   liters?: number;
   pricePerLiter?: number;
   stationName?: string;
+  odometer?: number;
+  mileage?: number;
+  plateNumber?: string;
 }
 
 export async function parseFuelReceipt(imageUrl: string): Promise<ParsedReceipt> {
+  // 1. Try Gemini AI OCR first (highest accuracy)
+  try {
+    const aiResult = await parseFuelReceiptWithAI(imageUrl);
+    if (aiResult && (aiResult.amount || aiResult.liters || aiResult.stationName)) {
+      return {
+        date: aiResult.date,
+        time: aiResult.time,
+        totalAmount: aiResult.totalAmount ?? aiResult.amount,
+        liters: aiResult.liters,
+        pricePerLiter: aiResult.pricePerLiter ?? aiResult.unitPrice,
+        stationName: aiResult.stationName,
+        mileage: aiResult.mileage,
+        odometer: aiResult.mileage,
+        plateNumber: aiResult.plateNumber
+      };
+    }
+  } catch (err) {
+    console.warn('[Fuel OCR] AI parse failed, trying Tesseract fallback:', err);
+  }
+
+  // 2. Fallback to client-side Tesseract
   try {
     const result = await Tesseract.recognize(imageUrl, 'eng+tha', {
       // logger suppressed
     });
 
     const text = result.data.text;
-    // OCR text extracted (no log)
-
     return extractDataFromText(text);
   } catch {
     return {};
