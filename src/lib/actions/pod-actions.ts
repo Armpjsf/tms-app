@@ -9,6 +9,7 @@ import { transitionJobStatus } from "@/services/job-status-machine"
 import { calculateJobPrice } from "@/services/pricing-engine"
 import { timeTH } from "@/lib/utils/date-th"
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { createHash } from "crypto"
 
 /**
  * Helper to update or append quantity remark to notes
@@ -90,6 +91,15 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     ])
 
     const photoUrls = rawPhotoUrls.filter((u): u is string => Boolean(u))
+
+    // Content hash of the signature — used below to reject a POD whose signature
+    // is byte-identical to an already-recorded drop (double-tap / offline-replay
+    // duplicate). Immune to timing, unlike a "too soon" guard which would wrongly
+    // reject legitimate back-to-back drops flushed from the offline queue.
+    let signatureHash = ''
+    try {
+        signatureHash = createHash('sha256').update(Buffer.from(await signatureFile.arrayBuffer())).digest('hex')
+    } catch { /* hashing is best-effort; skip dedup if it fails */ }
 
     const floorClimbReportFile = formData.get("floor_climb_report") as File
     let floorClimbReportUrl = null
@@ -241,6 +251,16 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
             return Array.isArray(parsed) ? parsed : []
         } catch { return [] }
     })()
+
+    // Duplicate guard: if this signature is byte-identical to one already recorded
+    // for this job, it's a re-submission of the same drop (double-tap or offline
+    // replay), NOT a new delivery. Accepting it would create a phantom drop that
+    // inflates completedDrops and prematurely closes a multi-drop job. Treat it as
+    // an accepted no-op so the client/queue stop retrying, and write nothing.
+    if (signatureHash && dropLog.some(d => d && (d as Record<string, unknown>).sigHash === signatureHash)) {
+        return { success: true, duplicate: true, message: 'ดรอปนี้ถูกบันทึกไว้แล้ว (ระบบป้องกันการส่งซ้ำ)' }
+    }
+
     while (dropLog.length < dropIndex) dropLog.push(null)
     dropLog[dropIndex] = {
         drop: completedDrops,
@@ -248,6 +268,7 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
         destination: thisDest?.name || '',
         photos: photoUrls,                 // this drop's POD report + delivery photos
         signature: signatureUrl || null,
+        sigHash: signatureHash || undefined,  // for the duplicate guard above
         floorClimb: floorClimbReportUrl || null,
         deliveredAt: now.toISOString(),
     }

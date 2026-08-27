@@ -160,11 +160,31 @@ export const syncOfflineJobs = async () => {
         if (job.type === 'POD' || job.type === 'PICKUP') {
             try {
                 const current = await getJobDetails(job.jobId)
-                const podDone = !!(current?.Photo_Proof_Url || current?.Signature_Url)
-                const pickupDone = !!(current?.Pickup_Photo_Url || current?.Pickup_Signature_Url)
-                if ((job.type === 'POD' && podDone) || (job.type === 'PICKUP' && pickupDone)) {
-                    await removeOfflineJob(job.id)
-                    continue
+
+                // How many drops does this job have? A multi-drop job legitimately
+                // has proof after drop 1 while later drops are still queued offline.
+                let totalDrop = Number(current?.Total_Drop) || 1
+                try {
+                    const raw = current?.original_destinations_json
+                    const dests = typeof raw === 'string' ? JSON.parse(raw) : raw
+                    if (Array.isArray(dests) && dests.length > totalDrop) totalDrop = dests.length
+                } catch { /* ignore malformed json */ }
+                const isMultiDropPod = job.type === 'POD' && totalDrop > 1
+
+                // Only short-circuit for single-drop POD / PICKUP, where "any proof
+                // exists" reliably means this exact submission already landed.
+                // For multi-drop POD we must NOT discard here — the proof on the
+                // server may belong to an earlier drop, and dropping the entry
+                // would lose a genuine next-drop. Replay is safe: the server's
+                // signature-hash guard returns success for an already-recorded
+                // drop, so a true duplicate still clears without creating a phantom.
+                if (!isMultiDropPod) {
+                    const podDone = !!(current?.Photo_Proof_Url || current?.Signature_Url)
+                    const pickupDone = !!(current?.Pickup_Photo_Url || current?.Pickup_Signature_Url)
+                    if ((job.type === 'POD' && podDone) || (job.type === 'PICKUP' && pickupDone)) {
+                        await removeOfflineJob(job.id)
+                        continue
+                    }
                 }
             } catch {
                 // Lookup failed (offline/transient) — fall through to normal replay.

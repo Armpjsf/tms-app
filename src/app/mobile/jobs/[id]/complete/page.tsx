@@ -43,6 +43,11 @@ export default function JobCompletePage() {
   const [job, setJob] = useState<Job | null>(null)
   const reportRef = useRef<HTMLDivElement>(null)
   const floorClimbReportRef = useRef<HTMLDivElement>(null)
+  // Synchronous in-flight lock to block double-tap. `loading` state only flips
+  // AFTER the ~1s report capture, leaving a window where a second tap fires a
+  // duplicate POD submission (creating a phantom extra drop that prematurely
+  // closes a multi-drop job). A ref set synchronously closes that window.
+  const submittingRef = useRef(false)
   const isContainer = job?.job_type === 'container'
 
   useEffect(() => {
@@ -101,6 +106,8 @@ export default function JobCompletePage() {
   }
 
     const handleSubmit = async () => {
+    // Block double-tap synchronously, before any await / report capture.
+    if (submittingRef.current) return
     // Explicit Validation Feedback
     if (photos.length === 0) {
         toast.error(isContainer ? "กรุณาถ่ายรูปใบ EIR" : "กรุณาถ่ายรูปสินค้า", {
@@ -125,6 +132,9 @@ export default function JobCompletePage() {
         )
         if (!ok) return
     }
+
+    // Lock now — validations passed and we're committed to submitting.
+    submittingRef.current = true
 
     // NOTE: do NOT setLoading(true) yet. The loading screen is an early-return
     // that unmounts the off-screen report DOM, which nulls reportRef/
@@ -309,6 +319,10 @@ export default function JobCompletePage() {
         }
     } finally {
         setLoading(false)
+        // Release the in-flight lock so a genuinely rejected submission can be
+        // retried. On success/offline the completed screen replaces the form,
+        // so the button is gone regardless.
+        submittingRef.current = false
     }
   }
 
