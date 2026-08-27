@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Cloud, Loader2 } from "lucide-react"
+import { Cloud, CloudRain, AlertTriangle, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /**
@@ -16,7 +16,7 @@ type Props = {
     lon?: number | null
     date?: string | null // YYYY-MM-DD หรือ ISO
     className?: string
-    // compact = ชิปเล็กบรรทัดเดียว (อีโมจิ + อุณหภูมิ + โอกาสฝน) สำหรับการ์ด/ลิสต์
+    // compact = ชิปเล็กบรรทัดเดียว สำหรับการ์ด/ลิสต์
     compact?: boolean
 }
 
@@ -25,27 +25,64 @@ type Forecast = {
     tMax: number
     tMin: number
     rainProb: number
+    rainSum: number // มิลลิเมตร (mm)
 }
 
-// WMO Weather interpretation codes → emoji + คำอธิบายไทย
-function describe(code: number): { emoji: string; label: string } {
-    if (code === 0) return { emoji: "☀️", label: "ท้องฟ้าโปร่ง" }
-    if (code <= 2) return { emoji: "🌤️", label: "มีเมฆบางส่วน" }
-    if (code === 3) return { emoji: "☁️", label: "เมฆมาก" }
-    if (code <= 48) return { emoji: "🌫️", label: "หมอก" }
-    if (code <= 57) return { emoji: "🌦️", label: "ฝนปรอย" }
-    if (code <= 67) return { emoji: "🌧️", label: "ฝนตก" }
-    if (code <= 77) return { emoji: "🌨️", label: "หิมะ" }
-    if (code <= 82) return { emoji: "🌧️", label: "ฝนตกหนัก" }
-    if (code <= 86) return { emoji: "🌨️", label: "หิมะตกหนัก" }
-    if (code <= 99) return { emoji: "⛈️", label: "พายุฝนฟ้าคะนอง" }
-    return { emoji: "🌡️", label: "ไม่ทราบสภาพอากาศ" }
+type WeatherInfo = {
+    emoji: string
+    label: string
+    level: 'clear' | 'cloudy' | 'drizzle' | 'rain' | 'heavy'
+    warningText?: string
+}
+
+function describeWeather(code: number, rainSum: number, rainProb: number): WeatherInfo {
+    // 1. พายุฝนฟ้าคะนอง หรือฝนตกหนักจริง (>= 12 mm หรือ WMO Code 95+)
+    if (code >= 95 || rainSum >= 12 || (code >= 65 && rainSum >= 8)) {
+        return {
+            emoji: "⛈️",
+            label: "พายุฝนฟ้าคะนอง",
+            level: "heavy",
+            warningText: "ระวังพายุ/คลุมผ้าใบ"
+        }
+    }
+
+    // 2. ฝนตกปานกลาง (4 - 12 mm) — ต้องเตรียมผ้าใบกันสินค้าเปียก
+    if (code >= 80 || code >= 61 || rainSum >= 4) {
+        return {
+            emoji: "🌧️",
+            label: "ฝนตกปานกลาง",
+            level: "rain",
+            warningText: "เตรียมผ้าใบคลุม"
+        }
+    }
+
+    // 3. ฝนปรอยๆ / ละอองสั้นๆ (0.4 - 4 mm) — ไม่หนัก ไม่ต้องแจ้งเตือนฉุกเฉิน
+    if (code >= 51 || (rainSum >= 0.4 && rainSum < 4) || (rainProb >= 70 && rainSum > 0.2)) {
+        return {
+            emoji: "🌦️",
+            label: "ฝนละอองบางพื้นที่",
+            level: "drizzle",
+            warningText: undefined
+        }
+    }
+
+    // 4. เมฆมาก
+    if (code === 3) {
+        return { emoji: "☁️", label: "มีเมฆมาก", level: "cloudy" }
+    }
+
+    // 5. มีเมฆบางส่วน
+    if (code >= 1 && code <= 2) {
+        return { emoji: "🌤️", label: "มีเมฆบางส่วน", level: "clear" }
+    }
+
+    // 6. ท้องฟ้าโปร่ง / แดดจัด
+    return { emoji: "☀️", label: "ท้องฟ้าโปร่ง", level: "clear" }
 }
 
 function toDateOnly(d?: string | null): string | null {
     if (!d) return null
     const s = String(d).trim()
-    // ตัดเวลาออก เหลือ YYYY-MM-DD
     const m = s.match(/^\d{4}-\d{2}-\d{2}/)
     if (m) return m[0]
     const parsed = new Date(s)
@@ -75,7 +112,7 @@ export function WeatherBadge({ lat, lon, date, className, compact }: Props) {
 
         const url =
             `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-            `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+            `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum` +
             `&timezone=Asia%2FBangkok&start_date=${day}&end_date=${day}`
 
         fetch(url)
@@ -92,6 +129,7 @@ export function WeatherBadge({ lat, lon, date, className, compact }: Props) {
                     tMax: Math.round(d.temperature_2m_max?.[0] ?? 0),
                     tMin: Math.round(d.temperature_2m_min?.[0] ?? 0),
                     rainProb: d.precipitation_probability_max?.[0] ?? 0,
+                    rainSum: +(d.precipitation_sum?.[0] ?? 0).toFixed(1)
                 })
             })
             .catch(() => !cancelled && setFailed(true))
@@ -106,7 +144,7 @@ export function WeatherBadge({ lat, lon, date, className, compact }: Props) {
     if (failed) return null
 
     if (loading) {
-        if (compact) return null // keep cards/lists quiet while loading
+        if (compact) return null
         return (
             <div className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}>
                 <Loader2 size={12} className="animate-spin" />
@@ -117,24 +155,35 @@ export function WeatherBadge({ lat, lon, date, className, compact }: Props) {
 
     if (!forecast) return null
 
-    const { emoji, label } = describe(forecast.code)
-    const heavyRain = forecast.rainProb >= 60 || (forecast.code >= 61 && forecast.code <= 99)
+    const info = describeWeather(forecast.code, forecast.rainSum, forecast.rainProb)
 
-    // Compact chip — one line, fits inside a job card / tracking list row.
+    const tooltip = `สภาพอากาศปลายทาง: ${info.label} · อุณหภูมิ ${forecast.tMin}–${forecast.tMax}°C · ปริมาณฝน ${forecast.rainSum} mm (โอกาสฝน ${forecast.rainProb}%)`
+
+    // Compact chip — for job cards & tracking list rows
     if (compact) {
         return (
             <div
                 className={cn(
-                    "inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-bold",
-                    heavyRain ? "bg-blue-500/10 border-blue-500/30 text-blue-600" : "bg-sky-500/5 border-sky-500/20 text-foreground",
+                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-colors",
+                    info.level === 'heavy' && "bg-rose-500/10 border-rose-500/30 text-rose-500 shadow-sm",
+                    info.level === 'rain' && "bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400",
+                    info.level === 'drizzle' && "bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400",
+                    info.level === 'cloudy' && "bg-muted/50 border-border/40 text-muted-foreground",
+                    info.level === 'clear' && "bg-amber-500/5 border-amber-500/20 text-foreground",
                     className
                 )}
-                title={`อากาศปลายทางวันส่ง: ${label} · ${forecast.tMin}–${forecast.tMax}°C · โอกาสฝน ${forecast.rainProb}%`}
+                title={tooltip}
             >
-                <span className="text-sm leading-none" aria-hidden>{emoji}</span>
+                <span className="text-sm leading-none" aria-hidden>{info.emoji}</span>
                 <span>{forecast.tMin}–{forecast.tMax}°C</span>
-                <span className={cn("opacity-70", heavyRain && "opacity-100")}>· ฝน {forecast.rainProb}%</span>
-                {heavyRain && <span className="uppercase tracking-wider">· เตรียมกันฝน</span>}
+                {forecast.rainSum > 0 ? (
+                    <span className="opacity-90">· ฝน {forecast.rainSum}mm</span>
+                ) : (
+                    <span className="opacity-75">· {info.label}</span>
+                )}
+                {info.warningText && (
+                    <span className="font-black uppercase tracking-wider text-[10px] pl-0.5">· {info.warningText}</span>
+                )}
             </div>
         )
     }
@@ -142,29 +191,36 @@ export function WeatherBadge({ lat, lon, date, className, compact }: Props) {
     return (
         <div
             className={cn(
-                "flex items-center gap-3 p-3 rounded-2xl border",
-                heavyRain
-                    ? "bg-blue-500/10 border-blue-500/30"
-                    : "bg-sky-500/5 border-sky-500/20",
+                "flex items-center gap-3 p-3 rounded-2xl border transition-all",
+                info.level === 'heavy' && "bg-rose-500/10 border-rose-500/30 text-rose-500",
+                info.level === 'rain' && "bg-blue-500/10 border-blue-500/30",
+                info.level === 'drizzle' && "bg-sky-500/5 border-sky-500/20",
+                (info.level === 'cloudy' || info.level === 'clear') && "bg-muted/30 border-border/40",
                 className
             )}
+            title={tooltip}
         >
             <span className="text-2xl leading-none" aria-hidden>
-                {emoji}
+                {info.emoji}
             </span>
             <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    อากาศปลายทางวันส่ง
+                    สภาพอากาศปลายทางวันส่ง
                 </p>
                 <p className="text-sm font-bold text-foreground truncate">
-                    {label} · {forecast.tMin}–{forecast.tMax}°C · โอกาสฝน {forecast.rainProb}%
+                    {info.label} · {forecast.tMin}–{forecast.tMax}°C {forecast.rainSum > 0 ? `· ปริมาณฝน ${forecast.rainSum} mm` : ''}
                 </p>
             </div>
-            {heavyRain && (
-                <span className="shrink-0 flex items-center gap-1 text-[10px] font-black text-blue-600 uppercase tracking-wider">
-                    <Cloud size={12} /> เตรียมกันฝน
+            {info.warningText && (
+                <span className={cn(
+                    "shrink-0 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md",
+                    info.level === 'heavy' ? "bg-rose-500/20 text-rose-500 border border-rose-500/30" : "bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30"
+                )}>
+                    {info.level === 'heavy' ? <AlertTriangle size={12} /> : <Cloud size={12} />}
+                    {info.warningText}
                 </span>
             )}
         </div>
     )
 }
+
