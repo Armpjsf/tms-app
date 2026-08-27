@@ -53,10 +53,13 @@ export interface DTCRefuelEvent {
   fuelPctBefore: number;
   fuelPctAfter: number;
   fuelPctIncrease: number;
+  distanceSinceLastKm: number;   // ระยะทาง GPS ที่วิ่งตั้งแต่การเติมครั้งก่อน (odometer delta)
+  // เติมหลังจับคู่กับบิลจริง (Fuel_Logs) ในฝั่ง client:
   matchedLogId?: string;
-  matchedLiters?: number;
+  matchedLiters?: number;        // ลิตรที่เติมจริงจากบิล
   matchedCost?: number;
   matchedStation?: string;
+  kmPerLiter?: number | null;    // full-to-full: distanceSinceLastKm / matchedLiters
 }
 
 export interface DTCAnalysisResult {
@@ -215,7 +218,8 @@ export function parseDTCExcel(dataBuffer: ArrayBuffer | Uint8Array | Buffer): DT
         odometer: pt.odometer,
         fuelPctBefore: prevPoint.fuelPercent,
         fuelPctAfter: pt.fuelPercent,
-        fuelPctIncrease: +(pt.fuelPercent - prevPoint.fuelPercent).toFixed(1)
+        fuelPctIncrease: +(pt.fuelPercent - prevPoint.fuelPercent).toFixed(1),
+        distanceSinceLastKm: 0
       });
     }
 
@@ -239,6 +243,13 @@ export function parseDTCExcel(dataBuffer: ArrayBuffer | Uint8Array | Buffer): DT
   if (currentTripPoints.length > 0) {
     const trip = buildTrip(currentTripPoints, vehiclePlate, trips.length + 1);
     if (trip && trip.distanceKm >= 0.1) trips.push(trip);
+  }
+
+  // 3b. ระยะทาง GPS ต่อรอบเติม (full-to-full): ไมล์ตอนเติมนี้ - ไมล์ตอนเติมครั้งก่อน
+  for (let i = 0; i < refuelEvents.length; i++) {
+    const prevOdo = i === 0 ? startOdometer : refuelEvents[i - 1].odometer;
+    const dist = refuelEvents[i].odometer - prevOdo;
+    refuelEvents[i].distanceSinceLastKm = dist > 0 ? +dist.toFixed(2) : 0;
   }
 
   // 4. Compute Daily, Weekly, Monthly Aggregations

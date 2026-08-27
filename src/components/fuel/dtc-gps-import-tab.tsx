@@ -28,9 +28,76 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import * as XLSX from "xlsx"
-import { parseDTCExcel, type DTCAnalysisResult } from "@/lib/parsers/dtc-gps-parser"
+import { parseDTCExcel, type DTCAnalysisResult, type DTCRefuelEvent } from "@/lib/parsers/dtc-gps-parser"
+import { getFuelBillsForMatching, type FuelBillForMatch } from "@/lib/supabase/fuel"
 
 type DtcSubView = 'trips' | 'daily' | 'weekly' | 'monthly' | 'refuels'
+
+// แปลงวัน-เวลา DTC "DD/MM/YYYY HH:MM:SS" -> ms (รองรับปี พ.ศ.)
+function dtcToMs(s: string): number {
+  try {
+    const [d, t] = s.split(' ')
+    const [day, month, yearRaw] = d.split('/').map(Number)
+    const year = yearRaw > 2500 ? yearRaw - 543 : yearRaw
+    const [hh, mm, ss] = (t || '0:0:0').split(':').map(Number)
+    return new Date(year, month - 1, day, hh || 0, mm || 0, ss || 0).getTime()
+  } catch {
+    return 0
+  }
+}
+
+// จับคู่เหตุการณ์เติมจาก GPS กับบิลจริง แล้วคำนวณ km/L แบบ full-to-full
+function matchRefuelsToBills(events: DTCRefuelEvent[], bills: FuelBillForMatch[]) {
+  const pool = bills.map(b => ({ bill: b, used: false }))
+  const ODO_TOLERANCE = 300      // กม.
+  const DATE_TOLERANCE = 2 * 86400000 // 2 วัน
+
+  const matched: DTCRefuelEvent[] = events.map(ev => {
+    const evMs = dtcToMs(ev.dateTime)
+    let best: (typeof pool)[number] | null = null
+    let bestScore = Infinity
+
+    for (const p of pool) {
+      if (p.used) continue
+      let score = Infinity
+      // 1) จับคู่ด้วยเลขไมล์ (แม่นสุด ไม่ติดปัญหา timezone/พ.ศ.)
+      if (p.bill.Odometer && ev.odometer) {
+        const od = Math.abs(p.bill.Odometer - ev.odometer)
+        if (od <= ODO_TOLERANCE) score = od
+      }
+      // 2) ถ้าไม่มีเลขไมล์ ใช้วันที่ใกล้สุดภายใน 2 วัน
+      if (score === Infinity && p.bill.Date_Time && evMs) {
+        const dd = Math.abs(new Date(p.bill.Date_Time).getTime() - evMs)
+        if (dd <= DATE_TOLERANCE) score = 1000 + dd / 86400000
+      }
+      if (score < bestScore) { bestScore = score; best = p }
+    }
+
+    if (best && bestScore !== Infinity) {
+      best.used = true
+      const liters = best.bill.Liters || 0
+      const kmPerLiter = liters > 0 && ev.distanceSinceLastKm > 0
+        ? +(ev.distanceSinceLastKm / liters).toFixed(2)
+        : null
+      return {
+        ...ev,
+        matchedLogId: best.bill.Log_ID,
+        matchedLiters: liters,
+        matchedCost: best.bill.Price_Total || 0,
+        matchedStation: best.bill.Station_Name || '',
+        kmPerLiter
+      }
+    }
+    return { ...ev, kmPerLiter: null }
+  })
+
+  const scored = matched.filter(m => m.kmPerLiter !== null && (m.matchedLiters || 0) > 0)
+  const totalDist = scored.reduce((s, m) => s + m.distanceSinceLastKm, 0)
+  const totalLiters = scored.reduce((s, m) => s + (m.matchedLiters || 0), 0)
+  const avgKmPerLiter = totalLiters > 0 ? +(totalDist / totalLiters).toFixed(2) : null
+
+  return { matched, avgKmPerLiter, matchedCount: scored.length, totalLiters: +totalLiters.toFixed(2) }
+}
 
 export function DtcGpsImportTab() {
   const [file, setFile] = useState<File | null>(null)
@@ -38,6 +105,9 @@ export function DtcGpsImportTab() {
   const [result, setResult] = useState<DTCAnalysisResult | null>(null)
   const [subView, setSubView] = useState<DtcSubView>('daily')
   const [search, setSearch] = useState('')
+  const [matchedRefuels, setMatchedRefuels] = useState<DTCRefuelEvent[]>([])
+  const [avgKmPerLiter, setAvgKmPerLiter] = useState<number | null>(null)
+  const [matchedCount, setMatchedCount] = useState(0)
 
   // Handle File Input
   const handleFileChange = async (selectedFile: File) => {
@@ -53,6 +123,20 @@ export function DtcGpsImportTab() {
       const buffer = await selectedFile.arrayBuffer()
       const parsed = parseDTCExcel(buffer)
       setResult(parsed)
+
+      // จับคู่เหตุการณ์เติมกับบิลจริง เพื่อคำนวณ km/L full-to-full
+      try {
+        const bills = await getFuelBillsForMatching(parsed.vehiclePlate)
+        const { matched, avgKmPerLiter: avg, matchedCount: mc } = matchRefuelsToBills(parsed.refuelEvents, bills)
+        setMatchedRefuels(matched)
+        setAvgKmPerLiter(avg)
+        setMatchedCount(mc)
+      } catch {
+        setMatchedRefuels(parsed.refuelEvents)
+        setAvgKmPerLiter(null)
+        setMatchedCount(0)
+      }
+
       toast.success(`ประมวลผลข้อมูล GPS รถทะเบียน ${parsed.vehiclePlate || '-'} สำเร็จ (${parsed.trips.length} Trips)`)
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err)
@@ -101,14 +185,18 @@ export function DtcGpsImportTab() {
     })))
     XLSX.utils.book_append_sheet(wb, wsTrips, "Trips")
 
-    // Sheet 3: Refuel Events
-    const wsRefuels = XLSX.utils.json_to_sheet(result.refuelEvents.map((r, i) => ({
+    // Sheet 3: Refuel Events (พร้อม km/L full-to-full จากบิลจริง)
+    const refuelsForExport = matchedRefuels.length > 0 ? matchedRefuels : result.refuelEvents
+    const wsRefuels = XLSX.utils.json_to_sheet(refuelsForExport.map((r, i) => ({
       "ลำดับ": i + 1,
       "วัน-เวลา": r.dateTime,
-      "สถานที่": r.location,
-      "เลขไมล์": r.odometer,
-      "ระดับน้ำมันก่อนหน้า (%)": r.fuelPctBefore,
-      "ระดับน้ำมันหลังเติม (%)": r.fuelPctAfter,
+      "สถานที่ (GPS)": r.location,
+      "เลขไมล์ GPS": r.odometer,
+      "ระยะตั้งแต่เติมก่อน (กม.)": r.distanceSinceLastKm || '',
+      "ลิตร (บิลจริง)": r.matchedLiters ?? '',
+      "ค่าน้ำมัน (บาท)": r.matchedCost ?? '',
+      "ปั๊ม (บิล)": r.matchedStation ?? '',
+      "km/L (full-to-full)": r.kmPerLiter ?? '',
       "น้ำมันเพิ่มขึ้น (%)": r.fuelPctIncrease
     })))
     XLSX.utils.book_append_sheet(wb, wsRefuels, "Refuel_Events")
@@ -185,7 +273,7 @@ export function DtcGpsImportTab() {
                 Export ผลวิเคราะห์
               </PremiumButton>
               <button
-                onClick={() => { setResult(null); setFile(null); }}
+                onClick={() => { setResult(null); setFile(null); setMatchedRefuels([]); setAvgKmPerLiter(null); setMatchedCount(0); }}
                 className="h-10 px-4 rounded-xl border border-border bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-colors"
               >
                 <Trash2 size={14} />
@@ -237,12 +325,14 @@ export function DtcGpsImportTab() {
             </PremiumCard>
 
             <PremiumCard className="p-5 bg-background border border-border rounded-2xl">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">สถานะความพร้อม</span>
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">อัตราสิ้นเปลืองเฉลี่ย</span>
               <p className="text-2xl font-black italic text-purple-400 tracking-tight mt-1">
-                100%
+                {avgKmPerLiter !== null ? avgKmPerLiter.toFixed(2) : '—'} <span className="text-xs font-normal text-muted-foreground">km/L</span>
               </p>
               <p className="text-[9px] font-black text-muted-foreground uppercase mt-1">
-                พร้อมจับคู่กับบิลน้ำมัน
+                {avgKmPerLiter !== null
+                  ? `เติมเต็ม-ถึง-เติมเต็ม • จับคู่บิล ${matchedCount} รอบ`
+                  : 'ยังไม่มีบิลน้ำมันจับคู่'}
               </p>
             </PremiumCard>
           </div>
@@ -378,26 +468,43 @@ export function DtcGpsImportTab() {
                     <tr className="bg-muted/50 border-b border-border text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                       <th className="p-3.5 pl-6">วัน-เวลา</th>
                       <th className="p-3.5">สถานที่เติม</th>
-                      <th className="p-3.5 text-right">เลขไมล์ (Odometer)</th>
-                      <th className="p-3.5 text-right">ระดับก่อนเติม</th>
-                      <th className="p-3.5 text-right">ระดับหลังเติม</th>
-                      <th className="p-3.5 text-right pr-6">เปอร์เซ็นต์ที่เพิ่ม</th>
+                      <th className="p-3.5 text-right">เลขไมล์ GPS</th>
+                      <th className="p-3.5 text-right">ระยะตั้งแต่เติมก่อน</th>
+                      <th className="p-3.5 text-right">ลิตร (บิลจริง)</th>
+                      <th className="p-3.5 text-right">%เพิ่ม</th>
+                      <th className="p-3.5 text-right pr-6">km/L (full-to-full)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/40 font-bold">
-                    {result.refuelEvents.length === 0 ? (
+                    {matchedRefuels.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-8 text-center text-muted-foreground">ไม่พบเหตุการณ์ระดับน้ำมันเพิ่มขึ้นผิดสังเกต</td>
+                        <td colSpan={7} className="p-8 text-center text-muted-foreground">ไม่พบเหตุการณ์ระดับน้ำมันเพิ่มขึ้นผิดสังเกต</td>
                       </tr>
                     ) : (
-                      result.refuelEvents.map((r, i) => (
+                      matchedRefuels.map((r, i) => (
                         <tr key={i} className="hover:bg-muted/30 transition-colors">
                           <td className="p-3.5 pl-6 font-black text-foreground">⛽ {r.dateTime}</td>
-                          <td className="p-3.5 font-bold text-foreground">{r.location || '-'}</td>
+                          <td className="p-3.5 font-bold text-foreground">
+                            {r.location || '-'}
+                            {r.matchedStation ? <span className="block text-[10px] text-muted-foreground font-normal">บิล: {r.matchedStation}</span> : null}
+                          </td>
                           <td className="p-3.5 text-right font-black text-foreground">{r.odometer.toLocaleString()} กม.</td>
-                          <td className="p-3.5 text-right text-muted-foreground">{r.fuelPctBefore}%</td>
-                          <td className="p-3.5 text-right text-emerald-400 font-black">{r.fuelPctAfter}%</td>
-                          <td className="p-3.5 text-right pr-6 font-black text-primary">+{r.fuelPctIncrease}%</td>
+                          <td className="p-3.5 text-right text-cyan-400">{r.distanceSinceLastKm > 0 ? `${r.distanceSinceLastKm.toLocaleString()} กม.` : '—'}</td>
+                          <td className="p-3.5 text-right">
+                            {r.matchedLiters ? (
+                              <span className="text-emerald-400 font-black">{r.matchedLiters.toLocaleString()} ล.</span>
+                            ) : (
+                              <span className="text-amber-400/70 text-[11px] font-normal">ไม่พบบิล</span>
+                            )}
+                          </td>
+                          <td className="p-3.5 text-right text-primary">+{r.fuelPctIncrease}%</td>
+                          <td className="p-3.5 text-right pr-6 font-black">
+                            {r.kmPerLiter != null ? (
+                              <span className="text-purple-400">{r.kmPerLiter.toFixed(2)}</span>
+                            ) : (
+                              <span className="text-muted-foreground/50">—</span>
+                            )}
+                          </td>
                         </tr>
                       ))
                     )}

@@ -189,6 +189,42 @@ export async function getAllFuelLogs(
   }
 }
 
+// ดึงบิลน้ำมันจริงของรถคันหนึ่ง สำหรับจับคู่กับเหตุการณ์เติมจาก GPS (DTC)
+export type FuelBillForMatch = {
+  Log_ID: string
+  Date_Time: string | null
+  Odometer: number | null
+  Liters: number
+  Price_Total: number
+  Station_Name: string | null
+}
+export async function getFuelBillsForMatching(vehiclePlate: string): Promise<FuelBillForMatch[]> {
+  try {
+    if (!vehiclePlate) return []
+    const supabase = await createClient()
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let query = supabase
+      .from('Fuel_Logs')
+      .select('Log_ID, Date_Time, Odometer, Liters, Price_Total, Station_Name')
+      .eq('Vehicle_Plate', vehiclePlate)
+      .order('Date_Time', { ascending: true })
+
+    if (branchId && branchId !== 'All') {
+      query = query.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+      return []
+    }
+
+    const { data, error } = await query
+    if (error) return []
+    return (data || []) as FuelBillForMatch[]
+  } catch {
+    return []
+  }
+}
+
 // นับสถิติน้ำมันวันนี้
 export async function getTodayFuelStats() {
   try {
