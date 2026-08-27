@@ -75,14 +75,15 @@ async function getPreviousLog(supabase: SupabaseClient, vehiclePlate: string, cu
   return data
 }
 
-// ดึงบันทึกเติมน้ำมันทั้งหมด (pagination + search + date filter)
+// ดึงบันทึกเติมน้ำมันทั้งหมด (pagination + search + date filter + vehicle filter)
 export async function getAllFuelLogs(
   page = 1, 
   limit = 20, 
   query = '',
   startDate?: string,
-  endDate?: string
-): Promise<{ data: (FuelLog & { Km_Per_Liter?: number })[], count: number }> {
+  endDate?: string,
+  selectedVehicles?: string[]
+): Promise<{ data: (FuelLog & { Km_Per_Liter?: number; Price_Per_Liter?: number; Delta_Km?: number })[], count: number }> {
   try {
     const supabase = await createClient()
     const offset = (page - 1) * limit
@@ -103,7 +104,11 @@ export async function getAllFuelLogs(
     dbQuery = dbQuery.order('Date_Time', { ascending: false })
 
     if (query) {
-      dbQuery = dbQuery.or(`Vehicle_Plate.ilike.%${query}%`)
+      dbQuery = dbQuery.or(`Vehicle_Plate.ilike.%${query}%,Station_Name.ilike.%${query}%`)
+    }
+
+    if (selectedVehicles && selectedVehicles.length > 0) {
+      dbQuery = dbQuery.in('Vehicle_Plate', selectedVehicles)
     }
 
     if (startDate) {
@@ -134,9 +139,10 @@ export async function getAllFuelLogs(
     
     const vehicleMap = new Map(vehicles?.map(v => [v.Vehicle_Plate, v.Tank_Capacity]) || [])
 
-    // Enrich logs with Driver Name, Efficiency, and alerts
+    // Enrich logs with Driver Name, Efficiency, Price_Per_Liter, Delta_Km, and alerts
     const enrichedLogs = await Promise.all(logs?.map(async (log) => {
       let kmPerLiter = 0
+      let deltaKm = 0
       let efficiencyStatus = 'Normal' // Normal, Warning, Critical
       let capacityStatus = 'Normal'   // Normal, Overflow
 
@@ -151,7 +157,8 @@ export async function getAllFuelLogs(
          if (prevLog && prevLog.Odometer) {
             const distance = log.Odometer - prevLog.Odometer
             if (distance > 0 && log.Liters > 0) {
-                kmPerLiter = distance / log.Liters
+                deltaKm = distance
+                kmPerLiter = +(distance / log.Liters).toFixed(2)
                 
                 // Efficiency Alerts
                 if (kmPerLiter < 5) efficiencyStatus = 'Critical'
@@ -160,9 +167,15 @@ export async function getAllFuelLogs(
          }
       }
 
+      const pricePerLiter = (log.Price_Total && log.Liters && log.Liters > 0)
+        ? +(log.Price_Total / log.Liters).toFixed(2)
+        : 0
+
       return {
         ...log,
-        Driver_Name: driverMap.get(log.Driver_ID) || 'Unknown',
+        Driver_Name: driverMap.get(log.Driver_ID) || 'ไม่ระบุคนขับ',
+        Price_Per_Liter: pricePerLiter,
+        Delta_Km: deltaKm,
         Km_Per_Liter: kmPerLiter,
         Efficiency_Status: efficiencyStatus,
         Capacity_Status: capacityStatus,
