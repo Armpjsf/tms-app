@@ -13,6 +13,13 @@ import { RealtimeJobsTrigger } from "@/components/mobile/realtime-jobs-trigger"
 import { Suspense } from "react"
 import JobsLoading from "./loading"
 
+// Every status that means the job is no longer active for the driver. Kept in
+// one place so the "hide from active view" filter and the one-job-at-a-time
+// lock agree, and so a job closed as Delivered/Billed/Paid/… is recognised as
+// closed (not shown as still pending). Mirrors the label groups in
+// job-search-list.tsx (statusMeta).
+const CLOSED_STATUSES = ['Completed', 'Complete', 'Delivered', 'Finished', 'Closed', 'Billed', 'Paid', 'Verified', 'Cancelled', 'Canceled', 'Rejected']
+
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
@@ -31,9 +38,12 @@ async function JobsContent({ driverId, searchParams }: { driverId: string, searc
   let displayJobs = jobs
   if (!status || status === 'All') {
       displayJobs = jobs.filter(j => {
-          // Keep active jobs regardless of date
-          if (j.Job_Status !== 'Completed' && j.Job_Status !== 'Cancelled' && j.Job_Status !== 'Verified' && j.Job_Status !== 'Rejected') return true;
-          // Keep completed jobs ONLY if a date filter was explicitly selected, or it's today/future
+          // Keep active jobs regardless of date. A job the admin closed with ANY
+          // closed status (Delivered/Billed/Paid/… — see CLOSED_STATUSES) must be
+          // treated as closed here; the old short list missed most of them, so
+          // those jobs kept showing as if still active.
+          if (!CLOSED_STATUSES.includes(j.Job_Status || '')) return true;
+          // Keep closed jobs ONLY if a date filter was explicitly selected, or it's today/future
           if (dateFrom || dateTo) return true;
           return j.Plan_Date && j.Plan_Date >= today
       })
@@ -41,8 +51,7 @@ async function JobsContent({ driverId, searchParams }: { driverId: string, searc
       // One job at a time: hide QUEUED open jobs so the driver only sees the
       // current (oldest open) job until it's closed (POD submitted). History
       // (completed/cancelled/verified) still shows. Mirrors the dashboard lock.
-      const CLOSED = ['Completed', 'Complete', 'Delivered', 'Cancelled', 'Verified', 'Rejected', 'Billed', 'Paid']
-      const openJobs = displayJobs.filter(j => !CLOSED.includes(j.Job_Status || ''))
+      const openJobs = displayJobs.filter(j => !CLOSED_STATUSES.includes(j.Job_Status || ''))
       if (openJobs.length > 1) {
           const currentOpen = [...openJobs].sort((a, b) => {
               const pa = a.Plan_Date || '', pb = b.Plan_Date || ''

@@ -14,6 +14,23 @@ type MobileJobListItem = Pick<Job, "Job_ID" | "Customer_Name" | "Dest_Location" 
 const fmtDayMonth = (v?: string | null) =>
   v ? new Date(v).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : null
 
+// Map any Job_Status the system uses onto a driver-facing label + colour.
+// Admins close jobs with several closed statuses (Delivered/Billed/Paid/Closed/…);
+// the previous switch only handled Completed/Verified, so every other closed
+// status fell through to "รอเริ่มงาน" and looked like the status never changed.
+const SUCCESS_STATUSES = ['Completed', 'Complete', 'Delivered', 'Finished', 'Closed', 'Billed', 'Paid']
+const ACTIVE_STATUSES = ['In Progress', 'In Transit', 'Arrived', 'Arrived Pickup', 'Arrived Dropoff', 'Picked Up']
+function statusMeta(status?: string | null): { label: string; className: string } {
+  const s = status || ''
+  if (s === 'Verified') return { label: 'สำเร็จ (ตรวจสอบแล้ว)', className: 'bg-emerald-100 text-emerald-700' }
+  if (SUCCESS_STATUSES.includes(s)) return { label: 'สำเร็จ', className: 'bg-emerald-100 text-emerald-700' }
+  if (s === 'Rejected') return { label: 'ถูกปฏิเสธ', className: 'bg-destructive/10 text-destructive' }
+  if (s === 'Cancelled' || s === 'Canceled') return { label: 'ยกเลิก', className: 'bg-destructive/10 text-destructive' }
+  if (s === 'SOS') return { label: 'ฉุกเฉิน (SOS)', className: 'bg-destructive/10 text-destructive' }
+  if (ACTIVE_STATUSES.includes(s)) return { label: 'กำลังดำเนินการ', className: 'bg-primary/10 text-primary' }
+  return { label: 'รอเริ่มงาน', className: 'bg-muted text-muted-foreground' }
+}
+
 export function MobileJobSearchList({ jobs }: { jobs: MobileJobListItem[] }) {
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -72,16 +89,9 @@ export function MobileJobSearchList({ jobs }: { jobs: MobileJobListItem[] }) {
                 </div>
                 <div className={cn(
                   "px-3 py-1 rounded-lg text-[10px] font-bold uppercase",
-                  job.Job_Status === 'Completed' || job.Job_Status === 'Verified' ? 'bg-emerald-100 text-emerald-700' : 
-                  job.Job_Status === 'Rejected' ? 'bg-destructive/10 text-destructive' :
-                  ['In Progress', 'In Transit', 'Arrived'].includes(job.Job_Status || '') ? 'bg-primary/10 text-primary' :
-                  'bg-muted text-muted-foreground'
+                  statusMeta(job.Job_Status).className
                 )}>
-                  {job.Job_Status === 'Verified' ? 'สำเร็จ (ตรวจสอบแล้ว)' :
-                   job.Job_Status === 'Completed' ? 'สำเร็จ' : 
-                   job.Job_Status === 'Rejected' ? 'ถูกปฏิเสธ' :
-                   ['In Progress', 'In Transit', 'Arrived'].includes(job.Job_Status || '') ? 'กำลังดำเนินการ' : 
-                   'รอเริ่มงาน'}
+                  {statusMeta(job.Job_Status).label}
                 </div>
               </div>
 
