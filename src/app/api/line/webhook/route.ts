@@ -392,16 +392,26 @@ async function resolveFleetPlate(
         const exact = plates.find(p => norm(p) === norm(raw))
         if (exact) return { plate: exact, matched: true }
 
-        // 2. Unique match by digit signature (the reliably-OCR'd part)
         const rawDigits = digitsOf(raw)
+
+        // 2. Unique match by full digit signature (best when OCR read all digits)
         if (rawDigits.length >= 3) {
             const byDigits = plates.filter(p => digitsOf(p) === rawDigits)
             if (byDigits.length === 1) return { plate: byDigits[0], matched: true }
-            // Tie-break by first character (usually a digit, reliably read)
             if (byDigits.length > 1) {
                 const byFirst = byDigits.filter(p => norm(p)[0] === norm(raw)[0])
                 if (byFirst.length === 1) return { plate: byFirst[0], matched: true }
             }
+        }
+
+        // 3. Match by the TRAILING plate number (the "2502" part), which OCR reads
+        //    most reliably. Robust to an extra/dropped leading digit or a misread
+        //    consonant. Use the last 4 (or 3) digits.
+        for (const n of [4, 3]) {
+            if (rawDigits.length < n) continue
+            const tail = rawDigits.slice(-n)
+            const byTail = plates.filter(p => digitsOf(p).slice(-n) === tail)
+            if (byTail.length === 1) return { plate: byTail[0], matched: true }
         }
     } catch { /* fall through to raw */ }
     return { plate: raw, matched: false }
@@ -2220,13 +2230,13 @@ export async function POST(req: NextRequest) {
                                 Liters: Number(extracted.liters) || 0,
                                 Price_Total: Number(extracted.priceTotal) || 0,
                                 Odometer: extracted.odometer != null ? Number(extracted.odometer) : null,
-                                Station_Name: extracted.stationName || 'ปั๊มน้ำมัน',
+                                Station_Name: 'ปั๊มน้ำมัน', // LLM station name unreliable — real station is in the attached photo
                                 Photo_Url: uploadRes.directLink,
                                 Branch_ID: boundDriver.Branch_ID || null,
                                 Status: 'Pending'
                             })
 
-                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n${extracted.stationName ? `📍 สถานี: ${extracted.stationName}\n` : ''}💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
+                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
                             continue
                         }
 
@@ -2351,18 +2361,17 @@ export async function POST(req: NextRequest) {
                                 liters: Number(fuel.liters) || 0,
                                 price: Number(fuel.priceTotal) || 0,
                                 odometer: fuel.odometer != null ? Number(fuel.odometer) : undefined,
-                                // Read from the transcribed header (see prompt). Kept only when
-                                // the model actually transcribed it; still admin-verified on the card.
-                                station: fuel.stationName || '',
+                                // Station name left blank: LLM OCR is non-deterministic here
+                                // (same photo → different Thai company names), so a guess is
+                                // worse than nothing. The receipt photo carries the real station.
+                                station: '',
                                 dateTime: fuel.dateTime || undefined,
                                 photoUrl: uploadRes.directLink,
                                 branchId: adminFuel.Branch_ID || undefined,
                             }
                             await savePendingAction(userId, 'create_fuel_log', args)
                             const meta = buildPendingAction('create_fuel_log', args)
-                            const stationNote = args.station
-                                ? '\n\nℹ️ โปรดตรวจชื่อปั๊มกับรูปบิลก่อนยืนยัน'
-                                : ''
+                            const stationNote = '\n\nℹ️ ชื่อปั๊ม: ดูจากรูปบิลที่แนบ'
                             const plateNote = !args.plate
                                 ? '\n\n⚠️ ไม่พบทะเบียนบนใบเสร็จ — โปรดระบุ/แก้ทะเบียนก่อนยืนยัน'
                                 : (!plateRes.matched
