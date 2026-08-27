@@ -291,19 +291,21 @@ async function callGeminiMultimodal(
     data: Buffer,
     // Callers that need accurate OCR (e.g. fuel receipts) can request a stronger
     // model; the default lite model is fine for classification / rough extraction.
-    modelOverride?: string
+    modelOverride?: string,
+    options?: {
+        temperature?: number;
+        responseMimeType?: string;
+        disableTools?: boolean;
+    }
 ): Promise<string | null> {
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
     if (!apiKey) return null
 
-    const DEFAULT_MODEL = "gemini-3.1-flash-lite"
-    // Try the requested (stronger) model first, then fall back to the default so a
-    // bad/unavailable model name can never silently break the flow (e.g. drop the
-    // fuel-receipt confirm card back to the generic AI reply).
-    const modelsToTry = Array.from(new Set([modelOverride || DEFAULT_MODEL, DEFAULT_MODEL]))
+    const DEFAULT_MODEL = "gemini-3.6-flash"
+    const FALLBACK_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"]
+    const modelsToTry = Array.from(new Set([modelOverride || DEFAULT_MODEL, ...FALLBACK_MODELS]))
     const urlFor = (m: string) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`
-    let url = urlFor(modelsToTry[0])
-    const tools = [{ function_declarations: geminiToolDefinitions }]
+    const tools = options?.disableTools ? undefined : [{ function_declarations: geminiToolDefinitions }]
 
     const contents: Record<string, unknown>[] = [{
         role: 'user',
@@ -314,14 +316,27 @@ async function callGeminiMultimodal(
         ]
     }]
 
+    const generationConfig: Record<string, unknown> = {}
+    if (options?.temperature !== undefined) {
+        generationConfig.temperature = options.temperature
+    }
+    if (options?.responseMimeType) {
+        generationConfig.responseMimeType = options.responseMimeType
+    }
+
     try {
         let res: Response | null = null
+        let usedUrl = ''
         for (const m of modelsToTry) {
-            url = urlFor(m)
-            res = await fetch(url, {
+            usedUrl = urlFor(m)
+            const bodyPayload: Record<string, unknown> = { contents }
+            if (tools) bodyPayload.tools = tools
+            if (Object.keys(generationConfig).length > 0) bodyPayload.generationConfig = generationConfig
+
+            res = await fetch(usedUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents, tools }),
+                body: JSON.stringify(bodyPayload),
                 signal: AbortSignal.timeout(25000)
             })
             if (res.ok) break
@@ -334,7 +349,7 @@ async function callGeminiMultimodal(
         let message = json?.candidates?.[0]?.content
 
         // Handle one round of tool calls for multimodal (usually enough for extraction -> create)
-        if (message?.parts?.some((p: Record<string, unknown>) => p.functionCall)) {
+        if (tools && message?.parts?.some((p: Record<string, unknown>) => p.functionCall)) {
             const toolResults: Record<string, unknown>[] = []
             contents.push(message)
 
@@ -349,7 +364,7 @@ async function callGeminiMultimodal(
             }
             contents.push({ role: 'function', parts: toolResults })
 
-            const resNext = await fetch(url, {
+            const resNext = await fetch(usedUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents, tools })
@@ -2167,36 +2182,50 @@ export async function POST(req: NextRequest) {
 
                         // 1. Ask Gemini to classify and extract
                         const classPrompt = `
-                        Analyze this image uploaded by the driver "${userName}".
-                        Classify the image into one of three types:
-                        1. "fuel_receipt" - Fuel purchase receipt, gas station invoice, or refueling log.
-                        2. "delivery_proof" - Signed delivery sheet (POD), cargo proof, dropoff photo, or package delivery.
-                        3. "other" - Any other photo.
+Analyze this image uploaded by the driver "${userName}".
+The image may be rotated sideways.
 
-                        Provide the result in the following JSON format ONLY, do not write markdown blocks or text other than the JSON:
-                        {
-                          "classification": "fuel_receipt" | "delivery_proof" | "other",
-                          "headerText": "If fuel receipt: transcribe verbatim the top 1-2 lines (seller company, usually 'บริษัท ... จำกัด'), exactly as printed. If unreadable, null",
-                          "stationName": "Copy the seller company name from headerText (do NOT paraphrase/shorten/translate or substitute a brand you didn't read). If headerText is null, return null",
-                          "priceTotal": 1200.00,
-                          "liters": 45.5,
-                          "odometer": 123456,
-                          "vehiclePlate": "Vehicle license plate specified on receipt (if fuel receipt)",
-                          "dateTime": "Refueling date and time in YYYY-MM-DDTHH:mm:ss format"
-                        }
-                        (odometer = the vehicle mileage / เลขไมล์ if printed on the receipt, else omit)
-                        For dateTime: read the date printed ON the receipt (a driver may send it days late). Thai receipts often use the Buddhist year (พ.ศ., e.g. 2568 = 2025) and dd/MM/yyyy — convert to Gregorian ISO. If no date is printed, return null (do NOT guess today).
-                        `.trim()
+Classify the image into one of three types:
+1. "fuel_receipt" - Fuel purchase receipt, gas station invoice, or refueling log.
+2. "delivery_proof" - Signed delivery sheet (POD), cargo proof, dropoff photo, or package delivery.
+3. "other" - Any other photo.
+
+If it is a fuel receipt, strictly extract the exact information verbatim:
+- "stationName": EXACT full company name / registered name of the SELLER (ผู้ขาย / สถานีบริการ / ผู้ออกใบกำกับ) at the TOP header of the receipt (e.g. 'บริษัท ขวัญเมือง ปิโตรเลียม ดีเซลออยล์ จำกัด'). DO NOT confuse with customer info (ข้อมูลลูกค้า). Never invent or guess words.
+- "taxIdSeller": Seller 13-digit tax ID
+- "priceTotal": Total amount in THB (number)
+- "liters": Fuel quantity in liters (number)
+- "odometer": Vehicle odometer reading if printed (number)
+- "vehiclePlate": Vehicle registration plate (ทะเบียนรถ)
+- "dateTime": Date and time in ISO format YYYY-MM-DDTHH:mm:ss. Convert Buddhist year (e.g. 2569 -> 2026).
+
+Provide JSON ONLY:
+{
+  "classification": "fuel_receipt" | "delivery_proof" | "other",
+  "stationName": "Exact seller name or null",
+  "taxIdSeller": "13-digit tax ID or null",
+  "priceTotal": 1200.00,
+  "liters": 45.5,
+  "odometer": 123456,
+  "vehiclePlate": "3ฒว2502",
+  "dateTime": "YYYY-MM-DDTHH:mm:ss"
+}
+`.trim()
 
                         let classification = 'other'
                         let extracted: Record<string, unknown> = {}
                         try {
                             const classResText = await callGeminiMultimodal(
-                                "You are a helpful logistics AI coordinator.",
+                                "You are an expert OCR and logistics AI coordinator.",
                                 classPrompt,
                                 mimeType,
                                 buffer,
-                                'gemini-2.5-flash' // stronger model for receipt OCR accuracy
+                                'gemini-3.6-flash',
+                                {
+                                    temperature: 0.0,
+                                    responseMimeType: 'application/json',
+                                    disableTools: true
+                                }
                             )
                             if (classResText) {
                                 const cleanJson = classResText.replace(/```json/g, '').replace(/```/g, '').trim()
@@ -2222,6 +2251,8 @@ export async function POST(req: NextRequest) {
                             // driver's own registered plate (most reliable for drivers).
                             const dPlateRes = await resolveFleetPlate(supabase, String(extracted.vehiclePlate || ''))
                             const driverPlate = dPlateRes.matched ? dPlateRes.plate : (boundDriver.Vehicle_Plate || dPlateRes.plate || null)
+                            const stationName = (extracted.stationName as string)?.trim() || 'ปั๊มน้ำมัน'
+
                             await supabase.from('Fuel_Logs').insert({
                                 Log_ID: logId,
                                 Date_Time: extracted.dateTime || new Date().toISOString(),
@@ -2230,13 +2261,13 @@ export async function POST(req: NextRequest) {
                                 Liters: Number(extracted.liters) || 0,
                                 Price_Total: Number(extracted.priceTotal) || 0,
                                 Odometer: extracted.odometer != null ? Number(extracted.odometer) : null,
-                                Station_Name: 'ปั๊มน้ำมัน', // LLM station name unreliable — real station is in the attached photo
+                                Station_Name: stationName,
                                 Photo_Url: uploadRes.directLink,
                                 Branch_ID: boundDriver.Branch_ID || null,
                                 Status: 'Pending'
                             })
 
-                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
+                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n🏢 ปั๊ม: ${stationName}\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
                             continue
                         }
 
@@ -2330,24 +2361,36 @@ export async function POST(req: NextRequest) {
                     // the details and ask for a confirm button before saving.
                     if (adminFuel && event.message.type === 'image') {
                         const fuelPrompt = `
-                        Analyze this image. If it is a fuel purchase receipt / gas station invoice, return JSON ONLY.
-                        IMPORTANT: First TRANSCRIBE the text you actually see, then extract — never invent a value to fill a field.
-                        {
-                          "isFuel": true,
-                          "headerText": "Transcribe verbatim the top 1-2 lines of the receipt (the seller company line, usually 'บริษัท ... จำกัด'), exactly as printed, character by character. If unreadable, null.",
-                          "stationName": "Copy the seller company name from headerText above (do NOT paraphrase, shorten, translate, or substitute a brand). If headerText is null, return null.",
-                          "priceTotal": 1200.00,
-                          "liters": 45.5,
-                          "odometer": 123456,
-                          "vehiclePlate": "license plate on the receipt if any",
-                          "dateTime": "YYYY-MM-DDTHH:mm:ss"
-                        }
-                        For dateTime: read the date printed ON the receipt (an admin may log it days late). Thai receipts often use the Buddhist year (พ.ศ., e.g. 2568 = 2025) and dd/MM/yyyy — convert to Gregorian ISO. If no date is printed, return null (do NOT guess today).
-                        If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
-                        `.trim()
+You are a specialized Thai OCR engine for fuel receipts and tax invoices (ใบเสร็จรับเงิน/ใบกำกับภาษี).
+Analyze this image carefully. The image may be rotated sideways.
+If it is a fuel purchase receipt / gas station invoice, return JSON ONLY:
+{
+  "isFuel": true,
+  "stationName": "EXACT full company/station name of the SELLER / ISSUER (ผู้ขาย/ผู้ออกใบกำกับ) at the TOP header of the receipt (e.g. บริษัท ขวัญเมือง ปิโตรเลียม ดีเซลออยล์ จำกัด). DO NOT confuse with customer name (ข้อมูลลูกค้า). Strictly transcribe verbatim, no hallucination.",
+  "taxIdSeller": "13-digit tax ID of the seller or null",
+  "priceTotal": 1200.00,
+  "liters": 45.5,
+  "odometer": 123456,
+  "vehiclePlate": "Vehicle license plate on receipt or null",
+  "dateTime": "YYYY-MM-DDTHH:mm:ss"
+}
+For dateTime: read the date printed ON the receipt (an admin may log it days late). Thai receipts often use Buddhist year (พ.ศ., e.g. 2568 = 2025) and dd/MM/yyyy — convert to Gregorian ISO. If no date is printed, return null (do NOT guess today).
+If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
+`.trim()
                         let fuel: Record<string, unknown> = {}
                         try {
-                            const t = await callGeminiMultimodal('You are a logistics AI.', fuelPrompt, mimeType, buffer, 'gemini-2.5-flash')
+                            const t = await callGeminiMultimodal(
+                                'You are an expert Thai document OCR AI.',
+                                fuelPrompt,
+                                mimeType,
+                                buffer,
+                                'gemini-3.6-flash',
+                                {
+                                    temperature: 0.0,
+                                    responseMimeType: 'application/json',
+                                    disableTools: true
+                                }
+                            )
                             if (t) fuel = JSON.parse(t.replace(/```json/g, '').replace(/```/g, '').trim())
                         } catch { /* not fuel */ }
 
@@ -2356,22 +2399,20 @@ export async function POST(req: NextRequest) {
                             // Snap the OCR'd plate to a real fleet vehicle (OCR misreads
                             // Thai consonants; digits are reliable → match on those).
                             const plateRes = await resolveFleetPlate(supabase, String(fuel.vehiclePlate || ''))
+                            const stationName = typeof fuel.stationName === 'string' && fuel.stationName.trim() ? fuel.stationName.trim() : ''
                             const args: Record<string, unknown> = {
                                 plate: plateRes.plate,
                                 liters: Number(fuel.liters) || 0,
                                 price: Number(fuel.priceTotal) || 0,
                                 odometer: fuel.odometer != null ? Number(fuel.odometer) : undefined,
-                                // Station name left blank: LLM OCR is non-deterministic here
-                                // (same photo → different Thai company names), so a guess is
-                                // worse than nothing. The receipt photo carries the real station.
-                                station: '',
+                                station: stationName,
                                 dateTime: fuel.dateTime || undefined,
                                 photoUrl: uploadRes.directLink,
                                 branchId: adminFuel.Branch_ID || undefined,
                             }
                             await savePendingAction(userId, 'create_fuel_log', args)
                             const meta = buildPendingAction('create_fuel_log', args)
-                            const stationNote = '\n\nℹ️ ชื่อปั๊ม: ดูจากรูปบิลที่แนบ'
+                            const stationNote = !stationName ? '\n\nℹ️ ชื่อปั๊ม: ไม่พบในบิล (ดูจากรูปที่แนบ)' : ''
                             const plateNote = !args.plate
                                 ? '\n\n⚠️ ไม่พบทะเบียนบนใบเสร็จ — โปรดระบุ/แก้ทะเบียนก่อนยืนยัน'
                                 : (!plateRes.matched
