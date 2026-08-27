@@ -2219,13 +2219,13 @@ export async function POST(req: NextRequest) {
                                 Liters: Number(extracted.liters) || 0,
                                 Price_Total: Number(extracted.priceTotal) || 0,
                                 Odometer: extracted.odometer != null ? Number(extracted.odometer) : null,
-                                Station_Name: extracted.stationName || 'ปั๊มน้ำมัน',
+                                Station_Name: 'ปั๊มน้ำมัน', // OCR station name unreliable — see attached photo for the real station
                                 Photo_Url: uploadRes.directLink,
                                 Branch_ID: boundDriver.Branch_ID || null,
                                 Status: 'Pending'
                             })
 
-                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n📍 สถานี: ${extracted.stationName || 'ไม่ระบุ'}\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
+                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
                             continue
                         }
 
@@ -2348,13 +2348,17 @@ export async function POST(req: NextRequest) {
                                 liters: Number(fuel.liters) || 0,
                                 price: Number(fuel.priceTotal) || 0,
                                 odometer: fuel.odometer != null ? Number(fuel.odometer) : undefined,
-                                station: fuel.stationName || '',
+                                // Station name from OCR is unreliable (the model paraphrases /
+                                // hallucinates Thai company names) — do NOT guess it. The receipt
+                                // photo is attached, so the real station is always verifiable.
+                                station: '',
                                 dateTime: fuel.dateTime || undefined,
                                 photoUrl: uploadRes.directLink,
                                 branchId: adminFuel.Branch_ID || undefined,
                             }
                             await savePendingAction(userId, 'create_fuel_log', args)
                             const meta = buildPendingAction('create_fuel_log', args)
+                            const stationNote = '\n\nℹ️ ชื่อปั๊ม: ดูจากรูปบิลที่แนบ (ระบบไม่เดาเพื่อกันข้อมูลผิด)'
                             const plateNote = !args.plate
                                 ? '\n\n⚠️ ไม่พบทะเบียนบนใบเสร็จ — โปรดระบุ/แก้ทะเบียนก่อนยืนยัน'
                                 : (!plateRes.matched
@@ -2362,7 +2366,7 @@ export async function POST(req: NextRequest) {
                                     : '')
                             await replyToUser(replyToken, {
                                 type: 'text',
-                                text: `${meta.title}\n\n${meta.summary}${plateNote}\n\n👇 กดยืนยันเพื่อบันทึก`,
+                                text: `${meta.title}\n\n${meta.summary}${plateNote}${stationNote}\n\n👇 กดยืนยันเพื่อบันทึก`,
                                 quickReply: {
                                     items: [
                                         { type: 'action', action: { type: 'message', label: '✅ ยืนยัน', text: 'ยืนยันคำสั่ง' } },
