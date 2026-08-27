@@ -2048,6 +2048,28 @@ export async function POST(req: NextRequest) {
             // IMAGE / FILE MESSAGE (Order Extraction & Analysis)
             // ─────────────────────────────────────────────────────────────
             if (event.type === 'message' && (event.message?.type === 'image' || event.message?.type === 'file')) {
+                // TEMP DEBUG: log group image identity resolution so we can see why an
+                // admin's receipt is silently ignored (usually: LINE didn't send userId
+                // because they haven't friended this OA, or a bot/id mismatch).
+                if (inGroup) {
+                    try {
+                        await supabase.from('System_Logs').insert({
+                            module: 'LineDebug',
+                            action_type: 'GROUP_IMAGE',
+                            details: {
+                                botIndex,
+                                hasUserId: !!userId,
+                                userId: userId || null,
+                                groupId: groupId || null,
+                                matchedAdmin: !!resolvedAdmin,
+                                matchedDriver: !!boundDriver,
+                                matchedCustomer: !!boundCustomer,
+                            },
+                            created_at: new Date().toISOString(),
+                        })
+                    } catch { /* ignore */ }
+                }
+
                 // adminFuel included so an admin's fuel receipt is processed in groups too
                 if (!boundAdmin && !boundDriver && !boundCustomer && !adminFuel) continue
 
