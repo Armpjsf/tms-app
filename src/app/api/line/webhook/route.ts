@@ -296,10 +296,15 @@ async function callGeminiMultimodal(
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
     if (!apiKey) return null
 
-    const modelName = modelOverride || "gemini-3.1-flash-lite"
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`
+    const DEFAULT_MODEL = "gemini-3.1-flash-lite"
+    // Try the requested (stronger) model first, then fall back to the default so a
+    // bad/unavailable model name can never silently break the flow (e.g. drop the
+    // fuel-receipt confirm card back to the generic AI reply).
+    const modelsToTry = Array.from(new Set([modelOverride || DEFAULT_MODEL, DEFAULT_MODEL]))
+    const urlFor = (m: string) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`
+    let url = urlFor(modelsToTry[0])
     const tools = [{ function_declarations: geminiToolDefinitions }]
-    
+
     const contents: Record<string, unknown>[] = [{
         role: 'user',
         parts: [
@@ -310,12 +315,19 @@ async function callGeminiMultimodal(
     }]
 
     try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents, tools }),
-            signal: AbortSignal.timeout(25000)
-        })
+        let res: Response | null = null
+        for (const m of modelsToTry) {
+            url = urlFor(m)
+            res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents, tools }),
+                signal: AbortSignal.timeout(25000)
+            })
+            if (res.ok) break
+            console.warn(`[Line Multimodal] model ${m} failed (${res.status}), trying next`)
+        }
+        if (!res) return null
 
         if (!res.ok) return null
         const json = await res.json()
@@ -2173,7 +2185,7 @@ export async function POST(req: NextRequest) {
                                 classPrompt,
                                 mimeType,
                                 buffer,
-                                'gemini-3.1-flash' // stronger model for receipt OCR accuracy
+                                'gemini-2.5-flash' // stronger model for receipt OCR accuracy
                             )
                             if (classResText) {
                                 const cleanJson = classResText.replace(/```json/g, '').replace(/```/g, '').trim()
@@ -2322,7 +2334,7 @@ export async function POST(req: NextRequest) {
                         `.trim()
                         let fuel: Record<string, unknown> = {}
                         try {
-                            const t = await callGeminiMultimodal('You are a logistics AI.', fuelPrompt, mimeType, buffer, 'gemini-3.1-flash')
+                            const t = await callGeminiMultimodal('You are a logistics AI.', fuelPrompt, mimeType, buffer, 'gemini-2.5-flash')
                             if (t) fuel = JSON.parse(t.replace(/```json/g, '').replace(/```/g, '').trim())
                         } catch { /* not fuel */ }
 
