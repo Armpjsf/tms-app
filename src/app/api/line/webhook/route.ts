@@ -2166,7 +2166,8 @@ export async function POST(req: NextRequest) {
                         Provide the result in the following JSON format ONLY, do not write markdown blocks or text other than the JSON:
                         {
                           "classification": "fuel_receipt" | "delivery_proof" | "other",
-                          "stationName": "the EXACT station/shop name printed on the receipt (read the Thai company name at the top). If you cannot read it clearly, return null — do NOT guess and do NOT output a common brand you didn't actually read",
+                          "headerText": "If fuel receipt: transcribe verbatim the top 1-2 lines (seller company, usually 'บริษัท ... จำกัด'), exactly as printed. If unreadable, null",
+                          "stationName": "Copy the seller company name from headerText (do NOT paraphrase/shorten/translate or substitute a brand you didn't read). If headerText is null, return null",
                           "priceTotal": 1200.00,
                           "liters": 45.5,
                           "odometer": 123456,
@@ -2219,13 +2220,13 @@ export async function POST(req: NextRequest) {
                                 Liters: Number(extracted.liters) || 0,
                                 Price_Total: Number(extracted.priceTotal) || 0,
                                 Odometer: extracted.odometer != null ? Number(extracted.odometer) : null,
-                                Station_Name: 'ปั๊มน้ำมัน', // OCR station name unreliable — see attached photo for the real station
+                                Station_Name: extracted.stationName || 'ปั๊มน้ำมัน',
                                 Photo_Url: uploadRes.directLink,
                                 Branch_ID: boundDriver.Branch_ID || null,
                                 Status: 'Pending'
                             })
 
-                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
+                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n${extracted.stationName ? `📍 สถานี: ${extracted.stationName}\n` : ''}💰 ยอดเงินรวม: ฿${(Number(extracted.priceTotal) || 0).toLocaleString()}\n⛽ จำนวนน้ำมัน: ${Number(extracted.liters) || 0} ลิตร\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
                             continue
                         }
 
@@ -2319,10 +2320,12 @@ export async function POST(req: NextRequest) {
                     // the details and ask for a confirm button before saving.
                     if (adminFuel && event.message.type === 'image') {
                         const fuelPrompt = `
-                        Analyze this image. If it is a fuel purchase receipt / gas station invoice, return JSON ONLY:
+                        Analyze this image. If it is a fuel purchase receipt / gas station invoice, return JSON ONLY.
+                        IMPORTANT: First TRANSCRIBE the text you actually see, then extract — never invent a value to fill a field.
                         {
                           "isFuel": true,
-                          "stationName": "the EXACT station/shop name printed on the receipt (read the Thai company name at the top). If you cannot read it clearly, return null — do NOT guess and do NOT output a common brand you didn't actually read",
+                          "headerText": "Transcribe verbatim the top 1-2 lines of the receipt (the seller company line, usually 'บริษัท ... จำกัด'), exactly as printed, character by character. If unreadable, null.",
+                          "stationName": "Copy the seller company name from headerText above (do NOT paraphrase, shorten, translate, or substitute a brand). If headerText is null, return null.",
                           "priceTotal": 1200.00,
                           "liters": 45.5,
                           "odometer": 123456,
@@ -2348,17 +2351,18 @@ export async function POST(req: NextRequest) {
                                 liters: Number(fuel.liters) || 0,
                                 price: Number(fuel.priceTotal) || 0,
                                 odometer: fuel.odometer != null ? Number(fuel.odometer) : undefined,
-                                // Station name from OCR is unreliable (the model paraphrases /
-                                // hallucinates Thai company names) — do NOT guess it. The receipt
-                                // photo is attached, so the real station is always verifiable.
-                                station: '',
+                                // Read from the transcribed header (see prompt). Kept only when
+                                // the model actually transcribed it; still admin-verified on the card.
+                                station: fuel.stationName || '',
                                 dateTime: fuel.dateTime || undefined,
                                 photoUrl: uploadRes.directLink,
                                 branchId: adminFuel.Branch_ID || undefined,
                             }
                             await savePendingAction(userId, 'create_fuel_log', args)
                             const meta = buildPendingAction('create_fuel_log', args)
-                            const stationNote = '\n\nℹ️ ชื่อปั๊ม: ดูจากรูปบิลที่แนบ (ระบบไม่เดาเพื่อกันข้อมูลผิด)'
+                            const stationNote = args.station
+                                ? '\n\nℹ️ โปรดตรวจชื่อปั๊มกับรูปบิลก่อนยืนยัน'
+                                : ''
                             const plateNote = !args.plate
                                 ? '\n\n⚠️ ไม่พบทะเบียนบนใบเสร็จ — โปรดระบุ/แก้ทะเบียนก่อนยืนยัน'
                                 : (!plateRes.matched
