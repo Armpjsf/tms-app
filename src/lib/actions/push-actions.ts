@@ -376,44 +376,20 @@ export async function sendPushToAdminUser(userId: string, payload: PushPayload) 
 // Notify: Driver New Job
 // ─────────────────────────────────────────────
 export async function notifyDriverNewJob(driverId: string, jobId: string, customerName: string) {
-    // Detect whether this new job is QUEUED behind an older open job. Because the
-    // app shows one job at a time (and hides the queue), a plain "new job" alert
-    // would be invisible to the driver — so tell them to finish the current job.
-    let isQueued = false
-    try {
-        const supabase = createAdminClient()
-        const CLOSED_JOB_STATUSES = ['Completed', 'Complete', 'Delivered', 'Verified', 'Billed', 'Paid', 'Cancelled', 'Draft', 'Rejected']
-        const { count } = await supabase
-            .from('Jobs_Main')
-            .select('*', { count: 'exact', head: true })
-            .eq('Driver_ID', driverId)
-            .not('Job_Status', 'in', `(${CLOSED_JOB_STATUSES.join(',')})`)
-        // >=2 open jobs (this one + at least one older still open) → it's queued.
-        isQueued = (count || 0) >= 2
-    } catch { /* fall back to the normal new-job message */ }
-
-    const title = isQueued ? '📦 มีงานใหม่รออยู่!' : '📦 งานใหม่สำหรับคุณ!'
-    const body = isQueued
-        ? `ลูกค้า: ${customerName} • รีบปิดงานปัจจุบันให้เสร็จ เพื่อรับงานถัดไป`
-        : `งาน ${jobId} • ลูกค้า: ${customerName}`
-    // A queued job is hidden until the current one closes, so point the driver at
-    // their active job (dashboard) rather than the locked job detail.
-    const link = isQueued ? '/mobile/dashboard' : `/mobile/jobs/${jobId}`
-
     await createNotification({
         Driver_ID: driverId,
-        Title: title,
-        Message: body,
+        Title: '📦 งานใหม่สำหรับคุณ!',
+        Message: `งาน ${jobId} • ลูกค้า: ${customerName}`,
         Type: 'info',
-        Link: link,
+        Link: `/mobile/jobs/${jobId}`,
     })
 
     // Driver notifications go via Web Push (free, unlimited) — the limited LINE
     // push quota is reserved for customer-facing delivery messages.
     await sendPushToDriver(driverId, {
-        title,
-        body,
-        url: link,
+        title: '📦 งานใหม่สำหรับคุณ!',
+        body: `งาน ${jobId} • ลูกค้า: ${customerName}`,
+        url: `/mobile/jobs/${jobId}`,
         type: 'new_job',
         tag: `new_job_${jobId}`,
     })

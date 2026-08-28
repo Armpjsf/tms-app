@@ -132,33 +132,6 @@ export async function createJob(data: JobFormData) {
     else if (vehicleErr) console.warn('[createJob] Vehicle lookup failed:', vehicleErr.message)
   }
 
-  // Data-quality guard: cap unclosed jobs per driver. A driver may hold at most
-  // MAX_OPEN_JOBS_PER_DRIVER jobs that aren't closed yet (POD submitted); the app
-  // shows one at a time and queues the next. Beyond that, block the admin so work
-  // doesn't pile up on one driver. Only counts real assigned work (skips drafts).
-  // Only jobs dated today-or-earlier count toward the "active right now" cap —
-  // a future-planned job neither counts nor is blocked (matches the bulk-import
-  // guard). Non-ISO / blank Plan_Date is treated as today (still counted).
-  const MAX_OPEN_JOBS_PER_DRIVER = 2
-  const CLOSED_JOB_STATUSES = ['Completed', 'Complete', 'Delivered', 'Verified', 'Billed', 'Paid', 'Cancelled', 'Draft', 'Rejected']
-  const capToday = todayTH()
-  const newPlanDate = String(data.Plan_Date || '').slice(0, 10)
-  const isFuturePlanned = /^\d{4}-\d{2}-\d{2}$/.test(newPlanDate) && newPlanDate > capToday
-  if (data.Driver_ID && data.Job_Status !== 'Draft' && !isFuturePlanned) {
-    const { count: openCount } = await supabase
-      .from('Jobs_Main')
-      .select('*', { count: 'exact', head: true })
-      .eq('Driver_ID', data.Driver_ID)
-      .not('Job_Status', 'in', `(${CLOSED_JOB_STATUSES.join(',')})`)
-      .lte('Plan_Date', capToday)
-    if ((openCount || 0) >= MAX_OPEN_JOBS_PER_DRIVER) {
-      return {
-        success: false,
-        message: `คนขับ ${driverName || data.Driver_ID} มีงานค้างอยู่ ${openCount} งาน (ยังไม่ปิด) — ให้ปิดงานเดิมก่อนจึงจะมอบงานใหม่ได้`,
-      }
-    }
-  }
-
   // Get Pricing from Engine
   const pricing = await calculateJobPrice({
       ...data,
@@ -948,45 +921,6 @@ export async function createBulkJobs(
 
   const newJobs = jobsMainData.filter(j => !existingIds.has(j.Job_ID as string))
   const updateJobs = jobsMainData.filter(j => existingIds.has(j.Job_ID as string))
-
-  // Data-quality guard: cap unclosed jobs per driver (existing open + this batch).
-  // A driver may hold at most MAX_OPEN_JOBS_PER_DRIVER jobs that aren't closed
-  // (POD submitted); the app shows one at a time and queues the next. Beyond that
-  // we block so work doesn't pile up on one driver. Skips drafts.
-  //
-  // Only jobs dated today-or-earlier count: a bulk import is usually a plan for
-  // future days, and future-planned jobs shouldn't trip an "active right now"
-  // cap. So future-dated batch rows are exempt, and the existing-open count is
-  // limited to Plan_Date <= today too.
-  {
-    const MAX_OPEN_JOBS_PER_DRIVER = 2
-    const today = todayTH()
-    const CLOSED_JOB_STATUSES = ['Completed', 'Complete', 'Delivered', 'Verified', 'Billed', 'Paid', 'Cancelled', 'Draft', 'Rejected']
-    const batchByDriver = new Map<string, number>()
-    for (const j of newJobs) {
-      const did = (j.Driver_ID as string) || ''
-      if (!did || j.Job_Status === 'Draft') continue
-      // Skip future-planned jobs — they don't count toward the active cap.
-      const planDate = (j.Plan_Date as string) || ''
-      if (planDate && planDate > today) continue
-      batchByDriver.set(did, (batchByDriver.get(did) || 0) + 1)
-    }
-    for (const [did, batchCount] of batchByDriver) {
-      const { count: openCount } = await supabase
-        .from('Jobs_Main')
-        .select('*', { count: 'exact', head: true })
-        .eq('Driver_ID', did)
-        .not('Job_Status', 'in', `(${CLOSED_JOB_STATUSES.join(',')})`)
-        .lte('Plan_Date', today)
-      if ((openCount || 0) + batchCount > MAX_OPEN_JOBS_PER_DRIVER) {
-        const dName = driverMap.get(did)?.Driver_Name || did
-        return {
-          success: false,
-          message: `คนขับ ${dName} มีงานค้างอยู่ ${openCount} งาน (ยังไม่ปิด) — รับได้สูงสุด ${MAX_OPEN_JOBS_PER_DRIVER} งาน ให้ปิดงานเดิมก่อนจึงจะมอบงานใหม่ได้`,
-        }
-      }
-    }
-  }
 
   // Insert new jobs only (no silent overwrite)
   if (newJobs.length > 0) {

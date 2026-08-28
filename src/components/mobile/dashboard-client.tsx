@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { 
     Truck, MapPin,
     Bell, Clock, Banknote,
-    ChevronRight, ArrowUpRight, ShieldCheck, Lock
+    ChevronRight, ArrowUpRight, ShieldCheck
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { createClient } from "@/utils/supabase/client"
@@ -281,27 +281,50 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
                 </AnimatePresence>
             </motion.div>
 
-            {/* QUEUE — locked. Next jobs stay hidden until the current one is
-                closed (POD submitted), so the driver focuses on one job at a time
-                and can't work out of order. Only a count is shown, no details. */}
+            {/* QUEUE */}
             {secondaryJobs.length > 0 && (
                 <motion.div variants={item} className="space-y-3">
                     <h2 className="text-base font-bold text-foreground uppercase flex items-center gap-2">
                         <div className="w-1 h-4 bg-muted-foreground/30 rounded-full" />
                         คิวงานถัดไป ({secondaryJobs.length})
                     </h2>
-                    <div className="bg-muted/30 border border-dashed border-border rounded-xl p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center text-muted-foreground flex-shrink-0">
-                            <Lock size={20} />
-                        </div>
-                        <div>
-                            <h4 className="text-sm font-bold text-foreground">
-                                มีงานถัดไปรออยู่ {secondaryJobs.length} งาน
-                            </h4>
-                            <p className="text-muted-foreground text-xs">
-                                ปิดงานปัจจุบันให้เสร็จก่อน จึงจะเห็นงานถัดไป
-                            </p>
-                        </div>
+                    <div className="space-y-3">
+                        {secondaryJobs.map((job) => (
+                            <Link key={job.Job_ID} href={`/mobile/jobs/${job.Job_ID}`}>
+                                <div className="bg-card border border-border rounded-xl p-4 flex items-center justify-between active:scale-[0.98] transition-all shadow-sm">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
+                                            <Clock size={20} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-foreground">#{(job.Job_ID || '').slice(-6).toUpperCase()}</h4>
+                                            <p className="text-muted-foreground text-xs truncate max-w-[180px]">
+                                                {job.Customer_Name}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1.5">
+                                        <div className="p-1.5 bg-muted/40 rounded-full">
+                                            <ChevronRight size={16} className="text-muted-foreground" />
+                                        </div>
+                                        {mounted && (() => {
+                                            const dateInfo = getJobDateInfo(job.Plan_Date ?? null)
+                                            if (!dateInfo.label) return null
+                                            return (
+                                                <span className={cn(
+                                                    "text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border",
+                                                    dateInfo.type === 'today' ? "bg-emerald-500 text-white border-emerald-400" :
+                                                    dateInfo.type === 'tomorrow' ? "bg-yellow-500 text-black border-yellow-400" :
+                                                    "bg-primary/5 text-primary border-primary/10"
+                                                )}>
+                                                    {dateInfo.label}
+                                                </span>
+                                            )
+                                        })()}
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
                     </div>
                 </motion.div>
             )}
