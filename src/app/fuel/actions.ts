@@ -116,7 +116,7 @@ export async function createFuelLog(data: FuelFormData) {
 }
 
 export async function updateFuelLog(logId: string, data: FuelFormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { error } = await supabase
     .from('Fuel_Logs')
@@ -155,7 +155,7 @@ export async function updateFuelLog(logId: string, data: FuelFormData) {
 }
 
 export async function updateFuelLogStatus(logId: string, status: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { error, data } = await supabase
     .from('Fuel_Logs')
@@ -194,7 +194,7 @@ export async function updateFuelLogStatus(logId: string, status: string) {
 }
 
 export async function deleteFuelLog(logId: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { error } = await supabase
     .from('Fuel_Logs')

@@ -1,8 +1,9 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { cookies } from "next/headers"
 import { todayTH } from "@/lib/utils/date-th"
 
 export type FuelLog = {
@@ -27,26 +28,22 @@ export type FuelLog = {
 // ดึงบันทึกเติมน้ำมันวันนี้
 export async function getTodayFuelLogs(): Promise<FuelLog[]> {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const today = todayTH()
     
-    const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const userBranchId = await getUserBranchId()
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
+    const branchId = isSuper ? (selectedBranch || userBranchId) : userBranchId
 
     let query = supabase
       .from('Fuel_Logs')
       .select('*')
       .gte('Date_Time', today)
     
-    // STRICT ISOLATION
-    if (!isAdmin) {
-        if (branchId && branchId !== 'All') {
-            query = query.eq('Branch_ID', branchId)
-        } else {
-            return []
-        }
-    } else if (branchId && branchId !== 'All') {
-        query = query.eq('Branch_ID', branchId)
+    if (branchId && branchId !== 'All') {
+      query = query.eq('Branch_ID', branchId)
     }
 
     const { data, error } = await query
@@ -71,7 +68,7 @@ async function getPreviousLog(supabase: SupabaseClient, vehiclePlate: string, cu
     .lt('Date_Time', currentDate)
     .order('Date_Time', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
   return data
 }
 
@@ -85,22 +82,21 @@ export async function getAllFuelLogs(
   selectedVehicles?: string[]
 ): Promise<{ data: (FuelLog & { Km_Per_Liter?: number; Price_Per_Liter?: number; Delta_Km?: number })[], count: number }> {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const offset = (page - 1) * limit
     
-    const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const userBranchId = await getUserBranchId()
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
+    const branchId = isSuper ? (selectedBranch || userBranchId) : userBranchId
 
     let dbQuery = supabase
       .from('Fuel_Logs')
       .select('*', { count: 'exact' })
     
-    // Super admins see every branch (their own Branch_ID may be a non-branch like
-    // 'HQ'); everyone else is scoped to their branch.
-    if (branchId && branchId !== 'All' && !isAdmin) {
-        dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
-        return { data: [], count: 0 }
+    if (branchId && branchId !== 'All') {
+      dbQuery = dbQuery.eq('Branch_ID', branchId)
     }
 
     dbQuery = dbQuery.order('Date_Time', { ascending: false })
@@ -124,6 +120,7 @@ export async function getAllFuelLogs(
     const { data: logs, error, count } = await dbQuery.range(offset, offset + limit - 1)
   
     if (error) {
+      console.error("[getAllFuelLogs] Supabase query error:", error)
       return { data: [], count: 0 }
     }
 
@@ -187,6 +184,7 @@ export async function getAllFuelLogs(
   
     return { data: enrichedLogs, count: count || 0 }
   } catch (e) {
+    console.error("[getAllFuelLogs] Exception:", e)
     return { data: [], count: 0 }
   }
 }
@@ -203,9 +201,12 @@ export type FuelBillForMatch = {
 export async function getFuelBillsForMatching(vehiclePlate: string): Promise<FuelBillForMatch[]> {
   try {
     if (!vehiclePlate) return []
-    const supabase = await createClient()
-    const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
+    const supabase = createAdminClient()
+    const isSuper = await isSuperAdmin()
+    const userBranchId = await getUserBranchId()
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
+    const branchId = isSuper ? (selectedBranch || userBranchId) : userBranchId
 
     let query = supabase
       .from('Fuel_Logs')
@@ -215,8 +216,6 @@ export async function getFuelBillsForMatching(vehiclePlate: string): Promise<Fue
 
     if (branchId && branchId !== 'All') {
       query = query.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
-      return []
     }
 
     const { data, error } = await query
@@ -230,26 +229,22 @@ export async function getFuelBillsForMatching(vehiclePlate: string): Promise<Fue
 // นับสถิติน้ำมันวันนี้
 export async function getTodayFuelStats() {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const today = todayTH()
     
-    const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const userBranchId = await getUserBranchId()
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
+    const branchId = isSuper ? (selectedBranch || userBranchId) : userBranchId
 
     let query = supabase
       .from('Fuel_Logs')
       .select('Liters, Price_Total')
       .gte('Date_Time', today)
     
-    // STRICT ISOLATION
-    if (!isAdmin) {
-        if (branchId && branchId !== 'All') {
-            query = query.eq('Branch_ID', branchId)
-        } else {
-            return { totalLiters: 0, totalAmount: 0, count: 0 }
-        }
-    } else if (branchId && branchId !== 'All') {
-        query = query.eq('Branch_ID', branchId)
+    if (branchId && branchId !== 'All') {
+      query = query.eq('Branch_ID', branchId)
     }
 
     const { data, error } = await query

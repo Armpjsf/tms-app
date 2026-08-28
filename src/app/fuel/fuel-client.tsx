@@ -286,6 +286,12 @@ export function FuelClient({
                       className="h-9 bg-transparent border-none text-foreground text-xs font-black outline-none px-2"
                   />
                 </div>
+                {selectedVehicles && selectedVehicles.length > 0 && (
+                  <input type="hidden" name="vehicles" value={selectedVehicles.join(',')} />
+                )}
+                {searchParams.get('q') && (
+                  <input type="hidden" name="q" value={searchParams.get('q') || ''} />
+                )}
                 <PremiumButton type="submit" variant="secondary" className="h-11 px-5 rounded-xl border-border bg-muted/80 text-foreground font-black text-xs uppercase tracking-wider">
                     {t('common.filter')}
                 </PremiumButton>
