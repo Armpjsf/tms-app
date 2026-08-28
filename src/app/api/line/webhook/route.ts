@@ -392,30 +392,33 @@ async function callGeminiMultimodal(
 async function resolveFleetPlate(
     supabase: ReturnType<typeof createAdminClient>,
     ocrPlate: string
-): Promise<{ plate: string; matched: boolean }> {
+): Promise<{ plate: string; matched: boolean; branchId: string | null }> {
     const raw = String(ocrPlate || '').replace(/\s+/g, '').trim()
-    if (!raw) return { plate: '', matched: false }
+    if (!raw) return { plate: '', matched: false, branchId: null }
     try {
-        const { data } = await supabase.from('Master_Vehicles').select('Vehicle_Plate')
-        const plates = (data || [])
-            .map((v: { Vehicle_Plate?: string | null }) => String(v.Vehicle_Plate || '').trim())
-            .filter(Boolean)
+        const { data } = await supabase.from('Master_Vehicles').select('Vehicle_Plate, Branch_ID')
+        const rows = (data || [])
+            .map((v: { Vehicle_Plate?: string | null; Branch_ID?: string | null }) => ({ plate: String(v.Vehicle_Plate || '').trim(), branch: v.Branch_ID ?? null }))
+            .filter(r => r.plate)
+        const plates = rows.map(r => r.plate)
+        const branchOf = (p: string) => rows.find(r => r.plate === p)?.branch ?? null
+        const hit = (p: string) => ({ plate: p, matched: true, branchId: branchOf(p) })
         const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase()
         const digitsOf = (s: string) => (s.match(/\d/g) || []).join('')
 
         // 1. Exact (ignoring spaces/case)
         const exact = plates.find(p => norm(p) === norm(raw))
-        if (exact) return { plate: exact, matched: true }
+        if (exact) return hit(exact)
 
         const rawDigits = digitsOf(raw)
 
         // 2. Unique match by full digit signature (best when OCR read all digits)
         if (rawDigits.length >= 3) {
             const byDigits = plates.filter(p => digitsOf(p) === rawDigits)
-            if (byDigits.length === 1) return { plate: byDigits[0], matched: true }
+            if (byDigits.length === 1) return hit(byDigits[0])
             if (byDigits.length > 1) {
                 const byFirst = byDigits.filter(p => norm(p)[0] === norm(raw)[0])
-                if (byFirst.length === 1) return { plate: byFirst[0], matched: true }
+                if (byFirst.length === 1) return hit(byFirst[0])
             }
         }
 
@@ -426,10 +429,15 @@ async function resolveFleetPlate(
             if (rawDigits.length < n) continue
             const tail = rawDigits.slice(-n)
             const byTail = plates.filter(p => digitsOf(p).slice(-n) === tail)
-            if (byTail.length === 1) return { plate: byTail[0], matched: true }
+            if (byTail.length === 1) return hit(byTail[0])
         }
     } catch { /* fall through to raw */ }
-    return { plate: raw, matched: false }
+    return { plate: raw, matched: false, branchId: null }
+}
+
+// A real, non-phantom branch: exists in Master_Branches (excludes legacy 'HQ'/'All').
+function isRealBranch(b: string | null | undefined): boolean {
+    return !!b && b !== 'HQ' && b !== 'All'
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -2292,7 +2300,9 @@ Provide JSON ONLY:
                                 Odometer: extracted.odometer != null ? Number(extracted.odometer) : null,
                                 Station_Name: stationName,
                                 Photo_Url: uploadRes.directLink,
-                                Branch_ID: boundDriver.Branch_ID || null,
+                                // Fuel belongs to the vehicle's branch (so it shows in that
+                                // branch's report), not the sender's — fall back to the driver's.
+                                Branch_ID: (isRealBranch(dPlateRes.branchId) ? dPlateRes.branchId : boundDriver.Branch_ID) || null,
                                 Status: 'Pending'
                             })
 
@@ -2443,7 +2453,10 @@ If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
                                 station: stationName,
                                 dateTime: fuel.dateTime || undefined,
                                 photoUrl: uploadRes.directLink,
-                                branchId: adminFuel.Branch_ID || undefined,
+                                // Fuel belongs to the vehicle's branch (so it shows in that
+                                // branch's report) — the sender may be a super-admin on a
+                                // non-branch (e.g. HQ). Fall back to the sender's branch.
+                                branchId: (isRealBranch(plateRes.branchId) ? plateRes.branchId : adminFuel.Branch_ID) || undefined,
                             }
                             await savePendingAction(userId, 'create_fuel_log', args)
                             const meta = buildPendingAction('create_fuel_log', args)
