@@ -28,7 +28,7 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import * as XLSX from "xlsx"
-import { parseDTCExcel, type DTCAnalysisResult, type DTCRefuelEvent } from "@/lib/parsers/dtc-gps-parser"
+import { parseDTCExcel, type DTCAnalysisResult, type DTCRefuelEvent, type DTCWorkTrip } from "@/lib/parsers/dtc-gps-parser"
 import { getFuelBillsForMatching, type FuelBillForMatch } from "@/lib/supabase/fuel"
 
 type DtcSubView = 'trips' | 'daily' | 'weekly' | 'monthly' | 'refuels'
@@ -99,6 +99,61 @@ function matchRefuelsToBills(events: DTCRefuelEvent[], bills: FuelBillForMatch[]
   return { matched, avgKmPerLiter, matchedCount: scored.length, totalLiters: +totalLiters.toFixed(2) }
 }
 
+/**
+ * Map บิลน้ำมันจริง (Fuel_Logs) เข้ากับ "เที่ยววิ่งงาน" ตาม timeline
+ *
+ * หลักการ full-to-full: เติมทุกครั้งคือเต็มถัง → ลิตรที่เติมครั้งหนึ่ง = น้ำมันที่ใช้ไป
+ * ตั้งแต่เติมครั้งก่อน. ดังนั้น km/L ต้องคิดที่ระดับ "เติม→เติม" (ระยะไมล์ช่วงนั้น ÷
+ * ลิตรที่เติมปิดช่วง) ไม่ใช่เอาลิตรทั้งก้อนไปหารระยะของเที่ยวเดียว (จะเพี้ยน).
+ *
+ * จากนั้นแจกเรท km/L ของแต่ละช่วงเข้า "เที่ยววิ่งงาน" ที่จบลงในช่วงนั้น แล้วประเมิน
+ * ลิตรที่เที่ยวนั้นใช้ = ระยะเที่ยว ÷ เรท (ให้ระยะ/ลิตร = เรทเดิม สอดคล้องกัน).
+ */
+function mapBillsToWorkTrips(workTrips: DTCWorkTrip[], bills: FuelBillForMatch[]): DTCWorkTrip[] {
+  const MIN_KMPL = 2, MAX_KMPL = 30
+  const END_TOLERANCE = 40 // กม. เผื่อบิลที่เติมหลังกลับถึงคลัง
+
+  const sorted = bills
+    .filter(b => typeof b.Odometer === 'number' && (b.Odometer as number) > 0 && (b.Liters || 0) > 0)
+    .sort((a, b) => (a.Odometer as number) - (b.Odometer as number))
+
+  // ช่วงเติม→เติม: [fromOdo, toOdo] พร้อม km/L ของช่วง
+  const spans = sorted.slice(1).map((b, i) => {
+    const prev = sorted[i]
+    const fromOdo = prev.Odometer as number
+    const toOdo = b.Odometer as number
+    const km = toOdo - fromOdo
+    const liters = b.Liters || 0
+    const kmpl = liters > 0 ? +(km / liters).toFixed(2) : 0
+    return { fromOdo, toOdo, km, liters, cost: b.Price_Total || 0, kmpl, valid: km > 0 && kmpl >= MIN_KMPL && kmpl <= MAX_KMPL }
+  })
+
+  return workTrips.map(t => {
+    // เลือกช่วงเติมที่ "ปิด" เที่ยวนี้: ช่วงที่ครอบเลขไมล์ตอนจบเที่ยว
+    const span = spans.find(s => s.valid && t.endOdo > s.fromOdo && t.endOdo <= s.toOdo + END_TOLERANCE)
+    // บิลที่เติม "ระหว่าง" เที่ยว (เลขไมล์อยู่ในช่วงวิ่งของเที่ยว) — บอกจังหวะการเติม
+    let timing: string | undefined
+    let count = 0
+    for (const b of sorted) {
+      const odo = b.Odometer as number
+      if (odo >= t.startOdo && odo <= t.endOdo + END_TOLERANCE) {
+        count += 1
+        const frac = t.distanceKm > 0 ? (odo - t.startOdo) / t.distanceKm : 1
+        const label = frac <= 0.1 ? 'ก่อนออก' : frac >= 0.9 ? 'หลังกลับ' : 'ระหว่างทาง'
+        timing = timing && timing !== label ? 'หลายจุด' : label
+      }
+    }
+
+    if (!span) {
+      return { ...t, refuelLiters: 0, refuelCost: 0, refuelCount: count, kmPerLiter: null, refuelTiming: timing }
+    }
+    const kmPerLiter = span.kmpl
+    const litersUsed = kmPerLiter > 0 ? +(t.distanceKm / kmPerLiter).toFixed(2) : 0
+    const cost = span.liters > 0 ? +(span.cost * (litersUsed / span.liters)).toFixed(2) : 0
+    return { ...t, refuelLiters: litersUsed, refuelCost: cost, refuelCount: count, kmPerLiter, refuelTiming: timing }
+  })
+}
+
 export function DtcGpsImportTab() {
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -108,6 +163,13 @@ export function DtcGpsImportTab() {
   const [matchedRefuels, setMatchedRefuels] = useState<DTCRefuelEvent[]>([])
   const [avgKmPerLiter, setAvgKmPerLiter] = useState<number | null>(null)
   const [matchedCount, setMatchedCount] = useState(0)
+  const [workTrips, setWorkTrips] = useState<DTCWorkTrip[]>([])
+
+  // อัตราสิ้นเปลืองเฉลี่ย "อิงเที่ยววิ่งงาน": ถ่วงน้ำหนักด้วยระยะทาง = Σ กม.ที่ได้เรท ÷ Σ ลิตรที่ใช้
+  const ratedTrips = workTrips.filter(t => t.kmPerLiter != null && (t.refuelLiters || 0) > 0)
+  const workTripKm = ratedTrips.reduce((s, t) => s + t.distanceKm, 0)
+  const workTripLiters = ratedTrips.reduce((s, t) => s + (t.refuelLiters || 0), 0)
+  const workAvgKmPerLiter = workTripLiters > 0 ? +(workTripKm / workTripLiters).toFixed(2) : null
 
   // Handle File Input
   const handleFileChange = async (selectedFile: File) => {
@@ -131,10 +193,12 @@ export function DtcGpsImportTab() {
         setMatchedRefuels(matched)
         setAvgKmPerLiter(avg)
         setMatchedCount(mc)
+        setWorkTrips(mapBillsToWorkTrips(parsed.workTrips, bills))
       } catch {
         setMatchedRefuels(parsed.refuelEvents)
         setAvgKmPerLiter(null)
         setMatchedCount(0)
+        setWorkTrips(parsed.workTrips)
       }
 
       toast.success(`ประมวลผลข้อมูล GPS รถทะเบียน ${parsed.vehiclePlate || '-'} สำเร็จ (${parsed.trips.length} Trips)`)
@@ -167,23 +231,29 @@ export function DtcGpsImportTab() {
     })))
     XLSX.utils.book_append_sheet(wb, wsDaily, "Daily_Summary")
 
-    // Sheet 2: Trips
-    const wsTrips = XLSX.utils.json_to_sheet(result.trips.map((t, i) => ({
+    // Sheet 2: Work Trips (PCG → PCG) พร้อม km/L ต่อเที่ยว
+    const tripSource = workTrips.length > 0 ? workTrips : result.workTrips
+    const wsTrips = XLSX.utils.json_to_sheet(tripSource.map((t, i) => ({
       "ลำดับ": i + 1,
-      "Trip ID": t.tripId,
+      "เที่ยว": t.tripId,
+      "วันที่": t.date,
       "เวลาเริ่ม": t.startTime,
       "เวลาสิ้นสุด": t.endTime,
       "ระยะเวลา (นาที)": t.durationMinutes,
-      "ต้นทาง": t.startLocation,
-      "ปลายทาง": t.endLocation,
+      "จำนวนจุดส่ง": t.dropsCount,
+      "จุดส่ง": t.dropNames.join(', '),
       "เลขไมล์เริ่ม": t.startOdo,
-      "เลขไมล์สิ้นสุด": t.endOdo,
-      "ระยะทาง (กม.)": t.distanceKm,
-      "ความเร็วสูงสุด": t.maxSpeed,
-      "ความเร็วเฉลี่ย": t.avgSpeed,
+      "เลขไมล์จบ": t.endOdo,
+      "ระยะทาง GPS (กม.)": t.distanceKm,
+      "น้ำมันเริ่ม (%)": t.startFuelPct,
+      "น้ำมันต่ำสุด (%)": t.minFuelPct,
+      "ลิตร (บิลจริง)": t.refuelLiters ?? '',
+      "ค่าน้ำมัน (บาท)": t.refuelCost ?? '',
+      "การเติม": t.refuelTiming ?? '',
+      "km/L (full-to-full)": t.kmPerLiter ?? '',
       "คนขับ": t.driverName
     })))
-    XLSX.utils.book_append_sheet(wb, wsTrips, "Trips")
+    XLSX.utils.book_append_sheet(wb, wsTrips, "Work_Trips")
 
     // Sheet 3: Refuel Events (พร้อม km/L full-to-full จากบิลจริง)
     const refuelsForExport = matchedRefuels.length > 0 ? matchedRefuels : result.refuelEvents
@@ -273,7 +343,7 @@ export function DtcGpsImportTab() {
                 Export ผลวิเคราะห์
               </PremiumButton>
               <button
-                onClick={() => { setResult(null); setFile(null); setMatchedRefuels([]); setAvgKmPerLiter(null); setMatchedCount(0); }}
+                onClick={() => { setResult(null); setFile(null); setMatchedRefuels([]); setAvgKmPerLiter(null); setMatchedCount(0); setWorkTrips([]); }}
                 className="h-10 px-4 rounded-xl border border-border bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-colors"
               >
                 <Trash2 size={14} />
@@ -327,12 +397,14 @@ export function DtcGpsImportTab() {
             <PremiumCard className="p-5 bg-background border border-border rounded-2xl">
               <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">อัตราสิ้นเปลืองเฉลี่ย</span>
               <p className="text-2xl font-black italic text-purple-400 tracking-tight mt-1">
-                {avgKmPerLiter !== null ? avgKmPerLiter.toFixed(2) : '—'} <span className="text-xs font-normal text-muted-foreground">km/L</span>
+                {workAvgKmPerLiter !== null ? workAvgKmPerLiter.toFixed(2) : (avgKmPerLiter !== null ? avgKmPerLiter.toFixed(2) : '—')} <span className="text-xs font-normal text-muted-foreground">km/L</span>
               </p>
               <p className="text-[9px] font-black text-muted-foreground uppercase mt-1">
-                {avgKmPerLiter !== null
-                  ? `เติมเต็ม-ถึง-เติมเต็ม • จับคู่บิล ${matchedCount} รอบ`
-                  : 'ยังไม่มีบิลน้ำมันจับคู่'}
+                {workAvgKmPerLiter !== null
+                  ? `อิงเที่ยววิ่งงาน • ${ratedTrips.length}/${workTrips.length} เที่ยวได้เรท`
+                  : avgKmPerLiter !== null
+                    ? `เติมเต็ม-ถึง-เติมเต็ม • จับคู่บิล ${matchedCount} รอบ`
+                    : 'ยังไม่มีบิลน้ำมันจับคู่'}
               </p>
             </PremiumCard>
           </div>
@@ -414,45 +486,64 @@ export function DtcGpsImportTab() {
             </PremiumCard>
           )}
 
-          {/* SubView 2: Trips Table */}
+          {/* SubView 2: Work Trips Table (PCG → PCG) พร้อม km/L ต่อเที่ยว */}
           {subView === 'trips' && (
             <PremiumCard className="p-0 overflow-hidden border border-border rounded-2xl bg-background shadow-lg">
+              <div className="px-6 pt-5 pb-2">
+                <h4 className="text-xs font-black text-foreground uppercase tracking-wider">เที่ยววิ่งงาน (ออก-กลับ คลัง PCG)</h4>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  km/L คิดแบบเติมเต็ม-ถึง-เติมเต็ม จากบิลจริงที่ map เข้ากับ timeline • ระยะทางจากเลขไมล์ GPS จริง
+                </p>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-muted/50 border-b border-border text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                      <th className="p-3.5 pl-6">Trip ID / เวลา</th>
-                      <th className="p-3.5">ต้นทาง → ปลายทาง</th>
-                      <th className="p-3.5 text-right">ระยะทาง (กม.)</th>
-                      <th className="p-3.5 text-right">ระยะเวลา</th>
-                      <th className="p-3.5 text-right">ความเร็วสูงสุด</th>
+                      <th className="p-3.5 pl-6">เที่ยว / วัน-เวลา</th>
+                      <th className="p-3.5 text-center">จุดส่ง</th>
+                      <th className="p-3.5 text-right">ระยะทาง GPS</th>
                       <th className="p-3.5 text-right">เลขไมล์เริ่ม - จบ</th>
-                      <th className="p-3.5 text-right">ระดับน้ำมัน</th>
+                      <th className="p-3.5 text-right">น้ำมัน (%)</th>
+                      <th className="p-3.5 text-right">ลิตร (บิล)</th>
+                      <th className="p-3.5 text-right">km/L</th>
                       <th className="p-3.5 pr-6">คนขับ</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/40 font-bold">
-                    {result.trips
-                      .filter(t => t.tripId.includes(search) || t.startLocation.includes(search) || t.endLocation.includes(search) || t.driverName.includes(search))
-                      .slice(0, 100)
-                      .map((t) => (
-                        <tr key={t.tripId} className="hover:bg-muted/30 transition-colors">
-                          <td className="p-3.5 pl-6">
-                            <span className="font-black text-foreground">{t.tripId}</span>
-                            <p className="text-[10px] text-muted-foreground">{t.startTime} - {t.endTime.split(' ')[1]}</p>
-                          </td>
-                          <td className="p-3.5 max-w-[200px]">
-                            <p className="font-bold text-foreground truncate">📍 {t.startLocation}</p>
-                            <p className="text-[11px] text-muted-foreground truncate">🏁 {t.endLocation}</p>
-                          </td>
-                          <td className="p-3.5 text-right font-black text-foreground">{t.distanceKm.toLocaleString()} กม.</td>
-                          <td className="p-3.5 text-right text-cyan-400">{t.durationMinutes} น.</td>
-                          <td className="p-3.5 text-right text-foreground">{t.maxSpeed} กม./ชม.</td>
-                          <td className="p-3.5 text-right text-[11px] text-muted-foreground">{t.startOdo.toLocaleString()} → {t.endOdo.toLocaleString()}</td>
-                          <td className="p-3.5 text-right text-emerald-400">{t.startFuelPct}% → {t.endFuelPct}%</td>
-                          <td className="p-3.5 pr-6 text-foreground truncate max-w-[120px]">{t.driverName}</td>
-                        </tr>
-                      ))}
+                    {workTrips.length === 0 ? (
+                      <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">ไม่พบเที่ยววิ่งงาน (PCG → PCG) ในไฟล์</td></tr>
+                    ) : (
+                      workTrips
+                        .filter(t => t.tripId.includes(search) || t.date.includes(search) || t.driverName.includes(search) || t.dropNames.some(d => d.includes(search)))
+                        .map((t) => (
+                          <tr key={t.tripId} className="hover:bg-muted/30 transition-colors">
+                            <td className="p-3.5 pl-6">
+                              <span className="font-black text-foreground">{t.tripId}</span>
+                              <p className="text-[10px] text-muted-foreground">{t.date} • {t.startTime.split(' ')[1]} - {t.endTime.split(' ')[1]}</p>
+                            </td>
+                            <td className="p-3.5 text-center">
+                              <Badge variant="outline">{t.dropsCount} จุด</Badge>
+                            </td>
+                            <td className="p-3.5 text-right font-black text-foreground">{t.distanceKm.toLocaleString()} กม.</td>
+                            <td className="p-3.5 text-right text-[11px] text-muted-foreground">{t.startOdo.toLocaleString()} → {t.endOdo.toLocaleString()}</td>
+                            <td className="p-3.5 text-right text-emerald-400">{t.startFuelPct}% → {t.minFuelPct}%</td>
+                            <td className="p-3.5 text-right">
+                              {t.refuelLiters ? (
+                                <>
+                                  <span className="text-emerald-400 font-black">{t.refuelLiters.toLocaleString()} ล.</span>
+                                  {t.refuelTiming ? <span className="block text-[9px] text-muted-foreground font-normal">{t.refuelTiming}</span> : null}
+                                </>
+                              ) : (
+                                <span className="text-amber-400/60 text-[11px] font-normal">ไม่พบบิล</span>
+                              )}
+                            </td>
+                            <td className="p-3.5 text-right font-black">
+                              {t.kmPerLiter != null ? <span className="text-purple-400">{t.kmPerLiter.toFixed(2)}</span> : <span className="text-muted-foreground/50">—</span>}
+                            </td>
+                            <td className="p-3.5 pr-6 text-foreground truncate max-w-[120px]">{t.driverName}</td>
+                          </tr>
+                        ))
+                    )}
                   </tbody>
                 </table>
               </div>

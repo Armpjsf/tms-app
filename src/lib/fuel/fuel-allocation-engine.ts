@@ -175,16 +175,84 @@ export async function getFuelIntelligenceAnalytics(
     vehicleEfficiencyMap.set(plate, { kmPerLiter, avgUnitPrice });
   });
 
-  // 4. Allocate Fuel to Jobs (Pro-rata Distance Allocation)
+  // 3b. Bucket ACTUAL full-to-full consumption per vehicle-day.
+  // Real per-trip fuel: match each refuel bill to the trip(s) that burned it,
+  // instead of smearing one flat vehicle-average km/L over every trip (which
+  // makes every trip show an identical, unrealistic km/L). Each odometer span
+  // (prev fill → this fill) is the fuel actually consumed before this fill, so
+  // we attribute its km + litres + cost to the date of the closing fill.
+  const MIN_KMPL = 2;
+  const MAX_KMPL = 30; // guard odometer typos / partial fills — implausible spans fall back
+  type DayFuel = { km: number; liters: number; cost: number };
+  const vehicleDayFuel = new Map<string, DayFuel>(); // key `${plate}|${YYYY-MM-DD}`
+
+  vehicleRefuels.forEach((logs, plate) => {
+    const eff = vehicleEfficiencyMap.get(plate);
+    const sorted = [...logs]
+      .filter(l => l.Odometer && (l.Odometer as number) > 0 && l.Liters > 0)
+      .sort((a, b) => (a.Odometer as number) - (b.Odometer as number));
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = sorted[i - 1];
+      const curr = sorted[i];
+      const km = (curr.Odometer as number) - (prev.Odometer as number);
+      const liters = curr.Liters;
+      if (km <= 0 || liters <= 0) continue;
+      const kmpl = km / liters;
+      if (kmpl < MIN_KMPL || kmpl > MAX_KMPL) continue; // skip → trip uses vehicle-avg fallback
+      const date = (curr.Date_Time || '').slice(0, 10);
+      if (!date) continue;
+      const key = `${plate}|${date}`;
+      const b = vehicleDayFuel.get(key) || { km: 0, liters: 0, cost: 0 };
+      b.km += km;
+      b.liters += liters;
+      b.cost += curr.Price_Total || liters * (eff?.avgUnitPrice || 38);
+      vehicleDayFuel.set(key, b);
+    }
+  });
+
+  // Per (plate|date): total estimated distance and trip count, so a day with
+  // several trips splits its actual fuel by each trip's distance share.
+  const dayEstDistance = new Map<string, number>();
+  const dayTripCount = new Map<string, number>();
+  for (const j of rawJobs) {
+    const key = `${String(j.Vehicle_Plate || '')}|${String(j.Plan_Date || '').slice(0, 10)}`;
+    dayEstDistance.set(key, (dayEstDistance.get(key) || 0) + (Number(j.Est_Distance_KM) || 0));
+    dayTripCount.set(key, (dayTripCount.get(key) || 0) + 1);
+  }
+
+  // 4. Allocate Fuel to Jobs (actual bill → trip; vehicle-average fallback)
   const jobAllocations: JobFuelAllocation[] = [];
 
   for (const j of rawJobs) {
     const plate = String(j.Vehicle_Plate || '');
-    const dist = Number(j.Est_Distance_KM) || 0;
+    const date = String(j.Plan_Date || '').slice(0, 10);
+    const estDist = Number(j.Est_Distance_KM) || 0;
     const eff = vehicleEfficiencyMap.get(plate) || { kmPerLiter: 8.5, avgUnitPrice: 38.0 };
 
-    const consumedLiters = dist > 0 ? +(dist / eff.kmPerLiter).toFixed(2) : 0;
-    const fuelCost = dist > 0 ? +(consumedLiters * eff.avgUnitPrice).toFixed(2) : 0;
+    const bucketKey = `${plate}|${date}`;
+    const bucket = vehicleDayFuel.get(bucketKey);
+
+    let dist: number;
+    let consumedLiters: number;
+    let fuelCost: number;
+    let kmPerLiter: number;
+
+    if (bucket && bucket.liters > 0) {
+      // Real allocation from the day's actual refuel bill(s).
+      const dayEst = dayEstDistance.get(bucketKey) || 0;
+      const count = dayTripCount.get(bucketKey) || 1;
+      const share = dayEst > 0 ? estDist / dayEst : 1 / count;
+      dist = +(bucket.km * share).toFixed(2);
+      consumedLiters = +(bucket.liters * share).toFixed(2);
+      fuelCost = +(bucket.cost * share).toFixed(2);
+      kmPerLiter = consumedLiters > 0 ? +(dist / consumedLiters).toFixed(2) : eff.kmPerLiter;
+    } else {
+      // Fallback: no matching bill this day → vehicle baseline on estimated distance.
+      dist = estDist;
+      consumedLiters = dist > 0 ? +(dist / eff.kmPerLiter).toFixed(2) : 0;
+      fuelCost = dist > 0 ? +(consumedLiters * eff.avgUnitPrice).toFixed(2) : 0;
+      kmPerLiter = eff.kmPerLiter;
+    }
     const fuelCostPerKm = dist > 0 ? +(fuelCost / dist).toFixed(2) : 0;
 
     const revenue = (Number(j.Price_Cust_Total) || 0) + (Number(j.Price_Cust_Extra) || 0);
@@ -205,7 +273,7 @@ export async function getFuelIntelligenceAnalytics(
       distanceKm: dist,
       allocatedLiters: consumedLiters,
       allocatedFuelCost: fuelCost,
-      kmPerLiter: eff.kmPerLiter,
+      kmPerLiter,
       fuelCostPerKm,
       revenue,
       driverCost,

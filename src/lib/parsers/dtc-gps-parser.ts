@@ -46,6 +46,33 @@ export interface DTCTrip {
   endLon?: number;
 }
 
+/**
+ * เที่ยววิ่งงานจริง (PCG → PCG): รถออกจากคลัง/บ้าน PCG ไปส่งของ แล้วกลับมา PCG
+ * ใช้เป็นหน่วยคิด km/L ต่อเที่ยว (แทน trip แบบสตาร์ท-ดับเครื่องซึ่งย่อยเกินไป)
+ */
+export interface DTCWorkTrip {
+  tripId: string;
+  date: string;              // YYYY-MM-DD (วันที่ออกงาน)
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  startOdo: number;
+  endOdo: number;
+  distanceKm: number;
+  dropsCount: number;
+  dropNames: string[];
+  startFuelPct: number;
+  endFuelPct: number;
+  minFuelPct: number;
+  driverName: string;
+  // เติมหลัง map บิลจริง (Fuel_Logs) เข้ากับ timeline ในฝั่ง client:
+  refuelLiters?: number;     // ลิตรบิลจริงที่จับเข้ากับเที่ยวนี้ (full-to-full)
+  refuelCost?: number;
+  refuelCount?: number;
+  kmPerLiter?: number | null;
+  refuelTiming?: string;     // 'ก่อนออก' | 'ระหว่างทาง' | 'หลังกลับ' | รวม
+}
+
 export interface DTCRefuelEvent {
   dateTime: string;
   location: string;
@@ -72,6 +99,7 @@ export interface DTCAnalysisResult {
   startOdometer: number;
   endOdometer: number;
   trips: DTCTrip[];
+  workTrips: DTCWorkTrip[];
   refuelEvents: DTCRefuelEvent[];
   dailySummary: {
     date: string;
@@ -245,6 +273,9 @@ export function parseDTCExcel(dataBuffer: ArrayBuffer | Uint8Array | Buffer): DT
     if (trip && trip.distanceKm >= 0.1) trips.push(trip);
   }
 
+  // 3a. Work Trips (PCG → PCG): หน่วยคิด km/L ต่อเที่ยววิ่งงานจริง
+  const workTrips = buildWorkTrips(points);
+
   // 3b. ระยะทาง GPS ต่อรอบเติม (full-to-full): ไมล์ตอนเติมนี้ - ไมล์ตอนเติมครั้งก่อน
   for (let i = 0; i < refuelEvents.length; i++) {
     const prevOdo = i === 0 ? startOdometer : refuelEvents[i - 1].odometer;
@@ -338,11 +369,85 @@ export function parseDTCExcel(dataBuffer: ArrayBuffer | Uint8Array | Buffer): DT
     startOdometer,
     endOdometer,
     trips,
+    workTrips,
     refuelEvents,
     dailySummary,
     weeklySummary,
     monthlySummary
   };
+}
+
+/**
+ * แบ่ง "เที่ยววิ่งงาน" ตามการออก-กลับคลัง PCG
+ * - เปิดเที่ยวเมื่อรถออกจากจุด PCG (มีการวิ่งออกไปจากคลัง)
+ * - ปิดเที่ยวเมื่อกลับมาถึงจุด PCG อีกครั้ง และวิ่งไปแล้วอย่างน้อย MIN_TRIP_KM
+ *   หรือมีการแวะจุดส่ง (drop) อย่างน้อย 1 จุด
+ * - การวิ่งสั้น ๆ ระหว่าง บ้านPCG ↔ โกดังPCG (reposition) จะถูกรวมเข้ากับเที่ยวถัดไป
+ *   เพราะยังไม่ปิดจนกว่าจะครบเงื่อนไข
+ */
+function buildWorkTrips(points: DTCRawRow[]): DTCWorkTrip[] {
+  const MIN_TRIP_KM = 40;
+  const isPCG = (s: string) => s.includes('PCG');
+  const result: DTCWorkTrip[] = [];
+
+  let open: {
+    startPt: DTCRawRow;
+    drops: Set<string>;
+    minFuel: number;
+    driver: string;
+    lastPt: DTCRawRow;
+  } | null = null;
+
+  for (const pt of points) {
+    const atPCG = isPCG(pt.stationName);
+    if (!open) {
+      // เปิดเที่ยวเมื่อออกจาก PCG (อยู่นอกคลังและมีเลขไมล์)
+      if (!atPCG && pt.odometer > 0) {
+        open = {
+          startPt: pt,
+          drops: new Set<string>(),
+          minFuel: pt.fuelPercent || 100,
+          driver: pt.driverName,
+          lastPt: pt,
+        };
+      }
+      continue;
+    }
+
+    // เก็บจุดส่ง (สถานีที่ไม่ใช่ PCG และไม่ว่าง)
+    if (pt.stationName && pt.stationName !== '-' && !isPCG(pt.stationName)) {
+      open.drops.add(pt.stationName);
+    }
+    if (pt.fuelPercent > 0) open.minFuel = Math.min(open.minFuel, pt.fuelPercent);
+    if (open.driver === 'ไม่ระบุคนขับ' && pt.driverName !== 'ไม่ระบุคนขับ') open.driver = pt.driverName;
+    open.lastPt = pt;
+
+    if (atPCG) {
+      const km = +(pt.odometer - open.startPt.odometer).toFixed(1);
+      if (km >= MIN_TRIP_KM || open.drops.size >= 1) {
+        const first = open.startPt;
+        result.push({
+          tripId: `WORK-${(result.length + 1).toString().padStart(3, '0')}`,
+          date: convertDateStrToIso(first.dateTime.split(' ')[0]),
+          startTime: first.dateTime,
+          endTime: pt.dateTime,
+          durationMinutes: Math.max(1, calculateMinutesDiff(first.dateTime, pt.dateTime)),
+          startOdo: first.odometer,
+          endOdo: pt.odometer,
+          distanceKm: km,
+          dropsCount: open.drops.size,
+          dropNames: Array.from(open.drops),
+          startFuelPct: first.fuelPercent,
+          endFuelPct: pt.fuelPercent,
+          minFuelPct: open.minFuel,
+          driverName: open.driver,
+        });
+        open = null;
+      }
+    }
+  }
+
+  return result;
 }
 
 function buildTrip(points: DTCRawRow[], vehiclePlate: string, tripNum: number): DTCTrip | null {
