@@ -95,7 +95,9 @@ export async function getAllFuelLogs(
       .from('Fuel_Logs')
       .select('*', { count: 'exact' })
     
-    if (branchId && branchId !== 'All') {
+    // Super admins see every branch (their own Branch_ID may be a non-branch like
+    // 'HQ'); everyone else is scoped to their branch.
+    if (branchId && branchId !== 'All' && !isAdmin) {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return { data: [], count: 0 }

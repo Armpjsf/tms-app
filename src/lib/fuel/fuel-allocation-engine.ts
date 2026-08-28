@@ -88,6 +88,7 @@ export async function getFuelIntelligenceAnalytics(
   selectedVehicles?: string[]
 ): Promise<FuelIntelligenceSummary> {
   const isUserAdmin = await isAdmin();
+  const isSuper = await isSuperAdmin();
   const branchId = await getUserBranchId();
   const supabase = isUserAdmin ? createAdminClient() : await createClient();
 
@@ -106,7 +107,7 @@ export async function getFuelIntelligenceAnalytics(
     .lte('Plan_Date', end)
     .order('Plan_Date', { ascending: false });
 
-  if (branchId && branchId !== 'All') {
+  if (branchId && branchId !== 'All' && !isSuper) {
     jobsQuery = jobsQuery.eq('Branch_ID', branchId);
   }
 
@@ -125,7 +126,7 @@ export async function getFuelIntelligenceAnalytics(
     .lte('Date_Time', `${end}T23:59:59`)
     .order('Date_Time', { ascending: false });
 
-  if (branchId && branchId !== 'All') {
+  if (branchId && branchId !== 'All' && !isSuper) {
     fuelQuery = fuelQuery.eq('Branch_ID', branchId);
   }
 
