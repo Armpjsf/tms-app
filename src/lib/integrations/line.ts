@@ -50,24 +50,58 @@ export function isBot2Configured(): boolean {
  * (Bangkok − 5h); taking the UTC calendar day of that shifted instant makes the
  * day boundary land at 05:00 Bangkok.
  */
+// ─────────────────────────────────────────────────────────────────
+// Dynamic Dual-bot Quota Failover Tracking
+// ─────────────────────────────────────────────────────────────────
+// Tracking quota exhaustion per bot in memory (auto resets at the next month / reset day)
+const _botExhaustedUntil: Partial<Record<BotIndex, number>> = {};
+
+function calculateNextQuotaResetTimestamp(): number {
+  const resetDay = Math.min(Math.max(parseInt(process.env.LINE_BOT_RESET_DAY || '1', 10) || 1, 1), 28);
+  const now = new Date();
+  let nextReset = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), resetDay, 0, 0, 0));
+  if (now.getTime() >= nextReset.getTime()) {
+    nextReset = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, resetDay, 0, 0, 0));
+  }
+  return nextReset.getTime();
+}
+
+export function isBotExhausted(botIndex: BotIndex): boolean {
+  const until = _botExhaustedUntil[botIndex];
+  if (!until) return false;
+  if (Date.now() >= until) {
+    delete _botExhaustedUntil[botIndex];
+    return false;
+  }
+  return true;
+}
+
+export function markBotExhausted(botIndex: BotIndex) {
+  const nextReset = calculateNextQuotaResetTimestamp();
+  _botExhaustedUntil[botIndex] = nextReset;
+  console.warn(`[LINE Bot Quota] Bot ${botIndex} hit quota limit (429)! Switched to secondary bot until ${new Date(nextReset).toISOString()}`);
+}
+
+function isQuotaExceededError(error: unknown): boolean {
+  if (!error) return false;
+  const anyErr = error as any;
+  if (anyErr.statusCode === 429 || anyErr.status === 429) return true;
+  if (anyErr.response?.status === 429 || anyErr.originalError?.response?.status === 429) return true;
+  const msg = (anyErr.message || String(error)).toLowerCase();
+  return msg.includes('429') || msg.includes('quota') || msg.includes('monthly limit') || msg.includes('rate limit');
+}
+
+/**
+ * Dynamic bot selection:
+ * - Uses Bot 1 as primary.
+ * - If Bot 1 hit 429 (quota exceeded), automatically switches to Bot 2.
+ * - If Bot 2 also hit 429, falls back to whichever bot resets soonest.
+ */
 export function getActiveCustomerBot(): BotIndex {
   if (!isBot2Configured()) return 1;
-
-  // Reset day of the monthly quota cycle. Clamp to 1–28 so it exists in every
-  // month (avoids "the 30th" being missing in February).
-  const resetDay = Math.min(Math.max(parseInt(process.env.LINE_BOT_RESET_DAY || '1', 10) || 1, 1), 28);
-
-  const shifted = new Date(Date.now() + 2 * 60 * 60 * 1000);
-  const day = shifted.getUTCDate();
-
-  // Days elapsed since this cycle's reset day (wrapping into the previous month).
-  let elapsed = day - resetDay;
-  if (elapsed < 0) {
-    const prevMonthLastDay = new Date(Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), 0)).getUTCDate();
-    elapsed += prevMonthLastDay;
-  }
-
-  return elapsed < 15 ? 1 : 2;
+  if (isBotExhausted(1) && !isBotExhausted(2)) return 2;
+  if (isBotExhausted(2) && !isBotExhausted(1)) return 1;
+  return 1;
 }
 
 // Lazy, per-bot client cache. Instantiated at runtime so env vars are read on
@@ -176,18 +210,20 @@ export async function pushToUser(to: string, text: string, botIndex: BotIndex = 
     });
     return { success: true };
   } catch (error) {
-    console.error('Error sending LINE push:', error);
-    return { success: false, error };
+    if (isQuotaExceededError(error)) {
+      markBotExhausted(botIndex);
+    }
+    console.error(`Error sending LINE push (Bot ${botIndex}):`, error);
+    return { success: false, error, is429: isQuotaExceededError(error) };
   }
 }
 
 /**
- * Sends a push to a customer using whichever bot is active right now, picking
- * the LINE user id that matches that bot. Falls back to the OTHER bot when the
- * active one either isn't linked OR fails to send — e.g. it hit its monthly
- * quota (429). Without this, the whole half-month owned by an exhausted bot
- * would go silent even though the other bot still has quota. (Each id is only
- * valid on its own Official Account, so we only retry when a second id exists.)
+ * Sends a push to a customer using the active bot with immediate retry / failover:
+ * 1. Checks which bot is currently active (Bot 1 by default, or Bot 2 if Bot 1 is exhausted).
+ * 2. Attempts sending to that bot's registered ID.
+ * 3. If it fails (either missing ID, error 429, or network failure) and a second ID exists:
+ *    Immediately retries sending via the OTHER bot to ensure zero message loss!
  */
 export async function pushToCustomerActive(
   cust: { Line_User_ID?: string | null; Line_User_ID_2?: string | null },
@@ -198,17 +234,22 @@ export async function pushToCustomerActive(
   const activeId = active === 2 ? cust.Line_User_ID_2 : cust.Line_User_ID;
   const otherId = active === 2 ? cust.Line_User_ID : cust.Line_User_ID_2;
 
-  // 1) Try the active bot with its own id.
+  // 1) Try sending with the active bot
   if (activeId) {
     const res = await pushToUser(activeId, text, active);
     if (res.success) return res;
+    console.warn(`[LINE Failover] Failed sending via Bot ${active}, retrying via Bot ${other}...`);
   }
-  // 2) Fall back to the other bot (covers "not linked to active bot" AND
-  //    "active bot failed / out of quota").
-  if (otherId) {
+
+  // 2) Immediate Auto-Retry via the other bot
+  if (otherId && isBot2Configured()) {
     const res = await pushToUser(otherId, text, other);
-    if (res.success) return res;
+    if (res.success) {
+      console.log(`[LINE Failover] Successfully sent via failover Bot ${other}!`);
+      return res;
+    }
   }
+
   return { success: false, error: 'no LINE id could be reached (missing id or all bots failed)' };
 }
 
