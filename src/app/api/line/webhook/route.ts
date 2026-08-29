@@ -7,6 +7,8 @@ import { undoLastAction } from '@/lib/ai/audit-log'
 import { uploadFileToSupabase } from '@/lib/actions/supabase-upload'
 import { getDetailedDriverAnalytics } from '@/lib/supabase/fleet-analytics'
 import { transitionJobStatus } from "@/services/job-status-machine"
+import { TMS_SCHEMA_PROMPT } from '@/lib/ai/schema-context'
+import { parseVoiceMessage } from '@/lib/ai/voice-action-parser'
 import fs from 'fs'
 
 // ─────────────────────────────────────────────────────────────────
@@ -450,19 +452,22 @@ async function buildAIContext(branchId?: string, userName: string = 'ผู้�
     })
 
     return `
-คุณคือ "LogisPro AI" ผู้ช่วยอัจฉริยะของระบบบริหารการขนส่ง (TMS)
+คุณคือ "LogisPro AI" ผู้ช่วยอัจฉริยะและ Super Admin ของระบบบริหารการขนส่ง (TMS)
 เวลาปัจจุบัน: ${now}
 ผู้ใช้: ${userName} | บทบาท: ${role} | สาขาที่ดูแล: ${branchId || 'ทุกสาขา'}
 
-บทบาทของคุณ:
-1. ตอบคำถามเกี่ยวกับงานขนส่ง, คนขับ, รถ, และการเงิน
-2. [Admin Only] ช่วยเหลือในการ "สร้างใบงานใหม่" (Draft/New) และ "ปล่อยงานเข้าแอป" (notify_jobs_by_date)
-3. สรุปข้อมูลที่สำคัญให้กระชับและเป็นมืออาชีพ
+บทบาทและความสามารถของคุณ:
+1. ตอบคำถามเกี่ยวกับงานขนส่ง, คนขับ, รถ, น้ำมัน, การเงิน และภาพรวมระบบได้อย่างแม่นยำและรอบด้าน
+2. สามารถเรียกใช้เครื่องมือเพื่อดึงข้อมูลเชิงลึกจากฐานข้อมูล (query_tms_database, get_fuel_efficiency_report, get_customer_insights, get_driver_performance ฯลฯ)
+3. [Admin Only] ช่วยเหลือในการ "สร้างใบงานใหม่" (Draft/New) และ "ปล่อยงานเข้าแอป" (notify_jobs_by_date)
+4. สรุปข้อมูลให้กระชับ ชัดเจน ใช้ภาษาไทยที่เป็นมิตร และจัดข้อความด้วย Emoji ให้อ่านง่ายบนหน้าจอ LINE
 
 กฎความปลอดภัย:
 - เฉพาะผู้ที่มีบทบาท "Admin" หรือ "Super Admin" เท่านั้นที่สามารถสร้างงาน, แก้ไขงาน, หรือปล่อยงานได้
 - หากคนขับ (Driver) หรือลูกค้า (Customer) สั่งให้สร้างงานหรือปล่อยงาน ให้ปฏิเสธอย่างสุภาพและบอกว่าไม่มีสิทธิ์ใช้งานส่วนนี้
 - ห้ามเปิดเผยข้อมูลการเงินให้คนขับหรือลูกค้าทราบ
+
+${TMS_SCHEMA_PROMPT}
 `.trim()
 }
 
@@ -2030,7 +2035,7 @@ export async function POST(req: NextRequest) {
             }
 
             // ─────────────────────────────────────────────────────────────
-            // AUDIO MESSAGE (Voice to Action)
+            // AUDIO MESSAGE (Voice to Action & Omnimodal AI)
             // ─────────────────────────────────────────────────────────────
             if (event.type === 'message' && event.message?.type === 'audio') {
                 if (!boundAdmin && !boundDriver) {
@@ -2040,11 +2045,117 @@ export async function POST(req: NextRequest) {
 
                 try {
                     const audioBuffer = await getMessageContent(event.message.id)
-                    const systemContext = await buildAIContext(branchId, userName)
-                    const prompt = `${systemContext}\n\nผู้ใช้ส่งไฟล์เสียงมา:\n1. แปลความหมายจากเสียง\n2. หากสั่งสร้างงาน/บันทึกน้ำมัน ให้แจ้งข้อมูลที่ได้ยิน\n3. ตอบกลับสรุปว่าได้ยินอะไรและควรทำอะไร`
+                    const parsed = await parseVoiceMessage(audioBuffer, {
+                        userName,
+                        role: boundAdmin ? 'Admin' : boundDriver ? 'Driver' : 'User',
+                        branchId,
+                        activeJobId: activeJob?.Job_ID
+                    })
 
-                    const aiResponse = await callGeminiMultimodal(prompt, 'วิเคราะห์เสียงนี้', 'audio/aac', audioBuffer)
-                    await replyToUser(replyToken, aiResponse || '⚠️ AI ไม่สามารถวิเคราะห์เสียงได้ กรุณาลองอีกครั้งครับ')
+                    const prefix = `🎙️ ได้ยินว่า: "${parsed.transcription}"\n`
+
+                    if (parsed.intent === 'UPDATE_JOB_STATUS' && activeJob) {
+                        const targetStatus = (parsed.payload?.status as string) || 'Delivered'
+                        const cash = Number(parsed.payload?.cashCollected) || 0
+                        
+                        try {
+                            const supabase = createAdminClient()
+                            const updateData: Record<string, unknown> = { Job_Status: targetStatus }
+                            if (cash > 0) {
+                                updateData.Notes = (activeJob.Notes ? `${activeJob.Notes} | ` : '') + `เก็บเงินสด: ฿${cash.toLocaleString()}`
+                            }
+                            await supabase.from('Jobs_Main').update(updateData).eq('Job_ID', activeJob.Job_ID)
+                            await replyToUser(replyToken, `${prefix}\n✅ อัปเดตสถานะงาน #${activeJob.Job_ID} เป็น "${targetStatus}" เรียบร้อยแล้วครับ!${cash > 0 ? `\n💰 บันทึกยอดเงินสดที่ได้รับ: ฿${cash.toLocaleString()}` : ''}`)
+                        } catch (stErr) {
+                            await replyToUser(replyToken, `${prefix}\n❌ อัปเดตสถานะงานไม่สำเร็จ: ${String(stErr)}`)
+                        }
+                        continue
+                    }
+
+                    if (parsed.intent === 'REPORT_DELAY_OR_INCIDENT' && activeJob) {
+                        const delayMin = parsed.payload?.delayMinutes || 'ชั่วคราว'
+                        const reason = parsed.payload?.reason || 'เกิดเหตุขัดข้องหน้างาน'
+                        const supabase = createAdminClient()
+                        const existingNotes = activeJob.Notes || ''
+                        const updatedNotes = `${existingNotes} [แจ้งเหตุล่าช้า: ${reason} (ประมาณ ${delayMin} นาที)]`.trim()
+                        await supabase.from('Jobs_Main').update({ Notes: updatedNotes }).eq('Job_ID', activeJob.Job_ID)
+                        await replyToUser(replyToken, `${prefix}\n⚠️ บันทึกรายงานเหตุล่าช้าลงในงาน #${activeJob.Job_ID} เรียบร้อยแล้วครับ\nเหตุผล: ${reason}\nเจ้าหน้าที่จะประสานงานเพิ่มเติมครับ`)
+                        continue
+                    }
+
+                    if (parsed.intent === 'LOG_FUEL') {
+                        const liters = Number(parsed.payload?.liters) || 0
+                        const totalAmount = Number(parsed.payload?.totalAmount) || 0
+                        const odometer = Number(parsed.payload?.odometer) || 0
+                        const station = (parsed.payload?.stationName as string) || 'ปั๊มน้ำมัน'
+                        const plate = (parsed.payload?.plate as string) || boundDriver?.Vehicle_Plate || boundAdmin?.Vehicle_Plate || '3ฒว2502'
+
+                        if (liters > 0 || totalAmount > 0) {
+                            const supabase = createAdminClient()
+                            const logId = `FUEL-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString().slice(-4)}`
+                            await supabase.from('Fuel_Logs').insert({
+                                Log_ID: logId,
+                                Vehicle_Plate: plate,
+                                Driver_ID: boundDriver?.Driver_ID || userName,
+                                Driver_Name: userName,
+                                Liters: liters,
+                                Price_Total: totalAmount,
+                                Odometer: odometer,
+                                Station_Name: station,
+                                Branch_ID: branchId || 'URT',
+                                Status: 'Pending'
+                            })
+                            await replyToUser(replyToken, `${prefix}\n⛽ บันทึกการเติมน้ำมันสำเร็จ:\n- ทะเบียน: ${plate}\n- ปริมาณ: ${liters} ลิตร\n- ยอดเงิน: ฿${totalAmount.toLocaleString()}\n- เลขไมล์: ${odometer > 0 ? odometer.toLocaleString() + ' กม.' : 'ไม่ระบุ'}\n- ปั๊ม: ${station}`)
+                            continue
+                        }
+                    }
+
+                    if (parsed.intent === 'REQUEST_LEAVE' && boundDriver) {
+                        const leaveType = (parsed.payload?.leaveType as string) || 'Sick'
+                        const reason = (parsed.payload?.reason as string) || 'ลาส่วนตัว'
+                        const startDate = (parsed.payload?.startDate as string) || new Date().toISOString().split('T')[0]
+                        const endDate = (parsed.payload?.endDate as string) || startDate
+
+                        const supabase = createAdminClient()
+                        await supabase.from('Driver_Leaves').insert({
+                            Driver_ID: boundDriver.Driver_ID,
+                            Driver_Name: userName,
+                            Leave_Type: leaveType,
+                            Date_From: startDate,
+                            Date_To: endDate,
+                            Reason: reason,
+                            Status: 'Pending',
+                            Branch_ID: branchId || 'URT'
+                        })
+                        await replyToUser(replyToken, `${prefix}\n📅 บันทึกคำขอลาเรียบร้อยแล้ว:\n- ประเภท: ${leaveType}\n- วันที่: ${startDate} ถึง ${endDate}\n- เหตุผล: ${reason}\n(รอแอดมินพิจารณาอนุมัติ)`)
+                        continue
+                    }
+
+                    if (parsed.intent === 'REPORT_REPAIR') {
+                        const problem = (parsed.payload?.problemDescription as string) || 'แจ้งตรวจเช็กสภาพรถ'
+                        const plate = (parsed.payload?.plate as string) || boundDriver?.Vehicle_Plate || 'ไม่ระบุ'
+                        const supabase = createAdminClient()
+                        const ticketId = `MNT-${Date.now().toString().slice(-6)}`
+                        await supabase.from('Maintenance_Tickets').insert({
+                            Ticket_ID: ticketId,
+                            Vehicle_Plate: plate,
+                            Problem_Description: problem,
+                            Status: 'Pending',
+                            Reported_At: new Date().toISOString(),
+                            Branch_ID: branchId || 'URT'
+                        })
+                        await replyToUser(replyToken, `${prefix}\n🔧 เปิดใบแจ้งซ่อม #${ticketId} สำเร็จ:\n- ทะเบียน: ${plate}\n- อาการ: ${problem}\n(ระบบส่งเรื่องถึงฝ่ายซ่อมบำรุงแล้วครับ)`)
+                        continue
+                    }
+
+                    if (parsed.intent === 'CREATE_JOB' && boundAdmin) {
+                        const p = parsed.payload || {}
+                        await replyToUser(replyToken, `${prefix}\n📋 ได้รับคำสั่งสร้างงาน:\n- ลูกค้า: ${p.customerName || 'ไม่ระบุ'}\n- ต้นทาง: ${p.origin || '-'}\n- ปลายทาง: ${p.destination || '-'}\n- ราคา: ฿${(Number(p.price) || 0).toLocaleString()}\n- วันที่: ${p.planDate || 'วันนี้'}\n\nพิมพ์ "ยืนยันสร้างงาน" หรือคลิกสร้างผ่านหน้าจอเว็บได้เลยครับ`)
+                        continue
+                    }
+
+                    // Default response fallback
+                    await replyToUser(replyToken, `${prefix}\n${parsed.summaryText || 'รับทราบคำสั่งเสียงเรียบร้อยครับ'}`)
                 } catch (err) {
                     console.error('[Line Audio] Error:', err)
                     await replyToUser(replyToken, '❌ เกิดข้อผิดพลาดในการประมวลผลเสียง')

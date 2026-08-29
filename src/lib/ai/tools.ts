@@ -323,6 +323,179 @@ export const aiToolExecutors = {
     return analytics
   },
 
+  // ---- TMS DEEP INTELLIGENCE & DYNAMIC DATABASE QUERY ----
+  query_tms_database: async (args: {
+    table: string,
+    select?: string,
+    filters?: Array<{ column: string, operator: string, value: unknown }>,
+    orderBy?: { column: string, ascending?: boolean },
+    limit?: number
+  }) => {
+    const allowedTables = [
+      'Jobs_Main', 'Fuel_Logs', 'Master_Vehicles', 'Master_Drivers', 
+      'Master_Customers', 'Master_Branches', 'Maintenance_Tickets', 
+      'Billing_Notes', 'Damage_Reports', 'Driver_Leaves'
+    ]
+    if (!allowedTables.includes(args.table)) {
+      return { error: `Table '${args.table}' is not accessible. Allowed tables: ${allowedTables.join(', ')}` }
+    }
+    const supabase = createAdminClient()
+    const selectCols = args.select || '*'
+    let query = supabase.from(args.table).select(selectCols)
+
+    if (Array.isArray(args.filters)) {
+      for (const f of args.filters) {
+        if (!f.column || f.operator === undefined) continue
+        switch (f.operator) {
+          case 'eq': query = query.eq(f.column, f.value); break
+          case 'neq': query = query.neq(f.column, f.value); break
+          case 'gt': query = query.gt(f.column, f.value); break
+          case 'gte': query = query.gte(f.column, f.value); break
+          case 'lt': query = query.lt(f.column, f.value); break
+          case 'lte': query = query.lte(f.column, f.value); break
+          case 'like': query = query.like(f.column, `%${f.value}%`); break
+          case 'ilike': query = query.ilike(f.column, `%${f.value}%`); break
+          case 'in': if (Array.isArray(f.value)) query = query.in(f.column, f.value); break
+          case 'is': query = query.is(f.column, f.value); break
+        }
+      }
+    }
+
+    if (args.orderBy && args.orderBy.column) {
+      query = query.order(args.orderBy.column, { ascending: args.orderBy.ascending ?? false })
+    }
+
+    const limit = Math.min(Math.max(Number(args.limit) || 25, 1), 100)
+    query = query.limit(limit)
+
+    const { data, error } = await query
+    if (error) {
+      return { error: error.message }
+    }
+    return { count: data?.length || 0, data: data || [] }
+  },
+
+  get_fuel_efficiency_report: async (args: { vehiclePlate?: string, startDate?: string, endDate?: string, branchId?: string }) => {
+    const supabase = createAdminClient()
+    let query = supabase.from('Fuel_Logs').select('*').order('Date_Time', { ascending: false })
+    if (args.vehiclePlate) query = query.eq('Vehicle_Plate', args.vehiclePlate)
+    if (args.branchId && args.branchId !== 'All') query = query.eq('Branch_ID', args.branchId)
+    if (args.startDate) query = query.gte('Date_Time', `${args.startDate}T00:00:00`)
+    if (args.endDate) query = query.lte('Date_Time', `${args.endDate}T23:59:59`)
+    
+    const { data: logs, error } = await query.limit(100)
+    if (error) return { error: error.message }
+    
+    const totalLiters = (logs || []).reduce((s, l) => s + (l.Liters || 0), 0)
+    const totalCost = (logs || []).reduce((s, l) => s + (l.Price_Total || 0), 0)
+    const avgPricePerLiter = totalLiters > 0 ? +(totalCost / totalLiters).toFixed(2) : 0
+    
+    const byVehicle: Record<string, { count: number, totalLiters: number, totalCost: number, stations: string[] }> = {}
+    for (const l of logs || []) {
+      const plate = l.Vehicle_Plate || 'ไม่ระบุ'
+      if (!byVehicle[plate]) byVehicle[plate] = { count: 0, totalLiters: 0, totalCost: 0, stations: [] }
+      byVehicle[plate].count++
+      byVehicle[plate].totalLiters = +(byVehicle[plate].totalLiters + (l.Liters || 0)).toFixed(2)
+      byVehicle[plate].totalCost = +(byVehicle[plate].totalCost + (l.Price_Total || 0)).toFixed(2)
+      if (l.Station_Name && !byVehicle[plate].stations.includes(l.Station_Name)) {
+        byVehicle[plate].stations.push(l.Station_Name)
+      }
+    }
+    
+    return {
+      totalLogs: logs?.length || 0,
+      totalLiters: +totalLiters.toFixed(2),
+      totalCost: +totalCost.toFixed(2),
+      avgPricePerLiter,
+      vehicleBreakdown: byVehicle,
+      recentLogs: (logs || []).slice(0, 10).map(l => ({
+        date: l.Date_Time,
+        plate: l.Vehicle_Plate,
+        liters: l.Liters,
+        total: l.Price_Total,
+        odometer: l.Odometer,
+        station: l.Station_Name
+      }))
+    }
+  },
+
+  get_customer_insights: async (args: { customerNameOrId: string, startDate?: string, endDate?: string }) => {
+    const supabase = createAdminClient()
+    let query = supabase.from('Jobs_Main').select('Job_ID, Plan_Date, Customer_Name, Customer_ID, Route_Name, Price_Cust_Total, Cost_Driver_Total, Job_Status, Origin_Location, Dest_Location')
+      .or(`Customer_Name.ilike.%${args.customerNameOrId}%,Customer_ID.ilike.%${args.customerNameOrId}%`)
+      .order('Plan_Date', { ascending: false })
+      
+    if (args.startDate) query = query.gte('Plan_Date', args.startDate)
+    if (args.endDate) query = query.lte('Plan_Date', args.endDate)
+    
+    const { data: jobs, error } = await query.limit(200)
+    if (error) return { error: error.message }
+    
+    const totalJobs = jobs?.length || 0
+    const totalRevenue = (jobs || []).reduce((s, j) => s + (Number(j.Price_Cust_Total) || 0), 0)
+    const totalCost = (jobs || []).reduce((s, j) => s + (Number(j.Cost_Driver_Total) || 0), 0)
+    const netProfit = totalRevenue - totalCost
+    
+    const routeCounts: Record<string, number> = {}
+    const statusCounts: Record<string, number> = {}
+    for (const j of jobs || []) {
+      const r = j.Route_Name || `${j.Origin_Location || '-'} -> ${j.Dest_Location || '-'}`
+      routeCounts[r] = (routeCounts[r] || 0) + 1
+      const s = j.Job_Status || 'Unknown'
+      statusCounts[s] = (statusCounts[s] || 0) + 1
+    }
+    
+    return {
+      customer: args.customerNameOrId,
+      totalJobs,
+      totalRevenue,
+      totalCost,
+      netProfit,
+      margin: totalRevenue > 0 ? +((netProfit / totalRevenue) * 100).toFixed(1) : 0,
+      statusBreakdown: statusCounts,
+      topRoutes: Object.entries(routeCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([route, count]) => ({ route, count })),
+      recentJobs: (jobs || []).slice(0, 5)
+    }
+  },
+
+  get_driver_performance: async (args: { driverNameOrId?: string, startDate?: string, endDate?: string }) => {
+    const supabase = createAdminClient()
+    let query = supabase.from('Jobs_Main').select('Job_ID, Plan_Date, Driver_Name, Driver_ID, Vehicle_Plate, Route_Name, Cost_Driver_Total, Job_Status')
+      .order('Plan_Date', { ascending: false })
+      
+    if (args.driverNameOrId) {
+      query = query.or(`Driver_Name.ilike.%${args.driverNameOrId}%,Driver_ID.ilike.%${args.driverNameOrId}%`)
+    }
+    if (args.startDate) query = query.gte('Plan_Date', args.startDate)
+    if (args.endDate) query = query.lte('Plan_Date', args.endDate)
+    
+    const { data: jobs, error } = await query.limit(300)
+    if (error) return { error: error.message }
+    
+    const byDriver: Record<string, { totalJobs: number, completed: number, active: number, totalPay: number, plates: string[] }> = {}
+    for (const j of jobs || []) {
+      const d = j.Driver_Name || 'ไม่ระบุคนขับ'
+      if (!byDriver[d]) byDriver[d] = { totalJobs: 0, completed: 0, active: 0, totalPay: 0, plates: [] }
+      byDriver[d].totalJobs++
+      if (['Completed', 'Delivered', 'Verified', 'Billed', 'Paid'].includes(j.Job_Status || '')) {
+        byDriver[d].completed++
+      }
+      if (['In Progress', 'In Transit', 'Picked Up', 'Assigned'].includes(j.Job_Status || '')) {
+        byDriver[d].active++
+      }
+      byDriver[d].totalPay += (Number(j.Cost_Driver_Total) || 0)
+      if (j.Vehicle_Plate && !byDriver[d].plates.includes(j.Vehicle_Plate)) {
+        byDriver[d].plates.push(j.Vehicle_Plate)
+      }
+    }
+    
+    return {
+      period: { from: args.startDate || 'all', to: args.endDate || 'all' },
+      totalJobsRecorded: jobs?.length || 0,
+      driverRankings: Object.entries(byDriver).map(([name, data]) => ({ name, ...data })).sort((a, b) => b.completed - a.completed)
+    }
+  },
+
   create_job: async (args: {
     customerName: string,
     planDate?: string,
@@ -1259,6 +1432,81 @@ export const geminiToolDefinitions = [
         name: "get_fuel_analytics",
         description: "วิเคราะห์การใช้น้ำมันและค่าใช้จ่ายน้ำมันรวม",
         parameters: { type: "object", properties: {} }
+    },
+    {
+        name: "query_tms_database",
+        description: "คิวรี่ข้อมูลเชิงลึกจากตารางในระบบ TMS (Jobs_Main, Fuel_Logs, Master_Vehicles, Master_Drivers, Master_Customers, Maintenance_Tickets, Billing_Notes, Damage_Reports, Driver_Leaves)",
+        parameters: {
+            type: "object",
+            properties: {
+                table: { 
+                    type: "string", 
+                    description: "ชื่อตารางที่ต้องการคิวรี่ เช่น Jobs_Main, Fuel_Logs, Master_Vehicles, Master_Drivers, Master_Customers, Maintenance_Tickets, Billing_Notes, Damage_Reports" 
+                },
+                select: { type: "string", description: "คอลัมน์ที่ต้องการเลือก (เช่น 'Job_ID, Customer_Name, Price_Cust_Total' หรือ '*')" },
+                filters: {
+                    type: "array",
+                    description: "เงื่อนไขการกรองข้อมูล",
+                    items: {
+                        type: "object",
+                        properties: {
+                            column: { type: "string", description: "ชื่อคอลัมน์" },
+                            operator: { type: "string", enum: ["eq", "neq", "gt", "gte", "lt", "lte", "like", "ilike", "in", "is"], description: "ตัวดำเนินการ" },
+                            value: { type: "string", description: "ค่าที่ต้องการกรอง" }
+                        },
+                        required: ["column", "operator", "value"]
+                    }
+                },
+                orderBy: {
+                    type: "object",
+                    properties: {
+                        column: { type: "string", description: "ชื่อคอลัมน์ที่ต้องการเรียงลำดับ" },
+                        ascending: { type: "boolean", description: "true = น้อยไปมาก, false = มากไปน้อย" }
+                    },
+                    required: ["column"]
+                },
+                limit: { type: "number", description: "จำนวนแถวสูงสุด (ค่าเริ่มต้น 25, สูงสุด 100)" }
+            },
+            required: ["table"]
+        }
+    },
+    {
+        name: "get_fuel_efficiency_report",
+        description: "ดึงรายงานประสิทธิภาพน้ำมัน (Liters, Price_Total, ปั๊มน้ำมัน, รายการเติม) เจาะจงตามทะเบียนรถหรือช่วงเวลา",
+        parameters: {
+            type: "object",
+            properties: {
+                vehiclePlate: { type: "string", description: "ทะเบียนรถ เช่น 3ฒว2502" },
+                startDate: { type: "string", description: "วันที่เริ่มต้น YYYY-MM-DD" },
+                endDate: { type: "string", description: "วันที่สิ้นสุด YYYY-MM-DD" },
+                branchId: { type: "string", description: "รหัสสาขา เช่น URT, SKN, PTE" }
+            }
+        }
+    },
+    {
+        name: "get_customer_insights",
+        description: "วิเคราะห์ข้อมูลลูกค้า สถิติงาน รายได้ กำไร เส้นทางที่วิ่งบ่อย และสถานะงานล่าสุด",
+        parameters: {
+            type: "object",
+            properties: {
+                customerNameOrId: { type: "string", description: "ชื่อหรือรหัสลูกค้า" },
+                startDate: { type: "string", description: "วันที่เริ่มต้น YYYY-MM-DD" },
+                endDate: { type: "string", description: "วันที่สิ้นสุด YYYY-MM-DD" }
+            },
+            required: ["customerNameOrId"]
+        }
+    },
+    {
+        name: "get_driver_performance",
+        description: "สรุปผลงานคนขับ จำนวนงานที่ส่งสำเร็จ งานที่กำลังวิ่ง ค่าเที่ยวสะสม และทะเบียนรถที่ขับ",
+        parameters: {
+            type: "object",
+            properties: {
+                driverNameOrId: { type: "string", description: "ชื่อหรือรหัสคนขับ (ถ้าไม่ใส่จะสรุปและจัดอันดับคนขับทุกคน)" },
+                startDate: { type: "string", description: "วันที่เริ่มต้น YYYY-MM-DD" },
+                endDate: { type: "string", description: "วันที่สิ้นสุด YYYY-MM-DD" }
+            }
+        }
     }
 ]
 

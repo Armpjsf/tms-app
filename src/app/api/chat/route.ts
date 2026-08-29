@@ -12,6 +12,7 @@ import {
 } from '@/lib/supabase/analytics-helpers'
 import { embedGemini } from '@/lib/ai/embeddings'
 import { getOpsSummary, getRevenueSummary, getOverdueDeliveries, getLossMakingJobs, getDailyTrend, type PeriodKey } from '@/lib/ai/metrics'
+import { TMS_SCHEMA_PROMPT } from '@/lib/ai/schema-context'
 
 // Gemini models to try in order. First the latest, then verified-stable fallbacks
 // so the assistant keeps working even if a preview model is renamed/retired.
@@ -604,6 +605,8 @@ ${ragContext}
 - สามารถวิเคราะห์แนวโน้ม เปรียบเทียบ หรือเสนอคำแนะนำได้ และอ้างอิงบทสนทนาก่อนหน้าได้
 - ถ้าข้อมูลบางส่วนเป็น 0 หรือน้อยมาก ให้บอกผู้ใช้ว่าอาจยังไม่มีงานในช่วงนั้น หรือข้อมูลยังไม่ถูก update
 - ถ้าถามเรื่องที่ไม่มีในฐานข้อมูล ให้บอกตรงๆ ว่าไม่มีข้อมูล
+
+${TMS_SCHEMA_PROMPT}
     `.trim()
 }
 
