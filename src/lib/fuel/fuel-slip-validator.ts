@@ -53,11 +53,18 @@ export async function resolveFleetPlate(
 
   const raw = canon(ocrPlate).replace(/\s+/g, '').trim()
   if (!raw) return { plate: '', matched: false, branchId: null, tankCapacity: null, currentMileage: null }
+  let dbg: Record<string, unknown> = {}
   try {
-    const { data } = await supabase
+    // ใช้ admin client ของตัวเองสำหรับอ่านทะเบียน กันกรณี client ที่ส่งเข้ามาติด RLS/สิทธิ์
+    const readClient = createAdminClient()
+    const { data, error: readError } = await readClient
       .from('Master_Vehicles')
       .select('Vehicle_Plate, Branch_ID, Tank_Capacity, Current_Mileage')
-    
+      .limit(5000)
+
+    const norm = (s: string) => canon(s).replace(/\s+/g, '').toLowerCase()
+    const digitsOf = (s: string) => (canon(s).match(/\d/g) || []).join('')
+
     const rows = (data || [])
       .map((v: { Vehicle_Plate?: string | null; Branch_ID?: string | null; Tank_Capacity?: number | null; Current_Mileage?: number | null }) => ({
         plate: String(v.Vehicle_Plate || '').trim(),
@@ -66,7 +73,7 @@ export async function resolveFleetPlate(
         currentMileage: v.Current_Mileage ? Number(v.Current_Mileage) : null
       }))
       .filter(r => r.plate)
-    
+
     const plates = rows.map(r => r.plate)
     const findRow = (p: string) => rows.find(r => r.plate === p)
     const hit = (p: string) => {
@@ -79,8 +86,15 @@ export async function resolveFleetPlate(
         currentMileage: row?.currentMileage ?? null
       }
     }
-    const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase()
-    const digitsOf = (s: string) => (s.match(/\d/g) || []).join('')
+
+    const rawDigitsEarly = digitsOf(raw)
+    dbg = {
+      readError: readError?.message ?? null,
+      vehCount: plates.length,
+      rawDigits: rawDigitsEarly,
+      digitHits: plates.filter(p => digitsOf(p) === rawDigitsEarly).slice(0, 5),
+      samplePlates: plates.slice(0, 8),
+    }
 
     // 1. Exact match
     const exact = plates.find(p => norm(p) === norm(raw))
@@ -120,6 +134,7 @@ export async function resolveFleetPlate(
         ocrHex: toHex(String(ocrPlate || '')),
         canonRaw: raw,
         canonHex: toHex(raw),
+        ...dbg,
       },
       created_at: new Date().toISOString(),
     })
