@@ -42,7 +42,16 @@ export async function resolveFleetPlate(
   supabase: ReturnType<typeof createAdminClient>,
   ocrPlate: string
 ): Promise<{ plate: string; matched: boolean; branchId: string | null; tankCapacity: number | null; currentMileage: number | null }> {
-  const raw = String(ocrPlate || '').replace(/\s+/g, '').trim()
+  // แปลงเลขไทย ๐-๙ -> อารบิก, ตัดอักขระซ่อน (zero-width / BOM / NBSP), แล้ว NFC
+  // เพื่อกันเคสที่ OCR อ่านทะเบียนมาแล้ว byte ไม่ตรงกับที่เก็บใน DB ทั้งที่ตาเห็นเหมือนกัน
+  const THAI_DIGITS = '๐๑๒๓๔๕๖๗๘๙'
+  const canon = (s: string) =>
+    String(s || '')
+      .replace(/[​-‍﻿ ]/g, '')
+      .replace(/[๐-๙]/g, d => String(THAI_DIGITS.indexOf(d)))
+      .normalize('NFC')
+
+  const raw = canon(ocrPlate).replace(/\s+/g, '').trim()
   if (!raw) return { plate: '', matched: false, branchId: null, tankCapacity: null, currentMileage: null }
   try {
     const { data } = await supabase
@@ -99,6 +108,22 @@ export async function resolveFleetPlate(
   } catch {
     /* fall through */
   }
+  // DEBUG: match ไม่เจอ — เก็บ byte จริงของทะเบียนที่ OCR อ่าน + รายชื่อทะเบียนในระบบ
+  // เพื่อฟันธงว่าเพี้ยนที่ตัวอักษร/อักขระซ่อนตรงไหน (ลบ log block นี้ออกเมื่อแก้เสร็จ)
+  try {
+    const toHex = (s: string) => Buffer.from(String(s || ''), 'utf8').toString('hex')
+    await supabase.from('System_Logs').insert({
+      module: 'FuelPlateDebug',
+      action_type: 'PLATE_NO_MATCH',
+      details: {
+        ocrRaw: String(ocrPlate || ''),
+        ocrHex: toHex(String(ocrPlate || '')),
+        canonRaw: raw,
+        canonHex: toHex(raw),
+      },
+      created_at: new Date().toISOString(),
+    })
+  } catch { /* ignore */ }
   return { plate: raw, matched: false, branchId: null, tankCapacity: null, currentMileage: null }
 }
 

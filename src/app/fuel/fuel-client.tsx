@@ -478,6 +478,11 @@ export function FuelClient({
                                 {log.Vehicle_Plate || "-"}
                               </Badge>
                               <p className="text-[10px] text-muted-foreground truncate max-w-[120px]">{log.Driver_Name}</p>
+                              {log.Trip_Fill_Type === 'enroute' && (
+                                <span className="text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wide bg-amber-500/20 text-amber-500 border border-amber-500/20 inline-block mt-0.5">
+                                  🛣️ ระหว่างทาง
+                                </span>
+                              )}
                             </td>
                             <td className="px-4 py-3.5 max-w-[180px]">
                               <p className="font-black text-foreground truncate">{log.Station_Name || "ปั๊มน้ำมัน"}</p>

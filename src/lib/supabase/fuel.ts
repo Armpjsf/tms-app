@@ -18,6 +18,7 @@ export type FuelLog = {
   Photo_Url: string | null
   Branch_ID: string | null
   Status: string | null
+  Trip_Fill_Type?: 'end' | 'enroute' | null
   Fuel_Type?: string
   Driver_Name?: string
   Efficiency_Status?: 'Normal' | 'Warning' | 'Critical'
@@ -56,6 +57,33 @@ export async function getTodayFuelLogs(providedBranchId?: string): Promise<FuelL
     return data || []
   } catch {
     return []
+  }
+}
+
+// B: เดาประเภทการเติม (end/enroute) จากสถานะงานของรถคันนั้น ณ เวลาที่เติม
+// ถ้ามีงานของรถคันนี้ที่ "กำลังวิ่งอยู่" ในวันเดียวกับบิล -> น่าจะเติมระหว่างทาง (enroute)
+// ถ้าไม่มีงานค้างวิ่ง -> เติมจบงาน/ก่อนเริ่มงาน (end) เป็น default ปลอดภัย
+// ใช้สถานะงาน (เชื่อถือได้) ไม่พึ่งพิกัด GPS ที่ยัง validate ไม่เสร็จ
+const ACTIVE_JOB_STATUSES = ['Assigned', 'Confirmed', 'Picked Up', 'In Transit', 'Arrived', 'In Progress']
+export async function suggestFillType(
+  supabase: SupabaseClient,
+  vehiclePlate: string,
+  dateTimeISO: string | null
+): Promise<'end' | 'enroute'> {
+  try {
+    if (!vehiclePlate) return 'end'
+    const d = dateTimeISO ? new Date(dateTimeISO) : new Date()
+    const dateStr = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+    const { data } = await supabase
+      .from('Jobs_Main')
+      .select('Job_ID')
+      .eq('Vehicle_Plate', vehiclePlate)
+      .eq('Plan_Date', dateStr)
+      .in('Job_Status', ACTIVE_JOB_STATUSES)
+      .limit(1)
+    return (data && data.length > 0) ? 'enroute' : 'end'
+  } catch {
+    return 'end'
   }
 }
 
@@ -135,9 +163,11 @@ export async function getAllFuelLogs(
     // Fetch Vehicles to get Tank Capacity
     const { data: vehicles } = await supabase
         .from('Master_Vehicles')
-        .select('Vehicle_Plate, Tank_Capacity')
-    
+        .select('Vehicle_Plate, Tank_Capacity, Driver_ID')
+
     const vehicleMap = new Map(vehicles?.map(v => [v.Vehicle_Plate, v.Tank_Capacity]) || [])
+    // ผูกทะเบียนรถ -> คนขับหลักที่ตั้งค่าไว้ใน Master_Vehicles (ใช้เป็น fallback เมื่อบิลไม่ได้ระบุคนขับ)
+    const plateDriverMap = new Map(vehicles?.filter(v => v.Driver_ID).map(v => [v.Vehicle_Plate, v.Driver_ID]) || [])
 
     // Enrich logs with Driver Name, Efficiency, Price_Per_Liter, Delta_Km, and alerts
     const enrichedLogs = await Promise.all(logs?.map(async (log) => {
@@ -173,7 +203,9 @@ export async function getAllFuelLogs(
 
       return {
         ...log,
-        Driver_Name: driverMap.get(log.Driver_ID) || 'ไม่ระบุคนขับ',
+        Driver_Name: driverMap.get(log.Driver_ID)
+          || driverMap.get(plateDriverMap.get(log.Vehicle_Plate))
+          || 'ไม่ระบุคนขับ',
         Price_Per_Liter: pricePerLiter,
         Delta_Km: deltaKm,
         Km_Per_Liter: kmPerLiter,

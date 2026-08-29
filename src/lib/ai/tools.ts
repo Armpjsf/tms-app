@@ -688,6 +688,7 @@ export const aiToolExecutors = {
     photoUrl?: string,
     driverId?: string,
     branchId?: string,
+    tripFillType?: 'end' | 'enroute',
   }) => {
     const supabase = createAdminClient()
     const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }).replace(/-/g, '')
@@ -714,6 +715,7 @@ export const aiToolExecutors = {
         Photo_Url: args.photoUrl || null,
         Driver_ID: args.driverId || null,
         Branch_ID: resolvedBranch,
+        Trip_Fill_Type: args.tripFillType === 'enroute' ? 'enroute' : 'end',
         Status: 'Pending',
     }).select().single()
 

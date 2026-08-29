@@ -10,6 +10,7 @@ import { transitionJobStatus } from "@/services/job-status-machine"
 import { TMS_SCHEMA_PROMPT } from '@/lib/ai/schema-context'
 import { parseVoiceMessage } from '@/lib/ai/voice-action-parser'
 import { validateFuelSlip, resolveFleetPlate } from '@/lib/fuel/fuel-slip-validator'
+import { suggestFillType } from '@/lib/supabase/fuel'
 import fs from 'fs'
 
 // ─────────────────────────────────────────────────────────────────
@@ -515,6 +516,21 @@ export async function POST(req: NextRequest) {
                 const params = new URLSearchParams(postbackData)
                 const action = params.get('action')
                 const mode = params.get('mode') as 'backlog' | 'today' | null
+
+                // A: คนขับ/แอดมินกดแก้ประเภทการเติม (จบงาน/ระหว่างทาง) ของบิลที่บันทึกไปแล้ว
+                if (action === 'SET_FILL_TYPE') {
+                    const logId = params.get('log')
+                    const fillType = params.get('type') === 'enroute' ? 'enroute' : 'end'
+                    if (!logId) { await replyToUser(replyToken, 'ไม่พบรหัสบิลครับ'); continue }
+                    const { error: setErr } = await supabase
+                        .from('Fuel_Logs')
+                        .update({ Trip_Fill_Type: fillType })
+                        .eq('Log_ID', logId)
+                    await replyToUser(replyToken, setErr
+                        ? '❌ อัปเดตประเภทการเติมไม่สำเร็จครับ'
+                        : `✅ อัปเดตเป็น "${fillType === 'enroute' ? 'เติมระหว่างทาง' : 'จบงาน/ก่อนเริ่มงาน'}" เรียบร้อยครับ`)
+                    continue
+                }
 
                 const isAdminUser = !!boundAdmin && [1, 2].includes(Number(boundAdmin.Role_ID))
                 const isSuper = !!boundAdmin && Number(boundAdmin.Role_ID) === 1
@@ -1905,7 +1921,9 @@ export async function POST(req: NextRequest) {
                 // Confirm/cancel a pending action. Uses adminFuel so it also works in
                 // group chats — but there it's restricted to fuel logs only (other
                 // admin write-actions can't even be created in a group).
-                if (adminFuel && (rawText === 'ยืนยันคำสั่ง' || rawText === 'ยกเลิกคำสั่ง')) {
+                const fuelConfirmEnd = rawText === 'ยืนยันจบงาน'
+                const fuelConfirmEnroute = rawText === 'ยืนยันระหว่างทาง'
+                if (adminFuel && (rawText === 'ยืนยันคำสั่ง' || rawText === 'ยกเลิกคำสั่ง' || fuelConfirmEnd || fuelConfirmEnroute)) {
                     const pending = await popPendingAction(userId)
                     if (!pending) {
                         await replyToUser(replyToken, 'ไม่พบคำสั่งที่รอยืนยัน (อาจหมดเวลาแล้ว) กรุณาสั่งใหม่อีกครั้งครับ')
@@ -1925,6 +1943,11 @@ export async function POST(req: NextRequest) {
                     const adminBranch = adminFuel.Branch_ID
                     const args: Record<string, unknown> = { ...pending.args }
                     if (adminBranch && (args.branchId == null || args.branchId === '')) args.branchId = adminBranch
+                    // A: ประเภทการเติมจากปุ่มที่แอดมินกด (เฉพาะบิลน้ำมัน)
+                    if (pending.name === 'create_fuel_log') {
+                        if (fuelConfirmEnroute) args.tripFillType = 'enroute'
+                        else if (fuelConfirmEnd) args.tripFillType = 'end'
+                    }
                     const resultText = await executeWriteTool(pending.name, args, Number(adminFuel.Role_ID), {
                         actor: userId, channel: 'line',
                     })
@@ -2351,6 +2374,8 @@ Provide JSON ONLY:
                             const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
                             const logId = `FUEL-${dateStr}-${randomSuffix}`
 
+                            // B: เดา end/enroute จากสถานะงานของรถ ณ เวลาเติม เก็บเป็น default
+                            const drvSuggested = await suggestFillType(supabase, String(validation.resolvedPlate), validation.dateTime)
                             await supabase.from('Fuel_Logs').insert({
                                 Log_ID: logId,
                                 Date_Time: validation.dateTime,
@@ -2364,6 +2389,7 @@ Provide JSON ONLY:
                                 // Fuel belongs to the vehicle's branch (so it shows in that
                                 // branch's report), not the sender's — fall back to the driver's.
                                 Branch_ID: (isRealBranch(validation.branchId) ? validation.branchId : boundDriver.Branch_ID) || null,
+                                Trip_Fill_Type: drvSuggested,
                                 Status: 'Pending'
                             })
 
@@ -2390,7 +2416,18 @@ Provide JSON ONLY:
                             const warningBlock = validation.odometerWarning ? `\n\n${validation.odometerWarning}` : ''
                             const plateWarningBlock = validation.plateWarning ? `\n\nℹ️ ${validation.plateWarning}` : ''
 
-                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจสอบใบเสร็จและบันทึกเรียบร้อยครับ!\n\n${validation.summaryText}${warningBlock}${plateWarningBlock}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันเรียบร้อยแล้วครับ! 🧾✨`)
+                            // A: ให้คนขับยืนยัน/แก้ประเภทการเติม (default จาก B = drvSuggested)
+                            const drvTypeLabel = drvSuggested === 'enroute' ? '🛣️ เติมระหว่างทาง' : '✅ จบงาน/ก่อนเริ่มงาน'
+                            await replyToUser(replyToken, {
+                                type: 'text',
+                                text: `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจสอบใบเสร็จและบันทึกเรียบร้อยครับ!\n\n${validation.summaryText}${warningBlock}${plateWarningBlock}\n\nระบบบันทึกเป็น "${drvTypeLabel}" ให้อัตโนมัติ 🧾\nถ้าไม่ถูก กดปุ่มด้านล่างเพื่อแก้ได้เลยครับ 👇`,
+                                quickReply: {
+                                    items: [
+                                        { type: 'action' as const, action: { type: 'postback' as const, label: '✅ จบงาน', data: `action=SET_FILL_TYPE&log=${logId}&type=end`, displayText: 'ตั้งเป็น: จบงาน' } },
+                                        { type: 'action' as const, action: { type: 'postback' as const, label: '🛣️ เติมระหว่างทาง', data: `action=SET_FILL_TYPE&log=${logId}&type=enroute`, displayText: 'ตั้งเป็น: เติมระหว่างทาง' } },
+                                    ],
+                                },
+                            })
                             continue
                         }
 
@@ -2544,18 +2581,22 @@ If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
                                 // non-branch (e.g. HQ). Fall back to the sender's branch.
                                 branchId: (isRealBranch(validation.branchId) ? validation.branchId : adminFuel.Branch_ID) || undefined,
                             }
+                            // B: เดา end/enroute จากสถานะงานของรถ ณ เวลาเติม แล้วเอาปุ่มที่แนะนำขึ้นก่อน
+                            const suggested = await suggestFillType(supabase, String(validation.resolvedPlate), validation.dateTime)
                             await savePendingAction(userId, 'create_fuel_log', args)
                             const meta = buildPendingAction('create_fuel_log', args)
                             const warningBlock = validation.odometerWarning ? `\n\n${validation.odometerWarning}` : ''
                             const plateWarningBlock = validation.plateWarning ? `\n\nℹ️ ${validation.plateWarning}` : ''
 
+                            const endBtn = { type: 'action' as const, action: { type: 'message' as const, label: suggested === 'end' ? '✅ จบงาน (แนะนำ)' : '✅ จบงาน', text: 'ยืนยันจบงาน' } }
+                            const enrouteBtn = { type: 'action' as const, action: { type: 'message' as const, label: suggested === 'enroute' ? '🛣️ ระหว่างทาง (แนะนำ)' : '🛣️ เติมระหว่างทาง', text: 'ยืนยันระหว่างทาง' } }
                             await replyToUser(replyToken, {
                                 type: 'text',
-                                text: `${meta.title}\n\n${meta.summary}${warningBlock}${plateWarningBlock}\n\n👇 กดยืนยันเพื่อบันทึก`,
+                                text: `${meta.title}\n\n${meta.summary}${warningBlock}${plateWarningBlock}\n\n👇 การเติมนี้คือ? (จบงาน = ลิตรนี้คือน้ำมันของงานที่จบ / ระหว่างทาง = งานยังไม่จบ)`,
                                 quickReply: {
                                     items: [
-                                        { type: 'action', action: { type: 'message', label: '✅ ยืนยัน', text: 'ยืนยันคำสั่ง' } },
-                                        { type: 'action', action: { type: 'message', label: 'ยกเลิก', text: 'ยกเลิกคำสั่ง' } },
+                                        ...(suggested === 'enroute' ? [enrouteBtn, endBtn] : [endBtn, enrouteBtn]),
+                                        { type: 'action' as const, action: { type: 'message' as const, label: 'ยกเลิก', text: 'ยกเลิกคำสั่ง' } },
                                     ],
                                 },
                             })
