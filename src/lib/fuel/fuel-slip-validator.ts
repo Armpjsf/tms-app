@@ -53,11 +53,10 @@ export async function resolveFleetPlate(
 
   const raw = canon(ocrPlate).replace(/\s+/g, '').trim()
   if (!raw) return { plate: '', matched: false, branchId: null, tankCapacity: null, currentMileage: null }
-  let dbg: Record<string, unknown> = {}
   try {
     // ใช้ admin client ของตัวเองสำหรับอ่านทะเบียน กันกรณี client ที่ส่งเข้ามาติด RLS/สิทธิ์
     const readClient = createAdminClient()
-    const { data, error: readError } = await readClient
+    const { data } = await readClient
       .from('Master_Vehicles')
       .select('Vehicle_Plate, Branch_ID, Tank_Capacity, Current_Mileage')
       .limit(5000)
@@ -87,15 +86,6 @@ export async function resolveFleetPlate(
       }
     }
 
-    const rawDigitsEarly = digitsOf(raw)
-    dbg = {
-      readError: readError?.message ?? null,
-      vehCount: plates.length,
-      rawDigits: rawDigitsEarly,
-      digitHits: plates.filter(p => digitsOf(p) === rawDigitsEarly).slice(0, 5),
-      samplePlates: plates.slice(0, 8),
-    }
-
     // 1. Exact match
     const exact = plates.find(p => norm(p) === norm(raw))
     if (exact) return hit(exact)
@@ -122,23 +112,6 @@ export async function resolveFleetPlate(
   } catch {
     /* fall through */
   }
-  // DEBUG: match ไม่เจอ — เก็บ byte จริงของทะเบียนที่ OCR อ่าน + รายชื่อทะเบียนในระบบ
-  // เพื่อฟันธงว่าเพี้ยนที่ตัวอักษร/อักขระซ่อนตรงไหน (ลบ log block นี้ออกเมื่อแก้เสร็จ)
-  try {
-    const toHex = (s: string) => Buffer.from(String(s || ''), 'utf8').toString('hex')
-    await supabase.from('System_Logs').insert({
-      module: 'FuelPlateDebug',
-      action_type: 'PLATE_NO_MATCH',
-      details: {
-        ocrRaw: String(ocrPlate || ''),
-        ocrHex: toHex(String(ocrPlate || '')),
-        canonRaw: raw,
-        canonHex: toHex(raw),
-        ...dbg,
-      },
-      created_at: new Date().toISOString(),
-    })
-  } catch { /* ignore */ }
   return { plate: raw, matched: false, branchId: null, tankCapacity: null, currentMileage: null }
 }
 
