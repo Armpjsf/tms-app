@@ -692,6 +692,17 @@ export const aiToolExecutors = {
     const supabase = createAdminClient()
     const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }).replace(/-/g, '')
     const logId = `FUEL-${dateStr}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`
+
+    let resolvedBranch = args.branchId || null
+    if (!resolvedBranch && args.plate) {
+      const { data: veh } = await supabase
+        .from('Master_Vehicles')
+        .select('Branch_ID')
+        .eq('Vehicle_Plate', args.plate)
+        .maybeSingle()
+      if (veh?.Branch_ID) resolvedBranch = veh.Branch_ID
+    }
+
     const { data, error } = await supabase.from('Fuel_Logs').insert({
         Log_ID: logId,
         Vehicle_Plate: args.plate,
@@ -702,9 +713,29 @@ export const aiToolExecutors = {
         Date_Time: args.dateTime || new Date().toISOString(),
         Photo_Url: args.photoUrl || null,
         Driver_ID: args.driverId || null,
-        Branch_ID: args.branchId || null,
+        Branch_ID: resolvedBranch,
         Status: 'Pending',
     }).select().single()
+
+    if (!error && args.plate && args.odometer && args.odometer > 0) {
+      try {
+        const { data: veh } = await supabase
+          .from('Master_Vehicles')
+          .select('Current_Mileage')
+          .eq('Vehicle_Plate', args.plate)
+          .maybeSingle()
+        const current = Number(veh?.Current_Mileage) || 0
+        if (args.odometer > current) {
+          await supabase
+            .from('Master_Vehicles')
+            .update({ Current_Mileage: Math.round(args.odometer) })
+            .eq('Vehicle_Plate', args.plate)
+        }
+      } catch (e) {
+        console.error('[Fuel Tool] Odometer sync failed:', e)
+      }
+    }
+
     return error ? { success: false, error: error.message } : { success: true, data }
   },
 

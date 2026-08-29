@@ -9,6 +9,7 @@ import { getDetailedDriverAnalytics } from '@/lib/supabase/fleet-analytics'
 import { transitionJobStatus } from "@/services/job-status-machine"
 import { TMS_SCHEMA_PROMPT } from '@/lib/ai/schema-context'
 import { parseVoiceMessage } from '@/lib/ai/voice-action-parser'
+import { validateFuelSlip, resolveFleetPlate } from '@/lib/fuel/fuel-slip-validator'
 import fs from 'fs'
 
 // ─────────────────────────────────────────────────────────────────
@@ -382,59 +383,6 @@ async function callGeminiMultimodal(
         console.error('[Line Multimodal Error]', err)
         return null
     }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Snap an OCR'd license plate to a real fleet plate.
-// Thai plate OCR is unreliable on the Thai consonants (ฒ/ม/ต, ว/จ look alike),
-// but the DIGITS (e.g. 2502) read accurately — so we match the OCR result against
-// Master_Vehicles and prefer the registered plate. Returns matched=false when we
-// can't confidently resolve it, so the caller can flag it for the admin to check.
-// ─────────────────────────────────────────────────────────────────
-async function resolveFleetPlate(
-    supabase: ReturnType<typeof createAdminClient>,
-    ocrPlate: string
-): Promise<{ plate: string; matched: boolean; branchId: string | null }> {
-    const raw = String(ocrPlate || '').replace(/\s+/g, '').trim()
-    if (!raw) return { plate: '', matched: false, branchId: null }
-    try {
-        const { data } = await supabase.from('Master_Vehicles').select('Vehicle_Plate, Branch_ID')
-        const rows = (data || [])
-            .map((v: { Vehicle_Plate?: string | null; Branch_ID?: string | null }) => ({ plate: String(v.Vehicle_Plate || '').trim(), branch: v.Branch_ID ?? null }))
-            .filter(r => r.plate)
-        const plates = rows.map(r => r.plate)
-        const branchOf = (p: string) => rows.find(r => r.plate === p)?.branch ?? null
-        const hit = (p: string) => ({ plate: p, matched: true, branchId: branchOf(p) })
-        const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase()
-        const digitsOf = (s: string) => (s.match(/\d/g) || []).join('')
-
-        // 1. Exact (ignoring spaces/case)
-        const exact = plates.find(p => norm(p) === norm(raw))
-        if (exact) return hit(exact)
-
-        const rawDigits = digitsOf(raw)
-
-        // 2. Unique match by full digit signature (best when OCR read all digits)
-        if (rawDigits.length >= 3) {
-            const byDigits = plates.filter(p => digitsOf(p) === rawDigits)
-            if (byDigits.length === 1) return hit(byDigits[0])
-            if (byDigits.length > 1) {
-                const byFirst = byDigits.filter(p => norm(p)[0] === norm(raw)[0])
-                if (byFirst.length === 1) return hit(byFirst[0])
-            }
-        }
-
-        // 3. Match by the TRAILING plate number (the "2502" part), which OCR reads
-        //    most reliably. Robust to an extra/dropped leading digit or a misread
-        //    consonant. Use the last 4 (or 3) digits.
-        for (const n of [4, 3]) {
-            if (rawDigits.length < n) continue
-            const tail = rawDigits.slice(-n)
-            const byTail = plates.filter(p => digitsOf(p).slice(-n) === tail)
-            if (byTail.length === 1) return hit(byTail[0])
-        }
-    } catch { /* fall through to raw */ }
-    return { plate: raw, matched: false, branchId: null }
 }
 
 // A real, non-phantom branch: exists in Master_Branches (excludes legacy 'HQ'/'All').
@@ -2383,6 +2331,18 @@ Provide JSON ONLY:
 
                         // 2. Handle Fuel Receipt
                         if (classification === 'fuel_receipt') {
+                            const validation = await validateFuelSlip(supabase, extracted, {
+                                driverId: boundDriver.Driver_ID,
+                                driverName: userName,
+                                assignedPlate: boundDriver.Vehicle_Plate,
+                                branchId: boundDriver.Branch_ID
+                            })
+
+                            if (!validation.isValid) {
+                                await replyToUser(replyToken, validation.rejectionMessage || '❌ ข้อมูลใบเสร็จไม่ครบถ้วน กรุณาขอใบเสร็จใหม่จากปั๊มน้ำมัน')
+                                continue
+                            }
+
                             const timestamp = Date.now()
                             const fileNameStr = `fuel_${timestamp}.jpg`
                             const uploadRes = await uploadFileToSupabase(buffer, fileNameStr, 'image/jpeg', 'Fuel_Photos')
@@ -2391,34 +2351,46 @@ Provide JSON ONLY:
                             const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
                             const logId = `FUEL-${dateStr}-${randomSuffix}`
 
-                            // Snap OCR plate to a fleet vehicle; fall back to the
-                            // driver's own registered plate (most reliable for drivers).
-                            const dPlateRes = await resolveFleetPlate(supabase, String(extracted.vehiclePlate || ''))
-                            const driverPlate = dPlateRes.matched ? dPlateRes.plate : (boundDriver.Vehicle_Plate || dPlateRes.plate || null)
-                            const stationName = (extracted.stationName as string)?.trim() || 'ปั๊มน้ำมัน'
-
-                            const total = Number(extracted.priceTotal) || 0
-                            const liters = Number(extracted.liters) || 0
-                            const unitPriceNum = Number(extracted.unitPrice) || (total > 0 && liters > 0 ? +(total / liters).toFixed(2) : 0)
-                            const unitPriceStr = unitPriceNum > 0 ? ` (฿${unitPriceNum.toFixed(2)}/ลิตร)` : ''
-
                             await supabase.from('Fuel_Logs').insert({
                                 Log_ID: logId,
-                                Date_Time: extracted.dateTime || new Date().toISOString(),
+                                Date_Time: validation.dateTime,
                                 Driver_ID: boundDriver.Driver_ID,
-                                Vehicle_Plate: driverPlate,
-                                Liters: liters,
-                                Price_Total: total,
-                                Odometer: extracted.odometer != null ? Number(extracted.odometer) : null,
-                                Station_Name: stationName,
+                                Vehicle_Plate: validation.resolvedPlate,
+                                Liters: validation.liters,
+                                Price_Total: validation.priceTotal,
+                                Odometer: validation.odometer,
+                                Station_Name: validation.stationName,
                                 Photo_Url: uploadRes.directLink,
                                 // Fuel belongs to the vehicle's branch (so it shows in that
                                 // branch's report), not the sender's — fall back to the driver's.
-                                Branch_ID: (isRealBranch(dPlateRes.branchId) ? dPlateRes.branchId : boundDriver.Branch_ID) || null,
+                                Branch_ID: (isRealBranch(validation.branchId) ? validation.branchId : boundDriver.Branch_ID) || null,
                                 Status: 'Pending'
                             })
 
-                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจพบใบเสร็จเติมน้ำมันเรียบร้อยครับ!\n🏢 ปั๊ม: ${stationName}\n💰 ยอดเงินรวม: ฿${total.toLocaleString()}\n⛽ จำนวนน้ำมัน: ${liters} ลิตร${unitPriceStr}\n${extracted.odometer != null ? `📟 เลขไมล์: ${Number(extracted.odometer).toLocaleString()}\n` : ''}🛻 ทะเบียน: ${driverPlate || '-'}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันประจำวันเรียบร้อยแล้วครับ! 🧾✨`)
+                            // Sync vehicle odometer forward in Master_Vehicles
+                            if (validation.resolvedPlate && validation.odometer > 0) {
+                                try {
+                                    const { data: veh } = await supabase
+                                        .from('Master_Vehicles')
+                                        .select('Current_Mileage')
+                                        .eq('Vehicle_Plate', validation.resolvedPlate)
+                                        .maybeSingle()
+                                    const current = Number(veh?.Current_Mileage) || 0
+                                    if (validation.odometer > current) {
+                                        await supabase
+                                            .from('Master_Vehicles')
+                                            .update({ Current_Mileage: Math.round(validation.odometer) })
+                                            .eq('Vehicle_Plate', validation.resolvedPlate)
+                                    }
+                                } catch (e) {
+                                    console.error('[Fuel] Odometer sync failed:', e)
+                                }
+                            }
+
+                            const warningBlock = validation.odometerWarning ? `\n\n${validation.odometerWarning}` : ''
+                            const plateWarningBlock = validation.plateWarning ? `\n\nℹ️ ${validation.plateWarning}` : ''
+
+                            await replyToUser(replyToken, `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจสอบใบเสร็จและบันทึกเรียบร้อยครับ!\n\n${validation.summaryText}${warningBlock}${plateWarningBlock}\n\nระบบบันทึกเข้ารายงานบัญชีค่าน้ำมันเรียบร้อยแล้วครับ! 🧾✨`)
                             continue
                         }
 
@@ -2548,39 +2520,38 @@ If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
                         } catch { /* not fuel */ }
 
                         if (fuel.isFuel) {
+                            const validation = await validateFuelSlip(supabase, fuel, {
+                                branchId: adminFuel.Branch_ID
+                            })
+
+                            if (!validation.isValid) {
+                                await replyToUser(replyToken, validation.rejectionMessage || '❌ ข้อมูลใบเสร็จไม่ครบถ้วน กรุณาขอใบเสร็จใหม่จากปั๊มน้ำมัน')
+                                continue
+                            }
+
                             const uploadRes = await uploadFileToSupabase(buffer, `fuel_${Date.now()}.jpg`, 'image/jpeg', 'Fuel_Photos')
-                            // Snap the OCR'd plate to a real fleet vehicle (OCR misreads
-                            // Thai consonants; digits are reliable → match on those).
-                            const plateRes = await resolveFleetPlate(supabase, String(fuel.vehiclePlate || ''))
-                            const stationName = typeof fuel.stationName === 'string' && fuel.stationName.trim() ? fuel.stationName.trim() : ''
-                            const total = Number(fuel.priceTotal) || 0
-                            const liters = Number(fuel.liters) || 0
-                            const unitPrice = Number(fuel.unitPrice) || (total > 0 && liters > 0 ? +(total / liters).toFixed(2) : undefined)
                             const args: Record<string, unknown> = {
-                                plate: plateRes.plate,
-                                liters: liters,
-                                unitPrice: unitPrice,
-                                price: total,
-                                odometer: fuel.odometer != null ? Number(fuel.odometer) : undefined,
-                                station: stationName,
-                                dateTime: fuel.dateTime || undefined,
+                                plate: validation.resolvedPlate,
+                                liters: validation.liters,
+                                unitPrice: validation.unitPrice,
+                                price: validation.priceTotal,
+                                odometer: validation.odometer,
+                                station: validation.stationName,
+                                dateTime: validation.dateTime,
                                 photoUrl: uploadRes.directLink,
                                 // Fuel belongs to the vehicle's branch (so it shows in that
                                 // branch's report) — the sender may be a super-admin on a
                                 // non-branch (e.g. HQ). Fall back to the sender's branch.
-                                branchId: (isRealBranch(plateRes.branchId) ? plateRes.branchId : adminFuel.Branch_ID) || undefined,
+                                branchId: (isRealBranch(validation.branchId) ? validation.branchId : adminFuel.Branch_ID) || undefined,
                             }
                             await savePendingAction(userId, 'create_fuel_log', args)
                             const meta = buildPendingAction('create_fuel_log', args)
-                            const stationNote = !stationName ? '\n\nℹ️ ชื่อปั๊ม: ไม่พบในบิล (ดูจากรูปที่แนบ)' : ''
-                            const plateNote = !args.plate
-                                ? '\n\n⚠️ ไม่พบทะเบียนบนใบเสร็จ — โปรดระบุ/แก้ทะเบียนก่อนยืนยัน'
-                                : (!plateRes.matched
-                                    ? `\n\n⚠️ ทะเบียน "${args.plate}" อ่านจากบิลแต่ไม่ตรงรถในระบบ — โปรดตรวจก่อนยืนยัน`
-                                    : '')
+                            const warningBlock = validation.odometerWarning ? `\n\n${validation.odometerWarning}` : ''
+                            const plateWarningBlock = validation.plateWarning ? `\n\nℹ️ ${validation.plateWarning}` : ''
+
                             await replyToUser(replyToken, {
                                 type: 'text',
-                                text: `${meta.title}\n\n${meta.summary}${plateNote}${stationNote}\n\n👇 กดยืนยันเพื่อบันทึก`,
+                                text: `${meta.title}\n\n${meta.summary}${warningBlock}${plateWarningBlock}\n\n👇 กดยืนยันเพื่อบันทึก`,
                                 quickReply: {
                                     items: [
                                         { type: 'action', action: { type: 'message', label: '✅ ยืนยัน', text: 'ยืนยันคำสั่ง' } },
