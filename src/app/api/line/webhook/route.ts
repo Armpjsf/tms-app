@@ -532,6 +532,28 @@ export async function POST(req: NextRequest) {
                     continue
                 }
 
+                // A: ยืนยัน/ยกเลิกบันทึกบิลน้ำมัน (admin) ผ่าน postback — เลี่ยงชนกับ handler คำสั่งข้อความ
+                if (action === 'CONFIRM_FUEL') {
+                    const fuelType = params.get('type')
+                    if (!adminFuel) { await replyToUser(replyToken, 'บัญชีนี้ไม่มีสิทธิ์บันทึกน้ำมันครับ'); continue }
+                    const pending = await popPendingAction(userId)
+                    if (!pending || pending.name !== 'create_fuel_log') {
+                        await replyToUser(replyToken, 'ไม่พบบิลที่รอยืนยัน (อาจหมดเวลาแล้ว) กรุณาส่งบิลใหม่อีกครั้งครับ')
+                        continue
+                    }
+                    if (fuelType === 'cancel') {
+                        const meta = buildPendingAction(pending.name, pending.args)
+                        await replyToUser(replyToken, meta.cancelMessage)
+                        continue
+                    }
+                    const fArgs: Record<string, unknown> = { ...pending.args }
+                    if (adminFuel.Branch_ID && (fArgs.branchId == null || fArgs.branchId === '')) fArgs.branchId = adminFuel.Branch_ID
+                    fArgs.tripFillType = fuelType === 'enroute' ? 'enroute' : 'end'
+                    const fRes = await executeWriteTool(pending.name, fArgs, Number(adminFuel.Role_ID), { actor: userId, channel: 'line' })
+                    await replyToUser(replyToken, fRes)
+                    continue
+                }
+
                 const isAdminUser = !!boundAdmin && [1, 2].includes(Number(boundAdmin.Role_ID))
                 const isSuper = !!boundAdmin && Number(boundAdmin.Role_ID) === 1
                 const adminBranch = boundAdmin?.Branch_ID
@@ -1921,9 +1943,7 @@ export async function POST(req: NextRequest) {
                 // Confirm/cancel a pending action. Uses adminFuel so it also works in
                 // group chats — but there it's restricted to fuel logs only (other
                 // admin write-actions can't even be created in a group).
-                const fuelConfirmEnd = rawText === 'ยืนยันจบงาน'
-                const fuelConfirmEnroute = rawText === 'ยืนยันระหว่างทาง'
-                if (adminFuel && (rawText === 'ยืนยันคำสั่ง' || rawText === 'ยกเลิกคำสั่ง' || fuelConfirmEnd || fuelConfirmEnroute)) {
+                if (adminFuel && (rawText === 'ยืนยันคำสั่ง' || rawText === 'ยกเลิกคำสั่ง')) {
                     const pending = await popPendingAction(userId)
                     if (!pending) {
                         await replyToUser(replyToken, 'ไม่พบคำสั่งที่รอยืนยัน (อาจหมดเวลาแล้ว) กรุณาสั่งใหม่อีกครั้งครับ')
@@ -1943,11 +1963,6 @@ export async function POST(req: NextRequest) {
                     const adminBranch = adminFuel.Branch_ID
                     const args: Record<string, unknown> = { ...pending.args }
                     if (adminBranch && (args.branchId == null || args.branchId === '')) args.branchId = adminBranch
-                    // A: ประเภทการเติมจากปุ่มที่แอดมินกด (เฉพาะบิลน้ำมัน)
-                    if (pending.name === 'create_fuel_log') {
-                        if (fuelConfirmEnroute) args.tripFillType = 'enroute'
-                        else if (fuelConfirmEnd) args.tripFillType = 'end'
-                    }
                     const resultText = await executeWriteTool(pending.name, args, Number(adminFuel.Role_ID), {
                         actor: userId, channel: 'line',
                     })
@@ -2588,15 +2603,16 @@ If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
                             const warningBlock = validation.odometerWarning ? `\n\n${validation.odometerWarning}` : ''
                             const plateWarningBlock = validation.plateWarning ? `\n\nℹ️ ${validation.plateWarning}` : ''
 
-                            const endBtn = { type: 'action' as const, action: { type: 'message' as const, label: suggested === 'end' ? '✅ จบงาน (แนะนำ)' : '✅ จบงาน', text: 'ยืนยันจบงาน' } }
-                            const enrouteBtn = { type: 'action' as const, action: { type: 'message' as const, label: suggested === 'enroute' ? '🛣️ ระหว่างทาง (แนะนำ)' : '🛣️ เติมระหว่างทาง', text: 'ยืนยันระหว่างทาง' } }
+                            // ใช้ postback ไม่ใช่ message — กันข้อความ "จบงาน" ไปชนกับ handler คำสั่งงาน
+                            const endBtn = { type: 'action' as const, action: { type: 'postback' as const, label: suggested === 'end' ? '✅ จบงาน (แนะนำ)' : '✅ จบงาน', data: 'action=CONFIRM_FUEL&type=end', displayText: 'ยืนยัน: จบงาน' } }
+                            const enrouteBtn = { type: 'action' as const, action: { type: 'postback' as const, label: suggested === 'enroute' ? '🛣️ ระหว่างทาง (แนะนำ)' : '🛣️ เติมระหว่างทาง', data: 'action=CONFIRM_FUEL&type=enroute', displayText: 'ยืนยัน: เติมระหว่างทาง' } }
                             await replyToUser(replyToken, {
                                 type: 'text',
                                 text: `${meta.title}\n\n${meta.summary}${warningBlock}${plateWarningBlock}\n\n👇 การเติมนี้คือ? (จบงาน = ลิตรนี้คือน้ำมันของงานที่จบ / ระหว่างทาง = งานยังไม่จบ)`,
                                 quickReply: {
                                     items: [
                                         ...(suggested === 'enroute' ? [enrouteBtn, endBtn] : [endBtn, enrouteBtn]),
-                                        { type: 'action' as const, action: { type: 'message' as const, label: 'ยกเลิก', text: 'ยกเลิกคำสั่ง' } },
+                                        { type: 'action' as const, action: { type: 'postback' as const, label: 'ยกเลิก', data: 'action=CONFIRM_FUEL&type=cancel', displayText: 'ยกเลิก' } },
                                     ],
                                 },
                             })
