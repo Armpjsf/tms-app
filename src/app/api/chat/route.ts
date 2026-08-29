@@ -60,16 +60,13 @@ const CREATE_JOB_DECLARATION = {
     },
 }
 
-// Read-only metric query the planner can request for ANY period/customer, so
-// the assistant answers "รายได้สัปดาห์ที่แล้ว" or "งานลูกค้า X เดือนก่อน"
-// with deterministic numbers instead of guessing from the fixed snapshot.
 const METRIC_QUERY_DECLARATION = {
     name: 'query_metrics',
-    description: 'ดึงตัวเลขสรุปเชิงธุรกิจตามช่วงเวลาที่ผู้ใช้ถาม (งาน/รายได้/กำไร/งานค้างส่ง) เรียกเมื่อคำถามต้องการตัวเลขของช่วงเวลาหรือลูกค้าที่เจาะจง',
+    description: 'ดึงตัวเลขสรุปเชิงธุรกิจตามช่วงเวลาที่ผู้ใช้ถาม (งาน/รายได้/กำไร/งานค้างส่ง/วินัยคนขับ) เรียกเมื่อคำถามต้องการตัวเลขของช่วงเวลาหรือลูกค้าที่เจาะจง หรือประเมินวินัยคนขับ',
     parameters: {
         type: 'object',
         properties: {
-            metric: { type: 'string', enum: ['ops', 'revenue', 'overdue', 'loss', 'trend'], description: 'ops=จำนวนงานตามสถานะ(รวม), revenue=รายได้/กำไร, overdue=งานค้างส่งเลยกำหนด, loss=งานที่ขาดทุน, trend=งานรายวัน(แยกแต่ละวัน ใช้เมื่อถาม "รายวัน/แต่ละวัน/ย้อนหลังกี่วัน")' },
+            metric: { type: 'string', enum: ['ops', 'revenue', 'overdue', 'loss', 'trend', 'discipline'], description: 'ops=จำนวนงานตามสถานะ(รวม), revenue=รายได้/กำไร, overdue=งานค้างส่งเลยกำหนด, loss=งานที่ขาดทุน, trend=งานรายวัน(แยกแต่ละวัน ใช้เมื่อถาม "รายวัน/แต่ละวัน/ย้อนหลังกี่วัน"), discipline=วินัยการใช้แอปคนขับ(จัดอันดับ, คะแนนวินัย %, กดงานรวดเดียว, งานค้างส่ง, ePOD)' },
             period: { type: 'string', enum: ['today', 'yesterday', 'this_week', 'last_week', 'this_month', 'last_month', 'last_7_days', 'last_30_days'], description: 'ช่วงเวลา (ไม่ต้องใส่สำหรับ overdue)' },
             from: { type: 'string', description: 'วันเริ่ม YYYY-MM-DD (ถ้าถามช่วงกำหนดเอง)' },
             to: { type: 'string', description: 'วันสิ้นสุด YYYY-MM-DD (ถ้าถามช่วงกำหนดเอง)' },
@@ -400,7 +397,7 @@ async function getRagContext(message: string, branchId?: string): Promise<string
 // metrics-layer function and returns a ready-to-cite Thai block. Degrades to
 // '' on any error, so the pre-computed snapshot still covers common asks.
 // ─────────────────────────────────────────────────────────────────
-const METRIC_INTENT = /(รายได้|กำไร|ยอด|ต้นทุน|งาน|ค้างส่ง|เลยกำหนด|สรุป|กี่|จำนวน|เท่าไหร่|สัปดาห์|เดือน|วันนี้|เมื่อวาน|รายวัน|แต่ละวัน|ย้อนหลัง|ลูกค้า|revenue|profit|จ่าย|ออเดอร์)/i
+const METRIC_INTENT = /(รายได้|กำไร|ยอด|ต้นทุน|งาน|ค้างส่ง|เลยกำหนด|สรุป|กี่|จำนวน|เท่าไหร่|สัปดาห์|เดือน|วันนี้|เมื่อวาน|รายวัน|แต่ละวัน|ย้อนหลัง|ลูกค้า|revenue|profit|จ่าย|ออเดอร์|วินัย|วินัยการใช้แอป|กดงานรวดเดียว|ปิดงานข้ามคืน|ePOD|discipline)/i
 const _money = (v: unknown) => `฿${(Number(v) || 0).toLocaleString()}`
 
 // A visual the chat UI renders below the text answer. Data is deterministic
@@ -412,6 +409,46 @@ export type VizSpec =
 // Run one metric the planner asked for → citable Thai line + optional visual.
 async function runOneMetric(a: Record<string, unknown>, branchId?: string): Promise<{ text: string; viz?: VizSpec }> {
     const period = (a.from && a.to) ? { from: String(a.from), to: String(a.to) } : ((a.period as PeriodKey) || 'this_month')
+    if (a.metric === 'discipline') {
+        const supabase = await createAdminClient()
+        let query = supabase.from('Master_Drivers').select('Driver_ID, Driver_Name').eq('Active_Status', 'Active')
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        }
+        const { data: drivers } = await query.limit(20)
+        const { calculateDriverAppDiscipline } = await import('@/services/app-discipline')
+        const results = []
+        for (const d of drivers || []) {
+            const disc = await calculateDriverAppDiscipline(d.Driver_ID, 30)
+            if (disc.totalEvaluatedJobs > 0) {
+                results.push({
+                    name: d.Driver_Name || d.Driver_ID,
+                    ...disc
+                })
+            }
+        }
+        results.sort((a, b) => b.score - a.score)
+        const topText = results.slice(0, 5).map((r, idx) => 
+            `${idx + 1}. **${r.name}**: วินัย ${r.score}% (เกรด ${r.grade}) | กดตามจุดจริง ${r.realtimeFlowRate}% | ปิดงานวันต่อวัน ${r.zeroHangingRate}% | ePOD ครบ ${r.proofCompletenessRate}%`
+        ).join('\n')
+        return {
+            text: `📱 วินัยการใช้งานแอปของคนขับ (ประเมิน 30 วันล่าสุด, ${branchId || 'ทุกสาขา'}):\n${topText || 'ยังไม่มีข้อมูลงานในรอบประเมิน'}`,
+            viz: results.length ? {
+                kind: 'table',
+                title: `อันดับวินัยการใช้แอป & ePOD (30 วันล่าสุด)`,
+                columns: ['อันดับ', 'ชื่อคนขับ', 'คะแนนวินัย', 'เกรด', 'กดตามจุดจริง', 'งานค้างข้ามคืน', 'ePOD ครบ'],
+                rows: results.map((r, idx) => [
+                    idx + 1,
+                    r.name,
+                    `${r.score}%`,
+                    r.grade,
+                    `${r.realtimeFlowRate}%`,
+                    `${r.hangingJobsCount} งาน`,
+                    `${r.proofCompletenessRate}%`
+                ])
+            } : undefined
+        }
+    }
     if (a.metric === 'ops') {
         const r = await getOpsSummary(period, branchId)
         return {

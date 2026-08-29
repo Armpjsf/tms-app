@@ -26,7 +26,7 @@ export type FuelLog = {
 }
 
 // ดึงบันทึกเติมน้ำมันวันนี้
-export async function getTodayFuelLogs(): Promise<FuelLog[]> {
+export async function getTodayFuelLogs(providedBranchId?: string): Promise<FuelLog[]> {
   try {
     const supabase = createAdminClient()
     const today = todayTH()
@@ -35,7 +35,7 @@ export async function getTodayFuelLogs(): Promise<FuelLog[]> {
     const userBranchId = await getUserBranchId()
     const cookieStore = await cookies()
     const selectedBranch = cookieStore.get('selectedBranch')?.value
-    const branchId = isSuper ? (selectedBranch || userBranchId) : userBranchId
+    const branchId = isSuper ? (providedBranchId || selectedBranch || userBranchId) : userBranchId
 
     let query = supabase
       .from('Fuel_Logs')
@@ -54,7 +54,7 @@ export async function getTodayFuelLogs(): Promise<FuelLog[]> {
     }
     
     return data || []
-  } catch (e) {
+  } catch {
     return []
   }
 }
@@ -72,14 +72,15 @@ async function getPreviousLog(supabase: SupabaseClient, vehiclePlate: string, cu
   return data
 }
 
-// ดึงบันทึกเติมน้ำมันทั้งหมด (pagination + search + date filter + vehicle filter)
+// ดึงบันทึกเติมน้ำมันทั้งหมด (pagination + search + date filter + vehicle filter + branch filter)
 export async function getAllFuelLogs(
   page = 1, 
   limit = 20, 
   query = '',
   startDate?: string,
   endDate?: string,
-  selectedVehicles?: string[]
+  selectedVehicles?: string[],
+  providedBranchId?: string
 ): Promise<{ data: (FuelLog & { Km_Per_Liter?: number; Price_Per_Liter?: number; Delta_Km?: number })[], count: number }> {
   try {
     const supabase = createAdminClient()
@@ -89,7 +90,7 @@ export async function getAllFuelLogs(
     const userBranchId = await getUserBranchId()
     const cookieStore = await cookies()
     const selectedBranch = cookieStore.get('selectedBranch')?.value
-    const branchId = isSuper ? (selectedBranch || userBranchId) : userBranchId
+    const branchId = isSuper ? (providedBranchId || selectedBranch || userBranchId) : (userBranchId || providedBranchId)
 
     let dbQuery = supabase
       .from('Fuel_Logs')
@@ -198,7 +199,7 @@ export type FuelBillForMatch = {
   Price_Total: number
   Station_Name: string | null
 }
-export async function getFuelBillsForMatching(vehiclePlate: string): Promise<FuelBillForMatch[]> {
+export async function getFuelBillsForMatching(vehiclePlate: string, providedBranchId?: string): Promise<FuelBillForMatch[]> {
   try {
     if (!vehiclePlate) return []
     const supabase = createAdminClient()
@@ -206,7 +207,7 @@ export async function getFuelBillsForMatching(vehiclePlate: string): Promise<Fue
     const userBranchId = await getUserBranchId()
     const cookieStore = await cookies()
     const selectedBranch = cookieStore.get('selectedBranch')?.value
-    const branchId = isSuper ? (selectedBranch || userBranchId) : userBranchId
+    const branchId = isSuper ? (providedBranchId || selectedBranch || userBranchId) : userBranchId
 
     let query = supabase
       .from('Fuel_Logs')
@@ -227,7 +228,7 @@ export async function getFuelBillsForMatching(vehiclePlate: string): Promise<Fue
 }
 
 // นับสถิติน้ำมันวันนี้
-export async function getTodayFuelStats() {
+export async function getTodayFuelStats(providedBranchId?: string) {
   try {
     const supabase = createAdminClient()
     const today = todayTH()
@@ -236,7 +237,7 @@ export async function getTodayFuelStats() {
     const userBranchId = await getUserBranchId()
     const cookieStore = await cookies()
     const selectedBranch = cookieStore.get('selectedBranch')?.value
-    const branchId = isSuper ? (selectedBranch || userBranchId) : userBranchId
+    const branchId = isSuper ? (providedBranchId || selectedBranch || userBranchId) : userBranchId
 
     let query = supabase
       .from('Fuel_Logs')
@@ -259,7 +260,7 @@ export async function getTodayFuelStats() {
       totalAmount: logs.reduce((sum, l) => sum + (l.Price_Total || 0), 0),
       count: logs.length,
     }
-  } catch (e) {
+  } catch {
     return { totalLiters: 0, totalAmount: 0, count: 0 }
   }
 }

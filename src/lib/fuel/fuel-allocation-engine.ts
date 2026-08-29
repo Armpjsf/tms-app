@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin, isAdmin } from "@/lib/permissions"
+import { cookies } from "next/headers"
 import type { FuelLog } from "@/lib/supabase/fuel"
 import type { Job } from "@/lib/supabase/jobs"
 
@@ -85,12 +86,15 @@ export interface FuelIntelligenceSummary {
 export async function getFuelIntelligenceAnalytics(
   startDate?: string,
   endDate?: string,
-  selectedVehicles?: string[]
+  selectedVehicles?: string[],
+  providedBranchId?: string
 ): Promise<FuelIntelligenceSummary> {
-  const isUserAdmin = await isAdmin();
   const isSuper = await isSuperAdmin();
-  const branchId = await getUserBranchId();
-  const supabase = isUserAdmin ? createAdminClient() : await createClient();
+  const userBranchId = await getUserBranchId();
+  const cookieStore = await cookies();
+  const selectedBranch = cookieStore.get('selectedBranch')?.value;
+  const effectiveBranch = isSuper ? (providedBranchId || selectedBranch || userBranchId) : (userBranchId || providedBranchId);
+  const supabase = createAdminClient();
 
   // Default to last 30 days
   const now = new Date();
@@ -107,8 +111,8 @@ export async function getFuelIntelligenceAnalytics(
     .lte('Plan_Date', end)
     .order('Plan_Date', { ascending: false });
 
-  if (branchId && branchId !== 'All' && !isSuper) {
-    jobsQuery = jobsQuery.eq('Branch_ID', branchId);
+  if (effectiveBranch && effectiveBranch !== 'All') {
+    jobsQuery = jobsQuery.eq('Branch_ID', effectiveBranch);
   }
 
   if (selectedVehicles && selectedVehicles.length > 0) {
@@ -126,8 +130,8 @@ export async function getFuelIntelligenceAnalytics(
     .lte('Date_Time', `${end}T23:59:59`)
     .order('Date_Time', { ascending: false });
 
-  if (branchId && branchId !== 'All' && !isSuper) {
-    fuelQuery = fuelQuery.eq('Branch_ID', branchId);
+  if (effectiveBranch && effectiveBranch !== 'All') {
+    fuelQuery = fuelQuery.eq('Branch_ID', effectiveBranch);
   }
 
   if (selectedVehicles && selectedVehicles.length > 0) {

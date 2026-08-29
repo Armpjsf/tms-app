@@ -19,7 +19,8 @@ import {
   Square,
   Layers,
   Sparkles,
-  Download
+  Download,
+  Building2
 } from "lucide-react"
 import { FuelDialog } from "@/components/fuel/fuel-dialog"
 import { FuelActions } from "@/components/fuel/fuel-actions"
@@ -37,6 +38,7 @@ import { useLanguage } from "@/components/providers/language-provider"
 import type { FuelLog } from "@/lib/supabase/fuel"
 import type { FuelAnalytics } from "@/lib/supabase/fuel-analytics"
 import type { Driver } from "@/lib/supabase/drivers"
+import type { Branch } from "@/lib/supabase/branches"
 import type { FuelIntelligenceSummary } from "@/lib/fuel/fuel-allocation-engine"
 
 type FuelClientProps = {
@@ -46,6 +48,9 @@ type FuelClientProps = {
   vehicles: { Vehicle_Plate?: string | null; Vehicle_Type?: string | null }[]
   analytics: FuelAnalytics
   intelligence?: FuelIntelligenceSummary
+  branches?: Branch[]
+  activeBranch?: string
+  isSuperAdmin?: boolean
   limit: number
   startDate?: string
   endDate?: string
@@ -61,6 +66,9 @@ export function FuelClient({
   vehicles, 
   analytics, 
   intelligence,
+  branches = [],
+  activeBranch = 'All',
+  isSuperAdmin = false,
   limit,
   startDate,
   endDate,
@@ -83,6 +91,18 @@ export function FuelClient({
     }))
 
   const allPlates = vehicleOptions.map(v => v.Vehicle_Plate)
+
+  // Apply Branch Filter
+  const handleBranchFilter = (branchId: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (!branchId || branchId === 'All') {
+      params.delete('branch')
+    } else {
+      params.set('branch', branchId)
+    }
+    params.delete('page')
+    router.push(`/fuel?${params.toString()}`)
+  }
 
   // Apply Vehicle Filter
   const applyVehicleFilter = (plates: string[]) => {
@@ -170,7 +190,7 @@ export function FuelClient({
           {/* Signal Filtering Matrix & Vehicle Multi-Selector */}
           <div className="space-y-6 bg-background p-6 rounded-3xl border border-border shadow-xl">
             <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-              {/* Left: Search & Vehicle Multi-select */}
+              {/* Left: Search & Branch & Vehicle Multi-select */}
               <div className="flex flex-1 flex-wrap items-center gap-3">
                 <div className="flex-1 min-w-[200px]">
                   <SearchInput 
@@ -178,6 +198,29 @@ export function FuelClient({
                     className="h-11 bg-muted/40 border border-border rounded-xl text-foreground placeholder:text-muted-foreground font-black text-xs"
                   />
                 </div>
+
+                {/* Branch Filter: Dropdown for SuperAdmin, Badge for Branch Admin */}
+                {isSuperAdmin ? (
+                  <div className="relative">
+                    <select
+                      value={activeBranch}
+                      onChange={(e) => handleBranchFilter(e.target.value)}
+                      className="h-11 px-3.5 bg-muted/60 hover:bg-muted border border-border rounded-xl text-foreground font-black text-xs uppercase tracking-wider transition-colors cursor-pointer outline-none focus:ring-1 focus:ring-primary/40"
+                    >
+                      <option value="All">📍 ทุกสาขา (All Branches)</option>
+                      {branches.map(b => (
+                        <option key={b.Branch_ID} value={b.Branch_ID}>
+                          📍 {b.Branch_Name || b.Branch_ID} ({b.Branch_ID})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="h-11 px-3.5 bg-primary/10 border border-primary/20 rounded-xl text-primary font-black text-xs uppercase tracking-wider flex items-center gap-2">
+                    <Building2 size={14} />
+                    <span>สาขา: {branches.find(b => b.Branch_ID === activeBranch)?.Branch_Name || activeBranch}</span>
+                  </div>
+                )}
 
                 {/* Vehicle Quick Filter Dropdown */}
                 <div className="relative">

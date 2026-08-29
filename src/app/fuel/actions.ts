@@ -33,6 +33,18 @@ export async function createFuelLog(data: FuelFormData) {
         logId = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
     }
 
+    let resolvedBranch = branchId === 'All' ? null : branchId
+    if (!resolvedBranch && data.Vehicle_Plate) {
+      const { data: veh } = await supabase
+        .from('Master_Vehicles')
+        .select('Branch_ID')
+        .eq('Vehicle_Plate', data.Vehicle_Plate)
+        .maybeSingle()
+      if (veh?.Branch_ID) {
+        resolvedBranch = veh.Branch_ID
+      }
+    }
+
     const insertData = {
         Log_ID: logId,
         Date_Time: data.Date_Time,
@@ -43,7 +55,7 @@ export async function createFuelLog(data: FuelFormData) {
         Odometer: data.Mileage,
         Station_Name: data.Station_Name,
         Photo_Url: data.Photo_Url || null,
-        Branch_ID: branchId === 'All' ? null : branchId
+        Branch_ID: resolvedBranch
     };
 
 

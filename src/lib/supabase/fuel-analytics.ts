@@ -40,12 +40,13 @@ export interface FuelAnalytics {
   }[]
 }
 
-export async function getFuelAnalytics(dateFrom?: string, dateTo?: string): Promise<FuelAnalytics> {
+export async function getFuelAnalytics(dateFrom?: string, dateTo?: string, providedBranchId?: string): Promise<FuelAnalytics> {
   const supabase = await createAdminClient()
   const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
   const cookieStore = await cookies()
   const selectedBranch = cookieStore.get('selectedBranch')?.value
+  const effectiveBranch = isAdmin ? (providedBranchId || selectedBranch || branchId) : (branchId || providedBranchId)
 
   // Default: last 90 days
   const now = new Date()
@@ -62,12 +63,8 @@ export async function getFuelAnalytics(dateFrom?: string, dateTo?: string): Prom
     .limit(5000)
 
   // Enhanced Branch Filtering
-  if (isAdmin) {
-    if (selectedBranch && selectedBranch !== 'All') {
-      query = query.eq('Branch_ID', selectedBranch)
-    }
-  } else if (branchId) {
-    query = query.eq('Branch_ID', branchId)
+  if (effectiveBranch && effectiveBranch !== 'All') {
+    query = query.eq('Branch_ID', effectiveBranch)
   }
 
   const { data: logs } = await query
