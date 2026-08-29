@@ -528,7 +528,7 @@ export async function POST(req: NextRequest) {
                         .eq('Log_ID', logId)
                     await replyToUser(replyToken, setErr
                         ? '❌ อัปเดตประเภทการเติมไม่สำเร็จครับ'
-                        : `✅ อัปเดตเป็น "${fillType === 'enroute' ? 'เติมระหว่างทาง' : 'จบงาน/ก่อนเริ่มงาน'}" เรียบร้อยครับ`)
+                        : `✅ อัปเดตเป็น "${fillType === 'enroute' ? 'เติมระหว่างทาง (งานยังไม่จบ)' : 'เติมปกติ (ก่อน/หลังงาน)'}" เรียบร้อยครับ`)
                     continue
                 }
 
@@ -2431,15 +2431,14 @@ Provide JSON ONLY:
                             const warningBlock = validation.odometerWarning ? `\n\n${validation.odometerWarning}` : ''
                             const plateWarningBlock = validation.plateWarning ? `\n\nℹ️ ${validation.plateWarning}` : ''
 
-                            // A: ให้คนขับยืนยัน/แก้ประเภทการเติม (default จาก B = drvSuggested)
-                            const drvTypeLabel = drvSuggested === 'enroute' ? '🛣️ เติมระหว่างทาง' : '✅ จบงาน/ก่อนเริ่มงาน'
+                            // A: บันทึกแล้ว — ให้คนขับกดแก้เฉพาะเคส "เติมระหว่างทาง" ถ้าจำเป็น
                             await replyToUser(replyToken, {
                                 type: 'text',
-                                text: `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจสอบใบเสร็จและบันทึกเรียบร้อยครับ!\n\n${validation.summaryText}${warningBlock}${plateWarningBlock}\n\nระบบบันทึกเป็น "${drvTypeLabel}" ให้อัตโนมัติ 🧾\nถ้าไม่ถูก กดปุ่มด้านล่างเพื่อแก้ได้เลยครับ 👇`,
+                                text: `⛽ [บันทึกค่าน้ำมันอัตโนมัติด้วย AI]\n\n✅ ตรวจสอบใบเสร็จและบันทึกเรียบร้อยครับ!\n\n${validation.summaryText}${warningBlock}${plateWarningBlock}\n\n🧾 บันทึกเรียบร้อยแล้ว\nถ้าเป็นการ "เติมแทรกระหว่างทาง" ที่งานยังไม่จบ กดปุ่มด้านล่างเพื่อระบุได้ครับ 👇`,
                                 quickReply: {
                                     items: [
-                                        { type: 'action' as const, action: { type: 'postback' as const, label: '✅ จบงาน', data: `action=SET_FILL_TYPE&log=${logId}&type=end`, displayText: 'ตั้งเป็น: จบงาน' } },
-                                        { type: 'action' as const, action: { type: 'postback' as const, label: '🛣️ เติมระหว่างทาง', data: `action=SET_FILL_TYPE&log=${logId}&type=enroute`, displayText: 'ตั้งเป็น: เติมระหว่างทาง' } },
+                                        { type: 'action' as const, action: { type: 'postback' as const, label: '🛣️ เป็นการเติมระหว่างทาง', data: `action=SET_FILL_TYPE&log=${logId}&type=enroute`, displayText: 'ระบุ: เติมระหว่างทาง' } },
+                                        { type: 'action' as const, action: { type: 'postback' as const, label: '✅ เติมปกติ (ถูกแล้ว)', data: `action=SET_FILL_TYPE&log=${logId}&type=end`, displayText: 'ระบุ: เติมปกติ' } },
                                     ],
                                 },
                             })
@@ -2603,12 +2602,12 @@ If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
                             const warningBlock = validation.odometerWarning ? `\n\n${validation.odometerWarning}` : ''
                             const plateWarningBlock = validation.plateWarning ? `\n\nℹ️ ${validation.plateWarning}` : ''
 
-                            // ใช้ postback ไม่ใช่ message — กันข้อความ "จบงาน" ไปชนกับ handler คำสั่งงาน
-                            const endBtn = { type: 'action' as const, action: { type: 'postback' as const, label: suggested === 'end' ? '✅ จบงาน (แนะนำ)' : '✅ จบงาน', data: 'action=CONFIRM_FUEL&type=end', displayText: 'ยืนยัน: จบงาน' } }
-                            const enrouteBtn = { type: 'action' as const, action: { type: 'postback' as const, label: suggested === 'enroute' ? '🛣️ ระหว่างทาง (แนะนำ)' : '🛣️ เติมระหว่างทาง', data: 'action=CONFIRM_FUEL&type=enroute', displayText: 'ยืนยัน: เติมระหว่างทาง' } }
+                            // ใช้ postback ไม่ใช่ message — กันข้อความไปชนกับ handler คำสั่งงาน
+                            const endBtn = { type: 'action' as const, action: { type: 'postback' as const, label: suggested === 'end' ? '✅ ยืนยัน บันทึก' : '✅ ยืนยัน บันทึก', data: 'action=CONFIRM_FUEL&type=end', displayText: 'ยืนยันบันทึก' } }
+                            const enrouteBtn = { type: 'action' as const, action: { type: 'postback' as const, label: '🛣️ เติมระหว่างทาง', data: 'action=CONFIRM_FUEL&type=enroute', displayText: 'เติมระหว่างทาง (งานยังไม่จบ)' } }
                             await replyToUser(replyToken, {
                                 type: 'text',
-                                text: `${meta.title}\n\n${meta.summary}${warningBlock}${plateWarningBlock}\n\n👇 การเติมนี้คือ? (จบงาน = ลิตรนี้คือน้ำมันของงานที่จบ / ระหว่างทาง = งานยังไม่จบ)`,
+                                text: `${meta.title}\n\n${meta.summary}${warningBlock}${plateWarningBlock}\n\n👇 ตรวจสอบแล้วกดยืนยันได้เลย\n(ถ้าเป็นการ "เติมแทรกระหว่างทาง" ที่งานยังไม่จบ ให้กดปุ่มขวาแทน)`,
                                 quickReply: {
                                     items: [
                                         ...(suggested === 'enroute' ? [enrouteBtn, endBtn] : [endBtn, enrouteBtn]),
