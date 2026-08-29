@@ -496,6 +496,54 @@ export const aiToolExecutors = {
     }
   },
 
+  get_driver_app_discipline: async (args: { driverNameOrId?: string, daysLookback?: number }) => {
+    const supabase = createAdminClient()
+    const days = Math.min(Math.max(Number(args.daysLookback) || 30, 1), 90)
+    
+    if (args.driverNameOrId) {
+      const { data: drivers } = await supabase.from('Master_Drivers')
+        .select('Driver_ID, Driver_Name')
+        .or(`Driver_Name.ilike.%${args.driverNameOrId}%,Driver_ID.ilike.%${args.driverNameOrId}%`)
+        .limit(1)
+        
+      if (!drivers || drivers.length === 0) {
+        return { error: `ไม่พบข้อมูลคนขับ "${args.driverNameOrId}" ในระบบ` }
+      }
+      const d = drivers[0]
+      const { calculateDriverAppDiscipline } = await import('@/services/app-discipline')
+      const discipline = await calculateDriverAppDiscipline(d.Driver_ID, days)
+      return {
+        driverId: d.Driver_ID,
+        driverName: d.Driver_Name,
+        evaluationPeriodDays: days,
+        ...discipline
+      }
+    } else {
+      const { data: drivers } = await supabase.from('Master_Drivers')
+        .select('Driver_ID, Driver_Name')
+        .eq('Active_Status', 'Active')
+        .limit(20)
+        
+      const { calculateDriverAppDiscipline } = await import('@/services/app-discipline')
+      const results = []
+      for (const d of drivers || []) {
+        const discipline = await calculateDriverAppDiscipline(d.Driver_ID, days)
+        if (discipline.totalEvaluatedJobs > 0) {
+          results.push({
+            driverId: d.Driver_ID,
+            driverName: d.Driver_Name,
+            ...discipline
+          })
+        }
+      }
+      return {
+        evaluationPeriodDays: days,
+        totalDriversEvaluated: results.length,
+        rankings: results.sort((a, b) => b.score - a.score)
+      }
+    }
+  },
+
   create_job: async (args: {
     customerName: string,
     planDate?: string,
@@ -1505,6 +1553,17 @@ export const geminiToolDefinitions = [
                 driverNameOrId: { type: "string", description: "ชื่อหรือรหัสคนขับ (ถ้าไม่ใส่จะสรุปและจัดอันดับคนขับทุกคน)" },
                 startDate: { type: "string", description: "วันที่เริ่มต้น YYYY-MM-DD" },
                 endDate: { type: "string", description: "วันที่สิ้นสุด YYYY-MM-DD" }
+            }
+        }
+    },
+    {
+        name: "get_driver_app_discipline",
+        description: "ประเมินและจัดอันดับวินัยการใช้งานแอปของคนขับ (ตรวจจับการกดงานรวดเดียวตอนเย็น, งานค้างส่งข้ามวัน, ความสมบูรณ์ของรูปถ่ายและลายเซ็น ePOD)",
+        parameters: {
+            type: "object",
+            properties: {
+                driverNameOrId: { type: "string", description: "ชื่อหรือรหัสคนขับ (ถ้าไม่ระบุจะจัดอันดับคนขับทุกคน)" },
+                daysLookback: { type: "number", description: "จำนวนวันที่ต้องการประเมินย้อนหลัง (เช่น 30 วัน)" }
             }
         }
     }

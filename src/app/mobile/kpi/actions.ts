@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from '@/utils/supabase/server'
+import { calculateDriverAppDiscipline, type AppDisciplineMetrics } from '@/services/app-discipline'
 
 export interface DriverKPIData {
   points: number
@@ -12,6 +13,7 @@ export interface DriverKPIData {
   achievements: { id: string; title: string; desc: string; icon: string; earned: boolean }[]
   monthlyGoal: number
   streakDays: number
+  appDiscipline: AppDisciplineMetrics
 }
 
 export async function getDriverKPI(driverId: string): Promise<DriverKPIData> {
@@ -81,12 +83,17 @@ export async function getDriverKPI(driverId: string): Promise<DriverKPIData> {
     }
   }
 
+  const appDiscipline = await calculateDriverAppDiscipline(driverId, 30)
+
   // Achievements
   const achievements = [
     { id: 'first10', title: '🚀 เริ่มต้น', desc: 'วิ่งงานครบ 10 เที่ยว', icon: '🚀', earned: total >= 10 },
     { id: 'first50', title: '💪 มือโปร', desc: 'วิ่งงานครบ 50 เที่ยว', icon: '💪', earned: total >= 50 },
     { id: 'first100', title: '👑 ชำนาญ', desc: 'วิ่งงานครบ 100 เที่ยว', icon: '👑', earned: total >= 100 },
     { id: 'ontime90', title: '⏰ ตรงเวลา', desc: 'ส่งตรงเวลา 90%+', icon: '⏰', earned: onTimeRate >= 90 },
+    { id: 'discipline90', title: '📱 วินัยแอปยอดเยี่ยม', desc: 'วินัยการใช้แอป 90%+', icon: '📱', earned: appDiscipline.score >= 90 },
+    { id: 'realtime20', title: '⚡ Real-time Flow', desc: 'อัปเดตตามจุดจริง 90%+', icon: '⚡', earned: appDiscipline.realtimeFlowRate >= 90 },
+    { id: 'proof100', title: '📸 ePOD ครบถ้วน', desc: 'แนบรูปและลายเซ็นครบ 100%', icon: '📸', earned: appDiscipline.proofCompletenessRate >= 95 },
     { id: 'streak7', title: '🔥 ไม่หยุด 7 วัน', desc: 'วิ่งงานต่อเนื่อง 7 วันติด', icon: '🔥', earned: streakDays >= 7 },
     { id: 'month20', title: '🏆 Top ประจำเดือน', desc: 'วิ่ง 20+ เที่ยวเดือนนี้', icon: '🏆', earned: monthly >= 20 },
   ]
@@ -101,5 +108,6 @@ export async function getDriverKPI(driverId: string): Promise<DriverKPIData> {
     achievements,
     monthlyGoal: 30,
     streakDays,
+    appDiscipline,
   }
 }

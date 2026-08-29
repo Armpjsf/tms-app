@@ -1,3 +1,5 @@
+export * from './app-discipline'
+
 export interface EvaluationMetrics {
     score: number; // 0-100
     grade: 'A' | 'B' | 'C' | 'D' | 'F';
@@ -6,6 +8,8 @@ export interface EvaluationMetrics {
     rating: number;
     incentiveAmount?: number; // For Company Drivers
     renewalIndex?: number;    // 0-100, For Subcontractors
+    appDisciplineScore?: number;
+    appDisciplineGrade?: string;
 }
 
 /**

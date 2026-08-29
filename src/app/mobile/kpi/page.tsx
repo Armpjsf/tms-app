@@ -75,6 +75,69 @@ export default async function MobileKPIPage() {
           </div>
         </div>
 
+        {/* App Discipline & ePOD Compliance Card */}
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-indigo-100">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <p className="text-xl font-black text-gray-900 flex items-center gap-2">
+                📱 วินัยการใช้งานแอป & ePOD
+              </p>
+              <p className="text-sm font-semibold text-gray-500 mt-0.5">ประเมินจากการกดงานจริง 30 วันล่าสุด</p>
+            </div>
+            <div className={`px-4 py-1.5 rounded-full text-base font-black ${
+              kpi.appDiscipline.grade === 'A' ? 'bg-emerald-100 text-emerald-800' :
+              kpi.appDiscipline.grade === 'B' ? 'bg-blue-100 text-blue-800' :
+              kpi.appDiscipline.grade === 'C' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+            }`}>
+              เกรด {kpi.appDiscipline.grade} ({kpi.appDiscipline.score}%)
+            </div>
+          </div>
+
+          {/* Sub-metrics */}
+          <div className="space-y-3.5 mt-2">
+            <div>
+              <div className="flex justify-between text-base font-black text-gray-700 mb-1">
+                <span>⏱️ อัปเดตงานตามจุดจริง (ไม่กดรวดเดียว)</span>
+                <span className="text-emerald-700">{kpi.appDiscipline.realtimeFlowRate}%</span>
+              </div>
+              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${kpi.appDiscipline.realtimeFlowRate}%` }} />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-base font-black text-gray-700 mb-1">
+                <span>🌙 ปิดงานวันต่อวัน (ไม่มีงานค้าง)</span>
+                <span className={kpi.appDiscipline.zeroHangingRate >= 90 ? 'text-emerald-700' : 'text-amber-700'}>
+                  {kpi.appDiscipline.zeroHangingRate}%
+                </span>
+              </div>
+              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full ${kpi.appDiscipline.zeroHangingRate >= 90 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${kpi.appDiscipline.zeroHangingRate}%` }} />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-base font-black text-gray-700 mb-1">
+                <span>📸 แนบรูปถ่าย & ลายเซ็น ePOD</span>
+                <span className="text-indigo-700">{kpi.appDiscipline.proofCompletenessRate}%</span>
+              </div>
+              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${kpi.appDiscipline.proofCompletenessRate}%` }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Feedback Notes */}
+          {kpi.appDiscipline.feedback.length > 0 && (
+            <div className="mt-4 pt-3.5 border-t border-gray-100 space-y-1.5">
+              {kpi.appDiscipline.feedback.map((fb, idx) => (
+                <p key={idx} className="text-sm font-bold text-gray-600">{fb}</p>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Monthly Goal Progress */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-3">
