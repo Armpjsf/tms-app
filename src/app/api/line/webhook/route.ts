@@ -133,7 +133,7 @@ async function getActiveDriverJob(driverId: string) {
     
     // 1. Try to find an active job that is already In Progress or Picked Up
     const { data: activeJob } = await supabase.from('Jobs_Main')
-        .select('Job_ID, Job_Status, Customer_Name, Route_Name')
+        .select('Job_ID, Job_Status, Customer_Name, Route_Name, Notes')
         .eq('Driver_ID', driverId)
         .in('Job_Status', ['In Progress', 'Picked Up', 'In Transit', 'กำลังโหลด', 'ระหว่างขนส่ง'])
         .order('Plan_Date', { ascending: true })
@@ -146,7 +146,7 @@ async function getActiveDriverJob(driverId: string) {
     const now = new Date()
     const todayDate = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     const { data: assignedJob } = await supabase.from('Jobs_Main')
-        .select('Job_ID, Job_Status, Customer_Name, Route_Name')
+        .select('Job_ID, Job_Status, Customer_Name, Route_Name, Notes')
         .eq('Driver_ID', driverId)
         .eq('Plan_Date', todayDate)
         .in('Job_Status', ['Assigned', 'Confirmed', 'New', 'Pending'])
@@ -2045,6 +2045,7 @@ export async function POST(req: NextRequest) {
 
                 try {
                     const audioBuffer = await getMessageContent(event.message.id)
+                    const activeJob = boundDriver ? await getActiveDriverJob(boundDriver.Driver_ID) : null
                     const parsed = await parseVoiceMessage(audioBuffer, {
                         userName,
                         role: boundAdmin ? 'Admin' : boundDriver ? 'Driver' : 'User',
@@ -2088,7 +2089,7 @@ export async function POST(req: NextRequest) {
                         const totalAmount = Number(parsed.payload?.totalAmount) || 0
                         const odometer = Number(parsed.payload?.odometer) || 0
                         const station = (parsed.payload?.stationName as string) || 'ปั๊มน้ำมัน'
-                        const plate = (parsed.payload?.plate as string) || boundDriver?.Vehicle_Plate || boundAdmin?.Vehicle_Plate || '3ฒว2502'
+                        const plate = (parsed.payload?.plate as string) || boundDriver?.Vehicle_Plate || '3ฒว2502'
 
                         if (liters > 0 || totalAmount > 0) {
                             const supabase = createAdminClient()

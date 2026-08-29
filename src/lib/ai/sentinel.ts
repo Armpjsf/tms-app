@@ -325,11 +325,12 @@ export async function runAllSentinelChecks(): Promise<{ count: number; alerts: S
           }, alert.branchId || undefined)
 
           await logActivity({
-            module: 'AI_Sentinel',
-            action_type: 'ALERT',
+            module: 'Reports',
+            action_type: 'UPDATE',
             target_id: alert.targetId || alert.category,
             branch_id: alert.branchId || undefined,
             details: {
+              type: 'AI_Sentinel_Alert',
               category: alert.category,
               severity: alert.severity,
               title: alert.title,
