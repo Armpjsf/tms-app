@@ -234,11 +234,27 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     }
     
     console.log(`[DB] Mapping ${driverMap.size} drivers to ${data?.length || 0} vehicles.`)
-    
+
+    // Fallback: การผูกจริงอยู่ฝั่งคนขับ (Master_Drivers.Vehicle_Plate = รถที่ได้รับมอบหมาย)
+    // ดึงชื่อคนขับตามทะเบียนของหน้านี้ มาใช้เมื่อฝั่งรถ (Driver_ID) ไม่ได้ตั้งไว้ — ไม่ต้องผูกซ้ำ
+    const pagePlates = Array.from(new Set((data || []).map((v: Partial<Vehicle>) => v.Vehicle_Plate).filter(Boolean)))
+    const driverByPlate = new Map<string, string>()
+    if (pagePlates.length > 0) {
+        const { data: plateDrivers } = await supabase
+            .from('Master_Drivers')
+            .select('Vehicle_Plate, Driver_Name')
+            .in('Vehicle_Plate', pagePlates as string[])
+        plateDrivers?.forEach((d: { Vehicle_Plate: string, Driver_Name: string }) => {
+            if (d.Vehicle_Plate && d.Driver_Name && !driverByPlate.has(d.Vehicle_Plate)) {
+                driverByPlate.set(d.Vehicle_Plate, d.Driver_Name)
+            }
+        })
+    }
+
     // Map joined driver name to the flat field
     const mappedData = (data || []).map((v: Partial<Vehicle>) => ({
       ...v,
-      Primary_Driver_Name: driverMap.get(v.Driver_ID || '') || null
+      Primary_Driver_Name: driverMap.get(v.Driver_ID || '') || driverByPlate.get(v.Vehicle_Plate || '') || null
     }))
     
     return { data: mappedData, count: count || 0 }
