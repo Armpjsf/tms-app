@@ -153,12 +153,19 @@ export async function getAllFuelLogs(
       return { data: [], count: 0 }
     }
 
-    // Fetch Drivers to map names
+    // Fetch Drivers to map names + การผูกทะเบียนรถที่ตั้งไว้ฝั่งคนขับ (รถที่ได้รับมอบหมาย)
     const { data: drivers } = await supabase
       .from('Master_Drivers')
-      .select('Driver_ID, Driver_Name')
-    
+      .select('Driver_ID, Driver_Name, Vehicle_Plate')
+
     const driverMap = new Map(drivers?.map(d => [d.Driver_ID, d.Driver_Name]) || [])
+    // ทะเบียนรถ -> ชื่อคนขับที่ผูกไว้ใน Master_Drivers.Vehicle_Plate (แหล่งผูกจริงที่ตั้งในหน้าคนขับ)
+    const driverByPlate = new Map<string, string>()
+    for (const d of drivers || []) {
+      if (d.Vehicle_Plate && d.Driver_Name && !driverByPlate.has(d.Vehicle_Plate)) {
+        driverByPlate.set(d.Vehicle_Plate, d.Driver_Name)
+      }
+    }
 
     // Fetch Vehicles to get Tank Capacity
     const { data: vehicles } = await supabase
@@ -168,6 +175,23 @@ export async function getAllFuelLogs(
     const vehicleMap = new Map(vehicles?.map(v => [v.Vehicle_Plate, v.Tank_Capacity]) || [])
     // ผูกทะเบียนรถ -> คนขับหลักที่ตั้งค่าไว้ใน Master_Vehicles (ใช้เป็น fallback เมื่อบิลไม่ได้ระบุคนขับ)
     const plateDriverMap = new Map(vehicles?.filter(v => v.Driver_ID).map(v => [v.Vehicle_Plate, v.Driver_ID]) || [])
+
+    // fallback ชั้นสุดท้าย: คนขับจากงานล่าสุดของรถคันนั้นใน Jobs_Main (เหมือนตารางวิเคราะห์ต่อจ็อบ)
+    // ใช้เมื่อบิลไม่ระบุคนขับ และรถไม่ได้ตั้งคนขับประจำใน Master_Vehicles
+    const logPlates = Array.from(new Set((logs || []).map(l => l.Vehicle_Plate).filter(Boolean)))
+    const plateJobDriverMap = new Map<string, string>()
+    if (logPlates.length > 0) {
+      const { data: jobRows } = await supabase
+        .from('Jobs_Main')
+        .select('Vehicle_Plate, Driver_ID, Driver_Name, Plan_Date')
+        .in('Vehicle_Plate', logPlates as string[])
+        .order('Plan_Date', { ascending: false })
+      for (const j of jobRows || []) {
+        if (!j.Vehicle_Plate || plateJobDriverMap.has(j.Vehicle_Plate)) continue
+        const name = j.Driver_Name || (j.Driver_ID ? driverMap.get(j.Driver_ID) : null)
+        if (name) plateJobDriverMap.set(j.Vehicle_Plate, name)
+      }
+    }
 
     // Enrich logs with Driver Name, Efficiency, Price_Per_Liter, Delta_Km, and alerts
     const enrichedLogs = await Promise.all(logs?.map(async (log) => {
@@ -204,7 +228,9 @@ export async function getAllFuelLogs(
       return {
         ...log,
         Driver_Name: driverMap.get(log.Driver_ID)
+          || driverByPlate.get(log.Vehicle_Plate)
           || driverMap.get(plateDriverMap.get(log.Vehicle_Plate))
+          || plateJobDriverMap.get(log.Vehicle_Plate)
           || 'ไม่ระบุคนขับ',
         Price_Per_Liter: pricePerLiter,
         Delta_Km: deltaKm,
