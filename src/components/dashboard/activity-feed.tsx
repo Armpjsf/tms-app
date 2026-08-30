@@ -132,25 +132,25 @@ export function ActivityFeed({ jobStats, sosCount, logs = [] }: ActivityFeedProp
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
               className={cn(
-                  "flex items-center gap-4 p-5 rounded-[2rem] border transition-all hover:scale-[1.02] cursor-default bg-background/40 backdrop-blur-xl group",
+                  "flex items-center gap-3 p-3 rounded-xl border transition-colors hover:bg-muted/30 cursor-default bg-card group",
                   activity.borderColor
               )}
             >
               <div className={cn(
-                  "w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-lg",
+                  "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
                   activity.bgColor,
                   activity.color
               )}>
-                <Icon size={20} strokeWidth={2.5} />
+                <Icon size={16} strokeWidth={2.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xl font-black text-foreground truncate tracking-tight uppercase">{activity.label}</p>
-                <div className="flex items-center gap-2 mt-1">
-                    <span className={cn("text-base font-bold font-black uppercase tracking-[0.2em]", activity.color)}>
+                <p className="text-sm font-semibold text-foreground truncate">{activity.label}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className={cn("text-xs font-medium", activity.color)}>
                         {activity.time}
                     </span>
-                    <div className="w-1 h-1 rounded-full bg-slate-700" />
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em]">
+                    <div className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                    <span className="text-xs font-medium text-muted-foreground truncate">
                         {activity.timestamp ? formatLogTime(activity.timestamp) : t('dashboard.activity.cycle_refreshed')}
                     </span>
                 </div>
@@ -159,9 +159,9 @@ export function ActivityFeed({ jobStats, sosCount, logs = [] }: ActivityFeedProp
           )
         })
       ) : (
-        <div className="p-12 text-center glass-panel rounded-[3rem] border-dashed border-border/5">
-          <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-          <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('dashboard.activity.operational_silence')}</p>
+        <div className="p-12 text-center rounded-2xl border border-dashed border-border">
+          <Activity className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-30" />
+          <p className="text-sm font-medium text-muted-foreground">{t('dashboard.activity.operational_silence')}</p>
         </div>
       )}
     </motion.div>

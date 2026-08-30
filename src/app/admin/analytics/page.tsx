@@ -35,15 +35,15 @@ export default async function AnalyticsPage(props: { searchParams: Promise<{ [ke
 
 function AnalyticsContentSkeleton() {
   return (
-    <div className="space-y-12 animate-pulse p-10">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <div className="space-y-8 animate-pulse p-4 lg:p-10">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[1, 2, 3, 4].map(i => (
-          <div key={i} className="h-56 bg-background rounded-br-[4rem] rounded-tl-[2rem] border border-border/5 shadow-2xl" />
+          <div key={i} className="h-56 bg-card rounded-2xl border border-border shadow-sm" />
         ))}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 h-[600px] bg-background rounded-br-[6rem] rounded-tl-[3rem] shadow-3xl border border-border/5" />
-        <div className="h-[600px] bg-background rounded-br-[6rem] rounded-tl-[3rem] shadow-3xl border border-border/5" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 h-[600px] bg-card rounded-2xl shadow-sm border border-border" />
+        <div className="h-[600px] bg-card rounded-2xl shadow-sm border border-border" />
       </div>
     </div>
   )

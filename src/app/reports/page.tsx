@@ -26,6 +26,7 @@ import { getSOSDriverIds } from "@/lib/supabase/sos"
 import { getSystemLogs } from "@/lib/supabase/logs"
 import { getExecutiveDashboardUnified } from "@/lib/supabase/financial-analytics"
 import { ActivityFeed } from "@/components/dashboard/activity-feed"
+import { isPending, isAssigned, isInTransit, isDeliveredOrSettled } from "@/lib/constants/job-status"
 
 export default async function ReportsPage() {
   const cookieStore = await cookies()
@@ -93,17 +94,17 @@ export default async function ReportsPage() {
     getExecutiveDashboardUnified(),
   ])
 
+  // นับตามกลุ่มสถานะจากแหล่งกลาง (lib/constants/job-status) แทนการ hardcode array
+  // กันปัญหา synonym สถานะตกหล่นทำให้ยอดนับเพี้ยน
+  const statusDist: { name: string; value: number }[] = unified?.statusDist ?? []
+  const sumBy = (pred: (name: string) => boolean) =>
+    statusDist.filter((s) => pred(s.name)).reduce((a, b) => a + (b.value || 0), 0)
+
   const jobStats = {
     total: unified?.kpi?.jobs?.current ?? 0,
-    pending: unified?.statusDist?.find((s: { name: string, value: number }) => ['New', 'Requested', 'Assigned', 'Pending'].includes(s.name))
-                ? unified.statusDist.filter((s: { name: string, value: number }) => ['New', 'Requested', 'Assigned', 'Pending'].includes(s.name)).reduce((a: number, b: { value: number }) => a + b.value, 0)
-                : 0,
-    inProgress: unified?.statusDist?.find((s: { name: string, value: number }) => ['In Progress', 'In Transit', 'Active'].includes(s.name))
-                 ? unified.statusDist.filter((s: { name: string, value: number }) => ['In Progress', 'In Transit', 'Active'].includes(s.name)).reduce((a: number, b: { value: number }) => a + b.value, 0)
-                 : 0,
-    delivered: unified?.statusDist?.find((s: { name: string, value: number }) => ['Completed', 'Delivered', 'Finished', 'Closed', 'Verified', 'Billed', 'Paid'].includes(s.name))
-                   ? unified.statusDist.filter((s: { name: string, value: number }) => ['Completed', 'Delivered', 'Finished', 'Closed', 'Verified', 'Billed', 'Paid'].includes(s.name)).reduce((a: number, b: { value: number }) => a + b.value, 0)
-                   : 0
+    pending: sumBy((n) => isPending(n) || isAssigned(n)),
+    inProgress: sumBy(isInTransit),
+    delivered: sumBy(isDeliveredOrSettled),
   }
 
   return (

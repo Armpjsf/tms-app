@@ -47,8 +47,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     if (data) {
       Object.keys(data).forEach(key => {
-        translated = translated.replace(`{${key}}`, String(data[key]));
-        translated = translated.replace(`{{${key}}}`, String(data[key]));
+        // double-brace ก่อน ไม่งั้น {count} จะไปแทนข้างในของ {{count}} เหลือ {774}
+        translated = translated.replaceAll(`{{${key}}}`, String(data[key]));
+        translated = translated.replaceAll(`{${key}}`, String(data[key]));
       });
     }
     

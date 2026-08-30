@@ -27,14 +27,19 @@ export default async function MaintenancePage(props: Props) {
     getMaintenanceSchedule(),
   ])
 
+  // แสดงเฉพาะรถบริษัท (Sub_ID ว่าง) — รถร่วมไม่ใช้งานและบริษัทไม่ได้ซ่อมให้
+  const companyVehicles = (vehicles.data || []).filter(
+    (v: { Sub_ID?: string | null }) => !v.Sub_ID || String(v.Sub_ID).trim() === ''
+  )
+
   return (
     <DashboardLayout>
-      <MaintenanceClient 
+      <MaintenanceClient
           tickets={tickets}
           count={count}
           stats={stats}
           drivers={drivers.data}
-          vehicles={vehicles.data}
+          vehicles={companyVehicles}
           schedule={schedule}
           limit={limit}
           startDate={startDate}

@@ -265,24 +265,23 @@ export function DashboardContent({
   }
 
   if (isInitialLoading) {
-    return <div className="py-20 text-center uppercase font-black text-primary animate-pulse tracking-widest text-sm italic">Initialising_Intelligence_Core...</div>
+    return <div className="py-20 text-center font-semibold text-muted-foreground animate-pulse text-sm">{t('common.loading')}</div>
   }
 
   return (
     <div className="space-y-6">
         {/* Navigation Interface */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-background/40 backdrop-blur-3xl border border-border rounded-xl shadow-lg relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-card border border-border rounded-xl shadow-sm relative">
             <div className="flex items-center gap-3 relative z-10">
-                <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center text-primary border border-primary/30 group-hover:scale-110 transition-all">
-                    <Zap size={16} className="animate-pulse" />
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary border border-primary/20">
+                    <Zap size={16} />
                 </div>
                 <div>
-                    <h3 className="text-xs font-black text-foreground uppercase italic leading-none mb-0.5">{t('common.tactical_cluster')}</h3>
-                    <p className="text-[9px] font-bold font-black text-muted-foreground uppercase italic opacity-60 tracking-widest">SIGNAL_STATUS: NOMINAL</p>
+                    <h3 className="text-sm font-semibold text-foreground leading-none mb-1">{t('analytics.center_title')}</h3>
+                    <p className="text-xs font-medium text-muted-foreground">{t('analytics.center_subtitle')}</p>
                 </div>
             </div>
-            
+
             <div className="flex items-center gap-2 relative z-10">
                 <ExportAllButton data={allData} />
             </div>
@@ -290,19 +289,19 @@ export function DashboardContent({
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="bg-muted/50 p-1 rounded-lg border border-border inline-flex h-auto">
-                <TabsTrigger value="overview" className="px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all italic">
+                <TabsTrigger value="overview" className="px-4 py-2 rounded-md text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
                     {t('common.overview')}
                 </TabsTrigger>
-                <TabsTrigger value="financial" className="px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-emerald-600 data-[state=active]:text-white transition-all italic">
+                <TabsTrigger value="financial" className="px-4 py-2 rounded-md text-xs font-semibold data-[state=active]:bg-emerald-600 data-[state=active]:text-white transition-all">
                     {t('common.financial_node')}
                 </TabsTrigger>
-                <TabsTrigger value="operations" className="px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all italic">
+                <TabsTrigger value="operations" className="px-4 py-2 rounded-md text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all">
                     {t('common.mission_node')}
                 </TabsTrigger>
-                <TabsTrigger value="drivers" className="px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all italic">
+                <TabsTrigger value="drivers" className="px-4 py-2 rounded-md text-xs font-semibold data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all">
                     {t('navigation.drivers')}
                 </TabsTrigger>
-                <TabsTrigger value="safety" className="px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-rose-600 data-[state=active]:text-white transition-all italic">
+                <TabsTrigger value="safety" className="px-4 py-2 rounded-md text-xs font-semibold data-[state=active]:bg-rose-600 data-[state=active]:text-white transition-all">
                     {t('common.safety_esg')}
                 </TabsTrigger>
             </TabsList>
@@ -350,7 +349,7 @@ export function DashboardContent({
                     <div className="col-span-12 lg:col-span-3">
                          <PremiumCard className="h-full overflow-hidden p-0 bg-background border border-border shadow-xl rounded-2xl group/feed">
                              <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
-                                <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.operational_stream')}</h3>
+                                <h3 className="text-xs font-semibold text-muted-foreground">{t('dashboard.operational_stream')}</h3>
                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                              </div>
                              <div className="h-[210px] overflow-hidden">
@@ -374,17 +373,17 @@ export function DashboardContent({
 
                     <PremiumCard className="col-span-12 lg:col-span-8 p-6 bg-background border border-border rounded-2xl shadow-xl overflow-hidden relative group">
                         <div className="absolute top-0 right-0 p-6 text-primary/5 pointer-events-none transition-transform group-hover:scale-110 duration-700"><BarChart3 size={100} /></div>
-                        <h3 className="text-base font-black text-foreground uppercase tracking-widest italic mb-6 flex items-center gap-2">
+                        <h3 className="text-base font-semibold text-foreground mb-6 flex items-center gap-2">
                            <div className="w-1 h-4 bg-primary rounded-full" />
-                           Pipeline Integrity
+                           {t('analytics.pipeline_status')}
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {(statusDist || []).length === 0 ? (
-                                <div className="col-span-full py-10 text-center text-[10px] font-black text-muted-foreground uppercase italic opacity-40">No data signals detected</div>
+                                <div className="col-span-full py-10 text-center text-xs font-medium text-muted-foreground opacity-60">{t('analytics.no_data')}</div>
                             ) : statusDist.filter(Boolean).map((item: {name?: string; value?: number}) => (
                                 <div key={item?.name || Math.random()} className="p-3 bg-muted/30 rounded-xl border border-border group-hover:bg-muted/50 transition-colors">
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1 truncate">{item?.name || 'N/A'}</p>
-                                    <p className="text-2xl font-black text-foreground italic">{item?.value || 0}</p>
+                                    <p className="text-xs font-medium text-muted-foreground mb-1 truncate">{item?.name || 'N/A'}</p>
+                                    <p className="text-2xl font-bold text-foreground">{item?.value || 0}</p>
                                 </div>
                             ))}
                         </div>
@@ -392,7 +391,7 @@ export function DashboardContent({
 
                     <div className="col-span-12 lg:col-span-4">
                          <PremiumCard className="h-full bg-muted/30 border border-border p-6 rounded-2xl">
-                            <h3 className="text-sm font-black text-foreground italic uppercase mb-6 flex items-center gap-2">
+                            <h3 className="text-sm font-semibold text-foreground mb-6 flex items-center gap-2">
                                 <div className="w-1 h-4 bg-primary rounded-full" />
                                 {t('dashboard.performance_kpi')}
                             </h3>
@@ -411,8 +410,8 @@ export function DashboardContent({
                                         <Trophy size={13} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-black text-foreground uppercase">{t('dashboard.operator_elite')}</h3>
-                                        <p className="text-[9px] text-amber-400 uppercase font-semibold tracking-wide">{t('dashboard.high_yield_performance_metrics')}</p>
+                                        <h3 className="text-sm font-semibold text-foreground">{t('dashboard.operator_elite')}</h3>
+                                        <p className="text-[9px] text-amber-400 font-medium">{t('dashboard.high_yield_performance_metrics')}</p>
                                     </div>
                                 </div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -421,27 +420,27 @@ export function DashboardContent({
                                 {(driverLeaderboard || []).length === 0 ? (
                                     <div className="py-12 text-center">
                                         <Users size={32} strokeWidth={1} className="mx-auto mb-3 text-muted-foreground/30" />
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.performance_data_recalibrating')}</p>
+                                        <p className="text-xs font-medium text-muted-foreground">{t('dashboard.performance_data_recalibrating')}</p>
                                     </div>
                                 ) : (driverLeaderboard || []).filter(Boolean).slice(0, 5).map((d: {name?: string; driverName?: string; jobCount?: number; trips?: number; revenue?: number; earnings?: number}, i: number) => (
                                     <div key={i} className="px-5 py-3 flex items-center justify-between group hover:bg-muted/20 transition-colors border-l-2 border-transparent hover:border-amber-500/50">
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className={cn(
-                                                "w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black shrink-0 border",
+                                                "w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-bold shrink-0 border",
                                                 i === 0 ? "bg-amber-500/20 border-amber-500/30 text-amber-300" : "bg-background border-border/20 text-muted-foreground"
                                             )}>#{i + 1}</div>
                                             <div className="min-w-0">
-                                                <p className="text-sm font-black text-foreground uppercase truncate">{d.name || d.driverName || 'Driver'}</p>
+                                                <p className="text-sm font-semibold text-foreground truncate">{d.name || d.driverName || 'Driver'}</p>
                                                 <p className="text-[9px] text-emerald-400 font-semibold truncate">
                                                     {d.jobCount || d.trips || 0} {t('dashboard.missions_completed_prefix')}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="text-right shrink-0 ml-3">
-                                            <p className="text-sm font-black text-foreground tabular-nums">
+                                            <p className="text-sm font-bold text-foreground tabular-nums">
                                                 ฿{Math.round((d.revenue || d.earnings || 0) / 1000)}K
                                             </p>
-                                            <p className="text-[9px] text-muted-foreground opacity-50 uppercase">yield</p>
+                                            <p className="text-[10px] text-muted-foreground opacity-60">{t('analytics.yield_label')}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -458,8 +457,8 @@ export function DashboardContent({
                                         <Truck size={13} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-black text-foreground uppercase">{t('dashboard.asset_readiness')}</h3>
-                                        <p className="text-[9px] text-blue-400 uppercase font-semibold tracking-wide">{t('dashboard.fleet_capacity')}</p>
+                                        <h3 className="text-sm font-semibold text-foreground">{t('dashboard.asset_readiness')}</h3>
+                                        <p className="text-[9px] text-blue-400 font-medium">{t('dashboard.fleet_capacity')}</p>
                                     </div>
                                 </div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
@@ -468,7 +467,7 @@ export function DashboardContent({
                                 {(vehicleProfitability || []).length === 0 ? (
                                     <div className="py-12 text-center">
                                         <Truck size={32} strokeWidth={1} className="mx-auto mb-3 text-muted-foreground/30" />
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.performance_data_recalibrating')}</p>
+                                        <p className="text-xs font-medium text-muted-foreground">{t('dashboard.performance_data_recalibrating')}</p>
                                     </div>
                                 ) : (vehicleProfitability || []).filter(Boolean).slice(0, 5).map((v: {plate?: string; netProfit?: number}, i: number) => {
                                     const maxProfit = Math.max(...(vehicleProfitability || []).filter(Boolean).map((x: PriorityData['vehicleProfitability'][0]) => x.netProfit || 0), 1)
@@ -477,13 +476,13 @@ export function DashboardContent({
                                         <div key={i} className="px-5 py-3 group hover:bg-muted/20 transition-colors border-l-2 border-transparent hover:border-blue-500/50">
                                             <div className="flex items-center justify-between mb-1.5">
                                                 <div className="flex items-center gap-2.5 min-w-0">
-                                                    <div className="w-7 h-7 rounded-lg bg-background border border-border/20 flex items-center justify-center text-[9px] font-black text-foreground shrink-0">
+                                                    <div className="w-7 h-7 rounded-lg bg-background border border-border/20 flex items-center justify-center text-[9px] font-bold text-foreground shrink-0">
                                                         {(v.plate || 'N/A').slice(0, 2)}
                                                     </div>
-                                                    <p className="text-sm font-black text-foreground uppercase truncate">{v.plate}</p>
+                                                    <p className="text-sm font-semibold text-foreground truncate">{v.plate}</p>
                                                 </div>
                                                 <div className="text-right shrink-0 ml-3">
-                                                    <p className={cn("text-sm font-black tabular-nums", (v.netProfit || 0) >= 0 ? 'text-foreground' : 'text-rose-400')}>
+                                                    <p className={cn("text-sm font-bold tabular-nums", (v.netProfit || 0) >= 0 ? 'text-foreground' : 'text-rose-400')}>
                                                         ฿{Math.round(Math.abs(v.netProfit || 0) / 1000)}K
                                                     </p>
                                                 </div>
@@ -511,8 +510,8 @@ export function DashboardContent({
                                 <TrendingUp size={20} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-black text-foreground italic uppercase">{t('common.financial_node')}</h2>
-                                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest opacity-60 italic">{t('analytics.commercial_monitoring')}</p>
+                                <h2 className="text-xl font-semibold text-foreground">{t('common.financial_node')}</h2>
+                                <p className="text-xs font-medium text-emerald-500 opacity-80">{t('analytics.commercial_monitoring')}</p>
                             </div>
                         </div>
                     </div>
@@ -523,9 +522,9 @@ export function DashboardContent({
 
                     <PremiumCard className="col-span-12 lg:col-span-8 overflow-hidden p-0 bg-background border border-border shadow-xl rounded-2xl">
                         <div className="p-5 border-b border-border bg-muted/30 flex items-center justify-between">
-                            <h3 className="text-sm font-black text-foreground italic uppercase flex items-center gap-2">
+                            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                                 <div className="w-1 h-4 bg-emerald-500 rounded-full" />
-                                Revenue Growth Vector
+                                {t('analytics.revenue_growth')}
                             </h3>
                             <BarChart3 className="text-primary/40" size={16} />
                         </div>
@@ -554,8 +553,8 @@ export function DashboardContent({
                                 <Truck size={20} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-black text-foreground italic uppercase">{t('common.mission_node')}</h2>
-                                <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest opacity-60 italic">{t('analytics.fleet_deployment')}</p>
+                                <h2 className="text-xl font-semibold text-foreground">{t('common.mission_node')}</h2>
+                                <p className="text-xs font-medium text-blue-500 opacity-80">{t('analytics.fleet_deployment')}</p>
                             </div>
                         </div>
                     </div>
@@ -590,8 +589,8 @@ export function DashboardContent({
                                 <Trophy size={20} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-black text-foreground italic uppercase">Operator Intelligence</h2>
-                                <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest opacity-60 italic">Human Capital Performance Matrix</p>
+                                <h2 className="text-xl font-semibold text-foreground">{t('analytics.operator_intelligence')}</h2>
+                                <p className="text-xs font-medium text-indigo-500 opacity-80">{t('analytics.operator_intelligence_sub')}</p>
                             </div>
                         </div>
                     </div>
@@ -602,28 +601,28 @@ export function DashboardContent({
 
                     <PremiumCard className="col-span-12 lg:col-span-8 overflow-hidden p-0 bg-background border border-border shadow-xl rounded-2xl group/leaderboard">
                         <div className="p-5 border-b border-border bg-muted/30 flex items-center justify-between">
-                            <h3 className="text-sm font-black text-foreground italic uppercase flex items-center gap-2">
+                            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                                 <div className="w-1 h-4 bg-indigo-500 rounded-full" />
-                                Elite Asset Registry
+                                {t('analytics.elite_asset_registry')}
                             </h3>
-                            <Star className="text-amber-500 animate-pulse" size={16} />
+                            <Star className="text-amber-500" size={16} />
                         </div>
                         <div className="divide-y divide-white/[0.03]">
                             {driverLeaderboard.length === 0 ? (
-                                <div className="py-20 text-center text-[10px] font-black text-muted-foreground uppercase italic opacity-40">Awaiting operator telemetry data</div>
+                                <div className="py-20 text-center text-xs font-medium text-muted-foreground opacity-60">{t('analytics.no_operator_data')}</div>
                             ) : ((driverLeaderboard || []).slice(0, 8) as DriverStats[]).map((driver: DriverStats, idx: number) => (
                                 <div key={driver.name} className="px-6 py-3.5 flex items-center justify-between hover:bg-muted/30 transition-all group/item">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center font-black text-[10px] italic border border-border transition-transform group-hover/item:scale-110">
+                                        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center font-semibold text-[11px] border border-border transition-transform group-hover/item:scale-110">
                                             {idx + 1}
                                         </div>
                                         <div>
-                                            <p className="text-xs font-black text-foreground uppercase italic leading-tight">{driver.name}</p>
-                                            <p className="text-[8px] font-black text-muted-foreground uppercase tracking-[0.2em]">{driver.completedJobs} Missions • {driver.onTimeRate?.toFixed(0) || 0}% Sync</p>
+                                            <p className="text-sm font-semibold text-foreground leading-tight">{driver.name}</p>
+                                            <p className="text-[10px] font-medium text-muted-foreground">{driver.completedJobs} {t('dashboard.missions_completed_prefix')} • {driver.onTimeRate?.toFixed(0) || 0}%</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-xs font-black text-primary italic tracking-tight bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">฿{Math.round((driver.revenue || 0) / 1000)}K</span>
+                                        <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">฿{Math.round((driver.revenue || 0) / 1000)}K</span>
                                     </div>
                                 </div>
                             ))}
@@ -640,8 +639,8 @@ export function DashboardContent({
                                 <ShieldAlert size={20} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-black text-foreground italic uppercase">Integrity & ESG</h2>
-                                <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest opacity-60 italic">Security Protocols & Environmental Metrics</p>
+                                <h2 className="text-xl font-semibold text-foreground">{t('analytics.integrity_esg')}</h2>
+                                <p className="text-xs font-medium text-rose-500 opacity-80">{t('analytics.integrity_esg_sub')}</p>
                             </div>
                         </div>
                     </div>
@@ -658,22 +657,20 @@ export function DashboardContent({
             </TabsContent>
         </Tabs>
 
-        {/* Tactical Footer */}
-        <div className="p-10 bg-background rounded-2xl border border-border flex flex-col items-center text-center space-y-4 mt-16 relative overflow-hidden group shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
-            <div className="p-2.5 bg-primary/20 rounded-xl shadow-lg border border-primary/30 group-hover:scale-110 transition-all duration-700">
+        {/* Footer */}
+        <div className="p-8 bg-card rounded-2xl border border-border flex flex-col items-center text-center space-y-3 mt-16">
+            <div className="p-2.5 bg-primary/10 rounded-xl border border-primary/20">
                 <Activity size={20} className="text-primary" />
             </div>
             <div className="space-y-1">
-                <h4 className="text-sm font-black text-foreground uppercase tracking-[0.4em] italic leading-tight">{t('common.intel_engine')}</h4>
-                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] max-w-xl leading-relaxed opacity-60">
-                    System cycle complete. Data nodes synchronized across regional clusters. <br/>
-                    Neural processing accuracy maintained at 99.8%.
+                <h4 className="text-sm font-semibold text-foreground leading-tight">{t('common.intel_engine')}</h4>
+                <p className="text-xs font-medium text-muted-foreground max-w-xl leading-relaxed opacity-80">
+                    {t('analytics.footer_note')}
                 </p>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full border border-border/10">
-               <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-               <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('common.sync_complete')}</span>
+            <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full border border-border">
+               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+               <span className="text-[11px] font-medium text-muted-foreground">{t('common.sync_complete')}</span>
             </div>
         </div>
     </div>

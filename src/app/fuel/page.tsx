@@ -57,13 +57,18 @@ export default async function FuelPage(props: Props) {
     getAllBranches()
   ])
 
+  // แสดงเฉพาะรถบริษัท (Sub_ID ว่าง) — รถร่วมไม่ใช้งานและบริษัทไม่ได้เติมน้ำมันให้
+  const companyVehicles = (vehicles.data || []).filter(
+    (v: { Sub_ID?: string | null }) => !v.Sub_ID || String(v.Sub_ID).trim() === ''
+  )
+
   return (
     <DashboardLayout>
-      <FuelClient 
+      <FuelClient
           logs={logs}
           count={count}
           drivers={drivers.data}
-          vehicles={vehicles.data}
+          vehicles={companyVehicles}
           analytics={analytics}
           intelligence={intelligence}
           branches={branches || []}
