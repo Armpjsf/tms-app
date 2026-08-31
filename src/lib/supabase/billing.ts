@@ -385,13 +385,13 @@ export async function getBillingNotes(filters?: { dateFrom?: string, dateTo?: st
         if (customerNames.length > 0) {
             const { data: customers } = await supabase
                 .from('Master_Customers')
-                .select('Customer_Name, Email')
+                .select('Customer_Name')
                 .in('Customer_Name', customerNames)
             
             if (customers) {
-                const emailMap = new Map<string, string>(customers.map((c: { Customer_Name: string, Email: string }) => [c.Customer_Name, c.Email]))
+                // Master_Customers ไม่มีคอลัมน์ Email — คงค่าเดิม/ว่างไว้
                 notes.forEach(n => {
-                    n.Customer_Email = emailMap.get(n.Customer_Name) || ""
+                    n.Customer_Email = n.Customer_Email || ""
                 })
             }
         }
@@ -524,7 +524,7 @@ export async function getBillingNoteByIdWithJobs(id: string) {
             // Try to find Customer_ID from jobs first (more reliable than name matching)
             const customerId = jobs.find(j => j.Customer_ID)?.Customer_ID
             
-            let query = supabase.from('Master_Customers').select('Address, Tax_ID, Email')
+            let query = supabase.from('Master_Customers').select('Address, Tax_ID')
             
             if (customerId) {
                 query = query.eq('Customer_ID', customerId)
@@ -544,7 +544,7 @@ export async function getBillingNoteByIdWithJobs(id: string) {
             if (customer) {
                 customerAddress = customer.Address || ""
                 customerTaxId = customer.Tax_ID || ""
-                customerEmail = customer.Email || ""
+                customerEmail = "" // Master_Customers ไม่มีคอลัมน์ Email
             }
         }
 
@@ -964,7 +964,7 @@ export async function getPublicBillingNoteById(id: string) {
             // Try to find Customer_ID from jobs first (more reliable)
             const customerId = jobs.find(j => j.Customer_ID)?.Customer_ID
             
-            let query = supabase.from('Master_Customers').select('Address, Tax_ID, Email')
+            let query = supabase.from('Master_Customers').select('Address, Tax_ID')
             
             if (customerId) {
                 query = query.eq('Customer_ID', customerId)
@@ -979,7 +979,7 @@ export async function getPublicBillingNoteById(id: string) {
             if (customer) {
                 customerAddress = customer.Address || ""
                 customerTaxId = customer.Tax_ID || ""
-                customerEmail = customer.Email || ""
+                customerEmail = "" // Master_Customers ไม่มีคอลัมน์ Email
             }
         }
 

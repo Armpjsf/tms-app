@@ -51,7 +51,9 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
     // 1. Fetch Invoices
     let invQuery = supabase
       .from('invoices')
-      .select('*, Master_Customers(Customer_Name, Email)')
+      // NOTE: Master_Customers ไม่มีคอลัมน์ Email — เดิม embed Email ทำให้ทั้ง query
+      // นี้ error แล้ว Promise.all reject → getInvoices คืนลิสต์ว่าง (ใบแจ้งหนี้ "หาย")
+      .select('*, Master_Customers(Customer_Name)')
     
     if (branchId && branchId !== 'All') {
         invQuery = invQuery.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
@@ -87,11 +89,11 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
     ])
 
     // 3. Merge and Map
-    const mappedInvoices: UnifiedInvoiceRow[] = (invRes.data || []).map((inv: Partial<{ Invoice_ID: string, Issue_Date: string, Due_Date: string | null, Created_At: string, Grand_Total: number, Status: string, Master_Customers?: { Customer_Name?: string, Email?: string } }>) => ({
+    const mappedInvoices: UnifiedInvoiceRow[] = (invRes.data || []).map((inv: Partial<{ Invoice_ID: string, Issue_Date: string, Due_Date: string | null, Created_At: string, Grand_Total: number, Status: string, Master_Customers?: { Customer_Name?: string } }>) => ({
         ...inv,
         Invoice_ID: inv.Invoice_ID || '',
         Customer_Name: inv.Master_Customers?.Customer_Name || 'Unknown Customer',
-        Customer_Email: inv.Master_Customers?.Email || null,
+        Customer_Email: null,
         Created_At: inv.Created_At || '',
         Type: 'Invoice'
     }))
@@ -100,10 +102,11 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
     // (needed for the "send billing email" action on the invoices hub).
     const bnNames = Array.from(new Set((bnRes.data || []).map((b: { Customer_Name?: string }) => b.Customer_Name).filter(Boolean))) as string[]
     const bnEmailMap = new Map<string, string>()
-    if (bnNames.length > 0) {
-        const { data: custs } = await supabase.from('Master_Customers').select('Customer_Name, Email').in('Customer_Name', bnNames)
+    // Master_Customers ไม่มีคอลัมน์ Email ในตอนนี้ — ข้ามการหาอีเมล (คงไว้เผื่ออนาคต)
+    if (false && bnNames.length > 0) {
+        const { data: custs } = await supabase.from('Master_Customers').select('Customer_Name').in('Customer_Name', bnNames)
         for (const c of custs || []) {
-            if (c?.Customer_Name && c?.Email) bnEmailMap.set(c.Customer_Name, c.Email)
+            if (c?.Customer_Name) bnEmailMap.set(c.Customer_Name, '')
         }
     }
 

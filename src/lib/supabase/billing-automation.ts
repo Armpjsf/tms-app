@@ -121,17 +121,11 @@ export async function sendScheduledBillingEmails() {
 
         // Fetch customer emails separately to avoid relationship errors
         const customerNames = Array.from(new Set(notes.map((n: { Customer_Name?: string }) => n.Customer_Name))).filter(Boolean)
-        let emailMap = new Map()
+        const emailMap = new Map()
         
         if (customerNames.length > 0) {
-            const { data: customers } = await supabase
-                .from('Master_Customers')
-                .select('Customer_Name, Email')
-                .in('Customer_Name', customerNames)
-            
-            if (customers) {
-                emailMap = new Map(customers.map((c: { Customer_Name: string, Email: string }) => [c.Customer_Name, c.Email]))
-            }
+            // Master_Customers ไม่มีคอลัมน์ Email — เดิม select Email ทำให้ query error
+            // emailMap จึงว่าง (ฟีเจอร์ส่งอีเมลอัตโนมัติจะไม่มีผู้รับจนกว่าจะเพิ่มคอลัมน์ Email)
         }
 
         const sentCount: string[] = []
