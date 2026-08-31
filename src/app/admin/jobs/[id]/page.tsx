@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { getJobRouteAdherence } from "@/lib/supabase/route-adherence"
 import { ArrowLeft, MapPin, Route, Navigation, CheckCircle2, AlertTriangle, ExternalLink } from "lucide-react"
 import Link from "next/link"
+import { DropReorder } from "@/components/mobile/drop-reorder"
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,7 @@ export default async function AdminJobDetailPage({
 
   const { data: job } = await supabase
     .from('Jobs_Main')
-    .select('Job_ID, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Origin_Location, Dest_Location, Job_Status, Plan_Date, Est_Distance_KM, Total_Drop, original_destinations_json')
+    .select('Job_ID, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Origin_Location, Dest_Location, Job_Status, Plan_Date, Est_Distance_KM, Total_Drop, original_destinations_json, Signature_Url')
     .eq('Job_ID', id)
     .single()
 
@@ -30,6 +31,11 @@ export default async function AdminJobDetailPage({
       return Array.isArray(parsed) ? parsed : []
     } catch { return [] }
   })()
+
+  // จุดที่ส่งแล้ว = จำนวนลายเซ็น (ล็อกไว้ ห้ามจัดลำดับ)
+  const completedDrops = (job as { Signature_Url?: string | null } | null)?.Signature_Url
+    ? String((job as { Signature_Url?: string | null }).Signature_Url).split(',').filter(Boolean).length
+    : 0
 
   return (
     <DashboardLayout>
@@ -54,29 +60,15 @@ export default async function AdminJobDetailPage({
             <div><span className="text-muted-foreground text-xs font-bold block">วันที่</span><span className="font-bold">{job?.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-'}</span></div>
           </div>
 
-          {/* จุดส่งทั้งหมด (multi-drop + จุดย่อยที่คนขับเพิ่มหน้างาน) */}
+          {/* จุดส่งทั้งหมด (multi-drop) — แอดมินจัดลำดับใหม่ได้ */}
           {allDrops.length > 1 && (
             <div className="mt-6 pt-5 border-t border-border/10">
-              <div className="flex items-center gap-2 mb-3">
-                <MapPin className="w-4 h-4 text-emerald-500" />
-                <span className="text-sm font-black text-foreground">จุดส่งทั้งหมด</span>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 text-[11px] font-bold border border-emerald-500/20">
-                  {allDrops.length} จุด
-                </span>
-              </div>
-              <ol className="space-y-1.5">
-                {allDrops.map((d, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-sm">
-                    <span className="mt-0.5 w-5 h-5 shrink-0 rounded-full bg-muted text-muted-foreground text-[11px] font-black flex items-center justify-center">
-                      {i + 1}
-                    </span>
-                    <span className="font-bold text-foreground">
-                      {d.name || `จุดส่งที่ ${i + 1}`}
-                      {d.so_no && <span className="ml-2 text-[11px] font-semibold text-muted-foreground">SO: {d.so_no}</span>}
-                    </span>
-                  </li>
-                ))}
-              </ol>
+              <DropReorder
+                jobId={job?.Job_ID || id}
+                destinations={allDrops}
+                completedDrops={completedDrops}
+                locked={['Completed', 'Verified', 'Rejected'].includes(job?.Job_Status || '')}
+              />
             </div>
           )}
         </div>

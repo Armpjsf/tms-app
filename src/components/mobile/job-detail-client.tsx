@@ -12,6 +12,7 @@ import {
 import { JobActionButton } from "@/components/mobile/job-action-button"
 import { JobWorkflow } from "@/components/mobile/job-workflow"
 import { NavigationButton } from "@/components/mobile/navigation-button"
+import { DropReorder } from "@/components/mobile/drop-reorder"
 import { RouteStrip } from "@/components/mobile/route-strip"
 import { WeatherBadge } from "@/components/weather/weather-badge"
 import { Job } from "@/lib/supabase/jobs"
@@ -177,6 +178,18 @@ export function JobDetailClient({ job, success, initialTab = 'mission' }: JobDet
                         )
                     })()}
                 </div>
+
+                {/* จัดลำดับการส่ง (multi-drop) — คนขับเลือกจุดถัดไปเองได้ */}
+                {Array.isArray(destinations) && destinations.length > 1 &&
+                 !['Completed', 'Verified', 'Rejected'].includes(job?.Job_Status) && (
+                    <div className="bg-card rounded-3xl p-6 border border-border shadow-sm">
+                        <DropReorder
+                            jobId={job.Job_ID}
+                            destinations={destinations}
+                            completedDrops={job?.Signature_Url ? job.Signature_Url.split(',').filter(Boolean).length : 0}
+                        />
+                    </div>
+                )}
 
                 {job?.Notes && (
                     <div className="p-5 bg-amber-50/50 border border-amber-200/50 rounded-2xl">
