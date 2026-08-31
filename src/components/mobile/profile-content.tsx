@@ -1,6 +1,6 @@
 "use client"
 
-import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote, BookOpen, LayoutGrid, Star, Calendar, ShieldAlert } from "lucide-react"
+import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote, BookOpen, LayoutGrid, Star, Calendar, ShieldAlert, FileText } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -186,6 +186,7 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
         { icon: LayoutGrid, label: "รับงานกลาง (ประมูล)", href: "/mobile/marketplace" },
         { icon: Star, label: "คะแนนและผลงาน", href: "/mobile/kpi" },
         { icon: Banknote, label: "รายได้และเบี้ยเลี้ยง", href: "/mobile/income-summary" },
+        { icon: FileText, label: "ใบสรุปจ่ายรถ", href: "/mobile/payslips" },
         { icon: Wrench, label: "แจ้งซ่อม/แจ้งเสีย", href: "/mobile/maintenance" },
         { icon: Fuel, label: "แจ้งเติมน้ำมัน", href: "/mobile/fuel" },
         { icon: ClipboardCheck, label: "ตรวจเช็คสภาพรถ", href: "/mobile/vehicle-check" },

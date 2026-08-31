@@ -1,0 +1,387 @@
+"use server"
+
+import ExcelJS from "exceljs"
+import { randomUUID } from "node:crypto"
+import { createAdminClient } from "@/utils/supabase/server"
+import { getSession } from "@/lib/session"
+import { getDriverSession } from "@/lib/auth-utils"
+import { getActiveDrivers } from "@/lib/supabase/drivers"
+import {
+  sheetToGrid,
+  extractSingleSheetXlsx,
+  looksLikeDriverSheet,
+  guessTotal,
+  type PayslipGrid,
+} from "@/lib/payslip/xlsx"
+import { suggestDriverId, parseFileName, type DriverLite } from "@/lib/payslip/match"
+import { buildVoucherData, type VoucherData } from "@/lib/payslip/voucher"
+import { getDriverPaymentByIdWithJobs } from "@/lib/supabase/billing"
+import { revalidatePath } from "next/cache"
+
+const BUCKET = "company-assets"
+const TABLE = "Driver_Payslips"
+
+async function requireAdmin() {
+  const session = await getSession()
+  if (!session || !session.userId || (session.roleId !== 1 && session.roleId !== 2)) {
+    throw new Error("ไม่มีสิทธิ์ (เฉพาะแอดมิน)")
+  }
+  return session
+}
+
+export interface SheetPreview {
+  sheetName: string
+  rowCount: number
+  isDriverSheet: boolean
+  suggestedDriverId: string | null
+  total: number | null
+}
+
+export interface UploadResult {
+  ok: boolean
+  error?: string
+  batchId?: string
+  sourcePath?: string
+  fileName?: string
+  defaults?: { title: string; period: string; branch: string }
+  sheets?: SheetPreview[]
+  drivers?: DriverLite[]
+}
+
+/** ขั้นที่ 1: อัปโหลดไฟล์รวม + แยก sheet คืนรายการให้จับคู่ */
+export async function uploadPayslipWorkbook(formData: FormData): Promise<UploadResult> {
+  try {
+    await requireAdmin()
+    const file = formData.get("file") as File | null
+    if (!file) return { ok: false, error: "ไม่พบไฟล์" }
+    const fileName = file.name
+    if (!/\.(xlsx|xlsm)$/i.test(fileName)) {
+      return { ok: false, error: "รองรับเฉพาะไฟล์ .xlsx" }
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const batchId = randomUUID()
+    const sourcePath = `payslips/_src/${batchId}.xlsx`
+
+    const supabase = createAdminClient()
+    const { error: upErr } = await supabase.storage
+      .from(BUCKET)
+      .upload(sourcePath, buffer, {
+        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        upsert: true,
+      })
+    if (upErr) return { ok: false, error: "อัปโหลดไฟล์ไม่สำเร็จ: " + upErr.message }
+
+    const wb = new ExcelJS.Workbook()
+    await wb.xlsx.load(buffer as unknown as ArrayBuffer)
+
+    const driverRows = await getActiveDrivers()
+    const drivers: DriverLite[] = (driverRows || []).map((d: Record<string, unknown>) => ({
+      id: String(d.Driver_ID),
+      name: String(d.Driver_Name || d.Driver_ID),
+      branch: (d.Branch_ID as string) ?? null,
+    }))
+
+    const sheets: SheetPreview[] = wb.worksheets.map((ws) => {
+      const isDriver = looksLikeDriverSheet(ws)
+      const grid = isDriver ? sheetToGrid(ws) : null
+      return {
+        sheetName: ws.name,
+        rowCount: ws.rowCount || 0,
+        isDriverSheet: isDriver,
+        suggestedDriverId: isDriver ? suggestDriverId(ws.name, drivers) : null,
+        total: grid ? guessTotal(grid) : null,
+      }
+    })
+
+    const parsed = parseFileName(fileName)
+
+    return {
+      ok: true,
+      batchId,
+      sourcePath,
+      fileName,
+      defaults: { title: parsed.title, period: parsed.period, branch: parsed.branch },
+      sheets,
+      drivers,
+    }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "เกิดข้อผิดพลาด" }
+  }
+}
+
+export interface ConfirmInput {
+  batchId: string
+  sourcePath: string
+  fileName: string
+  title: string
+  period: string
+  branch: string
+  mappings: { sheetName: string; driverId: string }[]
+}
+
+/** ขั้นที่ 2: ยืนยันการจับคู่ -> สร้างสลิปรายคน */
+export async function confirmPayslips(
+  input: ConfirmInput
+): Promise<{ ok: boolean; error?: string; created?: number }> {
+  try {
+    const session = await requireAdmin()
+    const { batchId, sourcePath, fileName, title, period, branch, mappings } = input
+    const valid = mappings.filter((m) => m.driverId && m.sheetName)
+    if (valid.length === 0) return { ok: false, error: "ยังไม่ได้จับคู่คนขับ" }
+
+    const supabase = createAdminClient()
+    const { data: dl, error: dlErr } = await supabase.storage.from(BUCKET).download(sourcePath)
+    if (dlErr || !dl) return { ok: false, error: "อ่านไฟล์ต้นทางไม่สำเร็จ" }
+    const srcBuffer = Buffer.from(await dl.arrayBuffer())
+
+    const wb = new ExcelJS.Workbook()
+    await wb.xlsx.load(srcBuffer as unknown as ArrayBuffer)
+
+    // ชื่อคนขับสำหรับ snapshot
+    const driverRows = await getActiveDrivers()
+    const nameById = new Map<string, string>()
+    for (const d of driverRows || []) {
+      nameById.set(String((d as Record<string, unknown>).Driver_ID), String((d as Record<string, unknown>).Driver_Name || ""))
+    }
+
+    const records: Record<string, unknown>[] = []
+    for (const m of valid) {
+      const ws = wb.getWorksheet(m.sheetName)
+      if (!ws) continue
+      const grid: PayslipGrid = sheetToGrid(ws)
+      const total = guessTotal(grid)
+
+      // สร้างไฟล์ Excel รายคน
+      let xlsxPath: string | null = null
+      try {
+        const singleBuf = await extractSingleSheetXlsx(srcBuffer, m.sheetName)
+        xlsxPath = `payslips/${batchId}/${m.driverId}.xlsx`
+        await supabase.storage.from(BUCKET).upload(xlsxPath, singleBuf, {
+          contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          upsert: true,
+        })
+      } catch {
+        xlsxPath = null
+      }
+
+      records.push({
+        Driver_ID: m.driverId,
+        driver_name: nameById.get(m.driverId) || m.sheetName,
+        sheet_name: m.sheetName,
+        title,
+        period_label: period || null,
+        branch_label: branch || null,
+        total_amount: total,
+        grid_json: grid,
+        xlsx_url: xlsxPath,
+        source_file: fileName,
+        batch_id: batchId,
+        uploaded_by: session.userId,
+      })
+    }
+
+    if (records.length === 0) return { ok: false, error: "ไม่มีข้อมูลที่บันทึกได้" }
+
+    const { error: insErr } = await supabase.from(TABLE).insert(records)
+    if (insErr) return { ok: false, error: "บันทึกไม่สำเร็จ: " + insErr.message }
+
+    revalidatePath("/billing/payslips")
+    return { ok: true, created: records.length }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "เกิดข้อผิดพลาด" }
+  }
+}
+
+/** รายการสลิปฝั่งแอดมิน (จัดกลุ่มตาม batch) */
+export async function listPayslipsAdmin(): Promise<Record<string, unknown>[]> {
+  await requireAdmin()
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from(TABLE)
+    .select("id, Driver_ID, driver_name, sheet_name, title, period_label, branch_label, total_amount, batch_id, source_file, uploaded_at")
+    .order("uploaded_at", { ascending: false })
+    .limit(2000)
+  return data || []
+}
+
+export async function deletePayslip(id: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await requireAdmin()
+    const supabase = createAdminClient()
+    const { data: row } = await supabase.from(TABLE).select("xlsx_url").eq("id", id).single()
+    if (row?.xlsx_url) {
+      await supabase.storage.from(BUCKET).remove([row.xlsx_url as string])
+    }
+    const { error } = await supabase.from(TABLE).delete().eq("id", id)
+    if (error) return { ok: false, error: error.message }
+    revalidatePath("/billing/payslips")
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "เกิดข้อผิดพลาด" }
+  }
+}
+
+export async function deletePayslipBatch(batchId: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await requireAdmin()
+    const supabase = createAdminClient()
+    const { data: rows } = await supabase
+      .from(TABLE)
+      .select("id, xlsx_url")
+      .or(`batch_id.eq.${batchId},id.eq.${batchId}`)
+    const paths = (rows || []).map((r) => r.xlsx_url as string).filter(Boolean)
+    paths.push(`payslips/_src/${batchId}.xlsx`)
+    if (paths.length) await supabase.storage.from(BUCKET).remove(paths)
+    // ลบทั้ง batch (excel) และ row เดี่ยว (voucher ที่ batch_id เป็น null)
+    const { error } = await supabase.from(TABLE).delete().or(`batch_id.eq.${batchId},id.eq.${batchId}`)
+    if (error) return { ok: false, error: error.message }
+    revalidatePath("/billing/payslips")
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "เกิดข้อผิดพลาด" }
+  }
+}
+
+/**
+ * ส่งใบสำคัญจ่าย (ในระบบ) เข้าแอปคนขับ — แปลง Driver_Payments -> สลิป kind='voucher'
+ * กัน push ซ้ำด้วย payment_id (upsert)
+ */
+export async function pushDriverPaymentToApp(
+  paymentId: string
+): Promise<{ ok: boolean; error?: string; driverName?: string }> {
+  try {
+    const session = await requireAdmin()
+    const data = await getDriverPaymentByIdWithJobs(paymentId)
+    if (!data) return { ok: false, error: "ไม่พบใบสำคัญจ่าย" }
+
+    const { payment, jobs, company, bankInfo } = data
+    const supabase = createAdminClient()
+
+    // company จาก getDriverPaymentByIdWithJobs อาจเป็น accounting_profile (ไม่มี logo/company_name)
+    // -> เติมโลโก้/ชื่อจาก company_profile เป็น fallback
+    let companyForVoucher = (company || {}) as Record<string, unknown>
+    if (!companyForVoucher.logo_url || !(companyForVoucher.company_name || companyForVoucher.company_name_th)) {
+      const { data: cp } = await supabase
+        .from("System_Settings")
+        .select("value")
+        .eq("key", "company_profile")
+        .maybeSingle()
+      if (cp?.value) {
+        try {
+          const parsed = typeof cp.value === "string" ? JSON.parse(cp.value) : cp.value
+          companyForVoucher = { ...parsed, ...companyForVoucher }
+          if (!companyForVoucher.logo_url && parsed.logo_url) companyForVoucher.logo_url = parsed.logo_url
+        } catch {}
+      }
+    }
+
+    const voucher: VoucherData = buildVoucherData(
+      payment as never,
+      jobs as never,
+      companyForVoucher as never,
+      bankInfo as never
+    )
+
+    // หา Driver_ID จากชื่อคนขับ
+    const { data: driver } = await supabase
+      .from("Master_Drivers")
+      .select("Driver_ID, Driver_Name")
+      .eq("Driver_Name", payment.Driver_Name)
+      .maybeSingle()
+
+    if (!driver?.Driver_ID) {
+      return { ok: false, error: `ไม่พบคนขับชื่อ "${payment.Driver_Name}" ใน Master_Drivers (จับคู่ไม่ได้)` }
+    }
+
+    const record = {
+      Driver_ID: String(driver.Driver_ID),
+      driver_name: payment.Driver_Name,
+      sheet_name: null,
+      title: `ใบสำคัญจ่าย ${payment.Driver_Payment_ID}`,
+      period_label: payment.Payment_Date || null,
+      branch_label: null,
+      total_amount: voucher.netTotal,
+      kind: "voucher",
+      grid_json: null,
+      voucher_json: voucher,
+      xlsx_url: null,
+      source_file: null,
+      batch_id: null,
+      payment_id: payment.Driver_Payment_ID,
+      uploaded_by: session.userId,
+      uploaded_at: new Date().toISOString(),
+    }
+
+    // push ซ้ำ = อัปเดต (select -> update/insert; ไม่พึ่ง ON CONFLICT เพราะ index เป็น partial)
+    const { data: existing } = await supabase
+      .from(TABLE)
+      .select("id")
+      .eq("payment_id", payment.Driver_Payment_ID)
+      .maybeSingle()
+
+    const { error } = existing?.id
+      ? await supabase.from(TABLE).update(record).eq("id", existing.id)
+      : await supabase.from(TABLE).insert(record)
+    if (error) return { ok: false, error: "บันทึกไม่สำเร็จ: " + error.message }
+
+    return { ok: true, driverName: payment.Driver_Name }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "เกิดข้อผิดพลาด" }
+  }
+}
+
+// ============ ฝั่งคนขับ (mobile) ============
+
+export async function getMyPayslips(): Promise<Record<string, unknown>[]> {
+  const session = await getDriverSession()
+  if (!session?.driverId) return []
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from(TABLE)
+    .select("id, title, period_label, branch_label, total_amount, source_file, kind, uploaded_at")
+    .eq("Driver_ID", session.driverId)
+    .order("uploaded_at", { ascending: false })
+    .limit(200)
+  return data || []
+}
+
+export async function getMyPayslip(
+  id: string
+): Promise<{
+  ok: boolean
+  kind?: string
+  grid?: PayslipGrid | null
+  voucher?: VoucherData | null
+  meta?: Record<string, unknown>
+  hasXlsx?: boolean
+  error?: string
+}> {
+  const session = await getDriverSession()
+  if (!session?.driverId) return { ok: false, error: "กรุณาเข้าสู่ระบบ" }
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from(TABLE)
+    .select("id, Driver_ID, title, period_label, branch_label, total_amount, kind, grid_json, voucher_json, xlsx_url, uploaded_at, driver_name")
+    .eq("id", id)
+    .single()
+  if (!data || String(data.Driver_ID) !== String(session.driverId)) {
+    return { ok: false, error: "ไม่พบสลิป" }
+  }
+  return {
+    ok: true,
+    kind: (data.kind as string) || "excel",
+    grid: (data.grid_json as PayslipGrid) || null,
+    voucher: (data.voucher_json as VoucherData) || null,
+    hasXlsx: !!data.xlsx_url,
+    meta: {
+      id: data.id,
+      title: data.title,
+      period_label: data.period_label,
+      branch_label: data.branch_label,
+      total_amount: data.total_amount,
+      uploaded_at: data.uploaded_at,
+      driver_name: data.driver_name,
+    },
+  }
+}

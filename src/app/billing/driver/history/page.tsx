@@ -32,9 +32,11 @@ import {
   Undo2,
   Loader2,
   CloudSync,
-  Eye
+  Eye,
+  Smartphone
 } from "lucide-react"
 import { getDriverPayments, DriverPayment, updateDriverPaymentStatus, recallDriverPayment } from "@/lib/supabase/billing"
+import { pushDriverPaymentToApp } from "@/lib/actions/payslip-actions"
 import { generateScbPaymentXlsx } from "@/lib/actions/scb-export"
 import { isSuperAdmin } from "@/lib/permissions"
 import { toast } from "sonner"
@@ -85,6 +87,22 @@ export default function DriverPaymentHistory() {
             toast.success("ส่งข้อมูลไประบบบัญชีสำเร็จ")
         } else {
             toast.error(res.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ")
+        }
+    } catch {
+        toast.error("เกิดข้อผิดพลาด")
+    } finally {
+        setProcessingId(null)
+    }
+  }
+
+  const handlePushToApp = async (id: string) => {
+    setProcessingId(id)
+    try {
+        const res = await pushDriverPaymentToApp(id)
+        if (res.ok) {
+            toast.success(`ส่งเข้าแอปคนขับ "${res.driverName}" แล้ว`)
+        } else {
+            toast.error(res.error || "ส่งเข้าแอปไม่สำเร็จ")
         }
     } catch {
         toast.error("เกิดข้อผิดพลาด")
@@ -330,11 +348,22 @@ export default function DriverPaymentHistory() {
                                 >
                                     <CloudSync className="w-4 h-4" />
                                 </PremiumButton>
- 
-                                <PremiumButton 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl" 
+
+                                <PremiumButton
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 rounded-xl"
+                                    onClick={() => handlePushToApp(item.Driver_Payment_ID)}
+                                    disabled={processingId === item.Driver_Payment_ID}
+                                    title="ส่งเข้าแอปคนขับ"
+                                >
+                                    <Smartphone className="w-4 h-4" />
+                                </PremiumButton>
+
+                                <PremiumButton
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl"
                                     title="Export SCB"
                                     onClick={() => handleExportSCB(item.Driver_Payment_ID)}
                                     disabled={processingId === item.Driver_Payment_ID}

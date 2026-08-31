@@ -23,6 +23,7 @@ import {
   CalendarDays,
   Receipt,
   Wallet,
+  FileSpreadsheet,
   History,
   CheckCircle2,
   Zap,
@@ -132,6 +133,7 @@ const navigation: NavGroup[] = [
       { titleKey: "navigation.invoices", href: "/billing/invoices", icon: <FileText size={20} /> },
       { titleKey: "navigation.billing_automation", href: "/billing/automation", icon: <Zap size={20} />, badge: "common.new", badgeColor: "yellow" },
       { titleKey: "navigation.payouts", href: "/billing/driver", icon: <Wallet size={20} /> },
+      { titleKey: "navigation.payslips", href: "/billing/payslips", icon: <FileSpreadsheet size={20} /> },
     ],
   },
   {
