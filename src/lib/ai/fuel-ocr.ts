@@ -62,7 +62,8 @@ Provide JSON ONLY:
 }
 `.trim();
 
-  const modelsToTry = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"];
+  // 3.5-flash เร็วกว่า 3.6 มาก (~5s vs ~18s) และแม่นเท่ากันสำหรับใบเสร็จน้ำมัน
+  const modelsToTry = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-3.6-flash"];
 
   for (const modelName of modelsToTry) {
     try {

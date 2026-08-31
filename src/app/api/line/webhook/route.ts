@@ -305,8 +305,10 @@ async function callGeminiMultimodal(
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
     if (!apiKey) return null
 
-    const DEFAULT_MODEL = "gemini-3.6-flash"
-    const FALLBACK_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"]
+    // 3.5-flash อ่านรูปแม่นพอๆ กับ 3.6 แต่เร็วกว่ามาก (~5s vs ~18s) — 3.6 ช้าจนชน
+    // AbortSignal timeout ตอนโหลดสูง ทำให้ OCR ใบเสร็จน้ำมันคืน null แล้วตกไป error
+    const DEFAULT_MODEL = "gemini-3.5-flash"
+    const FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-3.6-flash"]
     const modelsToTry = Array.from(new Set([modelOverride || DEFAULT_MODEL, ...FALLBACK_MODELS]))
     const urlFor = (m: string) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`
     const tools = options?.disableTools ? undefined : [{ function_declarations: geminiToolDefinitions }]
@@ -2350,7 +2352,7 @@ Provide JSON ONLY:
                                 classPrompt,
                                 mimeType,
                                 buffer,
-                                'gemini-3.6-flash',
+                                'gemini-3.5-flash',
                                 {
                                     temperature: 0.0,
                                     responseMimeType: 'application/json',
@@ -2560,7 +2562,7 @@ If it is NOT a fuel receipt, return {"isFuel": false}. No markdown, JSON only.
                                 fuelPrompt,
                                 mimeType,
                                 buffer,
-                                'gemini-3.6-flash',
+                                'gemini-3.5-flash',
                                 {
                                     temperature: 0.0,
                                     responseMimeType: 'application/json',
