@@ -2,11 +2,14 @@
 
 import { forwardRef } from "react"
 import { Job } from "@/lib/supabase/jobs"
+import type { FloorEntry } from "@/components/mobile/extra-service-modal"
 
 export type FloorClimbReportData = {
   soNo?: string
   storeName?: string
   movedQty?: number
+  // ขึ้นชั้นหลายชั้นแยกกล่องต่อชั้น (มาก่อน floorClimbQty/shelvedQty เดิม)
+  floors?: FloorEntry[]
   floorClimbQty?: number
   shelvedQty?: number
   approverPhone?: string
@@ -31,8 +34,16 @@ export const FloorClimbReport = forwardRef<HTMLDivElement, Props>(({ job, data }
   const storeName = data?.storeName || job.Customer_Name || ""
   const soNo = data?.soNo || job.Job_ID || ""
   const movedQty = data?.movedQty !== undefined ? data.movedQty : ""
-  const floorClimbQty = data?.floorClimbQty !== undefined ? data.floorClimbQty : ""
-  const shelvedQty = data?.shelvedQty !== undefined ? data.shelvedQty : ""
+  // รายชั้น: ใช้ floors[] เป็นหลัก ถ้าไม่มีค่อย fallback ค่าเดิม
+  const floors: FloorEntry[] = (data?.floors && data.floors.length > 0)
+    ? data.floors
+    : (data?.floorClimbQty && data.floorClimbQty > 0
+        ? [{ floor: data.floorClimbQty, qty: data.shelvedQty || 0 }]
+        : [])
+  const floorCount = floors.length
+  const totalShelvedQty = floors.reduce((s, f) => s + (f.qty || 0), 0)
+  // เลขชั้นที่ขึ้น เขียนแบบใบจริง เช่น "2, 3"
+  const floorsNumLabel = floors.map(f => f.floor).join(", ")
   const driverName = data?.driverName || job.Driver_Name || ""
   const approverPhone = data?.approverPhone || ""
 
@@ -83,23 +94,38 @@ export const FloorClimbReport = forwardRef<HTMLDivElement, Props>(({ job, data }
             </div>
           </div>
 
-          {/* Row 3: Floor Count & Shelved Qty */}
+          {/* Row 3: Floor Count & Shelved Qty (รวมทุกชั้น) */}
           <div className="flex items-baseline justify-between gap-4">
             <div className="flex items-baseline flex-1">
               <span className="font-bold whitespace-nowrap mr-2">จำนวนการขึ้นชั้น</span>
-              <span className="border-b border-black w-24 text-center font-bold pb-2 text-2xl">
-                {floorClimbQty !== "" && Number(floorClimbQty) > 0 ? floorClimbQty : "—"}
+              <span className="border-b border-black min-w-[6rem] px-2 text-center font-bold pb-2 text-2xl">
+                {floorCount > 0 ? floorsNumLabel : "—"}
               </span>
               <span className="ml-2 whitespace-nowrap">ชั้น</span>
             </div>
             <div className="flex items-baseline flex-1">
               <span className="font-bold whitespace-nowrap mr-2">จำนวนสินค้าที่ขึ้นชั้น</span>
               <span className="border-b border-black w-28 text-center font-bold pb-2 text-2xl">
-                {shelvedQty !== "" && Number(shelvedQty) > 0 ? shelvedQty : "—"}
+                {totalShelvedQty > 0 ? totalShelvedQty : "—"}
               </span>
               <span className="ml-2 whitespace-nowrap">กล่อง / กระสอบ / ชิ้น</span>
             </div>
           </div>
+
+          {/* Row 3b: แยกจำนวนกล่องต่อชั้น (เมื่อขึ้นมากกว่า 1 ชั้น) */}
+          {floorCount > 1 && (
+            <div className="border border-black/40 rounded-lg p-4">
+              <p className="font-bold mb-2">รายละเอียดต่อชั้น</p>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+                {floors.map((f) => (
+                  <div key={f.floor} className="flex items-baseline justify-between">
+                    <span className="font-medium">ชั้น {f.floor}</span>
+                    <span className="font-bold">{f.qty > 0 ? f.qty : "—"} กล่อง</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Row 4: Driver & Approver Signatures */}
           <div className="grid grid-cols-3 gap-4 pt-6 items-end">

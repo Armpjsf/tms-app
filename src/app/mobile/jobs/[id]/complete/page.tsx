@@ -397,6 +397,7 @@ export default function JobCompletePage() {
                         soNo: extraServiceData.soNo,
                         storeName: extraServiceData.storeName,
                         movedQty: extraServiceData.movedQty,
+                        floors: extraServiceData.floors,
                         floorClimbQty: extraServiceData.floorClimbQty,
                         shelvedQty: extraServiceData.shelvedQty,
                         approverPhone: extraServiceData.approverPhone,
@@ -494,7 +495,9 @@ export default function JobCompletePage() {
                             <p className="font-semibold text-indigo-300">SO: {extraServiceData.soNo}</p>
                             <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-300">
                                 {extraServiceData.movedQty > 0 && <span>ย้ายสินค้า: <strong>{extraServiceData.movedQty}</strong> กล่อง</span>}
-                                {extraServiceData.floorClimbQty > 0 && <span>ขึ้นชั้น: <strong>ชั้น {extraServiceData.floorClimbQty}</strong> ({extraServiceData.shelvedQty} กล่อง)</span>}
+                                {extraServiceData.floors && extraServiceData.floors.length > 0 && (
+                                    <span>ขึ้นชั้น: <strong>{extraServiceData.floors.map(f => `ชั้น ${f.floor} (${f.qty} กล่อง)`).join(", ")}</strong></span>
+                                )}
                                 {extraServiceData.approverPhone && <span>เบอร์ผู้รับรอง: <strong>{extraServiceData.approverPhone}</strong></span>}
                             </div>
                         </div>

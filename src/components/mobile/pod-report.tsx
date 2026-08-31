@@ -11,6 +11,7 @@ type Props = {
     soNo?: string
     storeName?: string
     movedQty?: number
+    floors?: { floor: number; qty: number }[]
     floorClimbQty?: number
     shelvedQty?: number
     approverName?: string
@@ -97,14 +98,21 @@ export const PodReport = forwardRef<HTMLDivElement, Props>(({ job, photos, signa
                         <td className="p-2 text-center text-blue-600 font-bold">บันทึกแล้ว</td>
                     </tr>
                 )}
-                {extraServiceData && (extraServiceData.floorClimbQty || 0) > 0 && (
-                    <tr>
-                        <td className="p-2 text-center">{(extraServiceData.movedQty || 0) > 0 ? 3 : 2}</td>
-                        <td className="p-2">บริการยกสินค้าขึ้นชั้น {extraServiceData.floorClimbQty}</td>
-                        <td className="p-2 text-right">{extraServiceData.shelvedQty || 0} กล่อง</td>
-                        <td className="p-2 text-center text-purple-600 font-bold">บันทึกแล้ว</td>
-                    </tr>
-                )}
+                {extraServiceData && ((extraServiceData.floors && extraServiceData.floors.length > 0) || (extraServiceData.floorClimbQty || 0) > 0) && (() => {
+                    const floors = (extraServiceData.floors && extraServiceData.floors.length > 0)
+                        ? extraServiceData.floors
+                        : [{ floor: extraServiceData.floorClimbQty || 0, qty: extraServiceData.shelvedQty || 0 }]
+                    const label = floors.map(f => `ชั้น ${f.floor}`).join(", ")
+                    const total = floors.reduce((s, f) => s + (f.qty || 0), 0)
+                    return (
+                        <tr>
+                            <td className="p-2 text-center">{(extraServiceData.movedQty || 0) > 0 ? 3 : 2}</td>
+                            <td className="p-2">บริการยกสินค้าขึ้นชั้น ({label})</td>
+                            <td className="p-2 text-right">{total} กล่อง</td>
+                            <td className="p-2 text-center text-purple-600 font-bold">บันทึกแล้ว</td>
+                        </tr>
+                    )
+                })()}
             </tbody>
         </table>
       </div>

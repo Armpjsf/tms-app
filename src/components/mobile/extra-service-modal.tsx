@@ -8,10 +8,17 @@ import { Input } from "@/components/ui/input"
 import { Package, Layers, Truck, UserCheck, Plus, Minus, CheckCircle2, Phone, PenTool } from "lucide-react"
 import { SignaturePad } from "@/components/mobile/signature-pad"
 
+// 1 รายการ = 1 ชั้นที่แบกขึ้น พร้อมจำนวนกล่องของชั้นนั้น
+export type FloorEntry = { floor: number; qty: number }
+
 export type ExtraServiceData = {
   soNo: string
   storeName: string
   movedQty: number
+  // ขึ้นชั้นหลายชั้นในจุดเดียว แยกจำนวนกล่องต่อชั้น (เช่น ชั้น 2 = 10, ชั้น 3 = 5)
+  floors: FloorEntry[]
+  // ── legacy (เก็บไว้เพื่อความเข้ากันได้กับข้อมูลเก่า/ออฟไลน์) ──
+  // floorClimbQty = จำนวนชั้นที่ขึ้น, shelvedQty = จำนวนกล่องรวมทุกชั้น
   floorClimbQty: number
   shelvedQty: number
   approverPhone: string
@@ -50,8 +57,8 @@ export function ExtraServiceModal({
   // index ของตัวเลือกใน dropdown — ใช้เป็นค่าที่ไม่ซ้ำ (จุดหน้าร้าน/โกดังมี SO เดียวกันได้)
   const [selectedIdx, setSelectedIdx] = useState<number>(0)
   const [movedQty, setMovedQty] = useState<number>(0)
-  const [floorClimbQty, setFloorClimbQty] = useState<number>(0)
-  const [shelvedQty, setShelvedQty] = useState<number>(0)
+  // ขึ้นชั้นหลายชั้น: แต่ละชั้นเก็บจำนวนกล่องแยกกัน
+  const [floors, setFloors] = useState<FloorEntry[]>([])
   const [approverPhone, setApproverPhone] = useState<string>("")
   const [approverSigBlob, setApproverSigBlob] = useState<Blob | null>(null)
   const [approverSigUrl, setApproverSigUrl] = useState<string | null>(null)
@@ -89,8 +96,14 @@ export function ExtraServiceModal({
       setSelectedSo(initialData.soNo || (list[safeIdx]?.so || currentJobId))
       setStoreName(initialData.storeName || (list[safeIdx]?.store || currentCustomerName || ""))
       setMovedQty(initialData.movedQty || 0)
-      setFloorClimbQty(initialData.floorClimbQty || 0)
-      setShelvedQty(initialData.shelvedQty || 0)
+      // รองรับข้อมูลเก่า: ถ้ายังไม่มี floors[] แต่มี floorClimbQty เดิม (ค่าเดิม = เลขชั้น) แปลงเป็น 1 รายการ
+      if (Array.isArray(initialData.floors) && initialData.floors.length > 0) {
+        setFloors(initialData.floors)
+      } else if (initialData.floorClimbQty && initialData.floorClimbQty > 0) {
+        setFloors([{ floor: initialData.floorClimbQty, qty: initialData.shelvedQty || 0 }])
+      } else {
+        setFloors([])
+      }
       setApproverPhone(initialData.approverPhone || "")
       setApproverSigUrl(initialData.approverSignatureUrl || null)
       setNotes(initialData.notes || "")
@@ -112,6 +125,17 @@ export function ExtraServiceModal({
     }
   }
 
+  // ขึ้นชั้น: แตะปุ่มชั้นเพื่อเปิด/ปิด, กรอกจำนวนกล่องแยกต่อชั้น
+  const toggleFloor = (floor: number) => {
+    setFloors(prev => {
+      if (prev.some(f => f.floor === floor)) return prev.filter(f => f.floor !== floor)
+      return [...prev, { floor, qty: 0 }].sort((a, b) => a.floor - b.floor)
+    })
+  }
+  const setFloorQty = (floor: number, qty: number) => {
+    setFloors(prev => prev.map(f => (f.floor === floor ? { ...f, qty: Math.max(0, qty) } : f)))
+  }
+
   const handleSignatureSave = (blob: Blob | null) => {
     setApproverSigBlob(blob)
     if (blob) {
@@ -130,12 +154,17 @@ export function ExtraServiceModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const cleanFloors = floors
+      .filter(f => f.floor > 0)
+      .sort((a, b) => a.floor - b.floor)
     onSave({
       soNo: selectedSo,
       storeName,
       movedQty,
-      floorClimbQty,
-      shelvedQty,
+      floors: cleanFloors,
+      // legacy: จำนวนชั้น + กล่องรวม เพื่อความเข้ากันได้กับตัวอ่านเก่า
+      floorClimbQty: cleanFloors.length,
+      shelvedQty: cleanFloors.reduce((s, f) => s + (f.qty || 0), 0),
       approverPhone,
       approverSignatureUrl: approverSigUrl,
       approverSignatureBlob: approverSigBlob,
@@ -224,36 +253,45 @@ export function ExtraServiceModal({
             </div>
           </div>
 
-          {/* Floor Climb Selector (Pills) */}
+          {/* Floor Climb Selector (Multi-select Pills) */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
               <Layers size={14} className="text-indigo-400" />
-              ระดับชั้นที่แบกขึ้น (ชั้น)
+              ชั้นที่แบกขึ้น (เลือกได้หลายชั้น)
             </Label>
             <div className="grid grid-cols-4 gap-2">
-              {[0, 2, 3, 4].map((floor) => (
-                <button
-                  key={floor}
-                  type="button"
-                  onClick={() => setFloorClimbQty(floor)}
-                  className={`h-11 rounded-xl text-xs font-bold transition-all border ${
-                    floorClimbQty === floor
-                      ? "bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30"
-                      : "bg-slate-800/80 text-slate-400 border-slate-700/60 hover:bg-slate-800"
-                  }`}
-                >
-                  {floor === 0 ? "ไม่ขึ้นชั้น" : `ชั้น ${floor}`}
-                </button>
-              ))}
+              {[2, 3, 4, 5].map((floor) => {
+                const active = floors.some(f => f.floor === floor)
+                return (
+                  <button
+                    key={floor}
+                    type="button"
+                    onClick={() => toggleFloor(floor)}
+                    className={`h-11 rounded-xl text-xs font-bold transition-all border ${
+                      active
+                        ? "bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30"
+                        : "bg-slate-800/80 text-slate-400 border-slate-700/60 hover:bg-slate-800"
+                    }`}
+                  >
+                    ชั้น {floor}
+                  </button>
+                )
+              })}
             </div>
+            {floors.length === 0 && (
+              <p className="text-[11px] text-slate-500">ไม่ได้ขึ้นชั้น — แตะเลือกชั้นถ้ามีการแบกขึ้น (เลือกได้มากกว่า 1 ชั้น)</p>
+            )}
           </div>
 
-          {/* Shelved Qty (Boxes) */}
-          {floorClimbQty > 0 && (
-            <div className="bg-indigo-950/40 p-3 rounded-2xl border border-indigo-900/50 flex items-center justify-between animate-in fade-in duration-300">
+          {/* Shelved Qty per selected floor */}
+          {floors.map((entry) => (
+            <div
+              key={entry.floor}
+              className="bg-indigo-950/40 p-3 rounded-2xl border border-indigo-900/50 flex items-center justify-between animate-in fade-in duration-300"
+            >
               <div>
-                <p className="text-sm font-bold text-indigo-200">จำนวนสินค้าขึ้นชั้น (กล่อง)</p>
-                <p className="text-[11px] text-indigo-400">พิมพ์ระบุจำนวนสินค้าที่ยกขึ้นชั้น {floorClimbQty}</p>
+                <p className="text-sm font-bold text-indigo-200">จำนวนสินค้าขึ้นชั้น {entry.floor} (กล่อง)</p>
+                <p className="text-[11px] text-indigo-400">จำนวนกล่องที่ยกขึ้นชั้น {entry.floor}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -261,15 +299,15 @@ export function ExtraServiceModal({
                   variant="outline"
                   size="icon"
                   className="h-9 w-9 rounded-xl border-indigo-800 bg-indigo-900/50 text-indigo-200 shrink-0"
-                  onClick={() => setShelvedQty(Math.max(0, shelvedQty - 1))}
+                  onClick={() => setFloorQty(entry.floor, entry.qty - 1)}
                 >
                   <Minus size={14} />
                 </Button>
                 <Input
                   type="number"
                   inputMode="numeric"
-                  value={shelvedQty === 0 ? "" : shelvedQty}
-                  onChange={(e) => setShelvedQty(Math.max(0, parseInt(e.target.value || "0", 10)))}
+                  value={entry.qty === 0 ? "" : entry.qty}
+                  onChange={(e) => setFloorQty(entry.floor, parseInt(e.target.value || "0", 10))}
                   placeholder="0"
                   className="w-16 h-10 bg-indigo-950 border-indigo-700 text-center font-black text-indigo-100 text-base rounded-xl focus-visible:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
@@ -278,13 +316,13 @@ export function ExtraServiceModal({
                   variant="outline"
                   size="icon"
                   className="h-9 w-9 rounded-xl border-indigo-800 bg-indigo-900/50 text-indigo-200 shrink-0"
-                  onClick={() => setShelvedQty(shelvedQty + 1)}
+                  onClick={() => setFloorQty(entry.floor, entry.qty + 1)}
                 >
                   <Plus size={14} />
                 </Button>
               </div>
             </div>
-          )}
+          ))}
 
           {/* จุดลงย่อย (แบ่งลงโกดัง ฯลฯ) — พบเฉพาะหน้างาน */}
           <div className="space-y-2 bg-amber-950/30 p-3 rounded-2xl border border-amber-900/40">
