@@ -188,34 +188,49 @@ export default function JobCompletePage() {
                 console.error("[POD report] blob missing/too small:", reportBlob?.size)
             }
             // 1.2 Capture Floor Climb Official Report (if extra service entered)
-            if (floorClimbReportRef.current && extraServiceData) {
-                try {
-                    await waitForImages(floorClimbReportRef.current!)
-                    const fcCanvas = await html2canvas(floorClimbReportRef.current!, {
-                        scale: 1,
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: "#ffffff",
-                        windowWidth: 800,
-                        allowTaint: true
-                    })
-                    const fcBlob = await new Promise<Blob | null>(resolve => fcCanvas.toBlob(resolve, 'image/jpeg', 0.85))
-                    if (fcBlob && fcBlob.size > 1000) {
-                        formData.append("floor_climb_report", fcBlob, `Floor_Climb_Report_${params.id}.jpg`)
-                    } else {
-                        console.error("[FloorClimb] blob missing/too small:", fcBlob?.size)
-                        toast.error("สร้างใบขึ้นชั้นไม่สำเร็จ (ภาพว่าง)")
+            // ให้ทนเท่าใบ POD: waitForImages + หน่วงให้ layout/ฟอนต์เสร็จ + retry + timeout
+            // ไม่งั้นบางดรอปถ่ายก่อนภาพเสร็จ → ได้ภาพว่าง แล้วใบขึ้นชั้นหายเงียบ (บั๊กเดิม)
+            if (extraServiceData) {
+                const captureFloorClimb = async (retryCount = 0): Promise<Blob | null> => {
+                    if (!floorClimbReportRef.current) return null
+                    try {
+                        await waitForImages(floorClimbReportRef.current)
+                        await new Promise(resolve => setTimeout(resolve, 500 + retryCount * 500))
+                        const fcCanvas = await html2canvas(floorClimbReportRef.current, {
+                            scale: 1,
+                            useCORS: true,
+                            logging: false,
+                            backgroundColor: "#ffffff",
+                            windowWidth: 800,
+                            allowTaint: true
+                        })
+                        return await new Promise<Blob | null>(resolve => fcCanvas.toBlob(resolve, 'image/jpeg', 0.85))
+                    } catch (fcErr) {
+                        if (retryCount < 1) return captureFloorClimb(retryCount + 1)
+                        console.error("[FloorClimb capture FAILED]", fcErr)
+                        return null
                     }
-                } catch (fcErr) {
-                    // No longer silent — this is exactly the failure the driver couldn't see.
-                    console.error("[FloorClimb capture FAILED]", fcErr)
-                    toast.error("สร้างใบขึ้นชั้นไม่สำเร็จ", { description: String((fcErr as Error)?.message || fcErr) })
                 }
-            } else if (extraServiceData && !floorClimbReportRef.current) {
-                // The form was filled but the hidden report element never mounted —
-                // capture is impossible. Make this visible instead of silently skipping.
-                console.error("[FloorClimb] ref is null despite extraServiceData present")
-                toast.error("ใบขึ้นชั้นไม่ถูกสร้าง (ref ว่าง)")
+                const fcBlob = await withTimeout(captureFloorClimb(), 25000, 'floor climb capture').catch((e) => {
+                    console.error("[FloorClimb capture TIMEOUT]", e)
+                    return null
+                })
+                if (fcBlob && fcBlob.size > 1000) {
+                    formData.append("floor_climb_report", fcBlob, `Floor_Climb_Report_${params.id}.jpg`)
+                } else {
+                    // กรอกใบขึ้นชั้นแล้วแต่สร้างภาพไม่สำเร็จ — อย่าปล่อยผ่านเงียบ (หลักฐานทางการหาย)
+                    console.error("[FloorClimb] blob missing/too small:", fcBlob?.size)
+                    const proceed = confirm(
+                        "สร้างใบขึ้นชั้นไม่สำเร็จ (ภาพว่าง)\n\n" +
+                        "ต้องการส่งงานต่อโดยยังไม่มีใบขึ้นชั้นนี้หรือไม่?\n" +
+                        'กด "ยกเลิก" เพื่อลองกดส่งงานใหม่อีกครั้ง'
+                    )
+                    if (!proceed) {
+                        toast.error("ยกเลิกการส่ง — กรุณากดส่งงานอีกครั้งเพื่อสร้างใบขึ้นชั้น", { id: "pod-upload" })
+                        return
+                    }
+                    toast.warning("ส่งงานต่อโดยไม่มีใบขึ้นชั้น (ตามที่ยืนยัน)")
+                }
             }
         }
 
@@ -568,6 +583,8 @@ export default function JobCompletePage() {
               ? JSON.parse(job.original_destinations_json)
               : job.original_destinations_json
           }
+          // ดรอปที่กำลังปิด = จำนวนลายเซ็นที่มี (ตรงกับที่ server ใช้) → default ร้านให้ตรงดรอป
+          currentDropIndex={job.Signature_Url ? job.Signature_Url.split(',').filter(Boolean).length : 0}
           initialData={extraServiceData}
         />
       )}

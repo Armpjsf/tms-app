@@ -37,6 +37,8 @@ type ExtraServiceModalProps = {
   currentJobId: string
   currentCustomerName?: string
   originalDestinations?: Array<{ name?: string; so_no?: string }>
+  // ดรอปที่กำลังปิดอยู่ (0-based = จำนวนลายเซ็นที่มี) เพื่อ default เลือกร้านให้ตรงดรอป
+  currentDropIndex?: number
   initialData?: ExtraServiceData | null
 }
 
@@ -47,6 +49,7 @@ export function ExtraServiceModal({
   currentJobId,
   currentCustomerName,
   originalDestinations,
+  currentDropIndex = 0,
   initialData
 }: ExtraServiceModalProps) {
   // Extract all available SOs / Jobs for dropdown
@@ -109,11 +112,13 @@ export function ExtraServiceModal({
       setNotes(initialData.notes || "")
       setSubDrops(Array.isArray(initialData.subDrops) ? initialData.subDrops : [])
     } else {
-      setSelectedIdx(0)
-      setSelectedSo(list[0]?.so || currentJobId)
-      setStoreName(list[0]?.store || currentCustomerName || "")
+      // default ให้ตรง "ดรอปที่กำลังปิด" ไม่ใช่ดรอปแรกเสมอ (clamp กัน index เกิน)
+      const di = Math.min(Math.max(0, currentDropIndex), Math.max(0, list.length - 1))
+      setSelectedIdx(di)
+      setSelectedSo(list[di]?.so || currentJobId)
+      setStoreName(list[di]?.store || currentCustomerName || "")
     }
-  }, [currentJobId, currentCustomerName, originalDestinations, initialData, isOpen])
+  }, [currentJobId, currentCustomerName, originalDestinations, currentDropIndex, initialData, isOpen])
 
   // เลือกจาก dropdown ด้วย index (ไม่ใช้ so เป็นค่า เพราะ so ซ้ำกันได้)
   const handleSelectIdx = (idx: number) => {
