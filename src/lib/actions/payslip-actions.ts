@@ -243,6 +243,91 @@ export async function deletePayslipBatch(batchId: string): Promise<{ ok: boolean
   }
 }
 
+// ============ Flow ใหม่: อ่านไฟล์ฝั่ง browser (กันไฟล์ใหญ่เกินลิมิต Server Action) ============
+
+/** ดึงรายชื่อคนขับสำหรับจับคู่ (payload เล็ก) */
+export async function getPayslipDrivers(): Promise<{ drivers: DriverLite[] }> {
+  await requireAdmin()
+  const rows = await getActiveDrivers()
+  const drivers: DriverLite[] = (rows || []).map((d: Record<string, unknown>) => ({
+    id: String(d.Driver_ID),
+    name: String(d.Driver_Name || d.Driver_ID),
+    branch: (d.Branch_ID as string) ?? null,
+  }))
+  return { drivers }
+}
+
+/** ขอ signed URL ให้ browser อัปไฟล์ตรงเข้า storage (ไม่ผ่าน body ของ Server Action) */
+export async function createPayslipSignedUpload(
+  path: string
+): Promise<{ ok: boolean; path?: string; token?: string; error?: string }> {
+  try {
+    await requireAdmin()
+    if (!/^payslips\/[A-Za-z0-9/_.\-]+\.(xlsx|xlsm)$/.test(path)) {
+      return { ok: false, error: "path ไม่ถูกต้อง" }
+    }
+    const supabase = createAdminClient()
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(path, { upsert: true })
+    if (error || !data) return { ok: false, error: error?.message || "สร้าง URL ไม่สำเร็จ" }
+    return { ok: true, path: data.path, token: data.token }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "เกิดข้อผิดพลาด" }
+  }
+}
+
+export interface ClientConfirmItem {
+  driverId: string
+  driverName?: string
+  sheetName: string
+  grid: PayslipGrid
+  total: number | null
+  xlsxPath: string | null
+}
+
+/** ยืนยันบันทึกสลิป (grid มาจาก browser แล้ว, payload เล็ก) */
+export async function confirmPayslipsClient(input: {
+  batchId: string
+  title: string
+  period: string
+  branch: string
+  fileName: string
+  items: ClientConfirmItem[]
+}): Promise<{ ok: boolean; created?: number; error?: string }> {
+  try {
+    const session = await requireAdmin()
+    const items = (input.items || []).filter((it) => it.driverId && it.sheetName && it.grid)
+    if (items.length === 0) return { ok: false, error: "ไม่มีรายการที่จับคู่" }
+
+    const supabase = createAdminClient()
+    const records = items.map((it) => ({
+      Driver_ID: it.driverId,
+      driver_name: it.driverName || it.sheetName,
+      sheet_name: it.sheetName,
+      title: input.title,
+      period_label: input.period || null,
+      branch_label: input.branch || null,
+      total_amount: it.total,
+      kind: "excel",
+      grid_json: it.grid,
+      voucher_json: null,
+      xlsx_url: it.xlsxPath,
+      source_file: input.fileName,
+      batch_id: input.batchId,
+      payment_id: null,
+      uploaded_by: session.userId,
+      uploaded_at: new Date().toISOString(),
+    }))
+
+    const { error } = await supabase.from(TABLE).insert(records)
+    if (error) return { ok: false, error: "บันทึกไม่สำเร็จ: " + error.message }
+
+    revalidatePath("/billing/payslips")
+    return { ok: true, created: records.length }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "เกิดข้อผิดพลาด" }
+  }
+}
+
 /**
  * ส่งใบสำคัญจ่าย (ในระบบ) เข้าแอปคนขับ — แปลง Driver_Payments -> สลิป kind='voucher'
  * กัน push ซ้ำด้วย payment_id (upsert)

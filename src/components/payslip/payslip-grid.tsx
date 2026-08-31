@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import type { PayslipGrid } from "@/lib/payslip/xlsx"
+import type { PayslipGrid } from "@/lib/payslip/types"
 
 interface Props {
   grid: PayslipGrid

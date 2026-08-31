@@ -1,19 +1,7 @@
 import ExcelJS from "exceljs"
+import type { PayslipCell, PayslipMerge, PayslipGrid } from "./types"
 
-/** โครงตารางที่ render ในแอปมือถือ (เก็บใน grid_json) */
-export interface PayslipCell {
-  t: string            // ข้อความที่แสดง
-  b?: boolean          // ตัวหนา
-  a?: "left" | "center" | "right"
-  n?: boolean          // เป็นตัวเลข (จัดชิดขวา)
-}
-export interface PayslipMerge { r: number; c: number; rs: number; cs: number } // 0-based, rowspan/colspan
-export interface PayslipGrid {
-  cols: number[]                 // ความกว้างคอลัมน์ (Excel width units)
-  merges: PayslipMerge[]
-  rows: PayslipCell[][]
-  maxCols: number
-}
+export type { PayslipCell, PayslipMerge, PayslipGrid } from "./types"
 
 const MAX_COLS = 24
 const MAX_ROWS = 400

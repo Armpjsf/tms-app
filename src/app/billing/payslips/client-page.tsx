@@ -1,22 +1,32 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
-  uploadPayslipWorkbook,
-  confirmPayslips,
+  getPayslipDrivers,
+  createPayslipSignedUpload,
+  confirmPayslipsClient,
   deletePayslipBatch,
-  type SheetPreview,
-  type UploadResult,
+  type ClientConfirmItem,
 } from "@/lib/actions/payslip-actions"
-import type { DriverLite } from "@/lib/payslip/match"
+import { parseWorkbookClient, readWorkbookClient, buildSingleSheetFromWb } from "@/lib/payslip/sheetjs"
+import type { PayslipGrid } from "@/lib/payslip/types"
+import { suggestDriverId, parseFileName, type DriverLite } from "@/lib/payslip/match"
+import { createClient } from "@/utils/supabase/client"
 import { Upload, FileSpreadsheet, Loader2, CheckCircle2, Trash2, Users } from "lucide-react"
 import { toast } from "sonner"
 
-interface Row extends SheetPreview {
+const BUCKET = "company-assets"
+
+interface Row {
+  sheetName: string
+  rowCount: number
+  isDriverSheet: boolean
+  grid: PayslipGrid
+  total: number | null
   selected: boolean
   driverId: string
 }
@@ -25,14 +35,17 @@ export default function PayslipsClient({ initialList }: { initialList: Record<st
   const router = useRouter()
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [parsed, setParsed] = useState<UploadResult | null>(null)
+  const [progress, setProgress] = useState("")
+  const [hasParsed, setHasParsed] = useState(false)
   const [rows, setRows] = useState<Row[]>([])
   const [drivers, setDrivers] = useState<DriverLite[]>([])
   const [title, setTitle] = useState("")
   const [period, setPeriod] = useState("")
   const [branch, setBranch] = useState("")
+  const [fileName, setFileName] = useState("")
+  const bufRef = useRef<ArrayBuffer | null>(null)
+  const batchRef = useRef<string>("")
 
-  // จัดกลุ่มรายการที่อัปแล้วตาม batch
   const batches = useMemo(() => {
     const map = new Map<string, { title: string; period: string; file: string; date: string; count: number; batchId: string }>()
     for (const r of initialList) {
@@ -55,32 +68,39 @@ export default function PayslipsClient({ initialList }: { initialList: Record<st
 
   const handleFile = async (file: File) => {
     setUploading(true)
-    setParsed(null)
+    setHasParsed(false)
     try {
-      const fd = new FormData()
-      fd.append("file", file)
-      const res = await uploadPayslipWorkbook(fd)
-      if (!res.ok) {
-        toast.error(res.error || "อ่านไฟล์ไม่สำเร็จ")
-        return
-      }
-      setParsed(res)
-      setDrivers(res.drivers || [])
-      setTitle(res.defaults?.title || "")
-      setPeriod(res.defaults?.period || "")
-      setBranch(res.defaults?.branch || "")
+      const ab = await file.arrayBuffer()
+      bufRef.current = ab
+      setFileName(file.name)
+      // parse ฝั่ง browser (SheetJS) — ไม่ส่งไฟล์ใหญ่ขึ้น server
+      await new Promise((r) => setTimeout(r, 30)) // ให้ spinner ทันแสดง
+      const sheets = parseWorkbookClient(ab)
+      const { drivers: drv } = await getPayslipDrivers()
+      setDrivers(drv)
+      const parsedName = parseFileName(file.name)
+      setTitle(parsedName.title)
+      setPeriod(parsedName.period)
+      setBranch(parsedName.branch)
       setRows(
-        (res.sheets || []).map((s) => ({
-          ...s,
+        sheets.map((s) => ({
+          sheetName: s.name,
+          rowCount: s.rowCount,
+          isDriverSheet: s.isDriverSheet,
+          grid: s.grid,
+          total: s.total,
           selected: s.isDriverSheet,
-          driverId: s.suggestedDriverId || "",
+          driverId: s.isDriverSheet ? suggestDriverId(s.name, drv) || "" : "",
         }))
       )
-      const matched = (res.sheets || []).filter((s) => s.isDriverSheet && s.suggestedDriverId).length
-      const totalDriverSheets = (res.sheets || []).filter((s) => s.isDriverSheet).length
-      toast.success(`พบ ${totalDriverSheets} แผ่นคนขับ · จับคู่อัตโนมัติได้ ${matched}`)
-    } catch {
-      toast.error("เกิดข้อผิดพลาดขณะอัปโหลด")
+      batchRef.current = crypto.randomUUID()
+      setHasParsed(true)
+      const driverSheets = sheets.filter((s) => s.isDriverSheet)
+      const matched = driverSheets.filter((s) => suggestDriverId(s.name, drv)).length
+      toast.success(`พบ ${driverSheets.length} แผ่นคนขับ · จับคู่อัตโนมัติได้ ${matched}`)
+    } catch (e) {
+      console.error(e)
+      toast.error("อ่านไฟล์ไม่สำเร็จ (ไฟล์อาจเสียหรือไม่ใช่ .xlsx)")
     } finally {
       setUploading(false)
     }
@@ -89,18 +109,20 @@ export default function PayslipsClient({ initialList }: { initialList: Record<st
   const updateRow = (i: number, patch: Partial<Row>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)))
 
+  const selectedCount = rows.filter((r) => r.selected && r.driverId).length
+  const unmatched = rows.filter((r) => r.isDriverSheet && !r.driverId)
+
   const handleConfirm = async () => {
-    if (!parsed?.batchId || !parsed.sourcePath) return
-    const mappings = rows
-      .filter((r) => r.selected && r.driverId)
-      .map((r) => ({ sheetName: r.sheetName, driverId: r.driverId }))
-    if (mappings.length === 0) {
+    const ab = bufRef.current
+    if (!ab) return
+    const mapped = rows.filter((r) => r.selected && r.driverId)
+    if (mapped.length === 0) {
       toast.error("กรุณาเลือกและจับคู่คนขับอย่างน้อย 1 รายการ")
       return
     }
     // กันจับคู่คนขับซ้ำ
     const seen = new Set<string>()
-    for (const m of mappings) {
+    for (const m of mapped) {
       if (seen.has(m.driverId)) {
         const d = drivers.find((x) => x.id === m.driverId)
         toast.error(`คนขับ "${d?.name || m.driverId}" ถูกจับคู่มากกว่า 1 แผ่น`)
@@ -108,41 +130,70 @@ export default function PayslipsClient({ initialList }: { initialList: Record<st
       }
       seen.add(m.driverId)
     }
-
-    // เตือนชัดๆ ก่อนข้ามคนที่จับคู่ไม่ได้
     if (unmatched.length > 0) {
       const names = unmatched.map((r) => `• ${r.sheetName}`).join("\n")
       const proceed = confirm(
         `มี ${unmatched.length} แผ่นที่จับคู่คนขับไม่ได้ (ไม่มีในระบบ) จะถูกข้าม ไม่บันทึก:\n\n${names}\n\n` +
-          `บันทึกเฉพาะ ${mappings.length} รายการที่จับคู่แล้วต่อไปหรือไม่?`
+          `บันทึกเฉพาะ ${mapped.length} รายการที่จับคู่แล้วต่อไปหรือไม่?`
       )
       if (!proceed) return
     }
 
     setSaving(true)
     try {
-      const res = await confirmPayslips({
-        batchId: parsed.batchId,
-        sourcePath: parsed.sourcePath,
-        fileName: parsed.fileName || "",
-        title,
-        period,
-        branch,
-        mappings,
-      })
+      const supabase = createClient()
+      const batchId = batchRef.current
+      const wb = readWorkbookClient(ab) // อ่านครั้งเดียว ใช้สร้างไฟล์รายคนทุกคน
+      const items: ClientConfirmItem[] = []
+      let done = 0
+      for (const r of mapped) {
+        done++
+        setProgress(`กำลังเตรียมไฟล์ ${done}/${mapped.length} …`)
+        let xlsxPath: string | null = null
+        try {
+          const bytes = buildSingleSheetFromWb(wb, r.sheetName)
+          const path = `payslips/${batchId}/${r.driverId}.xlsx`
+          const signed = await createPayslipSignedUpload(path)
+          if (signed.ok && signed.path && signed.token) {
+            const { error } = await supabase.storage
+              .from(BUCKET)
+              .uploadToSignedUrl(signed.path, signed.token, new Blob([bytes as unknown as BlobPart], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              }))
+            if (!error) xlsxPath = path
+          }
+        } catch (e) {
+          console.error("build/upload xlsx failed", r.sheetName, e)
+        }
+        items.push({
+          driverId: r.driverId,
+          driverName: drivers.find((d) => d.id === r.driverId)?.name,
+          sheetName: r.sheetName,
+          grid: r.grid,
+          total: r.total,
+          xlsxPath,
+        })
+      }
+
+      setProgress("กำลังบันทึก …")
+      const res = await confirmPayslipsClient({ batchId, title, period, branch, fileName, items })
       if (!res.ok) {
         toast.error(res.error || "บันทึกไม่สำเร็จ")
         return
       }
+      const noXlsx = items.filter((i) => !i.xlsxPath).length
       toast.success(
         `บันทึกสำเร็จ ${res.created} รายการ` +
-          (unmatched.length > 0 ? ` · ข้าม ${unmatched.length} แผ่น (ไม่มีในระบบ)` : "")
+          (unmatched.length > 0 ? ` · ข้าม ${unmatched.length} แผ่น (ไม่มีในระบบ)` : "") +
+          (noXlsx > 0 ? ` · ${noXlsx} รายการไม่มีไฟล์ Excel ให้โหลด (ดูในแอปได้)` : "")
       )
-      setParsed(null)
+      setHasParsed(false)
       setRows([])
+      bufRef.current = null
       router.refresh()
     } finally {
       setSaving(false)
+      setProgress("")
     }
   }
 
@@ -155,10 +206,6 @@ export default function PayslipsClient({ initialList }: { initialList: Record<st
     } else toast.error(res.error || "ลบไม่สำเร็จ")
   }
 
-  const selectedCount = rows.filter((r) => r.selected && r.driverId).length
-  // แผ่นที่เป็นคนขับแต่จับคู่ไม่ได้ (ไม่มีในระบบ) — จะถูกข้าม
-  const unmatched = rows.filter((r) => r.isDriverSheet && !r.driverId)
-
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
       <div>
@@ -170,22 +217,21 @@ export default function PayslipsClient({ initialList }: { initialList: Record<st
         </p>
       </div>
 
-      {/* Upload */}
-      {!parsed && (
+      {!hasParsed && (
         <Card>
           <CardContent className="p-6">
             <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-300 rounded-xl py-10 cursor-pointer hover:border-indigo-400 transition-colors">
               {uploading ? (
                 <>
                   <Loader2 className="animate-spin text-indigo-600" size={32} />
-                  <span className="text-muted-foreground">กำลังอ่านไฟล์…</span>
+                  <span className="text-muted-foreground">กำลังอ่านไฟล์ในเครื่อง…</span>
                 </>
               ) : (
                 <>
                   <Upload className="text-indigo-500" size={32} />
                   <span className="font-medium">เลือกไฟล์ Excel (.xlsx)</span>
                   <span className="text-xs text-muted-foreground">
-                    ไฟล์ควรเป็นค่านิ่งแล้ว (ไม่มีสูตรลิงก์ข้ามไฟล์)
+                    รองรับไฟล์ขนาดใหญ่ (อ่านในเครื่อง ไม่อัปทั้งไฟล์ขึ้นเซิร์ฟเวอร์)
                   </span>
                 </>
               )}
@@ -205,8 +251,7 @@ export default function PayslipsClient({ initialList }: { initialList: Record<st
         </Card>
       )}
 
-      {/* Mapping */}
-      {parsed && (
+      {hasParsed && (
         <Card>
           <CardContent className="p-4 md:p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -240,10 +285,7 @@ export default function PayslipsClient({ initialList }: { initialList: Record<st
 
             <div className="border rounded-xl overflow-hidden divide-y max-h-[420px] overflow-y-auto">
               {rows.map((r, i) => (
-                <div
-                  key={r.sheetName + i}
-                  className={`flex items-center gap-3 p-3 ${!r.isDriverSheet ? "bg-gray-50" : ""}`}
-                >
+                <div key={r.sheetName + i} className={`flex items-center gap-3 p-3 ${!r.isDriverSheet ? "bg-gray-50" : ""}`}>
                   <input
                     type="checkbox"
                     checked={r.selected}
@@ -253,9 +295,7 @@ export default function PayslipsClient({ initialList }: { initialList: Record<st
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">
                       {r.sheetName}
-                      {!r.isDriverSheet && (
-                        <span className="ml-2 text-xs text-amber-600">(ไม่ใช่แผ่นคนขับ?)</span>
-                      )}
+                      {!r.isDriverSheet && <span className="ml-2 text-xs text-amber-600">(ไม่ใช่แผ่นคนขับ?)</span>}
                       {r.isDriverSheet && !r.driverId && (
                         <span className="ml-2 text-xs font-semibold text-rose-600">จับคู่ไม่ได้ – จะถูกข้าม</span>
                       )}
@@ -281,8 +321,9 @@ export default function PayslipsClient({ initialList }: { initialList: Record<st
               ))}
             </div>
 
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setParsed(null)} disabled={saving}>
+            <div className="flex gap-2 justify-end items-center">
+              {progress && <span className="text-sm text-muted-foreground mr-auto">{progress}</span>}
+              <Button variant="outline" onClick={() => { setHasParsed(false); bufRef.current = null }} disabled={saving}>
                 ยกเลิก
               </Button>
               <Button onClick={handleConfirm} disabled={saving} className="gap-2">
@@ -294,7 +335,6 @@ export default function PayslipsClient({ initialList }: { initialList: Record<st
         </Card>
       )}
 
-      {/* Existing batches */}
       <div>
         <h2 className="font-semibold mb-2">ประวัติการอัปโหลด</h2>
         {batches.length === 0 ? (

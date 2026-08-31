@@ -3,7 +3,7 @@
 import { useRef, useState } from "react"
 import { PayslipGridView } from "@/components/payslip/payslip-grid"
 import { PayslipVoucherView } from "@/components/payslip/payslip-voucher"
-import type { PayslipGrid } from "@/lib/payslip/xlsx"
+import type { PayslipGrid } from "@/lib/payslip/types"
 import type { VoucherData } from "@/lib/payslip/voucher"
 import { Button } from "@/components/ui/button"
 import { FileDown, FileSpreadsheet, Loader2 } from "lucide-react"
