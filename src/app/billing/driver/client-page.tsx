@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -10,7 +10,7 @@ import { todayTH } from "@/lib/utils/date-th"
 import { Label } from "@/components/ui/label"
 import {
   Wallet, Download, Truck, User, CheckCircle2, Banknote, Percent, Loader2,
-  FileDown, History, Eye, Save, Users, ArrowLeft, ArrowRight, Search,
+  FileDown, History, Eye, Save, Users, ArrowLeft, ArrowRight, X,
 } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Job } from "@/lib/supabase/jobs"
@@ -21,26 +21,60 @@ import { Subcontractor } from "@/types/subcontractor"
 import { getBankCode } from "@/lib/constants/banks"
 import { toast } from "sonner"
 import { exportToCSV } from "@/lib/utils/export"
+import { generateCrewPaymentXlsx } from "@/lib/actions/crew-payment-export"
 import { PaymentVoucher } from "@/components/billing/driver/PaymentVoucher"
 import { cn } from "@/lib/utils"
 
 interface ExtraCost { cost_driver: string | number; type: string }
 
+// แปลง extra_costs_json ของงานเป็นอาเรย์ (client-safe)
+const parseJobExtras = (job: Job): ExtraCost[] => {
+    if (!job.extra_costs_json) return []
+    try {
+        if (typeof job.extra_costs_json === 'string') return JSON.parse(job.extra_costs_json)
+        return job.extra_costs_json as ExtraCost[]
+    } catch { return [] }
+}
+
 const getJobTotal = (job: Job) => {
     const basePrice = job.Cost_Driver_Total || 0
-    let extra = 0
-    if (job.extra_costs_json) {
-        try {
-            let costs: ExtraCost[] = []
-            if (typeof job.extra_costs_json === 'string') {
-                try { costs = JSON.parse(job.extra_costs_json) } catch {}
-            } else {
-                costs = job.extra_costs_json as ExtraCost[]
-            }
-            if (Array.isArray(costs)) extra = costs.reduce((s, c) => s + (Number(c.cost_driver) || 0), 0)
-        } catch {}
-    }
+    const extra = parseJobExtras(job).reduce((s, c) => s + (Number(c.cost_driver) || 0), 0)
     return basePrice + extra
+}
+
+// แตกค่าใช้จ่ายเพิ่มเติม (ฝั่งคนขับ/รถร่วม) ตาม keyword เดียวกับชีต PCG ledger
+// (master-sheet-sync CHARGE_GROUPS) เพื่อให้ยอดกระทบกันบรรทัดต่อบรรทัด
+// ยอดรวมทั้ง 4 กลุ่ม = ค่าเพิ่มเติมเดิม (ไม่กระทบยอดจ่ายจริง)
+const FLOOR_KW = ['ขึ้นชั้น', 'แรงงาน', 'ยกของ']
+const MOVE_KW = ['ย้าย']
+const RETURN_KW = ['ตีกลับ', 'ตี กลับ']
+const getDriverExtraBreakdown = (job: Job) => {
+    const extras = parseJobExtras(job)
+    const sumKw = (kw: string[]) => extras
+        .filter(e => kw.some(k => (e.type || '').includes(k)))
+        .reduce((s, e) => s + (Number(e.cost_driver) || 0), 0)
+    const floor = sumKw(FLOOR_KW)
+    const move = sumKw(MOVE_KW)
+    const ret = sumKw(RETURN_KW)
+    // อื่นๆ = ที่เหลือทั้งหมด (รวม "ส่งต่อ" ตามที่ ledger ฝั่งรถร่วมม้วนเข้าอื่นๆ)
+    const known = [...FLOOR_KW, ...MOVE_KW, ...RETURN_KW]
+    const other = extras
+        .filter(e => !known.some(k => (e.type || '').includes(k)))
+        .reduce((s, e) => s + (Number(e.cost_driver) || 0), 0)
+    return { floor, move, ret, other }
+}
+
+// รายชื่อจุดส่งทุกดรอป (ให้สอดคล้องกับ ledger ที่แตกรายดรอป) — ต่อด้วย " → "
+const getAllDrops = (job: Job): string => {
+    try {
+        const raw = (job as unknown as { original_destinations_json?: string | unknown[] }).original_destinations_json
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+        if (Array.isArray(parsed)) {
+            const names = parsed.map(d => String((d as { name?: unknown })?.name ?? '').trim()).filter(Boolean)
+            if (names.length > 0) return names.join(' → ')
+        }
+    } catch {}
+    return job.Dest_Location || job.Route_Name || '-'
 }
 
 interface DriverPaymentClientProps {
@@ -68,10 +102,56 @@ export default function DriverPaymentClient({
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  const [pdfLoading, setPdfLoading] = useState(false)
+  const voucherRef = useRef<HTMLDivElement>(null)
+
+  const handleDownloadVoucherPdf = async () => {
+    if (!voucherRef.current) return
+    setPdfLoading(true)
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ])
+      const el = voucherRef.current
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true, windowWidth: el.scrollWidth })
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
+      const margin = 8
+      const usableW = pdf.internal.pageSize.getWidth() - margin * 2
+      const usableH = pdf.internal.pageSize.getHeight() - margin * 2
+      const pxPerMm = canvas.width / usableW
+      const pageHpx = usableH * pxPerMm
+      let renderedPx = 0
+      let first = true
+      while (renderedPx < canvas.height) {
+        const sliceHpx = Math.min(pageHpx, canvas.height - renderedPx)
+        const pageCanvas = document.createElement("canvas")
+        pageCanvas.width = canvas.width
+        pageCanvas.height = sliceHpx
+        const ctx = pageCanvas.getContext("2d")!
+        ctx.fillStyle = "#ffffff"
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
+        ctx.drawImage(canvas, 0, renderedPx, canvas.width, sliceHpx, 0, 0, canvas.width, sliceHpx)
+        if (!first) pdf.addPage()
+        pdf.addImage(pageCanvas.toDataURL("image/png"), "PNG", margin, margin, usableW, sliceHpx / pxPerMm)
+        first = false
+        renderedPx += sliceHpx
+      }
+      const safe = `ใบสำคัญจ่าย_${entityName}`.replace(/[^\p{L}\p{N}\-_. ]/gu, "_").slice(0, 80)
+      pdf.save(`${safe}.pdf`)
+    } catch (e) {
+      console.error(e)
+      toast.error("สร้าง PDF ไม่สำเร็จ กรุณาลองใหม่")
+    } finally {
+      setPdfLoading(false)
+    }
+  }
   // แอดมินเลือกก่อนทำจ่าย — VAT / หัก ณ ที่จ่าย / ค่าเคลมสินค้า (เป็น %)
   const [vatRate, setVatRate] = useState<number>(0)
   const [whtRate, setWhtRate] = useState<number>(1)
   const [claimRate, setClaimRate] = useState<number>(0)
+  const [helperName, setHelperName] = useState<string>("")
+  const [crewLoading, setCrewLoading] = useState(false)
 
   // Jobs belonging to the chosen recipient (and date range). This is the ONLY
   // set that can ever be paid — the whole point of the recipient-first flow.
@@ -180,19 +260,49 @@ export default function DriverPaymentClient({
 
   const handleExportCSV = () => {
     if (selectedData.length === 0) return
-    const rows = selectedData.map(job => ({
-        'Job ID': job.Job_ID,
-        'วันที่': job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-',
-        'คนขับ': job.Driver_Name || '-',
-        'ทะเบียนรถ': job.Vehicle_Plate || '-',
-        'ต้นทาง': job.Origin_Location || '-',
-        'ปลายทาง': job.Dest_Location || job.Route_Name || '-',
-        'ลูกค้า': job.Customer_Name || '-',
-        'ต้นทุนคนขับ (Base)': job.Cost_Driver_Total || 0,
-        'ค่าใช้จ่ายเพิ่มเติม': getJobTotal(job) - (job.Cost_Driver_Total || 0),
-        'รวมทั้งหมด': getJobTotal(job),
-    }))
+    const rows = selectedData.map(job => {
+        const bd = getDriverExtraBreakdown(job)
+        return {
+            'Job ID': job.Job_ID,
+            'วันที่': job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-',
+            'คนขับ': job.Driver_Name || '-',
+            'ทะเบียนรถ': job.Vehicle_Plate || '-',
+            'ต้นทาง': job.Origin_Location || '-',
+            'ปลายทาง': getAllDrops(job),
+            'ลูกค้า': job.Customer_Name || '-',
+            'ต้นทุนคนขับ (Base)': job.Cost_Driver_Total || 0,
+            'ค่าขึ้นชั้น': bd.floor,
+            'ย้าย': bd.move,
+            'ตีกลับ': bd.ret,
+            'อื่นๆ': bd.other,
+            'รวมทั้งหมด': getJobTotal(job),
+        }
+    })
     exportToCSV(rows, `Driver_Payment_${entityName}`)
+  }
+
+  // สร้างไฟล์จ่ายพนักงาน 3 แท็บตามแม่แบบแอดมิน PCG (คนขับ + เด็กรถ + สรุปจ่าย)
+  const handleExportCrewXlsx = async () => {
+    if (selectedData.length === 0) return
+    setCrewLoading(true)
+    try {
+      const res = await generateCrewPaymentXlsx({
+        jobIds: selectedData.map(j => j.Job_ID),
+        driverName: entityName,
+        helperName: helperName.trim() || undefined,
+      })
+      if (!res.success) { toast.error(res.message); return }
+      const href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${res.base64}`
+      const link = document.createElement("a")
+      link.href = href
+      link.setAttribute("download", res.filename)
+      document.body.appendChild(link); link.click(); document.body.removeChild(link)
+      toast.success("สร้างไฟล์จ่ายพนักงานแล้ว")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "สร้างไฟล์ไม่สำเร็จ")
+    } finally {
+      setCrewLoading(false)
+    }
   }
 
   const entityOptions = mode === 'individual'
@@ -464,6 +574,22 @@ export default function DriverPaymentClient({
                         <Download size={18} /> Export CSV
                     </button>
                 </div>
+
+                {/* ไฟล์จ่ายพนักงานตามแม่แบบแอดมิน (3 แท็บ: สรุปจ่าย / คนขับ / เด็กรถ) */}
+                <div className="p-5 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 space-y-3">
+                    <p className="text-sm font-black flex items-center gap-2"><FileDown size={16} className="text-indigo-500" /> ไฟล์จ่ายพนักงาน (แม่แบบ PCG)</p>
+                    <div className="flex flex-wrap items-end gap-3">
+                        <label className="text-xs font-bold flex-1 min-w-[220px]">ชื่อเด็กรถ (ถ้ามี)
+                            <Input value={helperName} onChange={e => setHelperName(e.target.value)}
+                                className="h-11 mt-1" placeholder="เว้นว่างถ้าไม่มีเด็กรถ" />
+                            <span className="text-[10px] text-muted-foreground">เด็กรถได้ราคา = คนขับ − 200 (สูตรอ้างอิงแท็บคนขับ)</span>
+                        </label>
+                        <button onClick={handleExportCrewXlsx} disabled={crewLoading}
+                            className="h-11 px-6 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 hover:bg-indigo-500 hover:text-white transition-all font-bold flex items-center gap-2 disabled:opacity-50">
+                            {crewLoading ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />} สร้างไฟล์ Excel
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -487,9 +613,14 @@ export default function DriverPaymentClient({
         <DialogContent className="max-w-[210mm] max-h-[90vh] overflow-y-auto bg-white p-0 rounded-2xl">
             <div className="p-4 bg-slate-100 flex items-center justify-between border-b sticky top-0 z-50 text-foreground">
                 <DialogTitle className="text-sm font-black uppercase tracking-widest">ใบสำคัญจ่าย • Payout Voucher</DialogTitle>
-                <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-slate-200 rounded-lg"><Search size={18} /></button>
+                <div className="flex items-center gap-2">
+                    <button onClick={handleDownloadVoucherPdf} disabled={pdfLoading} className="px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 disabled:opacity-60">
+                        {pdfLoading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} ดาวน์โหลด PDF
+                    </button>
+                    <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-slate-200 rounded-lg" title="ปิด"><X size={18} /></button>
+                </div>
             </div>
-            {voucher}
+            <div ref={voucherRef} className="bg-white">{voucher}</div>
         </DialogContent>
     </Dialog>
 
