@@ -9,13 +9,13 @@ import { Button } from "@/components/ui/button"
 import { FileDown, Loader2 } from "lucide-react"
 
 interface Props {
-  id: string
+  id?: string
   kind: string
   grid?: PayslipGrid | null
   voucher?: VoucherData | null
   title: string
   subtitle: string
-  hasXlsx: boolean
+  hasXlsx?: boolean
 }
 
 export function PayslipDetailClient({ kind, grid, voucher, title, subtitle }: Props) {

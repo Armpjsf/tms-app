@@ -489,3 +489,38 @@ export async function getMyPayslip(
     },
   }
 }
+
+/**
+ * เปิดใบสรุปจ่ายรถผ่านลิงก์สาธารณะ (public_token) — ไม่ต้องล็อกอิน
+ * ใช้กับลิงก์ใน Flex card ไลน์. token สุ่มยาวเดาไม่ได้ = unlisted
+ */
+export async function getPayslipByPublicToken(token: string): Promise<{
+  ok: boolean
+  kind?: string
+  grid?: PayslipGrid | null
+  voucher?: VoucherData | null
+  meta?: Record<string, unknown>
+  error?: string
+}> {
+  if (!token || token.length < 8) return { ok: false, error: "ลิงก์ไม่ถูกต้อง" }
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from(TABLE)
+    .select("id, title, period_label, branch_label, total_amount, kind, grid_json, voucher_json, uploaded_at, driver_name")
+    .eq("public_token", token)
+    .single()
+  if (!data) return { ok: false, error: "ไม่พบสลิป หรือลิงก์หมดอายุ" }
+  return {
+    ok: true,
+    kind: (data.kind as string) || "excel",
+    grid: (data.grid_json as PayslipGrid) || null,
+    voucher: (data.voucher_json as VoucherData) || null,
+    meta: {
+      title: data.title,
+      period_label: data.period_label,
+      branch_label: data.branch_label,
+      total_amount: data.total_amount,
+      driver_name: data.driver_name,
+    },
+  }
+}

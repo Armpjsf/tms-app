@@ -1092,7 +1092,7 @@ export async function POST(req: NextRequest) {
                     // "สรุปจ่าย" → Flex card ใบสรุปจ่ายรถ (เปิดดู/โหลด PDF ในแอป)
                     if (text === 'สรุปจ่าย' || text === 'ใบสำคัญจ่าย' || text === 'สลิป' || text === 'สลิปจ่าย' || text.includes('สรุปจ่าย')) {
                         const { data: slips } = await supabase.from('Driver_Payslips')
-                            .select('id, title, period_label, total_amount, kind, uploaded_at')
+                            .select('id, title, period_label, total_amount, kind, uploaded_at, public_token')
                             .eq('Driver_ID', boundDriver.Driver_ID)
                             .order('uploaded_at', { ascending: false })
                             .limit(6)
@@ -1103,7 +1103,7 @@ export async function POST(req: NextRequest) {
                         }
 
                         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tms-e-pod.vercel.app'
-                        const bubbles = (slips as { id: string; title?: string; period_label?: string; total_amount?: number; kind?: string }[]).map(s => ({
+                        const bubbles = (slips as { id: string; title?: string; period_label?: string; total_amount?: number; kind?: string; public_token?: string }[]).map(s => ({
                             type: 'bubble', size: 'kilo',
                             header: { type: 'box', layout: 'vertical', paddingAll: '12px', backgroundColor: '#1e3a8a',
                                 contents: [
@@ -1118,7 +1118,9 @@ export async function POST(req: NextRequest) {
                             footer: { type: 'box', layout: 'vertical', paddingAll: '12px',
                                 contents: [
                                     { type: 'button', style: 'primary', color: '#1e3a8a', height: 'sm',
-                                        action: { type: 'uri', label: 'เปิดดู / โหลด PDF', uri: `${appUrl}/mobile/payslips/${s.id}` } },
+                                        action: { type: 'uri', label: 'เปิดดู / โหลด PDF',
+                                            // ลิงก์สาธารณะ (public_token) เปิดได้เลยไม่ต้องล็อกอิน; fallback หน้าในแอปถ้าไม่มี token
+                                            uri: s.public_token ? `${appUrl}/p/payslip/${s.public_token}` : `${appUrl}/mobile/payslips/${s.id}` } },
                                 ] },
                         }))
 
