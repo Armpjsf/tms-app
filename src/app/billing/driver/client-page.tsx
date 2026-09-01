@@ -10,7 +10,7 @@ import { todayTH } from "@/lib/utils/date-th"
 import { Label } from "@/components/ui/label"
 import {
   Wallet, Download, Truck, User, CheckCircle2, Banknote, Percent, Loader2,
-  FileDown, History, Eye, Save, Users, ArrowLeft, ArrowRight, X,
+  FileDown, History, Eye, Save, Users, ArrowLeft, ArrowRight, X, Search,
 } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Job } from "@/lib/supabase/jobs"
@@ -165,6 +165,7 @@ export default function DriverPaymentClient({
   const [claimRate, setClaimRate] = useState<number>(0)
   const [helperName, setHelperName] = useState<string>("")
   const [crewLoading, setCrewLoading] = useState(false)
+  const [entitySearch, setEntitySearch] = useState("")
 
   // Jobs belonging to the chosen recipient (and date range). This is the ONLY
   // set that can ever be paid — the whole point of the recipient-first flow.
@@ -322,6 +323,10 @@ export default function DriverPaymentClient({
     ? drivers.filter(d => !d.Sub_ID).map(d => ({ id: d.Driver_Name || "", label: d.Driver_Name || "-" }))
     : subcontractors.map(s => ({ id: s.Sub_ID, label: s.Sub_Name }))
 
+  const filteredEntityOptions = entitySearch.trim()
+    ? entityOptions.filter(o => o.label.toLowerCase().includes(entitySearch.trim().toLowerCase()))
+    : entityOptions
+
   const voucher = (
     <PaymentVoucher
         companyProfile={companyProfile}
@@ -415,11 +420,29 @@ export default function DriverPaymentClient({
                 <Label className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 block">
                     {mode === 'individual' ? "เลือกคนขับ" : "เลือกบริษัทรถร่วม"}
                 </Label>
+                <div className="relative mb-3">
+                    <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Input
+                        value={entitySearch}
+                        onChange={e => setEntitySearch(e.target.value)}
+                        placeholder={mode === 'individual' ? "ค้นหาชื่อคนขับ…" : "ค้นหาชื่อบริษัทรถร่วม…"}
+                        className="h-11 pl-9 pr-9"
+                    />
+                    {entitySearch && (
+                        <button type="button" onClick={() => setEntitySearch("")}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground" title="ล้าง">
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
                 <div className="max-h-72 overflow-y-auto custom-scrollbar space-y-2 pr-1">
                     {entityOptions.length === 0 && (
                         <p className="text-sm text-muted-foreground py-6 text-center">ไม่มีรายชื่อ</p>
                     )}
-                    {entityOptions.map(opt => {
+                    {entityOptions.length > 0 && filteredEntityOptions.length === 0 && (
+                        <p className="text-sm text-muted-foreground py-6 text-center">ไม่พบ &ldquo;{entitySearch}&rdquo;</p>
+                    )}
+                    {filteredEntityOptions.map(opt => {
                         const count = pendingCountFor[opt.id] || 0
                         const active = selectedEntityId === opt.id
                         return (
