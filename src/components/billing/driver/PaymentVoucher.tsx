@@ -345,8 +345,8 @@ export const PaymentVoucher = ({
             </div>
         </div>
 
-        {/* Footer Audit Path */}
-        <div className="absolute bottom-12 left-16 right-16 flex justify-between items-center border-t border-slate-100 pt-8 opacity-40">
+        {/* Footer Audit Path — in-flow (เดิม absolute ทำให้ทับส่วนลายเซ็นเมื่อรายการยาว) */}
+        <div className="relative z-10 mx-16 mt-16 flex justify-between items-center border-t border-slate-100 pt-8 opacity-40">
             <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">
                 {t('billing_driver.system_log')} LOGISPRO-FIN-{new Date().toISOString()} | {t('billing_driver.node_production')}
             </p>

@@ -114,7 +114,20 @@ export default function DriverPaymentClient({
         import("jspdf"),
       ])
       const el = voucherRef.current
-      const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true, windowWidth: el.scrollWidth })
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        allowTaint: false,
+        imageTimeout: 15000,
+        windowWidth: el.scrollWidth,
+        // ข้ามโลโก้/รูปที่โหลดไม่สำเร็จ (broken/ยังไม่โหลด) — กัน canvas ปนเปื้อนจน toDataURL พัง
+        ignoreElements: (node) => {
+          if (node.tagName !== "IMG") return false
+          const img = node as HTMLImageElement
+          return !img.complete || img.naturalWidth === 0
+        },
+      })
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
       const margin = 8
       const usableW = pdf.internal.pageSize.getWidth() - margin * 2
