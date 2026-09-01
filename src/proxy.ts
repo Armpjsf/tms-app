@@ -77,6 +77,7 @@ export async function proxy(request: NextRequest) {
   const isLoginPage = pathname.startsWith('/login')
   const isPublicTrack = pathname.startsWith('/track')
   const isPublicInvoice = pathname.startsWith('/public/invoice')
+  const isPublicPayslip = pathname.startsWith('/p/') // ลิงก์สาธารณะใบสรุปจ่ายรถ (จาก Flex card)
   const isMobile = pathname.startsWith('/mobile')
   const isStaticFile = pathname.includes('.') // Simple check for assets
 
@@ -90,7 +91,7 @@ export async function proxy(request: NextRequest) {
 
   // Role-based Access Control (RBAC) via Local JWT Decryption (FAST)
   // Skip RBAC for mobile routes (they have their own session logic)
-  if (!isApiRoute && !isMobile && !isLoginPage && !isPublicTrack && !isPublicInvoice && !isStaticFile && pathname !== '/' && !pathname.includes('analytics')) {
+  if (!isApiRoute && !isMobile && !isLoginPage && !isPublicTrack && !isPublicInvoice && !isPublicPayslip && !isStaticFile && pathname !== '/' && !pathname.includes('analytics')) {
     const sessionCookie = request.cookies.get('session')
     const driverSession = request.cookies.get('driver_session')
 
