@@ -6,7 +6,7 @@ import { PayslipVoucherView } from "@/components/payslip/payslip-voucher"
 import type { PayslipGrid } from "@/lib/payslip/types"
 import type { VoucherData } from "@/lib/payslip/voucher"
 import { Button } from "@/components/ui/button"
-import { FileDown, FileSpreadsheet, Loader2 } from "lucide-react"
+import { FileDown, Loader2 } from "lucide-react"
 
 interface Props {
   id: string
@@ -18,7 +18,7 @@ interface Props {
   hasXlsx: boolean
 }
 
-export function PayslipDetailClient({ id, kind, grid, voucher, title, subtitle, hasXlsx }: Props) {
+export function PayslipDetailClient({ kind, grid, voucher, title, subtitle }: Props) {
   const gridRef = useRef<HTMLDivElement>(null)
   const [pdfLoading, setPdfLoading] = useState(false)
 
@@ -86,14 +86,6 @@ export function PayslipDetailClient({ id, kind, grid, voucher, title, subtitle, 
           {pdfLoading ? <Loader2 className="animate-spin" size={18} /> : <FileDown size={18} />}
           ดาวน์โหลด PDF
         </Button>
-        {hasXlsx && (
-          <a href={`/api/payslips/xlsx?id=${encodeURIComponent(id)}`} className="flex-1">
-            <Button variant="outline" className="w-full h-12 gap-2 border-emerald-300 text-emerald-700">
-              <FileSpreadsheet size={18} />
-              โหลด Excel
-            </Button>
-          </a>
-        )}
       </div>
 
       {/* เนื้อหา — เป็นแหล่ง render สำหรับ PDF ด้วย */}

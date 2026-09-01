@@ -57,10 +57,13 @@ export const PaymentVoucher = ({
             <div className="flex flex-col gap-8 max-w-[65%]">
                 {companyProfile?.logo_url ? (
                     <div className="relative h-24 w-56 group">
-                        <img 
-                            src={companyProfile.logo_url} 
-                            alt="Company Logo" 
-                            className="h-full w-auto object-contain object-left filter contrast-[1.1]" 
+                        {/* crossOrigin=anonymous: ให้รูปโหลดแบบ CORS-clean (Supabase ส่ง ACAO:*)
+                            เพื่อให้ html2canvas จับภาพทำ PDF ได้โดย canvas ไม่ปนเปื้อน */}
+                        <img
+                            src={companyProfile.logo_url}
+                            alt="Company Logo"
+                            crossOrigin="anonymous"
+                            className="h-full w-auto object-contain object-left filter contrast-[1.1]"
                         />
                     </div>
                 ) : (

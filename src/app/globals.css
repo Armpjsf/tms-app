@@ -457,6 +457,24 @@ body[style*="pointer-events: none"] {
   main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
   [role="dialog"] { position: static !important; border: none !important; box-shadow: none !important; background: white !important; }
   p, span, h1, h2, h3, h4, h5, h6 { color: black !important; }
+
+  /* ใบสำคัญจ่าย: เดิมเป็นการ์ด A4 สูงคงที่ (min-h-[297mm] + overflow-hidden) สำหรับจอ
+     พอ print จะตัดเนื้อหาเกิน 1 หน้า — override ให้ไหลข้ามหน้าได้เต็ม */
+  .printable-content { position: static !important; inset: auto !important; z-index: auto !important; }
+  .printable-document {
+    overflow: visible !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
+    padding: 20px !important;
+  }
+  /* กันแถวงานถูกตัดครึ่งระหว่างหน้า */
+  .printable-document table { break-inside: auto; }
+  .printable-document tr { break-inside: avoid; page-break-inside: avoid; }
+  .printable-document thead { display: table-header-group; }
 }
 
 /* ============================================================

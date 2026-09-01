@@ -368,15 +368,34 @@ export async function pushDriverPaymentToApp(
       bankInfo as never
     )
 
-    // หา Driver_ID จากชื่อคนขับ
-    const { data: driver } = await supabase
+    // หา Driver_ID จากชื่อคนขับ (จ่ายรายคน)
+    let driver = (await supabase
       .from("Master_Drivers")
       .select("Driver_ID, Driver_Name")
       .eq("Driver_Name", payment.Driver_Name)
-      .maybeSingle()
+      .maybeSingle()).data as { Driver_ID: string; Driver_Name?: string } | null
+
+    // ถ้าไม่เจอ ลองเป็น "สังกัด (รถร่วม)" — voucher สังกัดผูกเข้าบัญชี "เจ้าของสังกัด"
+    if (!driver?.Driver_ID) {
+      const { data: sub } = await supabase
+        .from("Master_Subcontractors")
+        .select("Sub_ID, Sub_Name")
+        .eq("Sub_Name", payment.Driver_Name)
+        .maybeSingle()
+      if (sub?.Sub_ID) {
+        const { data: owner } = await supabase
+          .from("Master_Drivers")
+          .select("Driver_ID, Driver_Name")
+          .eq("Sub_ID", sub.Sub_ID)
+          .eq("Is_Sub_Owner", true)
+          .maybeSingle()
+        if (owner?.Driver_ID) driver = owner
+        else return { ok: false, error: `"${payment.Driver_Name}" เป็นสังกัด แต่ยังไม่ได้ตั้งเจ้าของสังกัด (ตั้ง Is_Sub_Owner ให้คนขับ 1 คนในสังกัดก่อน)` }
+      }
+    }
 
     if (!driver?.Driver_ID) {
-      return { ok: false, error: `ไม่พบคนขับชื่อ "${payment.Driver_Name}" ใน Master_Drivers (จับคู่ไม่ได้)` }
+      return { ok: false, error: `ไม่พบผู้รับ "${payment.Driver_Name}" (คนขับ/เจ้าของสังกัด) ใน Master_Drivers` }
     }
 
     const record = {

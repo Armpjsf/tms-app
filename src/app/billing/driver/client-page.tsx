@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo, useRef } from "react"
+import React, { useState, useMemo, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -13,7 +13,7 @@ import {
   FileDown, History, Eye, Save, Users, ArrowLeft, ArrowRight, X, Search,
 } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Job } from "@/lib/supabase/jobs"
+import { Job, getJobsForBilling, getDriverPendingCounts } from "@/lib/supabase/jobs"
 import { Driver } from "@/lib/supabase/drivers"
 import { createDriverPayment } from "@/lib/supabase/billing"
 import { CompanyProfile } from "@/lib/supabase/settings"
@@ -78,7 +78,7 @@ const getAllDrops = (job: Job): string => {
 }
 
 interface DriverPaymentClientProps {
-  initialJobs: Job[]
+  initialCounts: Record<string, number>   // ยอดงานค้างต่อชื่อคนขับ
   drivers: Driver[]
   companyProfile: CompanyProfile | null
   subcontractors: Subcontractor[]
@@ -89,7 +89,7 @@ interface DriverPaymentClientProps {
 type Mode = 'individual' | 'subcontractor'
 
 export default function DriverPaymentClient({
-  initialJobs, drivers, companyProfile, subcontractors, initialDateFrom, initialDateTo,
+  initialCounts, drivers, companyProfile, subcontractors, initialDateFrom, initialDateTo,
 }: DriverPaymentClientProps) {
   const { t } = useLanguage()
   const router = useRouter()
@@ -105,59 +105,16 @@ export default function DriverPaymentClient({
   const [pdfLoading, setPdfLoading] = useState(false)
   const voucherRef = useRef<HTMLDivElement>(null)
 
-  const handleDownloadVoucherPdf = async () => {
-    if (!voucherRef.current) return
+  // ใช้ print ของเบราว์เซอร์ (Save as PDF) แทน html2canvas — เพราะ html2canvas
+  // อ่านสี oklab/oklch ของ Tailwind v4 ไม่ได้ (bg-primary/5, text-*/40 ฯลฯ)
+  // print ได้ PDF เวกเตอร์คมกว่า + มีโลโก้ + แบ่งหน้าเอง ผ่าน layout .print:block ที่มีอยู่
+  const handleDownloadVoucherPdf = () => {
     setPdfLoading(true)
-    try {
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import("html2canvas"),
-        import("jspdf"),
-      ])
-      const el = voucherRef.current
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        allowTaint: false,
-        imageTimeout: 15000,
-        windowWidth: el.scrollWidth,
-        // ข้ามโลโก้/รูปที่โหลดไม่สำเร็จ (broken/ยังไม่โหลด) — กัน canvas ปนเปื้อนจน toDataURL พัง
-        ignoreElements: (node) => {
-          if (node.tagName !== "IMG") return false
-          const img = node as HTMLImageElement
-          return !img.complete || img.naturalWidth === 0
-        },
-      })
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
-      const margin = 8
-      const usableW = pdf.internal.pageSize.getWidth() - margin * 2
-      const usableH = pdf.internal.pageSize.getHeight() - margin * 2
-      const pxPerMm = canvas.width / usableW
-      const pageHpx = usableH * pxPerMm
-      let renderedPx = 0
-      let first = true
-      while (renderedPx < canvas.height) {
-        const sliceHpx = Math.min(pageHpx, canvas.height - renderedPx)
-        const pageCanvas = document.createElement("canvas")
-        pageCanvas.width = canvas.width
-        pageCanvas.height = sliceHpx
-        const ctx = pageCanvas.getContext("2d")!
-        ctx.fillStyle = "#ffffff"
-        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
-        ctx.drawImage(canvas, 0, renderedPx, canvas.width, sliceHpx, 0, 0, canvas.width, sliceHpx)
-        if (!first) pdf.addPage()
-        pdf.addImage(pageCanvas.toDataURL("image/png"), "PNG", margin, margin, usableW, sliceHpx / pxPerMm)
-        first = false
-        renderedPx += sliceHpx
-      }
-      const safe = `ใบสำคัญจ่าย_${entityName}`.replace(/[^\p{L}\p{N}\-_. ]/gu, "_").slice(0, 80)
-      pdf.save(`${safe}.pdf`)
-    } catch (e) {
-      console.error(e)
-      toast.error("สร้าง PDF ไม่สำเร็จ กรุณาลองใหม่")
-    } finally {
+    setShowPreview(false)            // ปิด dialog ก่อน ไม่งั้นจะพิมพ์ทับกับ print layout
+    setTimeout(() => {
+      window.print()
       setPdfLoading(false)
-    }
+    }, 350)
   }
   // แอดมินเลือกก่อนทำจ่าย — VAT / หัก ณ ที่จ่าย / ค่าเคลมสินค้า (เป็น %)
   const [vatRate, setVatRate] = useState<number>(0)
@@ -169,37 +126,51 @@ export default function DriverPaymentClient({
 
   // Jobs belonging to the chosen recipient (and date range). This is the ONLY
   // set that can ever be paid — the whole point of the recipient-first flow.
-  const recipientJobs = useMemo(() => {
-    if (!selectedEntityId) return []
-    return initialJobs.filter(item => {
-        const driver = drivers.find(d => d.Driver_Name === item.Driver_Name)
-        if (mode === 'individual') {
-            if (item.Driver_Name !== selectedEntityId) return false
-        } else {
-            if (driver?.Sub_ID !== selectedEntityId) return false
-        }
-        if (dateFrom && item.Plan_Date && item.Plan_Date < dateFrom) return false
-        if (dateTo && item.Plan_Date && item.Plan_Date > dateTo) return false
-        return true
-    })
-  }, [initialJobs, drivers, mode, selectedEntityId, dateFrom, dateTo])
+  // ยอดงานค้างต่อชื่อคนขับ (มาจาก server, refetch เมื่อเปลี่ยนวันที่)
+  const [counts, setCounts] = useState<Record<string, number>>(initialCounts)
+  useEffect(() => {
+    // ถ้าไม่เปลี่ยนวันที่จากค่าเริ่มต้น ใช้ initialCounts ไปเลย (กันยิงซ้ำตอนโหลด)
+    if ((dateFrom || "") === (initialDateFrom || "") && (dateTo || "") === (initialDateTo || "")) {
+      setCounts(initialCounts)
+      return
+    }
+    let alive = true
+    getDriverPendingCounts(dateFrom || undefined, dateTo || undefined)
+      .then(c => { if (alive) setCounts(c) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [dateFrom, dateTo, initialCounts, initialDateFrom, initialDateTo])
 
-  // Count of pending jobs per recipient (shown in the picker so the operator
-  // knows who actually has something to pay).
+  // นับต่อผู้รับตามโหมด: รายคน = ตรงชื่อ; รถร่วม = รวมคนขับที่อยู่บริษัทนั้น
   const pendingCountFor = useMemo(() => {
+    if (mode === 'individual') return counts
     const map: Record<string, number> = {}
-    initialJobs.forEach(item => {
-        const driver = drivers.find(d => d.Driver_Name === item.Driver_Name)
-        if (dateFrom && item.Plan_Date && item.Plan_Date < dateFrom) return
-        if (dateTo && item.Plan_Date && item.Plan_Date > dateTo) return
-        if (mode === 'individual') {
-            if (item.Driver_Name) map[item.Driver_Name] = (map[item.Driver_Name] || 0) + 1
-        } else if (driver?.Sub_ID) {
-            map[driver.Sub_ID] = (map[driver.Sub_ID] || 0) + 1
-        }
-    })
+    for (const d of drivers) {
+      if (!d.Sub_ID || !d.Driver_Name) continue
+      const c = counts[d.Driver_Name] || 0
+      if (c > 0) map[d.Sub_ID] = (map[d.Sub_ID] || 0) + c
+    }
     return map
-  }, [initialJobs, drivers, mode, dateFrom, dateTo])
+  }, [counts, drivers, mode])
+
+  // งานของผู้รับที่เลือก — โหลดจาก server ตอนเลือก (ไม่ส่งงานทั้งพันมาตั้งแต่แรก)
+  const [recipientJobs, setRecipientJobs] = useState<Job[]>([])
+  const [jobsLoading, setJobsLoading] = useState(false)
+  useEffect(() => {
+    if (!selectedEntityId) { setRecipientJobs([]); return }
+    // หา driverNames ของผู้รับ (รายคน = ชื่อเดียว; รถร่วม = คนขับทุกคนในบริษัท)
+    const names = mode === 'individual'
+      ? [selectedEntityId]
+      : drivers.filter(d => d.Sub_ID === selectedEntityId && d.Driver_Name).map(d => d.Driver_Name as string)
+    if (names.length === 0) { setRecipientJobs([]); return }
+    let alive = true
+    setJobsLoading(true)
+    getJobsForBilling(undefined, dateFrom || undefined, dateTo || undefined, 'driver', names)
+      .then(jobs => { if (alive) setRecipientJobs(jobs || []) })
+      .catch(() => { if (alive) setRecipientJobs([]) })
+      .finally(() => { if (alive) setJobsLoading(false) })
+    return () => { alive = false }
+  }, [selectedEntityId, mode, drivers, dateFrom, dateTo])
 
   const selectedData = recipientJobs.filter(i => selectedItems.includes(i.Job_ID))
   const selectedSubtotal = selectedData.reduce((s, i) => s + getJobTotal(i), 0)
@@ -220,6 +191,7 @@ export default function DriverPaymentClient({
 
   const goToJobs = () => {
     if (!selectedEntityId) { toast.warning("กรุณาเลือกผู้รับเงินก่อน"); return }
+    if (jobsLoading) { toast.info("กำลังโหลดงาน กรุณารอสักครู่"); return }
     if (recipientJobs.length === 0) { toast.warning("ผู้รับรายนี้ไม่มีงานค้างจ่ายในช่วงที่เลือก"); return }
     setSelectedItems(recipientJobs.map(j => j.Job_ID)) // default: select all of this recipient's jobs
     setStep(2)
@@ -466,9 +438,11 @@ export default function DriverPaymentClient({
             </div>
 
             <div className="flex justify-end pt-2">
-                <PremiumButton onClick={goToJobs} disabled={!selectedEntityId || recipientJobs.length === 0}
+                <PremiumButton onClick={goToJobs} disabled={!selectedEntityId || jobsLoading || recipientJobs.length === 0}
                     className="h-14 px-10 rounded-2xl gap-2 text-base font-black">
-                    ถัดไป <ArrowRight className="w-5 h-5" />
+                    {jobsLoading
+                      ? <><Loader2 className="w-5 h-5 animate-spin" /> กำลังโหลดงาน…</>
+                      : <>ถัดไป <ArrowRight className="w-5 h-5" /></>}
                 </PremiumButton>
             </div>
         </div>
@@ -651,7 +625,7 @@ export default function DriverPaymentClient({
                 <DialogTitle className="text-sm font-black uppercase tracking-widest">ใบสำคัญจ่าย • Payout Voucher</DialogTitle>
                 <div className="flex items-center gap-2">
                     <button onClick={handleDownloadVoucherPdf} disabled={pdfLoading} className="px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 disabled:opacity-60">
-                        {pdfLoading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} ดาวน์โหลด PDF
+                        {pdfLoading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} บันทึก PDF
                     </button>
                     <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-slate-200 rounded-lg" title="ปิด"><X size={18} /></button>
                 </div>
@@ -661,7 +635,8 @@ export default function DriverPaymentClient({
     </Dialog>
 
     {/* Print */}
-    <div className="hidden print:block printable-content fixed inset-0 bg-white z-[9999] p-0">{voucher}</div>
+    {/* print wrapper: เดิม fixed inset-0 บีบให้เหลือ 1 หน้า — เปลี่ยนเป็น block ปกติให้ไหลข้ามหน้าได้ */}
+    <div className="hidden print:block printable-content bg-white p-0">{voucher}</div>
     </>
   )
 }

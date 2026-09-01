@@ -56,7 +56,8 @@ export function DriverDialog({
     Branch_ID: (driver as { Branch_ID?: string })?.Branch_ID || '',
     Bank_Name: driver?.Bank_Name || '',
     Bank_Account_No: driver?.Bank_Account_No || '',
-    Bank_Account_Name: driver?.Bank_Account_Name || ''
+    Bank_Account_Name: driver?.Bank_Account_Name || '',
+    Is_Sub_Owner: (driver as { Is_Sub_Owner?: boolean })?.Is_Sub_Owner || false,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -215,6 +216,23 @@ export function DriverDialog({
                         ))}
                     </SelectContent>
                 </Select>
+                {/* เจ้าของสังกัด: โชว์เฉพาะเมื่อเลือกสังกัดแล้ว — คนนี้จะเห็นใบสำคัญจ่ายของสังกัดในแอป */}
+                {formData.Sub_ID && (
+                  <label className="flex items-start gap-2.5 mt-2 p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/20 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.Is_Sub_Owner}
+                      onChange={(e) => setFormData({ ...formData, Is_Sub_Owner: e.target.checked })}
+                      className="w-4 h-4 mt-0.5 shrink-0"
+                    />
+                    <span className="text-sm">
+                      <span className="font-bold">เป็นเจ้าของสังกัด (รับใบสำคัญจ่ายของสังกัด)</span>
+                      <span className="block text-xs text-muted-foreground mt-0.5">
+                        ติ๊กให้คนขับ 1 คนต่อสังกัด — ใบสำคัญจ่ายแบบ &ldquo;รถร่วม&rdquo; จะเข้าบัญชีคนนี้ให้เปิดดูในแอป
+                      </span>
+                    </span>
+                  </label>
+                )}
               </div>
 
               <div className="space-y-2">

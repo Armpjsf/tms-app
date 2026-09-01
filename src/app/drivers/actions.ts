@@ -16,6 +16,7 @@ export type DriverFormData = {
   Bank_Name?: string
   Bank_Account_No?: string
   Bank_Account_Name?: string
+  Is_Sub_Owner?: boolean
 }
 
 export async function createDriver(data: DriverFormData) {
@@ -38,6 +39,7 @@ export async function createDriver(data: DriverFormData) {
       Role: 'Driver',
       Active_Status: 'Active',
       Sub_ID: data.Sub_ID || null, // Fix: Convert empty string to null
+      Is_Sub_Owner: data.Sub_ID ? !!data.Is_Sub_Owner : false, // เจ้าของสังกัดต้องมี Sub_ID
       Bank_Name: data.Bank_Name || null,
       Bank_Account_No: data.Bank_Account_No || null,
       Bank_Account_Name: data.Bank_Account_Name || null,
@@ -158,6 +160,7 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
     Vehicle_Plate: data.Vehicle_Plate,
     Active_Status: data.Active_Status,
     Sub_ID: data.Sub_ID || null, // Fix: Convert empty string to null
+    Is_Sub_Owner: data.Sub_ID ? !!data.Is_Sub_Owner : false, // เจ้าของสังกัดต้องมี Sub_ID
     Bank_Name: data.Bank_Name || null,
     Bank_Account_No: data.Bank_Account_No || null,
     Bank_Account_Name: data.Bank_Account_Name || null,

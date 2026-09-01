@@ -1,4 +1,4 @@
-import { getJobsForBilling } from "@/lib/supabase/jobs"
+import { getDriverPendingCounts } from "@/lib/supabase/jobs"
 import { getActiveDrivers } from "@/lib/supabase/drivers"
 import { getCompanyProfile } from "@/lib/supabase/settings"
 import { getAllSubcontractors } from "@/lib/supabase/subcontractors"
@@ -18,18 +18,20 @@ export default async function DriverPaymentPage({ searchParams }: PageProps) {
   const dateFrom = params.dateFrom || undefined
   const dateTo = params.dateTo || undefined
 
-  const [jobs, drivers, companyProfile, subcontractors] = await Promise.all([
-    getJobsForBilling(undefined, dateFrom, dateTo, 'driver'),
+  // ส่งแค่ "ยอดงานค้างต่อคนขับ" (payload เล็ก) แทนงานทั้งพัน
+  // งานจริงของแต่ละคนขับโหลดตอนเลือก (client เรียก getJobsForBilling ต่อคน)
+  const [pendingCounts, drivers, companyProfile, subcontractors] = await Promise.all([
+    getDriverPendingCounts(dateFrom, dateTo),
     getActiveDrivers(),
     getCompanyProfile(),
     getAllSubcontractors()
   ])
 
   return (
-    <DriverPaymentClient 
-      initialJobs={jobs} 
-      drivers={drivers} 
-      companyProfile={companyProfile} 
+    <DriverPaymentClient
+      initialCounts={pendingCounts}
+      drivers={drivers}
+      companyProfile={companyProfile}
       subcontractors={subcontractors}
       initialDateFrom={dateFrom}
       initialDateTo={dateTo}

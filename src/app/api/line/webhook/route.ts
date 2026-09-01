@@ -1089,6 +1089,47 @@ export async function POST(req: NextRequest) {
 
                 // 3. Driver shortcuts
                 if (boundDriver) {
+                    // "สรุปจ่าย" → Flex card ใบสรุปจ่ายรถ (เปิดดู/โหลด PDF ในแอป)
+                    if (text === 'สรุปจ่าย' || text === 'ใบสำคัญจ่าย' || text === 'สลิป' || text === 'สลิปจ่าย' || text.includes('สรุปจ่าย')) {
+                        const { data: slips } = await supabase.from('Driver_Payslips')
+                            .select('id, title, period_label, total_amount, kind, uploaded_at')
+                            .eq('Driver_ID', boundDriver.Driver_ID)
+                            .order('uploaded_at', { ascending: false })
+                            .limit(6)
+
+                        if (!slips?.length) {
+                            await replyToUser(replyToken, `📄 คุณ ${boundDriver.Driver_Name}\nยังไม่มีใบสรุปจ่ายรถในระบบครับ\nแอดมินจะส่งให้เมื่อถึงงวดจ่าย`)
+                            continue
+                        }
+
+                        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tms-e-pod.vercel.app'
+                        const bubbles = (slips as { id: string; title?: string; period_label?: string; total_amount?: number; kind?: string }[]).map(s => ({
+                            type: 'bubble', size: 'kilo',
+                            header: { type: 'box', layout: 'vertical', paddingAll: '12px', backgroundColor: '#1e3a8a',
+                                contents: [
+                                    { type: 'text', text: s.kind === 'voucher' ? '🧾 ใบสำคัญจ่าย' : '📊 สรุปจ่ายรถ', color: '#93c5fd', size: 'xs', weight: 'bold' },
+                                    { type: 'text', text: s.title || 'ใบสรุปจ่ายรถ', color: '#ffffff', size: 'sm', weight: 'bold', wrap: true },
+                                ] },
+                            body: { type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '12px',
+                                contents: [
+                                    ...(s.period_label ? [{ type: 'text', text: `งวด ${s.period_label}`, size: 'xs', color: '#64748b' }] : []),
+                                    { type: 'text', text: typeof s.total_amount === 'number' ? `฿${s.total_amount.toLocaleString()}` : '—', size: 'xxl', weight: 'bold', color: '#047857' },
+                                ] },
+                            footer: { type: 'box', layout: 'vertical', paddingAll: '12px',
+                                contents: [
+                                    { type: 'button', style: 'primary', color: '#1e3a8a', height: 'sm',
+                                        action: { type: 'uri', label: 'เปิดดู / โหลด PDF', uri: `${appUrl}/mobile/payslips/${s.id}` } },
+                                ] },
+                        }))
+
+                        await replyToUser(replyToken, {
+                            type: 'flex',
+                            altText: `ใบสรุปจ่ายรถ (${slips.length} รายการ)`,
+                            contents: { type: 'carousel', contents: bubbles },
+                        })
+                        continue
+                    }
+
                     if (text === 'WORK' || text === 'งาน') {
                         // Exclude all variations of completed/cancelled statuses in both EN/TH
                         const excludedStatuses = [

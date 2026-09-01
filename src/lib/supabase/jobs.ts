@@ -998,10 +998,11 @@ export async function getAllVehicles() {
 
 // ดึงข้อมูลสำหรับหน้า Billing (Completed/Delivered)
 export async function getJobsForBilling(
-    explicitCustomerId?: string, 
-    startDate?: string, 
+    explicitCustomerId?: string,
+    startDate?: string,
     endDate?: string,
-    mode: 'customer' | 'driver' = 'customer'
+    mode: 'customer' | 'driver' = 'customer',
+    driverNames?: string[]   // โหมด driver: กรองเฉพาะคนขับที่เลือก (โหลดต่อคน)
 ): Promise<Job[]> {
     try {
         const isSuper = await isSuperAdmin()
@@ -1023,6 +1024,10 @@ export async function getJobsForBilling(
         if (mode === 'driver') {
             // For driver payments, only filter out if already paid to driver
             dbQuery = dbQuery.is('Driver_Payment_ID', null)
+            // โหลดเฉพาะงานของคนขับที่เลือก (ลด payload จากพันงานเหลือหลักสิบ)
+            if (driverNames && driverNames.length > 0) {
+                dbQuery = dbQuery.in('Driver_Name', driverNames)
+            }
         } else {
             // For customer billing, filter out if already invoiced/noted
             dbQuery = dbQuery.is('Billing_Note_ID', null).is('Invoice_ID', null)
@@ -1070,6 +1075,12 @@ export async function getJobsForBilling(
             return []
         }
 
+        // โหมด driver ใช้ Cost_Driver_Total ไม่ใช้ Price_Per_Unit ฝั่งลูกค้า
+        // จึงข้าม getSuggestedRate ต่องาน (เดิมยิง query ต่อทุกงาน = คอขวดหลัก)
+        if (mode === 'driver') {
+            return data as Job[]
+        }
+
         const uniqueCustomerIds = Array.from(new Set(data.filter((j: Partial<Job>) => j.Customer_ID).map((j: Partial<Job>) => j.Customer_ID)))
         const { data: customerPrices } = await supabase
             .from('Master_Customers')
@@ -1113,6 +1124,53 @@ export async function getJobsForBilling(
         return enhancedJobs as Job[]
     } catch {
         return []
+    }
+}
+
+/**
+ * นับจำนวนงานค้างจ่าย (driver) ต่อชื่อคนขับ — ใช้โชว์ badge "N งานค้าง" ในตัวเลือกคนขับ
+ * โดยไม่ต้องส่งงานทั้งพันเข้า client (แก้คอขวด render หน้าทำจ่าย)
+ */
+export async function getDriverPendingCounts(
+    startDate?: string,
+    endDate?: string
+): Promise<Record<string, number>> {
+    try {
+        const isSuper = await isSuperAdmin()
+        const branchId = await getUserBranchId()
+        const supabase = createAdminClient()
+
+        let q = supabase
+            .from('Jobs_Main')
+            .select('Driver_Name, Plan_Date')
+            .in('Job_Status', ['Completed', 'Delivered', 'Verified'])
+            .is('Driver_Payment_ID', null)
+
+        if (!isSuper) {
+            if (branchId && branchId !== 'All') q = q.eq('Branch_ID', branchId)
+            else return {}
+        } else if (branchId && branchId !== 'All') {
+            q = q.eq('Branch_ID', branchId)
+        }
+
+        if (startDate || endDate) {
+            if (startDate) q = q.gte('Plan_Date', startDate)
+            if (endDate) q = q.lte('Plan_Date', endDate)
+            q = q.limit(20000)
+        } else {
+            const past = new Date(); past.setDate(past.getDate() - 45)
+            q = q.gte('Plan_Date', past.toISOString().split('T')[0]).limit(20000)
+        }
+
+        const { data } = await q
+        const counts: Record<string, number> = {}
+        for (const j of (data || []) as { Driver_Name?: string | null }[]) {
+            const name = (j.Driver_Name || '').trim()
+            if (name) counts[name] = (counts[name] || 0) + 1
+        }
+        return counts
+    } catch {
+        return {}
     }
 }
 // ดึงข้อมูล Dashboard สำหรับ Driver (Mobile)

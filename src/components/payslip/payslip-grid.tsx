@@ -39,7 +39,7 @@ export const PayslipGridView = React.forwardRef<HTMLDivElement, Props>(function 
       <table
         style={{
           borderCollapse: "collapse",
-          fontSize: 12,
+          fontSize: 13,
           color: "#111827",
           fontFamily:
             "'Noto Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -52,7 +52,13 @@ export const PayslipGridView = React.forwardRef<HTMLDivElement, Props>(function 
           ))}
         </colgroup>
         <tbody>
-          {grid.rows.map((row, r) => (
+          {grid.rows.map((row, r) => {
+            // ข้ามแถวว่างเปล่า (จากเทมเพลต Excel ที่มีแถวสำรอง) — แต่ไม่ข้ามถ้าเป็นส่วนของ merge
+            const isEmptyRow = Array.from({ length: maxCols }).every((_, c) =>
+              (row[c]?.t ?? "") === "" && !covered.has(`${r}:${c}`) && !spanMap.has(`${r}:${c}`)
+            )
+            if (isEmptyRow) return null
+            return (
             <tr key={r}>
               {Array.from({ length: maxCols }).map((_, c) => {
                 if (covered.has(`${r}:${c}`)) return null
@@ -80,7 +86,8 @@ export const PayslipGridView = React.forwardRef<HTMLDivElement, Props>(function 
                 )
               })}
             </tr>
-          ))}
+            )
+          })}
         </tbody>
       </table>
     </div>
