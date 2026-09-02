@@ -20,29 +20,30 @@ export function BottomNav() {
   ]
 
   return (
-    <nav className="w-full bg-card border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.03)] px-6 pb-[env(safe-area-inset-bottom)] h-[calc(72px+env(safe-area-inset-bottom))] flex items-center justify-between relative z-50">
+    <nav
+      className="w-full bg-card border-t border-border px-4 pb-[env(safe-area-inset-bottom)] h-[calc(64px+env(safe-area-inset-bottom))] grid grid-flow-col auto-cols-fr items-center relative z-50"
+      style={{ boxShadow: '0 -4px 16px rgba(24,27,24,0.04)', touchAction: 'manipulation' }}
+    >
       {navItems.map((item) => {
         // Highlight the tab for its sub-routes too (e.g. /mobile/jobs/[id]).
         const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
         return (
-          <Link 
-            key={item.href} 
+          <Link
+            key={item.href}
             href={item.href}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex flex-col items-center justify-center min-w-[64px] transition-all active:scale-95",
-              isActive ? "text-primary" : "text-muted-foreground/50"
+              "flex flex-col items-center justify-center gap-1 min-h-[48px] transition-all active:scale-95",
+              isActive ? "text-foreground" : "text-muted-foreground"
             )}
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
-            <div className={cn(
-                "p-1.5 rounded-lg transition-colors",
-                isActive ? "bg-primary/5" : ""
-            )}>
-              <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-            </div>
-            <span className={cn(
-              "text-[10px] font-bold mt-1 transition-all",
-              isActive ? "opacity-100" : "opacity-60"
-            )}>
+            <item.icon
+              size={22}
+              strokeWidth={isActive ? 2.4 : 1.9}
+              style={isActive ? { color: 'var(--pd-hi)' } : undefined}
+            />
+            <span className={cn("text-[10px] transition-all", isActive ? "font-bold" : "font-medium opacity-70")}>
               {item.label}
             </span>
           </Link>

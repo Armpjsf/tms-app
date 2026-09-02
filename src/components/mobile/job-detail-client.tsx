@@ -69,9 +69,9 @@ export function JobDetailClient({ job, success, initialTab = 'mission' }: JobDet
         <div className="min-h-full bg-background pb-40 pt-[calc(56px+env(safe-area-inset-top))] relative overflow-hidden flex flex-col">
             <MobileHeader title="รายละเอียดงาน" showBack />
 
-            <div className="flex-1 px-5 overflow-y-auto pb-10 pt-4 space-y-8">
+            <div className="flex-1 px-4 overflow-y-auto pb-10 pt-4 space-y-4">
                 {/* 1. TOP SECTION: CUSTOMER & CONTACT (Critical Info) */}
-                <div className="bg-card rounded-3xl p-6 border border-border shadow-sm space-y-6">
+                <div className="bg-card rounded-2xl p-4 border border-border shadow-sm space-y-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -182,7 +182,7 @@ export function JobDetailClient({ job, success, initialTab = 'mission' }: JobDet
                 {/* จัดลำดับการส่ง (multi-drop) — คนขับเลือกจุดถัดไปเองได้ */}
                 {Array.isArray(destinations) && destinations.length > 1 &&
                  !['Completed', 'Verified', 'Rejected'].includes(job?.Job_Status) && (
-                    <div className="bg-card rounded-3xl p-6 border border-border shadow-sm">
+                    <div className="bg-card rounded-2xl p-4 border border-border shadow-sm">
                         <DropReorder
                             jobId={job.Job_ID}
                             destinations={destinations}
@@ -199,7 +199,7 @@ export function JobDetailClient({ job, success, initialTab = 'mission' }: JobDet
                 )}
 
                 {/* Workflow Tracker */}
-                <div className="bg-card rounded-3xl p-6 border border-border shadow-sm">
+                <div className="bg-card rounded-2xl p-4 border border-border shadow-sm">
                     <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                         <Activity size={20} className="text-primary" />
                         สถานะปัจจุบัน
@@ -214,7 +214,7 @@ export function JobDetailClient({ job, success, initialTab = 'mission' }: JobDet
 
                 {/* Container Specific Info */}
                 {job.job_type === 'container' && job.container && (
-                    <div className="bg-card rounded-3xl p-6 border border-border shadow-sm space-y-6">
+                    <div className="bg-card rounded-2xl p-4 border border-border shadow-sm space-y-6">
                         <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                             <Info size={20} className="text-primary" />
                             ข้อมูลตู้คอนเทนเนอร์ {job.container.container_subtype === 'export' ? '(Export)' : '(Import)'}

@@ -108,10 +108,7 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
   }
 
   return (
-    <div className="min-h-full bg-background pb-32 pt-20 px-6 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-red-500/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
-      
+    <div className="min-h-full bg-background pb-32 pt-20 px-4 relative overflow-hidden">
       <MobileHeader title="แจ้งปัญหา & เคลม" showBack />
 
       <div className="relative z-10 space-y-6 mt-4">
@@ -119,7 +116,7 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
         {!showForm ? (
           <div className="space-y-4">
             <div className="px-1">
-                <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase italic">รายงานปัญหา</h2>
+                <h2 className="text-2xl font-bold text-foreground tracking-tight">รายงานปัญหา</h2>
                 <p className="text-muted-foreground text-sm font-bold">แจ้งอุบัติเหตุหรือสินค้าเสียหายทันที</p>
             </div>
             

@@ -3,7 +3,6 @@ import { redirect } from "next/navigation"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { getMyPayslip } from "@/lib/actions/payslip-actions"
 import { PayslipDetailClient } from "../payslip-detail-client"
-import { Card, CardContent } from "@/components/ui/card"
 
 export const dynamic = "force-dynamic"
 
@@ -35,15 +34,13 @@ export default async function PayslipDetailPage({
     <div className="min-h-full bg-background pb-24 pt-16 px-4">
       <MobileHeader title="ใบสรุปจ่ายรถ" showBack />
 
-      <Card className="bg-gradient-to-br from-indigo-600 to-blue-700 border-0 mb-4">
-        <CardContent className="p-5">
-          <p className="text-blue-100 text-sm">{String(meta.title || "")}</p>
-          {subtitle && <p className="text-blue-100 text-xs mt-0.5">งวด {subtitle}</p>}
-          {typeof total === "number" && (
-            <h2 className="text-3xl font-bold text-white mt-2">฿{total.toLocaleString()}</h2>
-          )}
-        </CardContent>
-      </Card>
+      <div className="rounded-2xl mb-4 p-5" style={{ background: 'var(--pd-hi)', boxShadow: 'var(--pd-lift-2)' }}>
+        <p className="text-white/85 text-sm font-medium">{String(meta.title || "")}</p>
+        {subtitle && <p className="text-white/70 text-xs mt-0.5">งวด {subtitle}</p>}
+        {typeof total === "number" && (
+          <h2 className="text-3xl font-bold text-white mt-2 pd-num">฿{total.toLocaleString()}</h2>
+        )}
+      </div>
 
       <PayslipDetailClient
         id={id}

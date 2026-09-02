@@ -82,8 +82,8 @@ export default function MobileManualPage() {
           <div className="w-20 h-20 bg-primary/10 text-primary rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-inner">
              <BookOpen size={40} strokeWidth={2.5} />
           </div>
-          <h2 className="text-3xl font-black text-slate-900 mb-3 italic uppercase tracking-tighter">คู่มือคนขับ Elite</h2>
-          <p className="text-lg text-slate-500 font-bold leading-relaxed">
+          <h2 className="text-2xl font-bold text-foreground mb-3 tracking-tight">คู่มือคนขับ</h2>
+          <p className="text-base text-muted-foreground font-medium leading-relaxed">
             ขั้นตอนการทำงานอย่างละเอียด<br/>
             ตั้งแต่เริ่มรับงาน จนถึงส่งมอบสินค้า
           </p>

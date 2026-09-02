@@ -192,7 +192,7 @@ export default function JobPickupPage() {
             <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-6 animate-bounce">
                 <ShieldCheck size={48} className="text-white" />
             </div>
-            <h1 className="text-3xl font-black text-foreground mb-2 italic">สำเร็จ!</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2 tracking-tight">สำเร็จ!</h1>
             <p className="text-muted-foreground font-bold tracking-tight">บันทึกข้อมูลการรับตู้เรียบร้อยแล้ว</p>
         </div>
     )

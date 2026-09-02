@@ -1,7 +1,6 @@
 import { getDriverSession } from "@/lib/actions/auth-actions"
 import { redirect } from "next/navigation"
 import { MobileHeader } from "@/components/mobile/mobile-header"
-import { Card, CardContent } from "@/components/ui/card"
 import { Banknote, Calendar, CheckCircle2 } from "lucide-react"
 import { createClient } from "@/utils/supabase/server"
 
@@ -40,60 +39,55 @@ export default async function IncomeSummaryPage() {
         title="สรุปรายได้" 
       />
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Total Summary Card */}
-        <Card className="bg-gradient-to-br from-indigo-600 to-blue-700 border-0 overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <Banknote size={120} className="text-white transform rotate-12" />
+        <div className="rounded-2xl overflow-hidden relative p-5" style={{ background: 'var(--pd-hi)', boxShadow: 'var(--pd-lift-2)' }}>
+          <div className="absolute top-0 right-0 p-4 opacity-15">
+            <Banknote size={110} className="text-white rotate-12" />
           </div>
-          <CardContent className="p-6 relative z-10">
-            <p className="text-blue-100 text-xl mb-1">รายได้รวมทั้งหมด</p>
-            <h2 className="text-4xl font-bold text-foreground mb-4">
+          <div className="relative z-10">
+            <p className="text-white/85 text-sm font-medium mb-1">รายได้รวมสะสม (งานที่จบแล้ว)</p>
+            <h2 className="text-[38px] font-bold text-white leading-none mb-4 pd-num">
               ฿{totalEarnings.toLocaleString()}
             </h2>
-            <div className="flex gap-4">
-               <div className="bg-muted/80 rounded-lg px-3 py-2">
-                  <p className="text-blue-100 text-base font-bold uppercase">งานที่สำเร็จ</p>
-                  <p className="text-white font-bold">{totalJobs} งาน</p>
-               </div>
+            <div className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-white/15 backdrop-blur">
+              <CheckCircle2 size={16} className="text-white" />
+              <span className="text-white font-semibold text-sm pd-num">{totalJobs} งานสำเร็จ</span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* History List */}
-        <div className="space-y-3">
-          <h3 className="text-muted-foreground font-medium text-xl flex items-center gap-2">
-            <Calendar size={14} /> ประวัติงานที่สำเร็จ
+        <div className="space-y-2.5">
+          <h3 className="text-muted-foreground font-semibold text-xs uppercase tracking-wide flex items-center gap-1.5 px-1">
+            <Calendar size={13} /> ประวัติงานที่สำเร็จ
           </h3>
-          
+
           {totalJobs === 0 ? (
-            <div className="text-center py-10 text-muted-foreground">
-              <p>ไม่พบประวัติงานที่สำเร็จ</p>
+            <div className="text-center py-12 rounded-2xl text-muted-foreground text-sm" style={{ background: 'var(--pd-paper)', border: '1px dashed var(--pd-line)' }}>
+              ยังไม่มีประวัติงานที่สำเร็จ
             </div>
           ) : (
             <div className="space-y-2">
               {jobs?.map((job: SummaryJob) => (
-                <Card key={job.Job_ID} className="bg-white border-gray-200">
-                  <CardContent className="p-4 flex justify-between items-center">
-                    <div>
-                      <p className="text-gray-800 font-medium text-xl">{job.Customer_Name || job.Job_ID}</p>
-                      <p className="text-gray-400 text-base font-bold">
-                        {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-'}
-                      </p>
+                <div key={job.Job_ID} className="bg-card border border-border rounded-xl p-3.5 flex justify-between items-center" style={{ boxShadow: 'var(--pd-lift-1)' }}>
+                  <div className="min-w-0">
+                    <p className="text-foreground font-semibold text-sm truncate">{job.Customer_Name || job.Job_ID}</p>
+                    <p className="text-muted-foreground text-xs mt-0.5 pd-num">
+                      {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-'}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0 pl-3">
+                    {job.Show_Price_To_Driver !== false ? (
+                      <p className="font-bold text-sm pd-num" style={{ color: 'var(--pd-go)' }}>+฿{job.Cost_Driver_Total?.toLocaleString()}</p>
+                    ) : (
+                      <p className="text-muted-foreground font-bold text-sm">***</p>
+                    )}
+                    <div className="flex items-center justify-end gap-1 text-[11px] font-medium text-muted-foreground mt-0.5">
+                      <CheckCircle2 size={11} style={{ color: 'var(--pd-go)' }} /> สำเร็จ
                     </div>
-                    <div className="text-right">
-                      {job.Show_Price_To_Driver !== false ? (
-                        <p className="text-emerald-400 font-bold">+฿{job.Cost_Driver_Total?.toLocaleString()}</p>
-                      ) : (
-                        <p className="text-gray-400 font-bold">***</p>
-                      )}
-                      <div className="flex items-center justify-end gap-1 text-base font-bold text-gray-400">
-                        <CheckCircle2 size={10} className="text-emerald-500" />
-                        สำเร็จ
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           )}

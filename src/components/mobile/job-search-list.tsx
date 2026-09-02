@@ -48,73 +48,72 @@ export function MobileJobSearchList({ jobs }: { jobs: MobileJobListItem[] }) {
   })
 
   return (
-    <div className="space-y-6">
-      {/* Search Bar - Premium Style */}
+    <div className="space-y-4">
+      {/* Search Bar */}
       <div className="relative group">
-        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-          <Search size={20} />
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-foreground transition-colors">
+          <Search size={18} />
         </div>
-        <input 
-          type="text" 
+        <input
+          type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="ค้นหาเลขงาน, ชื่อลูกค้า..." 
-          className="w-full h-16 pl-14 pr-6 rounded-3xl bg-card/50 backdrop-blur-xl border border-border/10 text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all font-bold text-lg shadow-sm"
+          placeholder="ค้นหาเลขงาน, ชื่อลูกค้า, ปลายทาง..."
+          className="w-full h-12 pl-11 pr-4 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground/70 outline-none focus:ring-2 transition-all font-medium text-sm"
+          style={{ boxShadow: 'var(--pd-lift-1)' }}
         />
       </div>
 
-      {/* Job Grid / List */}
-      <div className="space-y-4">
+      {searchQuery && (
+        <p className="text-[11px] text-muted-foreground px-1 pd-num">พบ {filteredJobs.length} รายการ</p>
+      )}
+
+      {/* Job List */}
+      <div className="space-y-2.5">
         {filteredJobs.length === 0 ? (
-          <div className="text-center py-20 bg-muted/20 rounded-3xl border-2 border-dashed border-border/50">
-            <Truck className="text-muted-foreground/30 mx-auto mb-4" size={48} />
-            <p className="text-muted-foreground font-bold">ไม่พบรายการงานในขณะนี้</p>
+          <div className="text-center py-16 rounded-2xl" style={{ background: 'var(--pd-paper)', border: '1px dashed var(--pd-line)' }}>
+            <Truck className="text-muted-foreground/40 mx-auto mb-3" size={40} />
+            <p className="text-muted-foreground font-semibold text-sm">ไม่พบรายการงาน</p>
+            <p className="text-muted-foreground/70 text-xs mt-1">ลองปรับตัวกรองหรือคำค้นหา</p>
           </div>
-        ) : filteredJobs.map((job) => (
+        ) : filteredJobs.map((job) => {
+          const meta = statusMeta(job.Job_Status)
+          return (
           <Link href={`/mobile/jobs/${job.Job_ID}`} key={job.Job_ID} className="block active:scale-[0.98] transition-all">
-            <div className="bg-card p-6 rounded-3xl border border-border shadow-sm space-y-4">
-              {/* Status & Date */}
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
-                    <Calendar size={14} />
-                    รับ {fmtDayMonth(job.Pickup_Date) || "ไม่ระบุ"}
+            <div className="bg-card p-4 rounded-2xl border border-border space-y-3" style={{ boxShadow: 'var(--pd-lift-1)' }}>
+              {/* Customer + status */}
+              <div className="flex justify-between items-start gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-[15px] font-bold text-foreground leading-tight truncate">{job.Customer_Name || 'ไม่ระบุลูกค้า'}</h3>
+                  <p className="text-[11px] font-medium text-muted-foreground mt-0.5 pd-num">#{job.Job_ID.toUpperCase()}</p>
+                </div>
+                <div className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap shrink-0", meta.className)}>
+                  {meta.label}
+                </div>
+              </div>
+
+              {/* Route + dates */}
+              <div className="flex items-center gap-2.5 pt-2.5" style={{ borderTop: '1px solid var(--pd-line-2)' }}>
+                <MapPin size={15} className="shrink-0" style={{ color: 'var(--pd-hi)' }} />
+                <p className="text-[13px] font-medium text-foreground truncate flex-1">
+                  {job.Dest_Location || job.Route_Name || 'ไม่ระบุปลายทาง'}
+                </p>
+                <ChevronRight size={18} className="text-muted-foreground/40 shrink-0" />
+              </div>
+              <div className="flex items-center gap-3 -mt-1">
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: 'var(--pd-go)' }}>
+                  <Calendar size={12} /> รับ {fmtDayMonth(job.Pickup_Date) || "ไม่ระบุ"}
+                </span>
+                {job.Delivery_Date && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: 'var(--pd-hi-ink)' }}>
+                    <MapPin size={12} /> ส่ง {fmtDayMonth(job.Delivery_Date)}
                   </span>
-                  {job.Delivery_Date && (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-primary">
-                      <MapPin size={13} />
-                      ส่ง {fmtDayMonth(job.Delivery_Date)}
-                    </span>
-                  )}
-                </div>
-                <div className={cn(
-                  "px-3 py-1 rounded-lg text-[10px] font-bold uppercase",
-                  statusMeta(job.Job_Status).className
-                )}>
-                  {statusMeta(job.Job_Status).label}
-                </div>
-              </div>
-
-              {/* Customer */}
-              <div className="space-y-1">
-                <h3 className="text-xl font-bold text-foreground leading-tight">{job.Customer_Name}</h3>
-                <p className="text-xs font-medium text-muted-foreground">#{job.Job_ID.toUpperCase()}</p>
-              </div>
-
-              {/* Route */}
-              <div className="flex items-start gap-3 pt-2 border-t border-border/50">
-                <MapPin size={16} className="text-accent mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">จุดส่งสินค้า</p>
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {job.Dest_Location || job.Route_Name}
-                  </p>
-                </div>
-                <ChevronRight size={20} className="text-muted-foreground/30 self-center" />
+                )}
               </div>
             </div>
           </Link>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

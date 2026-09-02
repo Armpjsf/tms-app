@@ -40,9 +40,9 @@ export default function MobileSettingsPage() {
       
       <div className="space-y-6">
         <div className="space-y-4">
-            <h3 className="text-muted-foreground text-xl font-medium uppercase tracking-wider ml-1">ทั่วไป</h3>
+            <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider ml-1">ทั่วไป</h3>
             <Card className="bg-white border-gray-200">
-                <CardContent className="p-0 divide-y divide-slate-800">
+                <CardContent className="p-0 divide-y divide-border">
                     <div className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-3">
                             <Bell className="text-muted-foreground" size={20} />
@@ -68,9 +68,9 @@ export default function MobileSettingsPage() {
         </div>
 
         <div className="space-y-4">
-            <h3 className="text-muted-foreground text-xl font-medium uppercase tracking-wider ml-1">ข้อมูล & ความปลอดภัย</h3>
+            <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider ml-1">ข้อมูล & ความปลอดภัย</h3>
             <Card className="bg-white border-gray-200">
-                <CardContent className="p-0 divide-y divide-slate-800">
+                <CardContent className="p-0 divide-y divide-border">
                     <div className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-3">
                             <Shield className="text-muted-foreground" size={20} />

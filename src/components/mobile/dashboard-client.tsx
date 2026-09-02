@@ -4,15 +4,14 @@ import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { hourTH, fmtDateTH } from "@/lib/utils/date-th"
 import { Button } from "@/components/ui/button"
-import { 
+import {
     Truck, MapPin,
-    Bell, Clock, Banknote,
-    ChevronRight, ArrowUpRight, ShieldCheck
+    Clock, Banknote, Package, CalendarCheck,
+    ChevronRight, ArrowUpRight, ShieldCheck, CheckCircle2
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { createClient } from "@/utils/supabase/client"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { format, isToday, isTomorrow, parseISO } from "date-fns"
@@ -141,141 +140,165 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
     }, [session.driverId, supabase, router])
 
     const secondaryJobs = activeJobs.filter(j => j.Job_ID !== currentJob?.Job_ID)
+    const isRolling = currentJob
+        ? ['In Progress', 'In Transit', 'Arrived Pickup', 'Arrived Dropoff'].includes(currentJob.Job_Status)
+        : false
+    const rankPct = Math.min(100, Math.max(0, gamification.nextRankPoints > 0
+        ? (gamification.points / gamification.nextRankPoints) * 100 : 0))
+    const currentDrops = activeJobs.find(j => j.Job_ID === currentJob?.Job_ID)?.Total_Drop
 
     return (
-        <motion.div 
+        <motion.div
             variants={container}
             initial="hidden"
             animate="show"
-            className="space-y-6 pb-32 pt-[env(safe-area-inset-top)] px-4"
+            className="space-y-4 pb-32 pt-[env(safe-area-inset-top)] px-4"
         >
-            {/* HEADER */}
+            {/* IDENTITY + SHIFT: header merged into the payload */}
             <motion.div variants={item} className="flex items-center justify-between pt-2">
                 <div className="flex items-center gap-3">
                     <div className="relative">
                         <Link href="/mobile/profile">
-                            <Avatar className="h-12 w-12 border border-border shadow-sm active:scale-95 transition-transform">
-                                <AvatarFallback className="bg-primary/10 text-primary font-bold">{session.driverName?.charAt(0)}</AvatarFallback>
+                            <Avatar className="h-11 w-11 rounded-[13px] active:scale-95 transition-transform">
+                                <AvatarFallback className="rounded-[13px] bg-foreground text-background font-bold">{session.driverName?.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </Link>
-                        <div className="absolute -bottom-0.5 -right-0.5 bg-emerald-500 w-3 h-3 rounded-full border-2 border-background" />
+                        <div
+                            className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-background"
+                            style={{ background: 'var(--pd-go)' }}
+                        />
                     </div>
-                    <div>
-                        <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-0.5">
-                            {greeting || "สวัสดีคุณ"}
-                        </p>
-                        <h1 className="text-lg font-bold text-foreground truncate max-w-[180px]">
+                    <div className="min-w-0">
+                        <h1 className="text-base font-bold text-foreground leading-tight truncate max-w-[190px]">
                             {session.driverName}
                         </h1>
+                        <p className="text-muted-foreground text-[11px] font-medium mt-0.5">
+                            {greeting} · พร้อมวิ่งงาน
+                        </p>
                     </div>
                 </div>
             </motion.div>
 
-            {/* KEY STATS */}
-            <motion.div variants={item} className="grid grid-cols-2 gap-4">
-                <div className="bg-card border border-border rounded-xl p-4 relative overflow-hidden shadow-sm">
-                    <div className="relative z-10 space-y-1">
-                        <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">งานที่ต้องทำ</p>
-                        <div className="text-3xl font-bold text-foreground">
-                            {activeJobs.length < 10 ? `0${activeJobs.length}` : activeJobs.length}
-                        </div>
-                    </div>
-                    <div className="absolute -right-3 -bottom-3 opacity-5 text-muted-foreground">
-                         <Truck size={64} />
-                    </div>
+            {/* LIVE STAT STRIP: real numbers, above the fold, merged into one card */}
+            <motion.div
+                variants={item}
+                className="grid grid-cols-3 bg-card border border-border rounded-2xl overflow-hidden"
+                style={{ boxShadow: 'var(--pd-lift-1)' }}
+            >
+                <div className="p-3.5" style={{ borderRight: '1px solid var(--pd-line-2)' }}>
+                    <p className="text-muted-foreground text-[9.5px] font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                        <Truck size={11} /> งานค้าง
+                    </p>
+                    <p className="text-[22px] font-bold text-foreground leading-none pd-num">{activeJobs.length}</p>
                 </div>
-
-                <div className="bg-card border border-border rounded-xl p-4 relative overflow-hidden shadow-sm">
-                    <div className="relative z-10 space-y-1">
-                        <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">รายได้วันนี้</p>
-                        <div className="text-3xl font-bold text-foreground">
-                            ฿{todayIncome.toLocaleString()}
-                        </div>
-                    </div>
-                    <div className="absolute -right-3 -bottom-3 opacity-5 text-muted-foreground">
-                         <Banknote size={64} />
-                    </div>
+                <div className="p-3.5" style={{ borderRight: '1px solid var(--pd-line-2)' }}>
+                    <p className="text-muted-foreground text-[9.5px] font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                        <Banknote size={11} /> รายได้วันนี้
+                    </p>
+                    <p className="text-[22px] font-bold text-foreground leading-none pd-num">
+                        {todayIncome.toLocaleString()}<span className="text-sm text-muted-foreground font-semibold"> ฿</span>
+                    </p>
+                </div>
+                <div className="p-3.5">
+                    <p className="text-muted-foreground text-[9.5px] font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                        <CalendarCheck size={11} /> จบเดือนนี้
+                    </p>
+                    <p className="text-[22px] font-bold text-foreground leading-none pd-num">{gamification.monthlyCompleted}</p>
                 </div>
             </motion.div>
 
             {/* CURRENT JOB */}
-            <motion.div variants={item} className="space-y-3">
+            <motion.div variants={item} className="space-y-2.5 pt-1">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-base font-bold text-foreground uppercase flex items-center gap-2">
-                        <div className="w-1 h-4 bg-primary rounded-full" />
-                        งานปัจจุบัน
+                    <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--pd-hi)' }} />
+                        {isRolling ? 'งานที่กำลังวิ่ง' : 'งานปัจจุบัน'}
                     </h2>
                     {activeJobs.length > 0 && (
-                        <Link href="/mobile/jobs" className="text-primary text-xs font-semibold flex items-center gap-1">
-                            ดูทั้งหมด <ChevronRight size={14} />
+                        <Link href="/mobile/jobs" className="text-[11px] font-semibold flex items-center gap-0.5" style={{ color: 'var(--pd-hi-ink)' }}>
+                            คิวทั้งหมด <ChevronRight size={13} />
                         </Link>
                     )}
                 </div>
 
                 <AnimatePresence mode="wait">
                 {currentJob ? (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-card rounded-xl p-5 border border-border shadow-sm space-y-4 relative overflow-hidden"
+                        className="bg-card rounded-2xl p-4 border border-border"
+                        style={{ boxShadow: 'var(--pd-lift-2)' }}
                     >
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-                                    <Truck size={16} />
-                                </div>
-                                <span className="text-xs font-semibold text-muted-foreground">งานปัจจุบัน</span>
-                            </div>
-                            <div className={cn(
-                                "px-2.5 py-0.5 rounded text-[10px] font-semibold",
-                                ['In Progress', 'In Transit', 'Arrived Pickup', 'Arrived Dropoff'].includes(currentJob.Job_Status)
-                                ? "bg-primary/10 text-primary border border-primary/20"
-                                : "bg-muted text-muted-foreground"
-                            )}>
-                                {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : 'กำลังดำเนินการ'}
-                            </div>
-                        </div>
-
-                        <div className="space-y-0.5">
-                            <h4 className="text-lg font-bold text-foreground leading-tight">{currentJob.Customer_Name}</h4>
-                            <p className="text-xs text-primary font-medium">#{String(currentJob.Job_ID).slice(-8).toUpperCase()}</p>
-                        </div>
-
-                        <div className="flex items-center gap-2 p-3 bg-muted/40 rounded-lg border border-border/50">
-                            <MapPin size={14} className="text-primary shrink-0" />
-                            <p className="text-xs text-foreground truncate flex-1">
-                                {currentJob.Dest_Location || currentJob.Route_Name}
-                            </p>
-                        </div>
-
-                        {currentJob.Delivery_Date && (
-                            <div className="flex items-center gap-2 px-1">
-                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-                                    <MapPin size={12} /> รับ {fmtDateTH(currentJob.Pickup_Date || null)}
+                        <div className="flex items-center justify-between mb-2.5">
+                            {isRolling ? (
+                                <span
+                                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                                    style={{ background: 'var(--pd-go-wash)', color: 'var(--pd-go)' }}
+                                >
+                                    <span className="pd-livedot" style={{ background: 'var(--pd-go)' }} />
+                                    กำลังดำเนินการ
                                 </span>
-                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary">
-                                    <MapPin size={12} /> ส่ง {fmtDateTH(currentJob.Delivery_Date)}
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
+                                    <Clock size={12} /> รอเริ่มงาน
                                 </span>
+                            )}
+                            <span className="text-[12px] font-semibold text-muted-foreground pd-num">
+                                #{String(currentJob.Job_ID).slice(-8).toUpperCase()}
+                            </span>
+                        </div>
+
+                        <h4 className="text-[17px] font-bold text-foreground leading-tight mb-2.5">{currentJob.Customer_Name}</h4>
+
+                        {/* route legs: pickup and dropoff as facts */}
+                        <div className="flex gap-2 mb-3">
+                            <div className="flex-1 rounded-xl p-2.5" style={{ background: 'var(--pd-paper)', border: '1px solid var(--pd-line-2)' }}>
+                                <p className="text-[9.5px] uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1 mb-1">
+                                    <span className="w-1.5 h-1.5 rounded-sm" style={{ background: 'var(--pd-go)' }} /> จุดรับ
+                                </p>
+                                <p className="text-[12.5px] font-semibold text-foreground truncate">{currentJob.Origin_Location || currentJob.Route_Name || '—'}</p>
+                                {currentJob.Pickup_Date && (
+                                    <p className="text-[11px] font-semibold text-muted-foreground mt-0.5 pd-num">{fmtDateTH(currentJob.Pickup_Date)}</p>
+                                )}
+                            </div>
+                            <div className="flex-1 rounded-xl p-2.5" style={{ background: 'var(--pd-paper)', border: '1px solid var(--pd-line-2)' }}>
+                                <p className="text-[9.5px] uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1 mb-1">
+                                    <span className="w-1.5 h-1.5 rounded-sm" style={{ background: 'var(--pd-hi)' }} /> จุดส่ง
+                                </p>
+                                <p className="text-[12.5px] font-semibold text-foreground truncate">{currentJob.Dest_Location || '—'}</p>
+                                {currentJob.Delivery_Date && (
+                                    <p className="text-[11px] font-semibold text-muted-foreground mt-0.5 pd-num">{fmtDateTH(currentJob.Delivery_Date)}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {currentDrops != null && Number(currentDrops) > 0 && (
+                            <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-muted-foreground mb-3">
+                                <Package size={13} /> ทั้งหมด {Number(currentDrops)} จุดส่ง
                             </div>
                         )}
 
                         <Link href={`/mobile/jobs/${currentJob.Job_ID}`} className="block">
-                            <Button className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-semibold text-sm shadow-sm active:scale-95 transition-all gap-1.5 flex items-center justify-center">
-                                จัดการงานนี้ <ArrowUpRight className="w-4 h-4" />
+                            <Button
+                                className="w-full h-12 rounded-xl text-primary-foreground font-bold text-sm active:scale-[0.98] transition-all gap-1.5 flex items-center justify-center"
+                                style={{ background: 'var(--pd-hi)', boxShadow: '0 4px 12px rgba(232,100,26,.28)' }}
+                            >
+                                {isRolling ? 'ไปต่อที่งานนี้' : 'เริ่มจัดการงานนี้'} <ArrowUpRight className="w-4 h-4" />
                             </Button>
                         </Link>
                     </motion.div>
                 ) : (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="text-center py-12 px-6 bg-card border border-dashed border-border rounded-xl"
+                        className="text-center py-10 px-6 bg-card rounded-2xl"
+                        style={{ border: '1px dashed var(--pd-line)' }}
                     >
-                         <div className="w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                             <Truck size={28} className="text-muted-foreground/45" />
+                         <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: 'var(--pd-paper)' }}>
+                             <CheckCircle2 size={26} style={{ color: 'var(--pd-go)' }} />
                          </div>
-                         <h3 className="text-foreground font-bold text-lg mb-1">พร้อมรับงานใหม่?</h3>
-                         <p className="text-muted-foreground text-xs">ขณะนี้คุณยังไม่มีภารกิจค้างในระบบ</p>
+                         <h3 className="text-foreground font-bold text-base mb-1">เคลียร์งานหมดแล้ว</h3>
+                         <p className="text-muted-foreground text-xs">ยังไม่มีงานค้างในระบบ รอแอดมินจ่ายงานถัดไป</p>
                     </motion.div>
                 )}
                 </AnimatePresence>
@@ -283,45 +306,48 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
 
             {/* QUEUE */}
             {secondaryJobs.length > 0 && (
-                <motion.div variants={item} className="space-y-3">
-                    <h2 className="text-base font-bold text-foreground uppercase flex items-center gap-2">
-                        <div className="w-1 h-4 bg-muted-foreground/30 rounded-full" />
-                        คิวงานถัดไป ({secondaryJobs.length})
+                <motion.div variants={item} className="space-y-2.5 pt-1">
+                    <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                        คิวถัดไป ({secondaryJobs.length})
                     </h2>
-                    <div className="space-y-3">
-                        {secondaryJobs.map((job) => (
+                    <div className="space-y-2">
+                        {secondaryJobs.map((job, idx) => (
                             <Link key={job.Job_ID} href={`/mobile/jobs/${job.Job_ID}`}>
-                                <div className="bg-card border border-border rounded-xl p-4 flex items-center justify-between active:scale-[0.98] transition-all shadow-sm">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
-                                            <Clock size={20} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-sm font-bold text-foreground">#{(job.Job_ID || '').slice(-6).toUpperCase()}</h4>
-                                            <p className="text-muted-foreground text-xs truncate max-w-[180px]">
-                                                {job.Customer_Name}
-                                            </p>
-                                        </div>
+                                <div
+                                    className="bg-card border border-border rounded-xl p-3 flex items-center gap-3 active:scale-[0.98] transition-all"
+                                    style={{ boxShadow: 'var(--pd-lift-1)' }}
+                                >
+                                    <div
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[13px] font-bold text-muted-foreground pd-num shrink-0"
+                                        style={{ background: 'var(--pd-paper)', border: '1px solid var(--pd-line-2)' }}
+                                    >
+                                        {String(idx + 2).padStart(2, '0')}
                                     </div>
-                                    <div className="flex flex-col items-end gap-1.5">
-                                        <div className="p-1.5 bg-muted/40 rounded-full">
-                                            <ChevronRight size={16} className="text-muted-foreground" />
-                                        </div>
-                                        {mounted && (() => {
-                                            const dateInfo = getJobDateInfo(job.Plan_Date ?? null)
-                                            if (!dateInfo.label) return null
-                                            return (
-                                                <span className={cn(
-                                                    "text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border",
-                                                    dateInfo.type === 'today' ? "bg-emerald-500 text-white border-emerald-400" :
-                                                    dateInfo.type === 'tomorrow' ? "bg-yellow-500 text-black border-yellow-400" :
-                                                    "bg-primary/5 text-primary border-primary/10"
-                                                )}>
-                                                    {dateInfo.label}
-                                                </span>
-                                            )
-                                        })()}
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className="text-[13.5px] font-semibold text-foreground truncate">{job.Customer_Name || 'ไม่ระบุลูกค้า'}</h4>
+                                        <p className="text-muted-foreground text-[11px] truncate pd-num">
+                                            #{(job.Job_ID || '').slice(-6).toUpperCase()}{job.Route_Name ? ` · ${job.Route_Name}` : ''}
+                                        </p>
                                     </div>
+                                    {mounted && (() => {
+                                        const dateInfo = getJobDateInfo(job.Plan_Date ?? null)
+                                        if (!dateInfo.label) return null
+                                        return (
+                                            <span
+                                                className="text-[10px] font-bold px-2 py-1 rounded-lg whitespace-nowrap shrink-0"
+                                                style={
+                                                    dateInfo.type === 'today'
+                                                        ? { background: 'var(--pd-hi-wash)', color: 'var(--pd-hi-ink)' }
+                                                        : dateInfo.type === 'tomorrow'
+                                                        ? { background: 'var(--pd-paper)', color: 'var(--pd-ink-2)', border: '1px solid var(--pd-line)' }
+                                                        : { background: 'var(--pd-paper)', color: 'var(--pd-ink-3)', border: '1px solid var(--pd-line-2)' }
+                                                }
+                                            >
+                                                {dateInfo.label}
+                                            </span>
+                                        )
+                                    })()}
                                 </div>
                             </Link>
                         ))}
@@ -330,28 +356,40 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
             )}
 
             {/* RANK CARD */}
-            <motion.div variants={item} className="bg-card border border-border rounded-xl p-5 shadow-sm">
+            <motion.div
+                variants={item}
+                className="bg-card border border-border rounded-2xl p-4 mt-1"
+                style={{ boxShadow: 'var(--pd-lift-1)' }}
+            >
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20 shadow-sm">
-                             <ShieldCheck size={20} />
+                        <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center"
+                            style={{ background: 'var(--pd-hi-wash)', color: 'var(--pd-hi-ink)' }}
+                        >
+                             <ShieldCheck size={19} />
                         </div>
                         <div>
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider leading-none mb-1">คะแนนสะสม</p>
+                            <p className="text-[9.5px] font-semibold text-muted-foreground uppercase tracking-wide leading-none mb-1">อันดับคนขับ</p>
                             <h4 className="text-sm font-bold text-foreground">{gamification.rank}</h4>
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className="text-xl font-bold text-primary leading-none">{gamification.points}</div>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Points</p>
+                        <div className="text-lg font-bold leading-none pd-num" style={{ color: 'var(--pd-hi-ink)' }}>{gamification.points.toLocaleString()}</div>
+                        <p className="text-[9.5px] font-semibold text-muted-foreground uppercase tracking-wide mt-1">คะแนน</p>
                     </div>
                 </div>
-                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden border border-border">
+                <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--pd-line)' }}>
                     <div
-                        className="h-full bg-amber-500 rounded-full transition-all duration-1000"
-                        style={{ width: `${Math.min(100, Math.max(0, gamification.nextRankPoints > 0 ? (gamification.points / gamification.nextRankPoints) * 100 : 0))}%` }}
+                        className="h-full rounded-full transition-all duration-1000"
+                        style={{ width: `${rankPct}%`, background: 'var(--pd-hi)' }}
                     />
                 </div>
+                {gamification.nextRankPoints > gamification.points && (
+                    <p className="text-[10.5px] text-muted-foreground mt-2 pd-num">
+                        อีก {(gamification.nextRankPoints - gamification.points).toLocaleString()} คะแนนถึงอันดับถัดไป
+                    </p>
+                )}
             </motion.div>
 
         </motion.div>

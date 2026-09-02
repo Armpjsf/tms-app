@@ -238,6 +238,115 @@ body[style*="pointer-events: none"] {
                     radial-gradient(at 100% 0%, rgba(0, 30, 76, 0.05) 0px, transparent 50%);
 }
 
+/* ============================================================
+   PROM-DESIGN · DRIVER APP (instrument register)
+   Scoped to the mobile driver shell via `.tms-driver`.
+   Palette derived from the transport world: concrete ground,
+   diesel ink, hi-vis safety amber. Overriding the shadcn
+   semantic tokens here re-skins every mobile screen at once;
+   hand-built screens also read the raw --pd-* tokens below.
+   ============================================================ */
+.tms-driver {
+  /* shadcn semantic tokens, remapped */
+  --background: 90 12% 93%;        /* #EEF0EC concrete ground */
+  --foreground: 120 6% 10%;        /* #181B18 diesel ink */
+  --primary: 225 100% 31%;         /* #00279C corporate blue = brand/identity */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 80 10% 90%;         /* #E7E9E3 raised concrete */
+  --secondary-foreground: 120 6% 10%;
+  --accent: 225 100% 31%;          /* brand blue for accents/links */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 4 79% 37%;        /* #A81E14 late/error */
+  --destructive-foreground: 0 0% 100%;
+  --success: 150 59% 30%;          /* #1F7A4D road-sign green, in-transit */
+  --success-foreground: 0 0% 100%;
+  --card: 60 25% 98%;              /* #FBFBF9 raised surface */
+  --card-foreground: 120 6% 10%;
+  --popover: 60 25% 98%;
+  --popover-foreground: 120 6% 10%;
+  --muted: 80 10% 90%;
+  --muted-foreground: 75 4% 47%;   /* #797D74 tertiary ink */
+  --border: 120 6% 10% / 0.12;
+  --input: 120 6% 10% / 0.06;
+  --ring: 225 100% 31%;
+  --gradient-elite: none;          /* kill the global blue mesh in the app */
+
+  /* raw prom-design tokens for hand-built driver screens */
+  --pd-paper:#EEF0EC; --pd-card:#FBFBF9; --pd-surface:#E7E9E3;
+  --pd-ink:#181B18; --pd-ink-2:#565A54; --pd-ink-3:#797D74;
+  --pd-line:rgba(24,27,24,.12); --pd-line-2:rgba(24,27,24,.07);
+  --pd-hi:#E8641A; --pd-hi-ink:#B84C0E; --pd-hi-wash:#FBE9DC;
+  --pd-go:#1F7A4D; --pd-go-wash:#E2EFE7; --pd-late:#A81E14;
+  --pd-lift-1:0 0 0 1px rgba(24,27,24,.05),0 1px 2px rgba(24,27,24,.05);
+  --pd-lift-2:0 0 0 1px rgba(24,27,24,.03),0 8px 20px rgba(24,27,24,.07);
+  --pd-r-control:12px; --pd-r-media:16px;
+}
+.dark .tms-driver {
+  --background: 90 6% 9%;          /* #161815 asphalt night */
+  --foreground: 90 8% 92%;
+  --primary: 225 90% 66%;          /* #5B7BEA brighter brand blue on dark */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 100 5% 14%;
+  --secondary-foreground: 90 8% 92%;
+  --card: 100 5% 12%;
+  --card-foreground: 90 8% 92%;
+  --popover: 100 5% 12%;
+  --popover-foreground: 90 8% 92%;
+  --muted: 100 5% 16%;
+  --muted-foreground: 90 5% 62%;
+  --border: 90 8% 92% / 0.12;
+  --input: 90 8% 92% / 0.10;
+  --ring: 225 90% 66%;
+  --success: 150 45% 45%;
+
+  --pd-paper:#161815; --pd-card:#1F221D; --pd-surface:#262922;
+  --pd-ink:#ECEEE9; --pd-ink-2:#A7AB9F; --pd-ink-3:#82867A;
+  --pd-line:rgba(236,238,233,.12); --pd-line-2:rgba(236,238,233,.07);
+  --pd-hi:#F0813E; --pd-hi-ink:#F0813E; --pd-hi-wash:#3A2313;
+  --pd-go:#4FB37E; --pd-go-wash:#1B2C22; --pd-late:#E5675C;
+}
+/* ---- Palette remap: fold stray tailwind colors into the ONE aesthetic ----
+   Tailwind v4 utilities read var(--color-<name>-<shade>). Redefining those
+   vars inside the driver scope re-skins every solid / wash / gradient at once,
+   so no component needs editing. green-family -> road green (success/active),
+   blue+indigo+cyan+violet+purple -> hi-vis amber (the old brand accent).
+   Red/amber/yellow keep their meaning. */
+.tms-driver{
+  --color-emerald-50:#EAF3EE; --color-emerald-100:#D5E8DE; --color-emerald-200:#AFD3BF; --color-emerald-300:#7FBA98; --color-emerald-400:#4B9E70; --color-emerald-500:#2C8558; --color-emerald-600:#227A4D; --color-emerald-700:#1F6E45; --color-emerald-800:#1A5A39; --color-emerald-900:#16482E; --color-emerald-950:#0C2A1B;
+  --color-green-50:#EAF3EE; --color-green-100:#D5E8DE; --color-green-200:#AFD3BF; --color-green-300:#7FBA98; --color-green-400:#4B9E70; --color-green-500:#2C8558; --color-green-600:#227A4D; --color-green-700:#1F6E45; --color-green-800:#1A5A39; --color-green-900:#16482E; --color-green-950:#0C2A1B;
+  --color-teal-50:#EAF3EE; --color-teal-100:#D5E8DE; --color-teal-200:#AFD3BF; --color-teal-300:#7FBA98; --color-teal-400:#4B9E70; --color-teal-500:#2C8558; --color-teal-600:#227A4D; --color-teal-700:#1F6E45; --color-teal-800:#1A5A39; --color-teal-900:#16482E; --color-teal-950:#0C2A1B;
+  --color-lime-50:#EAF3EE; --color-lime-100:#D5E8DE; --color-lime-200:#AFD3BF; --color-lime-300:#7FBA98; --color-lime-400:#4B9E70; --color-lime-500:#2C8558; --color-lime-600:#227A4D; --color-lime-700:#1F6E45; --color-lime-800:#1A5A39; --color-lime-900:#16482E; --color-lime-950:#0C2A1B;
+
+  --color-blue-50:#EAEDFA; --color-blue-100:#D2D9F4; --color-blue-200:#A6B3E9; --color-blue-300:#7086DA; --color-blue-400:#3D57C4; --color-blue-500:#1E3AAE; --color-blue-600:#0E2C9F; --color-blue-700:#00279C; --color-blue-800:#001E7A; --color-blue-900:#00185C; --color-blue-950:#000D33;
+  --color-sky-50:#EAEDFA; --color-sky-100:#D2D9F4; --color-sky-200:#A6B3E9; --color-sky-300:#7086DA; --color-sky-400:#3D57C4; --color-sky-500:#1E3AAE; --color-sky-600:#0E2C9F; --color-sky-700:#00279C; --color-sky-800:#001E7A; --color-sky-900:#00185C; --color-sky-950:#000D33;
+  --color-indigo-50:#EAEDFA; --color-indigo-100:#D2D9F4; --color-indigo-200:#A6B3E9; --color-indigo-300:#7086DA; --color-indigo-400:#3D57C4; --color-indigo-500:#1E3AAE; --color-indigo-600:#0E2C9F; --color-indigo-700:#00279C; --color-indigo-800:#001E7A; --color-indigo-900:#00185C; --color-indigo-950:#000D33;
+  --color-cyan-50:#EAEDFA; --color-cyan-100:#D2D9F4; --color-cyan-200:#A6B3E9; --color-cyan-300:#7086DA; --color-cyan-400:#3D57C4; --color-cyan-500:#1E3AAE; --color-cyan-600:#0E2C9F; --color-cyan-700:#00279C; --color-cyan-800:#001E7A; --color-cyan-900:#00185C; --color-cyan-950:#000D33;
+  --color-violet-50:#EAEDFA; --color-violet-100:#D2D9F4; --color-violet-200:#A6B3E9; --color-violet-300:#7086DA; --color-violet-400:#3D57C4; --color-violet-500:#1E3AAE; --color-violet-600:#0E2C9F; --color-violet-700:#00279C; --color-violet-800:#001E7A; --color-violet-900:#00185C; --color-violet-950:#000D33;
+  --color-purple-50:#EAEDFA; --color-purple-100:#D2D9F4; --color-purple-200:#A6B3E9; --color-purple-300:#7086DA; --color-purple-400:#3D57C4; --color-purple-500:#1E3AAE; --color-purple-600:#0E2C9F; --color-purple-700:#00279C; --color-purple-800:#001E7A; --color-purple-900:#00185C; --color-purple-950:#000D33;
+
+  /* neutrals -> one concrete ramp (green-grey), so every stray slate/gray/zinc
+     tints toward the brand hue instead of reading cold and unconsidered.
+     A full 50..950 ramp serves both light and dark utilities. */
+  --color-slate-50:#F5F6F3; --color-slate-100:#ECEEE9; --color-slate-200:#DDDFD8; --color-slate-300:#C6C9C0; --color-slate-400:#9DA096; --color-slate-500:#797D74; --color-slate-600:#5C605A; --color-slate-700:#43473F; --color-slate-800:#2C2F29; --color-slate-900:#1D201B; --color-slate-950:#141610;
+  --color-gray-50:#F5F6F3; --color-gray-100:#ECEEE9; --color-gray-200:#DDDFD8; --color-gray-300:#C6C9C0; --color-gray-400:#9DA096; --color-gray-500:#797D74; --color-gray-600:#5C605A; --color-gray-700:#43473F; --color-gray-800:#2C2F29; --color-gray-900:#1D201B; --color-gray-950:#141610;
+  --color-zinc-50:#F5F6F3; --color-zinc-100:#ECEEE9; --color-zinc-200:#DDDFD8; --color-zinc-300:#C6C9C0; --color-zinc-400:#9DA096; --color-zinc-500:#797D74; --color-zinc-600:#5C605A; --color-zinc-700:#43473F; --color-zinc-800:#2C2F29; --color-zinc-900:#1D201B; --color-zinc-950:#141610;
+  --color-neutral-50:#F5F6F3; --color-neutral-100:#ECEEE9; --color-neutral-200:#DDDFD8; --color-neutral-300:#C6C9C0; --color-neutral-400:#9DA096; --color-neutral-500:#797D74; --color-neutral-600:#5C605A; --color-neutral-700:#43473F; --color-neutral-800:#2C2F29; --color-neutral-900:#1D201B; --color-neutral-950:#141610;
+  --color-stone-50:#F5F6F3; --color-stone-100:#ECEEE9; --color-stone-200:#DDDFD8; --color-stone-300:#C6C9C0; --color-stone-400:#9DA096; --color-stone-500:#797D74; --color-stone-600:#5C605A; --color-stone-700:#43473F; --color-stone-800:#2C2F29; --color-stone-900:#1D201B; --color-stone-950:#141610;
+
+  /* pure white/black are never used raw in this house: soften to card + ink */
+  --color-white:#FBFBF9; --color-black:#181B18;
+}
+/* dark shell keeps true white/black for text/contrast on dark panels */
+.dark .tms-driver{ --color-white:#FFFFFF; --color-black:#000000; }
+
+/* driver shell: tabular figures everywhere, kill the global gradient */
+.tms-driver { background-image:none; font-variant-numeric:tabular-nums; }
+.pd-num{ font-variant-numeric:tabular-nums; letter-spacing:.01em; }
+/* live status dot: only mount on genuinely live data (prom-design law 4) */
+.pd-livedot{ width:6px; height:6px; border-radius:50%; box-shadow:0 0 0 0 rgba(31,122,77,.5); animation:pd-pulse 1.8s infinite; }
+@keyframes pd-pulse{ 0%{box-shadow:0 0 0 0 rgba(31,122,77,.45)} 70%{box-shadow:0 0 0 7px rgba(31,122,77,0)} 100%{box-shadow:0 0 0 0 rgba(31,122,77,0)} }
+@media (prefers-reduced-motion:reduce){ .pd-livedot{ animation:none } }
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -18,7 +18,7 @@ export default async function MobileLayout({
   const session = await getDriverSession()
   
   return (
-    <div className="flex flex-col h-[100dvh] w-screen overflow-hidden bg-background text-foreground relative">
+    <div className="tms-driver flex flex-col h-[100dvh] w-screen overflow-hidden bg-background text-foreground relative">
       <SyncManager />
       <SWUpdater />
       <SessionStabilizer session={session} />

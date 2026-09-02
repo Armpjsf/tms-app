@@ -64,10 +64,11 @@ export function MobileHeader({ title, showBack, rightElement }: Props) {
             </button>
         )}
         <div className="flex flex-col min-w-0">
-            <h1 className="font-black text-accent text-xl tracking-tighter uppercase leading-none italic truncate">{title}</h1>
-            <span 
+            <h1 className="font-bold text-foreground text-lg tracking-tight leading-none truncate">{title}</h1>
+            <span
                 onClick={clearCache}
-                className="text-[8px] font-black text-primary italic cursor-pointer hover:opacity-80 transition-opacity uppercase tracking-[0.2em] mt-0.5"
+                className="text-[8px] font-bold cursor-pointer hover:opacity-80 transition-opacity uppercase tracking-[0.18em] mt-1"
+                style={{ color: 'var(--pd-ink-3)' }}
             >
 DRouteMind v1.2.5
             </span>

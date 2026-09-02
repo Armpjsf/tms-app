@@ -66,18 +66,19 @@ async function JobsContent({ driverId, searchParams }: { driverId: string, searc
   }
 
   return (
-    <div className="relative z-10 space-y-8">
+    <div className="relative z-10 space-y-5">
         {/* Header Section */}
-        <div className="flex justify-between items-end px-1">
-            <div className="space-y-1">
-                <p className="text-accent text-xs font-black uppercase tracking-[0.3em]">LogisPro Fleet</p>
-                <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase italic">รายการงาน</h2>
+        <div className="flex justify-between items-center px-1">
+            <div>
+                <h2 className="text-2xl font-bold text-foreground tracking-tight leading-none">รายการงาน</h2>
+                <p className="text-muted-foreground text-xs font-medium mt-1.5">งานที่มอบหมายและประวัติการวิ่ง</p>
             </div>
-            <div className="flex items-center gap-3 pb-1">
-                <div className="inline-flex items-center gap-1.5 h-11 px-4 bg-primary/10 rounded-2xl border border-primary/20 shadow-sm">
-                    <span className="text-primary font-black text-xl leading-none">{displayJobs.length}</span>
-                    <span className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">งาน</span>
-                </div>
+            <div
+                className="inline-flex items-baseline gap-1 h-10 px-3.5 rounded-xl"
+                style={{ background: 'var(--pd-hi-wash)', border: '1px solid var(--pd-line)' }}
+            >
+                <span className="font-bold text-lg leading-none pd-num" style={{ color: 'var(--pd-hi-ink)' }}>{displayJobs.length}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'var(--pd-hi-ink)' }}>งาน</span>
             </div>
         </div>
 
@@ -93,12 +94,8 @@ export default async function DriverJobsPage(props: Props) {
   if (!session) redirect("/mobile/login")
 
   return (
-    <div className="min-h-full bg-background pb-32 pt-24 px-6 relative overflow-hidden">
-       {/* High-end Background Decor */}
-      <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
-      
-      <MobileHeader title="Management" rightElement={<MobileJobFilter searchParams={searchParams} />} />
+    <div className="min-h-full bg-background pb-32 pt-20 px-4 relative overflow-hidden">
+      <MobileHeader title="รายการงาน" rightElement={<MobileJobFilter searchParams={searchParams} />} />
       
       <Suspense fallback={<JobsLoading />}>
           <JobsContent driverId={session.driverId} searchParams={searchParams} />
