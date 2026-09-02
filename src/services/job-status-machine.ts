@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logActivity } from "@/lib/supabase/logs";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { isCompleted } from "@/lib/constants/job-status";
 import { calculateJobEmissions } from "@/lib/utils/esg-utils";
 import { getCarbonFactors } from "@/lib/actions/carbon-factors";
@@ -158,10 +159,19 @@ export async function transitionJobStatus(
       throw updateError;
     }
  
-    // Trigger LINE notification if job is completed or delivered
+    // Trigger LINE notification if job is completed or delivered.
+    // Run it via after() so the serverless function stays alive until the
+    // notification finishes. Previously this was fire-and-forget (not awaited),
+    // so on Vercel the platform could freeze/kill the lambda once the POD
+    // response returned — dropping completion alerts intermittently (the
+    // notification never even claimed its Delivery_Notified_At slot).
     if (isCompleted(nextStatus)) {
-      sendDeliveryCompletionNotification(jobId).catch(err => {
-        console.error('[JobStatusMachine] Notification trigger failed:', err);
+      after(async () => {
+        try {
+          await sendDeliveryCompletionNotification(jobId);
+        } catch (err) {
+          console.error('[JobStatusMachine] Notification trigger failed:', err);
+        }
       });
     }
 
@@ -172,7 +182,9 @@ export async function transitionJobStatus(
     // path, so POD-completed jobs never notified admins.
     const NOTIFY_STATUSES = ['Picked Up', 'In Transit', 'Delivered', 'Completed', 'Failed', 'SOS'];
     if (NOTIFY_STATUSES.includes(nextStatus)) {
-      (async () => {
+      // after() (not fire-and-forget) so the Web Push isn't dropped when the
+      // serverless function returns before the promise settles.
+      after(async () => {
         try {
           const { data: j } = await supabase
             .from('Jobs_Main')
@@ -184,7 +196,7 @@ export async function transitionJobStatus(
         } catch (err) {
           console.error('[JobStatusMachine] Admin push failed:', err);
         }
-      })();
+      });
     }
  
     // 5. Log the transition
