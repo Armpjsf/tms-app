@@ -16,6 +16,7 @@ import { optimizeRoute, RoutePoint } from '@/lib/ai/route-optimizer'
 import { appendJobToMaster } from '@/lib/actions/master-sheet-sync'
 import { getSession } from '@/lib/session'
 import { resolveDistanceKm } from '@/lib/ai/distance'
+import { resolvePcgPrice, PCG_CUSTOMER_ID } from '@/lib/pricing/pcg-rate-card'
 
 export type JobFormData = {
   Job_ID: string
@@ -77,6 +78,32 @@ const parseIfString = (val: string | undefined | null) => {
 }
 
 import { calculateJobPrice } from "@/services/pricing-engine"
+
+// The ordered drop names for a job (multi-drop JSON first, else Dest_Location).
+function jobDropNames(data: JobFormData): string[] {
+  const parsed = parseIfString(data.original_destinations_json as string)
+  if (Array.isArray(parsed)) {
+    const names = parsed
+      .map(p => String((p as { name?: unknown })?.name ?? '').trim())
+      .filter(Boolean)
+    if (names.length > 0) return names
+  }
+  return data.Dest_Location ? [String(data.Dest_Location)] : []
+}
+
+// PCG customer price = rate of the farthest drop at the day's diesel band.
+// Only fills when the customer is PCG and no price was entered; a lookup miss
+// (unknown fuel price / unmatched destination) leaves the price for manual entry.
+async function applyPcgAutoPrice(data: JobFormData): Promise<void> {
+  try {
+    if (String(data.Customer_ID || '') !== PCG_CUSTOMER_ID) return
+    if (Number(data.Price_Cust_Total) > 0) return
+    const result = await resolvePcgPrice(jobDropNames(data), data.Plan_Date as string | undefined)
+    if (result) data.Price_Cust_Total = result.price
+  } catch (e) {
+    console.warn('[createJob] PCG auto-price failed:', e instanceof Error ? e.message : e)
+  }
+}
 
 export async function createJob(data: JobFormData) {
   const supabase = createAdminClient()
@@ -144,6 +171,10 @@ export async function createJob(data: JobFormData) {
   // client-side calculation completing before save.
   await hydrateJobCoordinates(data)
   data.Est_Distance_KM = await resolveJobDistance(data)
+
+  // PCG customer: auto-fill customer price from the PCG rate card (rate of the
+  // farthest drop at the day's diesel band) when no price was entered.
+  await applyPcgAutoPrice(data)
 
   // Attempt 1
   const payload = buildInsertPayload(data, driverName, subId, pricing.unitPrice)
@@ -865,6 +896,13 @@ export async function createBulkJobs(
   // Apply Auto-calculation asynchronously to support fuel lookups
   const finalizedData = await Promise.all(finalCleanData.map(async (j) => {
     let total = Number(j.Price_Cust_Total) || 0
+    // PCG: price from the rate card (farthest drop × diesel band) takes priority.
+    if (total === 0 && String(j.Customer_ID || '') === PCG_CUSTOMER_ID) {
+        try {
+            const pcg = await resolvePcgPrice(jobDropNames(j as JobFormData), j.Plan_Date as string | undefined)
+            if (pcg) total = pcg.price
+        } catch (e) { console.warn('[import] PCG auto-price failed:', e instanceof Error ? e.message : e) }
+    }
     if (total === 0 && j.Customer_ID) {
         const pricing = await calculateJobPrice({
             ...j,
