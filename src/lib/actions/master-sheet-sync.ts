@@ -581,6 +581,56 @@ export async function sortSheetTab(
  * Append one verified job as a row to the MASTER tab of the Google Sheet.
  * Best-effort: returns {success,error} and never throws.
  */
+// ฟอร์แมตแถวที่เขียนเข้าชีต MASTER ให้ตรงกับที่ใช้อยู่: Angsana New 14 ตัวหนา กึ่งกลาง
+// (values.append เขียนแค่ค่า ไม่ก็อปฟอร์แมต แถวใหม่จึงกลายเป็นฟอนต์ default/Arial)
+const MASTER_FONT = process.env.MASTER_SHEET_FONT || 'Angsana New'
+const MASTER_FONT_SIZE = Number(process.env.MASTER_SHEET_FONT_SIZE || 14)
+
+// A1 range เช่น 'สยามรุ่งเรือง'!A123:X125 → { title, startRow(1-based), endRow }
+function parseUpdatedRange(updatedRange: string): { title: string; startRow: number; endRow: number } | null {
+  const bang = updatedRange.lastIndexOf('!')
+  if (bang < 0) return null
+  let title = updatedRange.slice(0, bang)
+  if (title.startsWith("'") && title.endsWith("'")) title = title.slice(1, -1).replace(/''/g, "'")
+  const a1 = updatedRange.slice(bang + 1)
+  const m = a1.match(/^[A-Z]+(\d+)(?::[A-Z]+(\d+))?$/)
+  if (!m) return null
+  const startRow = parseInt(m[1], 10)
+  const endRow = m[2] ? parseInt(m[2], 10) : startRow
+  return { title, startRow, endRow }
+}
+
+async function applyMasterRowFormat(sheets: SheetsClient, updatedRange: string | null | undefined): Promise<void> {
+  if (!updatedRange) return
+  try {
+    const parsed = parseUpdatedRange(updatedRange)
+    if (!parsed) return
+    const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID, fields: 'sheets.properties(sheetId,title)' })
+    const sheetId = meta.data.sheets?.find(s => s.properties?.title === parsed.title)?.properties?.sheetId
+    if (sheetId == null) return
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: SHEET_ID,
+      requestBody: {
+        requests: [{
+          repeatCell: {
+            range: { sheetId, startRowIndex: parsed.startRow - 1, endRowIndex: parsed.endRow },
+            cell: {
+              userEnteredFormat: {
+                horizontalAlignment: 'CENTER',
+                verticalAlignment: 'MIDDLE',
+                textFormat: { fontFamily: MASTER_FONT, fontSize: MASTER_FONT_SIZE, bold: true },
+              },
+            },
+            fields: 'userEnteredFormat(horizontalAlignment,verticalAlignment,textFormat(fontFamily,fontSize,bold))',
+          },
+        }],
+      },
+    })
+  } catch (e) {
+    console.warn('[MASTER_SHEET] apply row format failed:', e instanceof Error ? e.message : e)
+  }
+}
+
 export async function appendJobToMaster(jobId: string): Promise<{ success: boolean; error?: string; skipped?: boolean }> {
   try {
     const supabase = createAdminClient()
@@ -613,13 +663,16 @@ export async function appendJobToMaster(jobId: string): Promise<{ success: boole
     // One row per drop (multi-drop → main row + one row per extra destination).
     const values = rowObjects.map(byName => order.map(h => byName[h] ?? ''))
 
-    await sheets.spreadsheets.values.append({
+    const appendRes = await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
       range: `${qtab}!A:BZ`,
       valueInputOption: 'USER_ENTERED',
       insertDataOption: 'INSERT_ROWS',
       requestBody: { values },
     })
+
+    // แถวใหม่ให้ฟอนต์ตรงกับชีต (Angsana New 14 ตัวหนา กึ่งกลาง) ก่อน sort
+    await applyMasterRowFormat(sheets, appendRes.data.updates?.updatedRange)
 
     // Auto-sort the tab chronologically by Date & Customer
     await sortSheetTab(sheets, tabOverride)
@@ -750,13 +803,14 @@ export async function verifyAndBackfillHistorical(
       }
 
       for (let i = 0; i < rows.length; i += 500) {
-        await sheets.spreadsheets.values.append({
+        const res = await sheets.spreadsheets.values.append({
           spreadsheetId: SHEET_ID,
           range: `${qtab}!A:BZ`,
           valueInputOption: 'USER_ENTERED',
           insertDataOption: 'INSERT_ROWS',
           requestBody: { values: rows.slice(i, i + 500) },
         })
+        await applyMasterRowFormat(sheets, res.data.updates?.updatedRange)
       }
       totalAppended += rows.length
 
@@ -879,13 +933,14 @@ export async function backfillMasterSheet(
       }
 
       for (let i = 0; i < rows.length; i += 500) {
-        await sheets.spreadsheets.values.append({
+        const res = await sheets.spreadsheets.values.append({
           spreadsheetId: SHEET_ID,
           range: `${qtab}!A:BZ`,
           valueInputOption: 'USER_ENTERED',
           insertDataOption: 'INSERT_ROWS',
           requestBody: { values: rows.slice(i, i + 500) },
         })
+        await applyMasterRowFormat(sheets, res.data.updates?.updatedRange)
       }
       totalAppended += rows.length
     }
