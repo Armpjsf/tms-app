@@ -575,29 +575,22 @@ export async function getDriverPayments(filters?: { dateFrom?: string, dateTo?: 
         const branchId = await getUserBranchId()
         const isSuper = await isSuperAdmin()
 
-        let query = supabase.from('Driver_Payments').select('*')
+        // Non-SuperAdmins with no branch see nothing (safety).
+        if (!isSuper && !(branchId && branchId !== 'All')) return []
 
-        // STRICT ISOLATION
-        if (!isSuper) {
-            if (branchId && branchId !== 'All') {
+        // Page past the 1000-row cap so the payment history list + export are complete.
+        const data = await fetchAllRows<DriverPayment>(() => {
+            let query = supabase.from('Driver_Payments').select('*')
+            if (!isSuper) {
                 query = query.or(`Branch_ID.eq."${branchId}",Branch_ID.is.null`)
-            } else {
-                return []
+            } else if (branchId && branchId !== 'All') {
+                query = query.eq('Branch_ID', branchId)
             }
-        } else if (branchId && branchId !== 'All') {
-            query = query.eq('Branch_ID', branchId)
-        }
-
-        if (filters?.dateFrom) query = query.gte('Payment_Date', filters.dateFrom)
-        if (filters?.dateTo) query = query.lte('Payment_Date', filters.dateTo)
-        if (filters?.status && filters.status !== 'all') query = query.eq('Status', filters.status)
-
-        const { data, error } = await query
-            .order('Created_At', { ascending: false })
-        
-        if (error) {
-            return []
-        }
+            if (filters?.dateFrom) query = query.gte('Payment_Date', filters.dateFrom)
+            if (filters?.dateTo) query = query.lte('Payment_Date', filters.dateTo)
+            if (filters?.status && filters.status !== 'all') query = query.eq('Status', filters.status)
+            return query.order('Created_At', { ascending: false })
+        })
         return data as DriverPayment[]
     } catch {
         return []

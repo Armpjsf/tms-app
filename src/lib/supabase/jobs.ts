@@ -6,6 +6,7 @@ import { getDriverSession } from '@/lib/auth-utils'
 import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions"
 import { todayTH } from "@/lib/utils/date-th"
 import { isDeliveredOrSettled } from "@/lib/constants/job-status"
+import { fetchAllRows } from "@/lib/supabase/analytics-helpers"
  
 export type JobAssignment = {
   Vehicle_Type: string
@@ -1016,61 +1017,41 @@ export async function getJobsForBilling(
         // while strictly enforcing branch-level isolation programmatically below.
         const supabase = createAdminClient()
 
-        let dbQuery = supabase
-            .from('Jobs_Main')
-            .select('Job_ID, Job_Status, Plan_Date, Customer_ID, Customer_Name, Route_Name, Vehicle_Plate, Vehicle_Type, Origin_Location, Dest_Location, Price_Cust_Total, Price_Per_Unit, Loaded_Qty, Created_At, Branch_ID, Driver_ID, Driver_Name, Cost_Driver_Total, extra_costs_json, Driver_Payment_ID, Billing_Note_ID, Invoice_ID')
-            .in('Job_Status', ['Completed', 'Delivered', 'Verified'])
-        
-        if (mode === 'driver') {
-            // For driver payments, only filter out if already paid to driver
-            dbQuery = dbQuery.is('Driver_Payment_ID', null)
-            // โหลดเฉพาะงานของคนขับที่เลือก (ลด payload จากพันงานเหลือหลักสิบ)
-            if (driverNames && driverNames.length > 0) {
-                dbQuery = dbQuery.in('Driver_Name', driverNames)
-            }
-        } else {
-            // For customer billing, filter out if already invoiced/noted
-            dbQuery = dbQuery.is('Billing_Note_ID', null).is('Invoice_ID', null)
-        }
-        
-        if (customerId) {
-            dbQuery = dbQuery.eq('Customer_ID', customerId)
-        } else if (!isSuper) {
-            // STRICT ISOLATION for regular staff
-            if (branchId && branchId !== 'All') {
-                dbQuery = dbQuery.eq('Branch_ID', branchId)
+        // Guard: regular staff accessing 'All'/no branch (no customer scope) see nothing.
+        if (!customerId && !isSuper && !(branchId && branchId !== 'All')) return []
+
+        // A default 45-day window (only when no explicit dates/customer) keeps the
+        // initial load snappy; otherwise honor the caller's range. Either way we
+        // page past PostgREST's 1000-row cap so billing never silently drops
+        // billable jobs (a .limit(10000) was clamped to 1000 — under-billing risk).
+        const defaultPast = new Date()
+        defaultPast.setDate(defaultPast.getDate() - 45)
+        const useDefaultWindow = !startDate && !endDate && !explicitCustomerId
+
+        // Build a FRESH query each page (fetchAllRows calls this per 1000-row page).
+        const buildQuery = () => {
+            let q = supabase
+                .from('Jobs_Main')
+                .select('Job_ID, Job_Status, Plan_Date, Customer_ID, Customer_Name, Route_Name, Vehicle_Plate, Vehicle_Type, Origin_Location, Dest_Location, Price_Cust_Total, Price_Per_Unit, Loaded_Qty, Created_At, Branch_ID, Driver_ID, Driver_Name, Cost_Driver_Total, extra_costs_json, Driver_Payment_ID, Billing_Note_ID, Invoice_ID')
+                .in('Job_Status', ['Completed', 'Delivered', 'Verified'])
+            if (mode === 'driver') {
+                q = q.is('Driver_Payment_ID', null)
+                if (driverNames && driverNames.length > 0) q = q.in('Driver_Name', driverNames)
             } else {
-                // If regular staff tries to access 'All' or has no branch, return nothing for safety
-                return []
+                q = q.is('Billing_Note_ID', null).is('Invoice_ID', null)
             }
-        } else if (branchId && branchId !== 'All') {
-            // SuperAdmin only filters if a specific branch is selected
-            dbQuery = dbQuery.eq('Branch_ID', branchId)
+            if (customerId) q = q.eq('Customer_ID', customerId)
+            else if (!isSuper && branchId && branchId !== 'All') q = q.eq('Branch_ID', branchId)
+            else if (isSuper && branchId && branchId !== 'All') q = q.eq('Branch_ID', branchId)
+            q = q.order('Plan_Date', { ascending: false })
+            if (startDate) q = q.gte('Plan_Date', startDate)
+            if (endDate) q = q.lte('Plan_Date', endDate)
+            if (useDefaultWindow) q = q.gte('Plan_Date', defaultPast.toISOString().split('T')[0])
+            return q
         }
 
-        let query = dbQuery.order('Plan_Date', { ascending: false })
-            
-        // Add default date range if not provided (e.g. last 30 days) to keep initial load snappy
-        if (startDate || endDate) {
-            if (startDate) {
-                query = query.gte('Plan_Date', startDate)
-            }
-            if (endDate) {
-                query = query.lte('Plan_Date', endDate)
-            }
-            // Lift limit to 10,000 when explicit dates are searched to guarantee complete exports
-            query = query.limit(10000)
-        } else {
-            if (!explicitCustomerId) {
-                const defaultPast = new Date()
-                defaultPast.setDate(defaultPast.getDate() - 45)
-                query = query.gte('Plan_Date', defaultPast.toISOString().split('T')[0])
-            }
-            query = query.limit(1000)
-        }
-        
-        const { data } = await query
-        
+        const data = await fetchAllRows<Partial<Job>>(() => buildQuery())
+
         if (!data || data.length === 0) {
             return []
         }
