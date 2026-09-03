@@ -106,6 +106,8 @@ export async function getCostPerTrip(startDate?: string, endDate?: string, custo
   // Fetch all unique fuel prices for the relevant dates in one go
   const rows = data as CostTripSourceRow[]
   const uniqueDates = Array.from(new Set(rows.map((d) => d.Plan_Date).filter(Boolean))) as string[]
+  const uniquePlates = Array.from(new Set(rows.map((d) => d.Vehicle_Plate).filter(Boolean))) as string[]
+
   const { data: fuelData } = await supabase
     .from('daily_fuel_prices')
     .select('Date, Price')
@@ -122,30 +124,110 @@ export async function getCostPerTrip(startDate?: string, endDate?: string, custo
     .maybeSingle()
   const globalFallbackPrice = latestFuel?.Price || 35.0 // Baht/Litre
 
+  // Fetch actual Fuel Logs for the vehicles & date range
+  let fuelLogs: { Vehicle_Plate: string | null; Date_Time: string | null; Price_Total: number | null; Liters: number | null }[] = []
+  if (uniquePlates.length > 0) {
+    fuelLogs = await fetchAllRows(() => {
+      let fQuery = supabase
+        .from('Fuel_Logs')
+        .select('Vehicle_Plate, Date_Time, Price_Total, Liters')
+        .in('Vehicle_Plate', uniquePlates)
+        .gte('Date_Time', `${start}T00:00:00`)
+        .lte('Date_Time', `${end}T23:59:59`)
+      return fQuery
+    })
+  }
+
+  // Fetch actual Repair/Maintenance Tickets for the vehicles & date range
+  let maintLogs: { Vehicle_Plate: string | null; Date_Report: string | null; Cost_Total: number | null }[] = []
+  if (uniquePlates.length > 0) {
+    maintLogs = await fetchAllRows(() => {
+      let mQuery = supabase
+        .from('Repair_Tickets')
+        .select('Vehicle_Plate, Date_Report, Cost_Total')
+        .in('Vehicle_Plate', uniquePlates)
+        .eq('Status', 'completed')
+        .gte('Date_Report', start)
+        .lte('Date_Report', end)
+      return mQuery
+    })
+  }
+
+  const normalizePlate = (plate?: string | null) => (plate || '').replace(/\s+/g, '').trim()
+
+  // Map Fuel Logs by (Vehicle_Plate | YYYY-MM-DD)
+  const vehicleDayFuel = new Map<string, { cost: number; liters: number }>()
+  for (const f of fuelLogs) {
+    if (!f.Vehicle_Plate || !f.Date_Time) continue
+    const date = f.Date_Time.slice(0, 10)
+    const key = `${normalizePlate(f.Vehicle_Plate)}|${date}`
+    const curr = vehicleDayFuel.get(key) || { cost: 0, liters: 0 }
+    curr.cost += Number(f.Price_Total) || 0
+    curr.liters += Number(f.Liters) || 0
+    vehicleDayFuel.set(key, curr)
+  }
+
+  // Map Maintenance Logs by (Vehicle_Plate | YYYY-MM-DD)
+  const vehicleDayMaint = new Map<string, number>()
+  for (const m of maintLogs) {
+    if (!m.Vehicle_Plate || !m.Date_Report) continue
+    const date = m.Date_Report.slice(0, 10)
+    const key = `${normalizePlate(m.Vehicle_Plate)}|${date}`
+    const curr = vehicleDayMaint.get(key) || 0
+    vehicleDayMaint.set(key, curr + (Number(m.Cost_Total) || 0))
+  }
+
+  // Calculate day total distance & trip count per vehicle-day for proportional cost allocation
+  const dayEstDistance = new Map<string, number>()
+  const dayTripCount = new Map<string, number>()
+  for (const r of rows) {
+    const normPlate = normalizePlate(r.Vehicle_Plate)
+    const date = String(r.Plan_Date || '').slice(0, 10)
+    const key = `${normPlate}|${date}`
+    const dist = Number(r.Est_Distance_KM) || 0
+    dayEstDistance.set(key, (dayEstDistance.get(key) || 0) + dist)
+    dayTripCount.set(key, (dayTripCount.get(key) || 0) + 1)
+  }
+
   const trips: TripCost[] = rows.map((d) => {
     const dist = Number(d.Est_Distance_KM) || 0
     const planDate = d.Plan_Date || null
     const loadedQty = Number(d.Loaded_Qty) || 0
-    
+    const normPlate = normalizePlate(d.Vehicle_Plate)
+    const bucketKey = planDate ? `${normPlate}|${planDate}` : ''
+
     // Estimates (For reference only)
     const dailyPrice = planDate ? fuelMap.get(planDate) || 0 : 0
-    // If we have daily price, we can use it. But for now, 3.5 seems to be a fixed 'rate per KM' in the existing logic.
-    // If the user wants the calculation to be dynamic based on fuel price, we'd need a consumption rate.
-    // However, the user specifically asked for the "Fuel Price column" to be added/fixed.
     const fuelEst = dist > 0 ? dist * 3.5 : 0
     const maintEst = dist * 1.25
 
-    // Real data
-    const fuelReal = 0 // Will read from DB if added later
-    const maintReal = 0 // Will read from DB if added later
-    const tollCost = 0 // Will read from DB if added later
-    
+    // Real fuel cost from Fuel_Logs
+    let fuelReal = 0
+    const fuelBucket = bucketKey ? vehicleDayFuel.get(bucketKey) : null
+    if (fuelBucket && fuelBucket.cost > 0) {
+      const totalDayDist = dayEstDistance.get(bucketKey) || 0
+      const totalDayTrips = dayTripCount.get(bucketKey) || 1
+      const share = totalDayDist > 0 ? (dist / totalDayDist) : (1 / totalDayTrips)
+      fuelReal = Math.round(fuelBucket.cost * share)
+    }
+
+    // Real maintenance cost from Repair_Tickets
+    let maintReal = 0
+    const maintBucketCost = (bucketKey ? vehicleDayMaint.get(bucketKey) : null) || 0
+    if (maintBucketCost > 0) {
+      const totalDayDist = dayEstDistance.get(bucketKey) || 0
+      const totalDayTrips = dayTripCount.get(bucketKey) || 1
+      const share = totalDayDist > 0 ? (dist / totalDayDist) : (1 / totalDayTrips)
+      maintReal = Math.round(maintBucketCost * share)
+    }
+
+    const tollCost = 0
     const driverCost = Number(d.Cost_Driver_Total) || 0
     const extraCost = Number(d.Cost_Driver_Extra) || 0
     
     const revenue = (Number(d.Price_Cust_Total) || 0) + (Number(d.Price_Cust_Extra) || 0)
     
-    // Total cost now EXCLUDES estimates, only uses real data
+    // Total cost now includes actual fuel and actual maintenance
     const totalCost = driverCost + fuelReal + maintReal + tollCost + extraCost
     const profit = revenue - totalCost
     const profitPct = revenue > 0 ? (profit / revenue) * 100 : 0
