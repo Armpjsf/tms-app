@@ -16,6 +16,7 @@ import {
 import { suggestDriverId, parseFileName, type DriverLite } from "@/lib/payslip/match"
 import { buildVoucherData, type VoucherData } from "@/lib/payslip/voucher"
 import { getDriverPaymentByIdWithJobs } from "@/lib/supabase/billing"
+import { fetchAllRows } from "@/lib/supabase/analytics-helpers"
 import { revalidatePath } from "next/cache"
 
 const BUCKET = "company-assets"
@@ -197,11 +198,10 @@ export async function confirmPayslips(
 export async function listPayslipsAdmin(): Promise<Record<string, unknown>[]> {
   await requireAdmin()
   const supabase = createAdminClient()
-  const { data } = await supabase
+  const data = await fetchAllRows(() => supabase
     .from(TABLE)
     .select("id, Driver_ID, driver_name, sheet_name, title, period_label, branch_label, total_amount, batch_id, source_file, uploaded_at")
-    .order("uploaded_at", { ascending: false })
-    .limit(2000)
+    .order("uploaded_at", { ascending: false }))
   return data || []
 }
 

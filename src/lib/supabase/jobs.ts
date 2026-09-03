@@ -1121,29 +1121,24 @@ export async function getDriverPendingCounts(
         const branchId = await getUserBranchId()
         const supabase = createAdminClient()
 
-        let q = supabase
-            .from('Jobs_Main')
-            .select('Driver_Name, Plan_Date')
-            .in('Job_Status', ['Completed', 'Delivered', 'Verified'])
-            .is('Driver_Payment_ID', null)
+        if (!isSuper && !(branchId && branchId !== 'All')) return {}
 
-        if (!isSuper) {
+        const past = new Date(); past.setDate(past.getDate() - 45)
+        const useDefault = !startDate && !endDate
+        // Page past the 1000-row cap so per-driver pending counts are complete
+        // (.limit(20000) was clamped to 1000, undercounting the badges).
+        const data = await fetchAllRows<{ Driver_Name?: string | null }>(() => {
+            let q = supabase
+                .from('Jobs_Main')
+                .select('Driver_Name, Plan_Date')
+                .in('Job_Status', ['Completed', 'Delivered', 'Verified'])
+                .is('Driver_Payment_ID', null)
             if (branchId && branchId !== 'All') q = q.eq('Branch_ID', branchId)
-            else return {}
-        } else if (branchId && branchId !== 'All') {
-            q = q.eq('Branch_ID', branchId)
-        }
-
-        if (startDate || endDate) {
             if (startDate) q = q.gte('Plan_Date', startDate)
             if (endDate) q = q.lte('Plan_Date', endDate)
-            q = q.limit(20000)
-        } else {
-            const past = new Date(); past.setDate(past.getDate() - 45)
-            q = q.gte('Plan_Date', past.toISOString().split('T')[0]).limit(20000)
-        }
-
-        const { data } = await q
+            if (useDefault) q = q.gte('Plan_Date', past.toISOString().split('T')[0])
+            return q
+        })
         const counts: Record<string, number> = {}
         for (const j of (data || []) as { Driver_Name?: string | null }[]) {
             const name = (j.Driver_Name || '').trim()

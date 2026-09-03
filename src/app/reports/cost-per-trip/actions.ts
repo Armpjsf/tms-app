@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, getCustomerId, isAdmin } from "@/lib/permissions"
+import { fetchAllRows } from "@/lib/supabase/analytics-helpers"
 
 export interface TripCost {
   Job_ID: string
@@ -80,32 +81,26 @@ export async function getCostPerTrip(startDate?: string, endDate?: string, custo
   const start = startDate || (endDate ? endDate : defaultStart.toISOString().split('T')[0])
   const end = endDate || (startDate ? startDate : now.toISOString().split('T')[0])
 
-  let query = supabase
-    .from('Jobs_Main')
-    .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Origin_Location, Dest_Location, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Est_Distance_KM, Loaded_Qty')
-    // Include Billed/Paid and Verified so completed work that has moved into invoicing or verification still
-    // counts toward profitability — those are the jobs with confirmed revenue.
-    .in('Job_Status', ['Completed', 'Delivered', 'Finished', 'Closed', 'Billed', 'Paid', 'Verified'])
-    .gte('Plan_Date', start)
-    .lte('Plan_Date', end)
-    .order('Plan_Date', { ascending: false })
-    .limit(1500)
-
-  if (customerId) {
-    query = query.eq('Customer_ID', customerId)
-  } else {
-    if (branchId && branchId !== 'All') {
-      query = query.eq('Branch_ID', branchId)
+  // Page past the 1000-row cap so the profitability report covers the whole
+  // filtered range (.limit(1500) was clamped to 1000, truncating trips/costs).
+  const data = await fetchAllRows<CostTripSourceRow>(() => {
+    let query = supabase
+      .from('Jobs_Main')
+      .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Origin_Location, Dest_Location, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Est_Distance_KM, Loaded_Qty')
+      // Include Billed/Paid and Verified so completed work that has moved into
+      // invoicing/verification still counts toward profitability.
+      .in('Job_Status', ['Completed', 'Delivered', 'Finished', 'Closed', 'Billed', 'Paid', 'Verified'])
+      .gte('Plan_Date', start)
+      .lte('Plan_Date', end)
+      .order('Plan_Date', { ascending: false })
+    if (customerId) {
+      query = query.eq('Customer_ID', customerId)
+    } else {
+      if (branchId && branchId !== 'All') query = query.eq('Branch_ID', branchId)
+      if (customerNames && customerNames.length > 0) query = query.in('Customer_Name', customerNames)
     }
-    if (customerNames && customerNames.length > 0) {
-      query = query.in('Customer_Name', customerNames)
-    }
-  }
-
-  const { data, error } = await query
-  if (error) {
-    throw new Error(`DB Error in getCostPerTrip: ${error.message} (Code: ${error.code})`)
-  }
+    return query
+  })
   if (!data) return { trips: [], summary: emptySummary() }
 
   // Fetch all unique fuel prices for the relevant dates in one go
