@@ -4,7 +4,7 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
 import { getDriverLeaderboard } from './analytics'
-import { PIPELINE_STATUSES } from './analytics-helpers'
+import { PIPELINE_STATUSES, fetchAllRows } from './analytics-helpers'
 
 export type WorkforceAnalytics = {
   kpis: {
@@ -64,17 +64,15 @@ export async function getWorkforceAnalytics(
   
   // KPI: Active Now (Drivers with jobs in active state for the specific branch)
   let activeDriversCount = 0
-  let activeJobsQueryBuilder = supabase
-     .from('Jobs_Main')
-     .select('Driver_ID')
-     .in('Job_Status', PIPELINE_STATUSES)
-     .not('Driver_ID', 'is', null)
-  
-  if (effectiveBranchId) {
-    activeJobsQueryBuilder = activeJobsQueryBuilder.eq('Branch_ID', effectiveBranchId)
-  }
-
-  const { data: activeJobs } = await activeJobsQueryBuilder
+  const activeJobs = await fetchAllRows<any>(() => {
+    let activeJobsQueryBuilder = supabase
+      .from('Jobs_Main')
+      .select('Driver_ID')
+      .in('Job_Status', PIPELINE_STATUSES)
+      .not('Driver_ID', 'is', null)
+    if (effectiveBranchId) activeJobsQueryBuilder = activeJobsQueryBuilder.eq('Branch_ID', effectiveBranchId)
+    return activeJobsQueryBuilder
+  })
   
   if (activeJobs) {
       const uniqueDrivers = new Set(activeJobs.map((j: { Driver_ID: string }) => j.Driver_ID))

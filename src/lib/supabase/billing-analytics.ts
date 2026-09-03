@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
+import { fetchAllRows } from './analytics-helpers'
 
 export type BillingAnalytics = {
   accountsReceivable: {
@@ -68,24 +69,15 @@ export async function getBillingAnalytics(
   const dayMs = 86400000
 
   // 1. Fetch Accounts Receivable (Billing Notes)
-  let arQuery = supabase
-    .from('Billing_Notes')
-    .select('Billing_Note_ID, Customer_Name, Total_Amount, Status, Due_Date, Billing_Date, Branch_ID')
-    .neq('Status', 'Cancelled')
-    .neq('Status', 'Paid') // Only unpaid
-  
-  if (effectiveBranchId && effectiveBranchId !== 'All') {
-    arQuery = arQuery.eq('Branch_ID', effectiveBranchId)
-  }
-
-  const { data: unpaidNotes, error } = await arQuery
-
-  if (error) {
-    console.error("AR Analytics Error:", error)
-    return emptyResult
-  }
-
-  const receivables = unpaidNotes || []
+  const receivables = await fetchAllRows<{ Billing_Note_ID: string; Customer_Name?: string; Total_Amount?: number; Status?: string; Due_Date?: string; Billing_Date?: string }>(() => {
+    let arQuery = supabase
+      .from('Billing_Notes')
+      .select('Billing_Note_ID, Customer_Name, Total_Amount, Status, Due_Date, Billing_Date, Branch_ID')
+      .neq('Status', 'Cancelled')
+      .neq('Status', 'Paid') // Only unpaid
+    if (effectiveBranchId && effectiveBranchId !== 'All') arQuery = arQuery.eq('Branch_ID', effectiveBranchId)
+    return arQuery
+  })
   const totalAr = receivables.reduce((sum: number, n: { Total_Amount?: number }) => sum + (n.Total_Amount || 0), 0)
   
   // Calculate Aging
@@ -128,27 +120,11 @@ export async function getBillingAnalytics(
   recentUnpaid.sort((a, b) => b.daysOverdue - a.daysOverdue)
 
   // 2. Fetch Accounts Payable (Driver Payments)
-  const apQuery = supabase
+  const payables = await fetchAllRows<{ Total_Amount?: number; Status?: string }>(() => supabase
     .from('Driver_Payments')
-    .select('Total_Amount, Status, Branch_ID') // Assuming Branch_ID exists or linked via jobs? 
-    // Driver_Payments might not have Branch_ID directly in some schemas. 
-    // If it doesn't, we might skip branch filter for AP or need join. 
-    // Based on billing.ts, createDriverPayment doesn't seem to insert Branch_ID explicitly?
-    // Let's assume for now we might miss Branch_ID or it exists. 
-    // Safest is to try select. If error, we'll know.
-    // Update: billing.ts doesn't show Branch_ID in Payment interface. 
-    // We will fetch widely for now or try to filter if possible.
+    .select('Total_Amount, Status, Branch_ID')
     .neq('Status', 'Cancelled')
-    .neq('Status', 'Paid')
-  
-  // If Driver_Payments has Branch_ID:
-  // apQuery = apQuery.eq('Branch_ID', effectiveBranchId) 
-  // NOTE: Schema check didn't confirm Branch_ID on Driver_Payments. 
-  // Let's assume we can't filter AP by branch easily without join. 
-  // For 'All' view it's fine. For Branch view it might be inaccurate if shared drivers.
-  
-  const { data: unpaidPayments } = await apQuery
-  const payables = unpaidPayments || []
+    .neq('Status', 'Paid'))
   
   // Filter by branch manually if necessary/possible (complex without join). 
   // For MVP, we'll calculate total.
@@ -159,18 +135,16 @@ export async function getBillingAnalytics(
   const start = startDate ? new Date(startDate) : new Date(now.getTime() - 30 * dayMs)
   const end = endDate ? new Date(endDate) : now
   
-  let collectionQuery = supabase
-    .from('Billing_Notes')
-    .select('Total_Amount, Status')
-    .gte('Billing_Date', start.toISOString())
-    .lte('Billing_Date', end.toISOString())
-    .neq('Status', 'Cancelled')
-
-  if (effectiveBranchId) {
-    collectionQuery = collectionQuery.eq('Branch_ID', effectiveBranchId)
-  }
-  
-  const { data: periodNotes } = await collectionQuery
+  const periodNotes = await fetchAllRows<{ Total_Amount?: number; Status?: string }>(() => {
+    let collectionQuery = supabase
+      .from('Billing_Notes')
+      .select('Total_Amount, Status')
+      .gte('Billing_Date', start.toISOString())
+      .lte('Billing_Date', end.toISOString())
+      .neq('Status', 'Cancelled')
+    if (effectiveBranchId) collectionQuery = collectionQuery.eq('Branch_ID', effectiveBranchId)
+    return collectionQuery
+  })
   const totalPeriod = (periodNotes || []).reduce((s: number, n: { Total_Amount?: number, Status?: string }) => s + (n.Total_Amount || 0), 0)
   const paidPeriod = (periodNotes || []).filter((n: { Status?: string }) => n.Status === 'Paid').reduce((s: number, n: { Total_Amount?: number, Status?: string }) => s + (n.Total_Amount || 0), 0)
   
@@ -183,21 +157,22 @@ export async function getBillingAnalytics(
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
   
   // Revenue (Billing Notes)
-  let trendRevQuery = supabase
-    .from('Billing_Notes')
-    .select('Billing_Date, Total_Amount')
-    .gte('Billing_Date', sixMonthsAgo.toISOString())
-    .neq('Status', 'Cancelled')
-    
-  if (effectiveBranchId) trendRevQuery = trendRevQuery.eq('Branch_ID', effectiveBranchId)
-  const { data: trendRev } = await trendRevQuery
-  
+  const trendRev = await fetchAllRows<{ Billing_Date?: string; Total_Amount?: number }>(() => {
+    let trendRevQuery = supabase
+      .from('Billing_Notes')
+      .select('Billing_Date, Total_Amount')
+      .gte('Billing_Date', sixMonthsAgo.toISOString())
+      .neq('Status', 'Cancelled')
+    if (effectiveBranchId) trendRevQuery = trendRevQuery.eq('Branch_ID', effectiveBranchId)
+    return trendRevQuery
+  })
+
   // Payout (Driver Payments)
-  const { data: trendPay } = await supabase
+  const trendPay = await fetchAllRows<{ Payment_Date?: string; Total_Amount?: number }>(() => supabase
     .from('Driver_Payments')
     .select('Payment_Date, Total_Amount')
     .gte('Payment_Date', sixMonthsAgo.toISOString())
-    .neq('Status', 'Cancelled')
+    .neq('Status', 'Cancelled'))
     
   // Aggregate by month
   const trendMap = new Map<string, { revenue: number, payout: number }>()

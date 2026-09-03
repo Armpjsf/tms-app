@@ -3,6 +3,7 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isAdmin, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
+import { fetchAllRows } from '@/lib/supabase/analytics-helpers'
 
 export interface ReportFilters {
   reportType: string
@@ -36,25 +37,22 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{
   try {
     switch (filters.reportType) {
       case 'jobs': {
-        let query = supabase
-          .from('Jobs_Main')
-          .select('*')
-          .order('Plan_Date', { ascending: false })
-          .limit(2000)
+        // fetchAllRows page-loops past PostgREST's 1000-row hard cap so a whole
+        // month/quarter isn't silently truncated (a .limit(2000) never returned
+        // more than 1000 here — the export inherited the same truncation).
+        const rawData = await fetchAllRows<Record<string, unknown>>(() => {
+          let query = supabase
+            .from('Jobs_Main')
+            .select('*')
+            .order('Plan_Date', { ascending: false })
+          if (filters.dateFrom) query = query.gte('Plan_Date', filters.dateFrom)
+          if (filters.dateTo) query = query.lte('Plan_Date', filters.dateTo)
+          if (filters.status && filters.status !== 'all') query = query.eq('Job_Status', filters.status)
+          if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
+          return query
+        })
 
-        if (filters.dateFrom) query = query.gte('Plan_Date', filters.dateFrom)
-        if (filters.dateTo) query = query.lte('Plan_Date', filters.dateTo)
-        if (filters.status && filters.status !== 'all') query = query.eq('Job_Status', filters.status)
-        if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
-
-        const { data, error } = await query
-        if (error) {
-          console.error('[Report Debug] Jobs Query Error:', error)
-          throw error
-        }
-
-        console.log('[Report Debug] Jobs found:', data?.length || 0)
-        const rawData = data || []
+        console.log('[Report Debug] Jobs found:', rawData.length)
 
         // Extract all unique extra cost types to create columns
         const extraCostTypes = new Set<string>()
@@ -111,39 +109,35 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{
       }
 
       case 'drivers': {
-        let query = supabase
-          .from('Master_Drivers')
-          .select('*')
-          .order('Driver_Name')
-          .limit(500)
+        const data = await fetchAllRows<Record<string, unknown>>(() => {
+          let query = supabase
+            .from('Master_Drivers')
+            .select('*')
+            .order('Driver_Name')
+          if (filters.status && filters.status !== 'all') query = query.eq('Active_Status', filters.status)
+          if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
+          return query
+        })
 
-        if (filters.status && filters.status !== 'all') query = query.eq('Active_Status', filters.status)
-        if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
-
-        const { data, error } = await query
-        if (error) throw error
-
-        return { 
-          data: data || [], 
+        return {
+          data: data || [],
           columns: ['Driver_ID', 'Driver_Name', 'Mobile_No', 'Active_Status', 'Vehicle_Plate'],
           debug: { admin, effectiveBranch, count: data?.length || 0 }
         }
       }
 
       case 'vehicles': {
-        let query = supabase
-          .from('Master_Vehicles')
-          .select('*')
-          .order('Vehicle_Plate')
-          .limit(500)
+        const data = await fetchAllRows<Record<string, unknown>>(() => {
+          let query = supabase
+            .from('Master_Vehicles')
+            .select('*')
+            .order('Vehicle_Plate')
+          if (filters.status && filters.status !== 'all') query = query.eq('Active_Status', filters.status)
+          if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
+          return query
+        })
 
-        if (filters.status && filters.status !== 'all') query = query.eq('Active_Status', filters.status)
-        if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
-
-        const { data, error } = await query
-        if (error) throw error
-
-        return { 
+        return {
           data: (data || []).map((v: Record<string, unknown>) => ({
             ...v,
             vehicle_plate: v.Vehicle_Plate,
@@ -164,20 +158,18 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{
       }
 
       case 'fuel': {
-        let query = supabase
-          .from('Fuel_Logs')
-          .select('*')
-          .order('Date_Time', { ascending: false })
-          .limit(2000)
+        const data = await fetchAllRows<Record<string, unknown>>(() => {
+          let query = supabase
+            .from('Fuel_Logs')
+            .select('*')
+            .order('Date_Time', { ascending: false })
+          if (filters.dateFrom) query = query.gte('Date_Time', filters.dateFrom)
+          if (filters.dateTo) query = query.lte('Date_Time', filters.dateTo)
+          if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
+          return query
+        })
 
-        if (filters.dateFrom) query = query.gte('Date_Time', filters.dateFrom)
-        if (filters.dateTo) query = query.lte('Date_Time', filters.dateTo)
-        if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
-
-        const { data, error } = await query
-        if (error) throw error
-
-        return { 
+        return {
           data: (data || []).map((f: Record<string, unknown>) => ({
             ...f,
             fuel_date: f.Date_Time,
@@ -193,20 +185,18 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{
       }
 
       case 'maintenance': {
-        let query = supabase
-          .from('Repair_Tickets')
-          .select('*')
-          .order('Date_Report', { ascending: false })
-          .limit(1000)
+        const data = await fetchAllRows<Record<string, unknown>>(() => {
+          let query = supabase
+            .from('Repair_Tickets')
+            .select('*')
+            .order('Date_Report', { ascending: false })
+          if (filters.dateFrom) query = query.gte('Date_Report', filters.dateFrom)
+          if (filters.dateTo) query = query.lte('Date_Report', filters.dateTo)
+          if (filters.status && filters.status !== 'all') query = query.eq('Status', filters.status)
+          return query
+        })
 
-        if (filters.dateFrom) query = query.gte('Date_Report', filters.dateFrom)
-        if (filters.dateTo) query = query.lte('Date_Report', filters.dateTo)
-        if (filters.status && filters.status !== 'all') query = query.eq('Status', filters.status)
-
-        const { data, error } = await query
-        if (error) throw error
-
-        return { 
+        return {
           data: (data || []).map((m: Record<string, unknown>) => ({
             ...m,
             created_at: m.Date_Report,
@@ -236,33 +226,39 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{
 
         const plates = vehicles.map((v: Record<string, unknown>) => v.Vehicle_Plate)
 
-        // 2. Aggregate Fuel Costs
-        let fuelQuery = supabase
-          .from('Fuel_Logs')
-          .select('Vehicle_Plate, Price_Total')
-          .in('Vehicle_Plate', plates)
-        if (filters.dateFrom) fuelQuery = fuelQuery.gte('Date_Time', filters.dateFrom)
-        if (filters.dateTo) fuelQuery = fuelQuery.lte('Date_Time', filters.dateTo)
-        const { data: fuelLogs } = await fuelQuery
+        // 2. Aggregate Fuel Costs (page past the 1000 cap so costs aren't undercounted)
+        const fuelLogs = await fetchAllRows<Record<string, unknown>>(() => {
+          let fuelQuery = supabase
+            .from('Fuel_Logs')
+            .select('Vehicle_Plate, Price_Total')
+            .in('Vehicle_Plate', plates)
+          if (filters.dateFrom) fuelQuery = fuelQuery.gte('Date_Time', filters.dateFrom)
+          if (filters.dateTo) fuelQuery = fuelQuery.lte('Date_Time', filters.dateTo)
+          return fuelQuery
+        })
 
         // 3. Aggregate Maintenance Costs
-        let maintQuery = supabase
-          .from('Repair_Tickets')
-          .select('Vehicle_Plate, Cost_Total')
-          .in('Vehicle_Plate', plates)
-          .eq('Status', 'completed')
-        if (filters.dateFrom) maintQuery = maintQuery.gte('Date_Report', filters.dateFrom)
-        if (filters.dateTo) maintQuery = maintQuery.lte('Date_Report', filters.dateTo)
-        const { data: maintLogs } = await maintQuery
+        const maintLogs = await fetchAllRows<Record<string, unknown>>(() => {
+          let maintQuery = supabase
+            .from('Repair_Tickets')
+            .select('Vehicle_Plate, Cost_Total')
+            .in('Vehicle_Plate', plates)
+            .eq('Status', 'completed')
+          if (filters.dateFrom) maintQuery = maintQuery.gte('Date_Report', filters.dateFrom)
+          if (filters.dateTo) maintQuery = maintQuery.lte('Date_Report', filters.dateTo)
+          return maintQuery
+        })
 
         // 4. Get Extra Costs from Jobs (Subcontractor job costs if applicable)
-        let jobQuery = supabase
-          .from('Jobs_Main')
-          .select('Vehicle_Plate, extra_costs_json')
-          .in('Vehicle_Plate', plates)
-        if (filters.dateFrom) jobQuery = jobQuery.gte('Plan_Date', filters.dateFrom)
-        if (filters.dateTo) jobQuery = jobQuery.lte('Plan_Date', filters.dateTo)
-        const { data: rawJobs } = await jobQuery
+        const rawJobs = await fetchAllRows<Record<string, unknown>>(() => {
+          let jobQuery = supabase
+            .from('Jobs_Main')
+            .select('Vehicle_Plate, extra_costs_json')
+            .in('Vehicle_Plate', plates)
+          if (filters.dateFrom) jobQuery = jobQuery.gte('Plan_Date', filters.dateFrom)
+          if (filters.dateTo) jobQuery = jobQuery.lte('Plan_Date', filters.dateTo)
+          return jobQuery
+        })
 
         // 5. Get Subcontractor details for labeling
         const subIds = [...new Set(vehicles.map((v: Record<string, unknown>) => v.Sub_ID).filter(Boolean))]

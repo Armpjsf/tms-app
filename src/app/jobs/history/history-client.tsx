@@ -102,9 +102,21 @@ export function HistoryClient({
   const handleExportAll = async () => {
     setIsExporting(true)
     try {
-        // Fetch all jobs matching the filters (limit 10,000)
-        const result = await getAllJobs(1, 10000, query, status, dateFrom, dateTo)
-        const allJobs = result.data
+        // PostgREST hard-caps each query at 1000 rows, so a single big-limit call
+        // silently returned only 1000 of the filtered jobs. Page through 1000 at a
+        // time until we have every job that matches the current filters.
+        const PAGE = 1000
+        const allJobs: Awaited<ReturnType<typeof getAllJobs>>['data'] = []
+        let page = 1
+        let total = Infinity
+        while (allJobs.length < total && page <= 200) {
+            const result = await getAllJobs(page, PAGE, query, status, dateFrom, dateTo)
+            total = result.count || result.data.length
+            if (!result.data.length) break
+            allJobs.push(...result.data)
+            if (result.data.length < PAGE) break
+            page += 1
+        }
 
         if (!allJobs || allJobs.length === 0) {
             alert("No data to export")

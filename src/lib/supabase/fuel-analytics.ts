@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
+import { fetchAllRows } from './analytics-helpers'
 
 export interface FuelAnalytics {
   // Summary KPIs
@@ -53,21 +54,18 @@ export async function getFuelAnalytics(dateFrom?: string, dateTo?: string, provi
   const from = dateFrom || new Date(now.getTime() - 90 * 86400000).toISOString().split('T')[0]
   const to = dateTo || now.toISOString().split('T')[0]
 
-  // Base query for fuel logs
-  let query = supabase
-    .from('Fuel_Logs')
-    .select('Vehicle_Plate, Date_Time, Liters, Price_Total, Odometer')
-    .gte('Date_Time', from)
-    .lte('Date_Time', to)
-    .order('Date_Time', { ascending: false })
-    .limit(5000)
-
-  // Enhanced Branch Filtering
-  if (effectiveBranch && effectiveBranch !== 'All') {
-    query = query.eq('Branch_ID', effectiveBranch)
-  }
-
-  const { data: logs } = await query
+  // Base query for fuel logs (page past the 1000-row cap; .limit(5000) was
+  // clamped to 1000 by PostgREST, silently dropping older logs).
+  const logs = await fetchAllRows<{ Vehicle_Plate: string; Date_Time?: string; Liters?: number; Price_Total?: number; Odometer?: number }>(() => {
+    let query = supabase
+      .from('Fuel_Logs')
+      .select('Vehicle_Plate, Date_Time, Liters, Price_Total, Odometer')
+      .gte('Date_Time', from)
+      .lte('Date_Time', to)
+      .order('Date_Time', { ascending: false })
+    if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
+    return query
+  })
 
   if (!logs) {
     return {

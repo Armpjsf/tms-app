@@ -5,7 +5,8 @@ import {
     REVENUE_STATUSES,
     formatDateSafe,
     getBranchPlates,
-    getEffectiveBranchId
+    getEffectiveBranchId,
+    fetchAllRows
 } from './analytics-helpers'
 
 // 4. Operational Stats
@@ -27,19 +28,17 @@ export async function getOperationalStats(branchId?: string, startDate?: string,
 
     const { count: totalVehicles } = await vehicleQuery
 
-    let activeJobsQuery = supabase
-        .from('Jobs_Main')
-        .select('Vehicle_Plate')
-        .gte('Plan_Date', firstDay)
-        .lte('Plan_Date', lastDay)
-        .not('Job_Status', 'eq', 'Cancelled')
-        .not('Vehicle_Plate', 'is', null)
-
-    if (effectiveBranchId) {
-        activeJobsQuery = activeJobsQuery.eq('Branch_ID', effectiveBranchId)
-    }
-
-    const { data: activeJobs } = await activeJobsQuery
+    const activeJobs = await fetchAllRows<{ Vehicle_Plate?: string }>(() => {
+        let activeJobsQuery = supabase
+            .from('Jobs_Main')
+            .select('Vehicle_Plate')
+            .gte('Plan_Date', firstDay)
+            .lte('Plan_Date', lastDay)
+            .not('Job_Status', 'eq', 'Cancelled')
+            .not('Vehicle_Plate', 'is', null)
+        if (effectiveBranchId) activeJobsQuery = activeJobsQuery.eq('Branch_ID', effectiveBranchId)
+        return activeJobsQuery
+    })
 
     const uniqueActiveVehicles = new Set(activeJobs?.map((j: { Vehicle_Plate?: string }) => j.Vehicle_Plate)).size
 
@@ -56,17 +55,15 @@ export async function getOperationalStats(branchId?: string, startDate?: string,
     }
     const { count: healthyVehicles } = await gpsQuery
 
-    let jobStatsQuery = supabase
-        .from('Jobs_Main')
-        .select('Job_Status')
-        .gte('Plan_Date', firstDay)
-        .lte('Plan_Date', lastDay)
-    
-    if (effectiveBranchId) {
-        jobStatsQuery = jobStatsQuery.eq('Branch_ID', effectiveBranchId)
-    }
-        
-    const { data: jobStats } = await jobStatsQuery
+    const jobStats = await fetchAllRows<{ Job_Status?: string }>(() => {
+        let jobStatsQuery = supabase
+            .from('Jobs_Main')
+            .select('Job_Status')
+            .gte('Plan_Date', firstDay)
+            .lte('Plan_Date', lastDay)
+        if (effectiveBranchId) jobStatsQuery = jobStatsQuery.eq('Branch_ID', effectiveBranchId)
+        return jobStatsQuery
+    })
         
     const totalJobs = jobStats?.length || 0
     const completedJobs = jobStats?.filter((j: { Job_Status?: string }) => REVENUE_STATUSES.includes(j.Job_Status || '')).length || 0
@@ -77,22 +74,20 @@ export async function getOperationalStats(branchId?: string, startDate?: string,
         activePlates = await getBranchPlates(effectiveBranchId)
     }
 
-    let fuelLogsQuery = supabase
-        .from('Fuel_Logs')
-        .select('Liters, Odometer, Vehicle_Plate')
-        .gte('Date_Time', firstDay)
-        .lte('Date_Time', lastDay + 'T23:59:59')
-        .order('Date_Time', { ascending: true })
-
-    if (effectiveBranchId) {
-        if (activePlates.length > 0) {
-            fuelLogsQuery = fuelLogsQuery.in('Vehicle_Plate', activePlates)
-        } else {
-             fuelLogsQuery = fuelLogsQuery.in('Vehicle_Plate', ['NO_MATCH'])
+    const fuelLogs = await fetchAllRows<{ Liters?: number; Odometer?: number; Vehicle_Plate?: string }>(() => {
+        let fuelLogsQuery = supabase
+            .from('Fuel_Logs')
+            .select('Liters, Odometer, Vehicle_Plate')
+            .gte('Date_Time', firstDay)
+            .lte('Date_Time', lastDay + 'T23:59:59')
+            .order('Date_Time', { ascending: true })
+        if (effectiveBranchId) {
+            fuelLogsQuery = activePlates.length > 0
+                ? fuelLogsQuery.in('Vehicle_Plate', activePlates)
+                : fuelLogsQuery.in('Vehicle_Plate', ['NO_MATCH'])
         }
-    }
-    
-    const { data: fuelLogs } = await fuelLogsQuery
+        return fuelLogsQuery
+    })
 
     let totalDistanceApprox = 0
     let totalFuelUsed = 0
@@ -138,18 +133,18 @@ export async function getDriverLeaderboard(startDate?: string, endDate?: string,
     const sDate = formatDateSafe(startDate)
     const eDate = formatDateSafe(endDate)
 
-    let query = supabase
-        .from('Jobs_Main')
-        .select('Driver_Name, Price_Cust_Total, Cost_Driver_Total, Job_Status, Plan_Date, Actual_Delivery_Time')
-        .not('Driver_Name', 'is', null)
+    const jobs = await fetchAllRows<Record<string, unknown>>(() => {
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Driver_Name, Price_Cust_Total, Cost_Driver_Total, Job_Status, Plan_Date, Actual_Delivery_Time')
+            .not('Driver_Name', 'is', null)
+        if (sDate) query = query.gte('Plan_Date', sDate)
+        if (eDate) query = query.lte('Plan_Date', eDate)
+        if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+        return query
+    })
 
-    if (sDate) query = query.gte('Plan_Date', sDate)
-    if (eDate) query = query.lte('Plan_Date', eDate)
-    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
-
-    const { data: jobs } = await query
-
-    const driverStats: Record<string, { 
+    const driverStats: Record<string, {
         name: string, revenue: number, completedJobs: number, totalJobs: number, onTimeJobs: number, lateJobs: number
     }> = {}
 
@@ -196,16 +191,16 @@ export async function getDetailedDriverAnalytics(startDate?: string, endDate?: s
     const sDate = formatDateSafe(startDate)
     const eDate = formatDateSafe(endDate)
 
-    const [driversResult, jobsResult] = await Promise.all([
+    const [driversResult, allJobs] = await Promise.all([
         supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate, Vehicle_Type, Branch_ID, Active_Status, Sub_ID'),
-        supabase.from('Jobs_Main')
+        fetchAllRows<Record<string, unknown>>(() => supabase.from('Jobs_Main')
             .select('Driver_ID, Job_Status, Plan_Date, Actual_Delivery_Time, Cost_Driver_Total, Rating, Est_Distance_KM, Weight_Kg')
             .gte('Plan_Date', sDate || '')
             .lte('Plan_Date', eDate || '')
-            .not('Driver_ID', 'is', null)
+            .not('Driver_ID', 'is', null))
     ])
 
-    if (jobsResult.error) return []
+    const jobsResult = { data: allJobs, error: null as unknown }
 
     const driverStats: Record<string, {
         driverId: string, name: string, plate: string, type: string, subId: string | null,
@@ -280,66 +275,47 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
 
     const effectiveBranchId = await getEffectiveBranchId(branchId)
 
-    let jobsQuery = supabase
-        .from('Jobs_Main')
-        .select('Vehicle_Plate, Price_Cust_Total, Cost_Driver_Total, Est_Distance_KM')
-        .gte('Plan_Date', firstDay)
-        .lte('Plan_Date', lastDay)
-        .in('Job_Status', REVENUE_STATUSES)
-        .not('Vehicle_Plate', 'is', null)
+    // Resolve branch plates once so every cost aggregation shares the same filter.
+    const profitBranchPlates = effectiveBranchId ? await getBranchPlates(effectiveBranchId) : []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const plateFilter = (q: any): any =>
+        effectiveBranchId ? q.in('Vehicle_Plate', profitBranchPlates.length > 0 ? profitBranchPlates : ['NO_MATCH']) : q
 
-    if (effectiveBranchId) {
-        jobsQuery = jobsQuery.eq('Branch_ID', effectiveBranchId)
-    }
+    // All four aggregations page past the 1000-row cap so per-vehicle revenue and
+    // costs aren't undercounted for busy fleets / long ranges.
+    const jobs = await fetchAllRows<Record<string, unknown>>(() => {
+        let jobsQuery = supabase
+            .from('Jobs_Main')
+            .select('Vehicle_Plate, Price_Cust_Total, Cost_Driver_Total, Est_Distance_KM')
+            .gte('Plan_Date', firstDay)
+            .lte('Plan_Date', lastDay)
+            .in('Job_Status', REVENUE_STATUSES)
+            .not('Vehicle_Plate', 'is', null)
+        if (effectiveBranchId) jobsQuery = jobsQuery.eq('Branch_ID', effectiveBranchId)
+        return jobsQuery
+    })
+    console.log(`[getVehicleProfitability] Found ${jobs.length} jobs for range ${firstDay} to ${lastDay}, branchId=${effectiveBranchId}`)
 
-    const { data: jobs, error: jobsError } = await jobsQuery
-    if (jobsError) console.error('[getVehicleProfitability] Query Error:', jobsError)
-    console.log(`[getVehicleProfitability] Found ${(jobs || []).length} jobs for range ${firstDay} to ${lastDay}, branchId=${effectiveBranchId}`)
-
-    const fuelQuery = supabase
+    const fuel = await fetchAllRows<Record<string, unknown>>(() => plateFilter(supabase
         .from('Fuel_Logs')
         .select('Vehicle_Plate, Price_Total')
         .gte('Date_Time', `${firstDay}T00:00:00`)
-        .lte('Date_Time', `${lastDay}T23:59:59`)
+        .lte('Date_Time', `${lastDay}T23:59:59`)))
 
-    if (effectiveBranchId) {
-        const branchPlates = await getBranchPlates(effectiveBranchId)
-        if (branchPlates.length > 0) fuelQuery.in('Vehicle_Plate', branchPlates)
-        else fuelQuery.in('Vehicle_Plate', ['NO_MATCH'])
-    }
-
-    const { data: fuel } = await fuelQuery
-
-    const maintenanceQuery = supabase
+    const maintenance = await fetchAllRows<Record<string, unknown>>(() => plateFilter(supabase
         .from('Repair_Tickets')
         .select('Vehicle_Plate, Cost_Total')
         .gte('Date_Report', `${firstDay}T00:00:00`)
         .lte('Date_Report', `${lastDay}T23:59:59`)
-        .neq('Status', 'Cancelled')
-
-    if (effectiveBranchId) {
-        const branchPlates = await getBranchPlates(effectiveBranchId)
-        if (branchPlates.length > 0) maintenanceQuery.in('Vehicle_Plate', branchPlates)
-        else maintenanceQuery.in('Vehicle_Plate', ['NO_MATCH'])
-    }
-
-    const { data: maintenance } = await maintenanceQuery
+        .neq('Status', 'Cancelled')))
 
     // Tire costs live in their own table (Tire_Logs) — include them so per-vehicle
     // profit reflects the real running cost, not just fuel + repairs.
-    const tireQuery = supabase
+    const tireLogs = await fetchAllRows<Record<string, unknown>>(() => plateFilter(supabase
         .from('Tire_Logs')
         .select('Vehicle_Plate, cost')
         .gte('service_date', firstDay)
-        .lte('service_date', lastDay)
-
-    if (effectiveBranchId) {
-        const branchPlates = await getBranchPlates(effectiveBranchId)
-        if (branchPlates.length > 0) tireQuery.in('Vehicle_Plate', branchPlates)
-        else tireQuery.in('Vehicle_Plate', ['NO_MATCH'])
-    }
-
-    const { data: tireLogs } = await tireQuery
+        .lte('service_date', lastDay)))
 
     const stats: Record<string, { plate: string, revenue: number, driverCost: number, fuelCost: number, maintenanceCost: number, tireCost: number, totalCost: number, netProfit: number, totalKm: number, count: number }> = {}
 
@@ -382,17 +358,14 @@ export async function getProvincialMileageStats(branchId?: string) {
         const supabase = await createAdminClient()
         const effectiveBranchId = await getEffectiveBranchId(branchId)
 
-        let query = supabase
-            .from('Jobs_Main')
-            .select('Dest_Location, Zone, Weight_Kg, Est_Distance_KM')
-            .in('Job_Status', REVENUE_STATUSES)
-        
-        if (effectiveBranchId) {
-            query = query.eq('Branch_ID', effectiveBranchId)
-        }
-
-        const { data, error } = await query.limit(500)
-        if (error) return []
+        const data = await fetchAllRows<{ Zone?: string; Est_Distance_KM?: number | string }>(() => {
+            let query = supabase
+                .from('Jobs_Main')
+                .select('Dest_Location, Zone, Weight_Kg, Est_Distance_KM')
+                .in('Job_Status', REVENUE_STATUSES)
+            if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+            return query
+        })
 
         const stats: Record<string, { name: string, range: string, percentage: number, color: string, rawVal: number, totalKm: number }> = {}
         const colors = ["bg-emerald-500", "bg-blue-500", "bg-amber-500", "bg-purple-500", "bg-rose-500"]
@@ -506,17 +479,17 @@ export async function getDelayRootCause(startDate?: string, endDate?: string, br
         const sDate = formatDateSafe(startDate)
         const eDate = formatDateSafe(endDate)
 
-        let query = supabase
-            .from('Jobs_Main')
-            .select('Failed_Reason')
-            .not('Failed_Reason', 'is', null)
-            .neq('Failed_Reason', '')
-
-        if (sDate) query = query.gte('Plan_Date', sDate)
-        if (eDate) query = query.lte('Plan_Date', eDate)
-        if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
-
-        const { data } = await query
+        const data = await fetchAllRows<{ Failed_Reason?: string }>(() => {
+            let query = supabase
+                .from('Jobs_Main')
+                .select('Failed_Reason')
+                .not('Failed_Reason', 'is', null)
+                .neq('Failed_Reason', '')
+            if (sDate) query = query.gte('Plan_Date', sDate)
+            if (eDate) query = query.lte('Plan_Date', eDate)
+            if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+            return query
+        })
         const reasons: Record<string, number> = {}
         data?.forEach((j: { Failed_Reason?: string }) => {
             const r = j.Failed_Reason || 'อื่นๆ'
@@ -538,16 +511,17 @@ export async function getVehicleJobDetails(plate: string, startDate?: string, en
         const sDate = formatDateSafe(startDate)
         const eDate = formatDateSafe(endDate)
 
-        let query = supabase
-            .from('Jobs_Main')
-            .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Job_Status, Price_Cust_Total, Cost_Driver_Total')
-            .eq('Vehicle_Plate', plate)
-            .order('Plan_Date', { ascending: false })
-
-        if (sDate) query = query.gte('Plan_Date', sDate)
-        if (eDate) query = query.lte('Plan_Date', eDate)
-
-        const { data } = await query
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = await fetchAllRows<any>(() => {
+            let query = supabase
+                .from('Jobs_Main')
+                .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Job_Status, Price_Cust_Total, Cost_Driver_Total')
+                .eq('Vehicle_Plate', plate)
+                .order('Plan_Date', { ascending: false })
+            if (sDate) query = query.gte('Plan_Date', sDate)
+            if (eDate) query = query.lte('Plan_Date', eDate)
+            return query
+        })
         return data || []
     } catch {
         return []

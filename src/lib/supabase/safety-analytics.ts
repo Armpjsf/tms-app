@@ -3,7 +3,7 @@
 import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
-import { REVENUE_STATUSES } from './analytics-helpers'
+import { REVENUE_STATUSES, fetchAllRows } from './analytics-helpers'
 
 export type SafetyAnalytics = {
   sos: {
@@ -55,16 +55,17 @@ export async function getSafetyAnalytics(
   // We want to count incidents that occurred in the date range.
   // Assuming 'Failed_Time' is the timestamp for the incident.
 
-  let sosQuery = supabase
-    .from('Jobs_Main')
-    .select('Job_ID, Job_Status, Failed_Reason, Failed_Time, Vehicle_Plate, Driver_Name')
-    .in('Job_Status', ['SOS', 'Failed', 'Issue', 'Problem', 'เกิดปัญหา', 'ส่งไม่สำเร็จ', 'แจ้งเหตุเขาสวม']) // Filter for safety/problem incidents
-    
-  if (startDate) sosQuery = sosQuery.gte('Plan_Date', startDate)
-  if (endDate) sosQuery = sosQuery.lte('Plan_Date', endDate)
-  if (effectiveBranchId) sosQuery = sosQuery.eq('Branch_ID', effectiveBranchId)
-
-  const { data: sosData, error: sosError } = await sosQuery
+  const sosData = await fetchAllRows<any>(() => {
+    let sosQuery = supabase
+      .from('Jobs_Main')
+      .select('Job_ID, Job_Status, Failed_Reason, Failed_Time, Vehicle_Plate, Driver_Name')
+      .in('Job_Status', ['SOS', 'Failed', 'Issue', 'Problem', 'เกิดปัญหา', 'ส่งไม่สำเร็จ', 'แจ้งเหตุเขาสวม'])
+    if (startDate) sosQuery = sosQuery.gte('Plan_Date', startDate)
+    if (endDate) sosQuery = sosQuery.lte('Plan_Date', endDate)
+    if (effectiveBranchId) sosQuery = sosQuery.eq('Branch_ID', effectiveBranchId)
+    return sosQuery
+  })
+  const sosError = null
   
   if (sosError) {
     // Continue with empty data
@@ -103,16 +104,16 @@ export async function getSafetyAnalytics(
 
   // 2. Fetch POD Stats
   // TMS 2026: Use standardized REVENUE_STATUSES for cross-language compatibility
-  let podQuery = supabase
-    .from('Jobs_Main')
-    .select('Job_ID, Job_Status, Photo_Proof_Url, Signature_Url')
-    .in('Job_Status', REVENUE_STATUSES)
-    
-  if (startDate) podQuery = podQuery.gte('Plan_Date', startDate)
-  if (endDate) podQuery = podQuery.lte('Plan_Date', endDate)
-  if (effectiveBranchId) podQuery = podQuery.eq('Branch_ID', effectiveBranchId)
-  
-  const { data: podData } = await podQuery
+  const podData = await fetchAllRows<Record<string, unknown>>(() => {
+    let podQuery = supabase
+      .from('Jobs_Main')
+      .select('Job_ID, Job_Status, Photo_Proof_Url, Signature_Url')
+      .in('Job_Status', REVENUE_STATUSES)
+    if (startDate) podQuery = podQuery.gte('Plan_Date', startDate)
+    if (endDate) podQuery = podQuery.lte('Plan_Date', endDate)
+    if (effectiveBranchId) podQuery = podQuery.eq('Branch_ID', effectiveBranchId)
+    return podQuery
+  })
   
   const completedJobs = podData || []
   const totalCompleted = completedJobs.length

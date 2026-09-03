@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
+import { fetchAllRows } from './analytics-helpers'
 
 export type VehicleRisk = {
   vehicle_plate: string
@@ -56,18 +57,15 @@ export async function getVehicleRiskAssessment(branchId?: string): Promise<Vehic
   const now = new Date()
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString()
   
-  let fuelQuery = supabase
-    .from('Fuel_Logs')
-    .select('Vehicle_Plate, Odometer, Date_Time')
-    .gte('Date_Time', thirtyDaysAgo)
-    .order('Date_Time', { ascending: true })
-
-  // Optimization: Filter fuel logs by active vehicle plates if feasible, 
-  // but for fetching all, just filtering by branch in join (if possible) or post-filter is fine.
-  // Since Fuel_Logs has Branch_ID, let's use it.
-  if (effectiveBranchId) fuelQuery = fuelQuery.eq('Branch_ID', effectiveBranchId)
-
-  const { data: fuelLogs } = await fuelQuery
+  const fuelLogs = await fetchAllRows<{ Vehicle_Plate?: string; Odometer?: number; Date_Time?: string }>(() => {
+    let fuelQuery = supabase
+      .from('Fuel_Logs')
+      .select('Vehicle_Plate, Odometer, Date_Time')
+      .gte('Date_Time', thirtyDaysAgo)
+      .order('Date_Time', { ascending: true })
+    if (effectiveBranchId) fuelQuery = fuelQuery.eq('Branch_ID', effectiveBranchId)
+    return fuelQuery
+  })
   const logs = fuelLogs || []
 
   // Group logs by vehicle
@@ -80,14 +78,14 @@ export async function getVehicleRiskAssessment(branchId?: string): Promise<Vehic
 
   // 3. Fetch Repair History (Last 90 Days)
   const ninetyDaysAgo = new Date(now.getTime() - 90 * 86400000).toISOString()
-  let repairQuery = supabase
-    .from('Repair_Tickets')
-    .select('Vehicle_Plate, Date_Report')
-    .gte('Date_Report', ninetyDaysAgo)
-
-  if (effectiveBranchId) repairQuery = repairQuery.eq('Branch_ID', effectiveBranchId)
-  
-  const { data: repairs } = await repairQuery
+  const repairs = await fetchAllRows<{ Vehicle_Plate?: string; Date_Report?: string }>(() => {
+    let repairQuery = supabase
+      .from('Repair_Tickets')
+      .select('Vehicle_Plate, Date_Report')
+      .gte('Date_Report', ninetyDaysAgo)
+    if (effectiveBranchId) repairQuery = repairQuery.eq('Branch_ID', effectiveBranchId)
+    return repairQuery
+  })
   const repairCounts = new Map<string, number>()
   repairs?.forEach(r => {
       const plate = r.Vehicle_Plate || 'Unknown'
@@ -188,14 +186,14 @@ export async function getRouteRiskProfile(branchId?: string): Promise<RouteRisk[
   const now = new Date()
   const ninetyDaysAgo = new Date(now.getTime() - 90 * 86400000).toISOString().split('T')[0]
 
-  let query = supabase
-    .from('Jobs_Main')
-    .select('Route_Name, Job_Status, Plan_Date, Actual_Delivery_Time')
-    .gte('Plan_Date', ninetyDaysAgo)
-  
-  if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
-
-  const { data: jobs } = await query
+  const jobs = await fetchAllRows<any>(() => {
+    let query = supabase
+      .from('Jobs_Main')
+      .select('Route_Name, Job_Status, Plan_Date, Actual_Delivery_Time')
+      .gte('Plan_Date', ninetyDaysAgo)
+    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+    return query
+  })
   
   const routeMap = new Map<string, { total: number; fail: number; delay: number }>()
 
