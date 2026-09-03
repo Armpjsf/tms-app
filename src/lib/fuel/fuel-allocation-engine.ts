@@ -195,22 +195,45 @@ export async function getFuelIntelligenceAnalytics(
     const sorted = [...logs]
       .filter(l => l.Odometer && (l.Odometer as number) > 0 && l.Liters > 0)
       .sort((a, b) => (a.Odometer as number) - (b.Odometer as number));
+    if (sorted.length < 2) return;
+
+    // Full-to-full cycles honoring Trip_Fill_Type:
+    //   • "end" (or unset) fills CLOSE a cycle — the tank is back to full after a
+    //     finished trip, so liters added ≈ what was consumed since the last close.
+    //   • "enroute" fills DO NOT close a cycle — they are mid-trip top-ups, so
+    //     their litres accumulate into the ongoing cycle and the cycle only closes
+    //     at the next "end" fill. Treating an enroute fill as a boundary would
+    //     split one trip into two and skew its km/L.
+    const isClosing = (l: FuelLog) => l.Trip_Fill_Type !== 'enroute';
+
+    let startOdo = sorted[0].Odometer as number; // anchor (fill before the first cycle)
+    let accumLiters = 0;
+    let accumCost = 0;
     for (let i = 1; i < sorted.length; i++) {
-      const prev = sorted[i - 1];
       const curr = sorted[i];
-      const km = (curr.Odometer as number) - (prev.Odometer as number);
-      const liters = curr.Liters;
-      if (km <= 0 || liters <= 0) continue;
-      const kmpl = km / liters;
-      if (kmpl < MIN_KMPL || kmpl > MAX_KMPL) continue; // skip → trip uses vehicle-avg fallback
-      const date = (curr.Date_Time || '').slice(0, 10);
-      if (!date) continue;
-      const key = `${plate}|${date}`;
-      const b = vehicleDayFuel.get(key) || { km: 0, liters: 0, cost: 0 };
-      b.km += km;
-      b.liters += liters;
-      b.cost += curr.Price_Total || liters * (eff?.avgUnitPrice || 38);
-      vehicleDayFuel.set(key, b);
+      accumLiters += curr.Liters;
+      accumCost += curr.Price_Total || curr.Liters * (eff?.avgUnitPrice || 38);
+      if (!isClosing(curr)) continue; // enroute → keep accumulating, don't close
+
+      const km = (curr.Odometer as number) - startOdo;
+      if (km > 0 && accumLiters > 0) {
+        const kmpl = km / accumLiters;
+        if (kmpl >= MIN_KMPL && kmpl <= MAX_KMPL) { // guard odometer typos / partial fills
+          const date = (curr.Date_Time || '').slice(0, 10);
+          if (date) {
+            const key = `${plate}|${date}`;
+            const b = vehicleDayFuel.get(key) || { km: 0, liters: 0, cost: 0 };
+            b.km += km;
+            b.liters += accumLiters;
+            b.cost += accumCost;
+            vehicleDayFuel.set(key, b);
+          }
+        }
+      }
+      // Start the next cycle from this closing fill.
+      startOdo = curr.Odometer as number;
+      accumLiters = 0;
+      accumCost = 0;
     }
   });
 

@@ -117,16 +117,29 @@ function mapBillsToWorkTrips(workTrips: DTCWorkTrip[], bills: FuelBillForMatch[]
     .filter(b => typeof b.Odometer === 'number' && (b.Odometer as number) > 0 && (b.Liters || 0) > 0)
     .sort((a, b) => (a.Odometer as number) - (b.Odometer as number))
 
-  // ช่วงเติม→เติม: [fromOdo, toOdo] พร้อม km/L ของช่วง
-  const spans = sorted.slice(1).map((b, i) => {
-    const prev = sorted[i]
-    const fromOdo = prev.Odometer as number
-    const toOdo = b.Odometer as number
-    const km = toOdo - fromOdo
-    const liters = b.Liters || 0
-    const kmpl = liters > 0 ? +(km / liters).toFixed(2) : 0
-    return { fromOdo, toOdo, km, liters, cost: b.Price_Total || 0, kmpl, valid: km > 0 && kmpl >= MIN_KMPL && kmpl <= MAX_KMPL }
-  })
+  // ช่วงเติม→เติม (full-to-full) โดยเคารพ Trip_Fill_Type:
+  //   • บิล "end"/ไม่ระบุ = ปิดรอบ (ถังกลับมาเต็มหลังจบเที่ยว)
+  //   • บิล "enroute" = เติมแทรกกลางทาง ไม่ปิดรอบ → รวมลิตรเข้ารอบปัจจุบัน
+  //     แล้วไปปิดที่บิล end ถัดไป (ไม่งั้นเที่ยวเดียวถูกหั่นเป็น 2 ทำ km/L เพี้ยน)
+  const spans: { fromOdo: number; toOdo: number; km: number; liters: number; cost: number; kmpl: number; valid: boolean }[] = []
+  if (sorted.length >= 2) {
+    let fromOdo = sorted[0].Odometer as number
+    let accLiters = 0
+    let accCost = 0
+    for (let i = 1; i < sorted.length; i++) {
+      const b = sorted[i]
+      accLiters += b.Liters || 0
+      accCost += b.Price_Total || 0
+      if (b.Trip_Fill_Type === 'enroute') continue // ไม่ปิดรอบ รวมต่อ
+      const toOdo = b.Odometer as number
+      const km = toOdo - fromOdo
+      const kmpl = accLiters > 0 ? +(km / accLiters).toFixed(2) : 0
+      spans.push({ fromOdo, toOdo, km, liters: accLiters, cost: accCost, kmpl, valid: km > 0 && kmpl >= MIN_KMPL && kmpl <= MAX_KMPL })
+      fromOdo = toOdo
+      accLiters = 0
+      accCost = 0
+    }
+  }
 
   return workTrips.map(t => {
     // เลือกช่วงเติมที่ "ปิด" เที่ยวนี้: ช่วงที่ครอบเลขไมล์ตอนจบเที่ยว

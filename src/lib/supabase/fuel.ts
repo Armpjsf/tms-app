@@ -256,6 +256,7 @@ export type FuelBillForMatch = {
   Liters: number
   Price_Total: number
   Station_Name: string | null
+  Trip_Fill_Type?: 'end' | 'enroute' | null
 }
 export async function getFuelBillsForMatching(vehiclePlate: string, providedBranchId?: string): Promise<FuelBillForMatch[]> {
   try {
@@ -269,7 +270,7 @@ export async function getFuelBillsForMatching(vehiclePlate: string, providedBran
 
     let query = supabase
       .from('Fuel_Logs')
-      .select('Log_ID, Date_Time, Odometer, Liters, Price_Total, Station_Name')
+      .select('Log_ID, Date_Time, Odometer, Liters, Price_Total, Station_Name, Trip_Fill_Type')
       .eq('Vehicle_Plate', vehiclePlate)
       .order('Date_Time', { ascending: true })
 
