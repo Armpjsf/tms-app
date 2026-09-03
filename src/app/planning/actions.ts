@@ -79,16 +79,22 @@ const parseIfString = (val: string | undefined | null) => {
 
 import { calculateJobPrice } from "@/services/pricing-engine"
 
-// The ordered drop names for a job (multi-drop JSON first, else Dest_Location).
-function jobDropNames(data: JobFormData): string[] {
+// The ordered drops for a job (multi-drop JSON first, else Dest_Location),
+// carrying coordinates so PCG pricing can reverse-geocode a name that has no อ./จ.
+function jobDrops(data: JobFormData): { name?: string; lat?: number | string | null; lng?: number | string | null }[] {
   const parsed = parseIfString(data.original_destinations_json as string)
   if (Array.isArray(parsed)) {
-    const names = parsed
-      .map(p => String((p as { name?: unknown })?.name ?? '').trim())
-      .filter(Boolean)
-    if (names.length > 0) return names
+    const drops = parsed
+      .map(p => {
+        const o = p as { name?: unknown; lat?: unknown; lng?: unknown }
+        return { name: String(o?.name ?? '').trim(), lat: (o?.lat as number | string | null) ?? null, lng: (o?.lng as number | string | null) ?? null }
+      })
+      .filter(d => d.name || d.lat)
+    if (drops.length > 0) return drops
   }
-  return data.Dest_Location ? [String(data.Dest_Location)] : []
+  return data.Dest_Location
+    ? [{ name: String(data.Dest_Location), lat: data.Delivery_Lat ?? null, lng: data.Delivery_Lon ?? null }]
+    : []
 }
 
 // PCG customer price = rate of the farthest drop at the day's diesel band.
@@ -98,7 +104,7 @@ async function applyPcgAutoPrice(data: JobFormData): Promise<void> {
   try {
     if (String(data.Customer_ID || '') !== PCG_CUSTOMER_ID) return
     if (Number(data.Price_Cust_Total) > 0) return
-    const result = await resolvePcgPrice(jobDropNames(data), data.Plan_Date as string | undefined)
+    const result = await resolvePcgPrice(jobDrops(data), data.Plan_Date as string | undefined)
     if (result) data.Price_Cust_Total = result.price
   } catch (e) {
     console.warn('[createJob] PCG auto-price failed:', e instanceof Error ? e.message : e)
@@ -899,7 +905,7 @@ export async function createBulkJobs(
     // PCG: price from the rate card (farthest drop × diesel band) takes priority.
     if (total === 0 && String(j.Customer_ID || '') === PCG_CUSTOMER_ID) {
         try {
-            const pcg = await resolvePcgPrice(jobDropNames(j as JobFormData), j.Plan_Date as string | undefined)
+            const pcg = await resolvePcgPrice(jobDrops(j as JobFormData), j.Plan_Date as string | undefined)
             if (pcg) total = pcg.price
         } catch (e) { console.warn('[import] PCG auto-price failed:', e instanceof Error ? e.message : e) }
     }

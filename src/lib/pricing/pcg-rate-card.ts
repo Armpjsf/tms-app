@@ -2,6 +2,7 @@ import 'server-only'
 
 import { createAdminClient } from '@/utils/supabase/server'
 import { getFuelPriceNumber } from '@/lib/actions/fuel-actions'
+import { reverseGeocode } from '@/lib/ai/geocoding'
 
 /**
  * PCG 4WJ freight pricing.
@@ -33,7 +34,10 @@ const stripSpaces = (s: string) => s.normalize('NFC').replace(/\s+/g, '')
 
 // อำเภอ/จังหวัด key for matching: drop the อ./จ./กิ่งอ. prefix and all spaces.
 function normAmphoe(s: string): string {
-  return stripSpaces(s).replace(/^(?:กิ่งอ\.|อำเภอ|อ\.)/, '')
+  const a = stripSpaces(s).replace(/^(?:กิ่งอ\.|อำเภอ|อ\.)/, '')
+  // อำเภอเมือง is always "เมือง<จังหวัด>" (e.g. เมืองภูเก็ต) — the rate card
+  // stores it as plain "เมือง", so collapse any "เมือง…" back to "เมือง".
+  return a.startsWith('เมือง') ? 'เมือง' : a
 }
 function normProvince(s: string): string {
   return stripSpaces(s).replace(/^(?:จังหวัด|จ\.)/, '')
@@ -50,14 +54,33 @@ function provinceMatches(a: string, b: string): boolean {
   return stem >= 3 && a.slice(0, stem) === b.slice(0, stem)
 }
 
-// Pull (อำเภอ, จังหวัด) out of a free-text destination. Accepts "อ.X จ.Y",
-// "อ. X  จ. Y", with or without surrounding "( )".
+// Pull (อำเภอ, จังหวัด) out of a free-text destination / address. Accepts the
+// short "อ.X จ.Y" form and the full "อำเภอX ... จังหวัดY" form (e.g. what a
+// Google reverse-geocode returns).
 export function extractAmphoeProvince(dest: string): { amphoe: string; province: string } | null {
   if (!dest) return null
   const text = dest.normalize('NFC')
-  const amMatch = text.match(/อ\.\s*([^)]+?)\s*จ\.\s*([^)\s]+)/)
+
+  // Short form: อ.X ... จ.Y
+  const short = text.match(/อ\.\s*([^)]+?)\s*จ\.\s*([^)\s]+)/)
+  if (short) return { amphoe: normAmphoe('อ.' + short[1]), province: normProvince('จ.' + short[2]) }
+
+  // Otherwise find อำเภอ and จังหวัด independently — covers Google reverse-geocode
+  // addresses like "...ตำบลตลาดใหญ่ อำเภอเมืองภูเก็ต ภูเก็ต 83000 ประเทศไทย"
+  // where the province is a bare word before the 5-digit postal code.
+  const amMatch = text.match(/(?:อำเภอ|กิ่งอำเภอ|อ\.)\s*([^\s,]+)/)
   if (!amMatch) return null
-  return { amphoe: normAmphoe('อ.' + amMatch[1]), province: normProvince('จ.' + amMatch[2]) }
+  const amphoe = normAmphoe(amMatch[0])
+
+  let province: string | null = null
+  const provKw = text.match(/จังหวัด\s*([^\s,]+)/)
+  if (provKw) province = normProvince('จังหวัด' + provKw[1])
+  else {
+    const prePostal = text.match(/([^\s,]+)\s+\d{5}\b/) // token right before the postal code
+    if (prePostal) province = normProvince(prePostal[1])
+  }
+  if (!province) return null
+  return { amphoe, province }
 }
 
 // Diesel price → band key ("29".."46"), clamped to the table's range.
@@ -91,16 +114,25 @@ export type PcgPriceResult = {
   totalDrops: number
 }
 
+export type PcgDropInput = string | { name?: string | null; lat?: number | string | null; lng?: number | string | null }
+
 /**
  * Resolve the PCG customer price for a trip from its drop destinations.
  * Returns null when the diesel price is unknown or no drop matches the card,
  * so callers can fall back to manual pricing instead of writing a wrong price.
+ *
+ * Each drop may be a name string or an object with name + lat/lng. When a
+ * drop name has no "อ./จ." (jobs created in-app often store just the store
+ * name), we reverse-geocode its coordinates to recover อำเภอ/จังหวัด before
+ * matching — so pricing still works without a hand-typed area.
  */
 export async function resolvePcgPrice(
-  destinations: string[],
+  destinations: PcgDropInput[],
   date?: string,
 ): Promise<PcgPriceResult | null> {
-  const drops = (destinations || []).map(d => String(d || '').trim()).filter(Boolean)
+  const drops = (destinations || [])
+    .map(d => (typeof d === 'string' ? { name: d } : d))
+    .filter(d => (d?.name && String(d.name).trim()) || d?.lat)
   if (drops.length === 0) return null
 
   const fuel = await getFuelPriceNumber(date).catch(() => null)
@@ -110,14 +142,28 @@ export async function resolvePcgPrice(
   const rows = await getPcgRates()
   const singles = rows.filter(r => !r.is_combo && r.amphoe)
 
+  const findRow = (ap: { amphoe: string; province: string }) =>
+    singles.find(r => r.amphoe === ap.amphoe && provinceMatches(r.province || '', ap.province))
+
   let best: { price: number; name: string } | null = null
   let matched = 0
-  for (const dest of drops) {
-    const ap = extractAmphoeProvince(dest)
+  let totalDrops = 0
+  for (const drop of drops) {
+    totalDrops += 1
+    const name = String(drop.name || '').trim()
+    let ap = name ? extractAmphoeProvince(name) : null
+
+    // Fallback: name lacks อ./จ. → reverse-geocode the drop's coordinates.
+    if (!ap) {
+      const lat = Number(drop.lat), lng = Number(drop.lng)
+      if (lat && lng && !Number.isNaN(lat) && !Number.isNaN(lng)) {
+        const label = await reverseGeocode(lat, lng).catch(() => null)
+        if (label) ap = extractAmphoeProvince(label)
+      }
+    }
     if (!ap) continue
-    const row = singles.find(r =>
-      r.amphoe === ap.amphoe && provinceMatches(r.province || '', ap.province),
-    )
+
+    const row = findRow(ap)
     if (!row) continue
     const price = Number(row.rates?.[band])
     if (!(price > 0)) continue
@@ -133,6 +179,6 @@ export async function resolvePcgPrice(
     fuelPrice: fuel,
     matchedDestination: best.name,
     matchedDrops: matched,
-    totalDrops: drops.length,
+    totalDrops,
   }
 }
