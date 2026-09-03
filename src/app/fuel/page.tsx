@@ -57,9 +57,12 @@ export default async function FuelPage(props: Props) {
     getAllBranches()
   ])
 
-  // แสดงเฉพาะรถบริษัท (Sub_ID ว่าง) — รถร่วมไม่ใช้งานและบริษัทไม่ได้เติมน้ำมันให้
+  // แสดงเฉพาะรถบริษัท (Owner_Type = 'company') — รถร่วม/รถอิสระ (independent/sub)
+  // บริษัทไม่ได้เติมน้ำมันให้และไม่รู้ยอดเติม จึงไม่ต้องโชว์ในเมนูบันทึกน้ำมัน
+  // NB: เดิมกรองด้วย "Sub_ID ว่าง" ซึ่งพลาด รถ independent 32 คัน (Sub_ID ว่างแต่เป็นรถร่วม)
+  // หลุดเข้ามา — Owner_Type คือตัวแยกที่ถูกต้อง (company / independent / sub)
   const companyVehicles = (vehicles.data || []).filter(
-    (v: { Sub_ID?: string | null }) => !v.Sub_ID || String(v.Sub_ID).trim() === ''
+    (v: { Owner_Type?: string | null }) => String(v.Owner_Type || '').toLowerCase() === 'company'
   )
 
   return (

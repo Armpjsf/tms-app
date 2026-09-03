@@ -5,6 +5,7 @@ import { getUserBranchId, isAdmin, isSuperAdmin } from "@/lib/permissions"
 import { accountingService } from "@/services/accounting"
 import { Job, Driver_Payment } from "@/types/database"
 import { logActivity } from "./logs"
+import { fetchAllRows } from "./analytics-helpers"
 import { revalidatePath } from "next/cache"
 
 export interface BillingNote {
@@ -353,31 +354,24 @@ export async function getBillingNotes(filters?: { dateFrom?: string, dateTo?: st
         const branchId = await getUserBranchId()
         const isSuper = await isSuperAdmin()
 
-        let query = supabase.from('Billing_Notes').select('*')
+        // Non-SuperAdmins with no branch see nothing (safety).
+        if (!isSuper && !(branchId && branchId !== 'All')) return []
 
-        // STRICT ISOLATION: Non-SuperAdmins MUST be filtered by their branch
-        if (!isSuper) {
-            if (branchId && branchId !== 'All') {
+        // Page past the 1000-row cap so the billing history list + its export
+        // show every matching note, not just the newest 1000.
+        const data = await fetchAllRows<BillingNote>(() => {
+            let query = supabase.from('Billing_Notes').select('*')
+            if (!isSuper) {
                 query = query.or(`Branch_ID.eq."${branchId}",Branch_ID.is.null`)
-            } else {
-                // If they have no branch assigned, they see nothing (safety)
-                return []
+            } else if (branchId && branchId !== 'All') {
+                query = query.eq('Branch_ID', branchId)
             }
-        } else if (branchId && branchId !== 'All') {
-            // SuperAdmin can filter by specific branch
-            query = query.eq('Branch_ID', branchId)
-        }
-        if (filters?.dateFrom) query = query.gte('Billing_Date', filters.dateFrom)
-        if (filters?.dateTo) query = query.lte('Billing_Date', filters.dateTo)
-        if (filters?.status && filters.status !== 'all') query = query.eq('Status', filters.status)
+            if (filters?.dateFrom) query = query.gte('Billing_Date', filters.dateFrom)
+            if (filters?.dateTo) query = query.lte('Billing_Date', filters.dateTo)
+            if (filters?.status && filters.status !== 'all') query = query.eq('Status', filters.status)
+            return query.order('Created_At', { ascending: false })
+        })
 
-        const { data, error } = await query
-            .order('Created_At', { ascending: false })
-        
-        if (error) {
-            return []
-        }
-        
         const notes = data as BillingNote[]
         
         // Fetch emails separately to avoid join errors if relationships aren't configured

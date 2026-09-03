@@ -12,6 +12,7 @@ import { getFuelAnalytics } from "@/lib/supabase/fuel-analytics"
 import { getFleetHealthAlerts } from "@/lib/supabase/fleet-health"
 import { getWorkforceAnalytics } from "@/lib/supabase/workforce-analytics"
 import { createAdminClient } from '@/utils/supabase/server'
+import { fetchAllRows } from '@/lib/supabase/analytics-helpers'
 import { geocodeAddress } from '@/lib/ai/geocoding'
 import { logAction, type ActionRef } from '@/lib/ai/audit-log'
 
@@ -262,12 +263,23 @@ export const aiToolExecutors = {
 
   // ---- FUEL ----
   get_fuel_analytics: async () => {
-    const fuel = (await getFuelAnalytics()) as { totalFuelCost?: number; totalLiters?: number; avgFuelPerTrip?: number; records?: unknown[]; }
+    // Map to getFuelAnalytics' ACTUAL return shape. The old code read
+    // totalFuelCost/avgFuelPerTrip/records — fields that don't exist — so the
+    // assistant always saw undefined and reported "no fuel data".
+    const fuel = (await getFuelAnalytics()) as {
+        totalLiters?: number; totalCost?: number; totalLogs?: number;
+        avgCostPerLiter?: number; avgKmPerLiter?: number;
+        vehicleBreakdown?: unknown[]; monthlyTrends?: unknown[]; anomalies?: unknown[];
+    }
     return {
-        totalFuelCost: fuel.totalFuelCost,
-        totalLiters: fuel.totalLiters,
-        avgPerTrip: fuel.avgFuelPerTrip,
-        recentRecords: fuel.records?.slice(0, 5)
+        totalFuelCost: fuel.totalCost ?? 0,
+        totalLiters: fuel.totalLiters ?? 0,
+        totalLogs: fuel.totalLogs ?? 0,
+        avgCostPerLiter: fuel.avgCostPerLiter ?? 0,
+        avgKmPerLiter: fuel.avgKmPerLiter ?? 0,
+        topVehicles: fuel.vehicleBreakdown?.slice(0, 10) ?? [],
+        monthlyTrends: fuel.monthlyTrends ?? [],
+        anomalies: fuel.anomalies?.slice(0, 5) ?? [],
     }
   },
 
@@ -377,15 +389,17 @@ export const aiToolExecutors = {
 
   get_fuel_efficiency_report: async (args: { vehiclePlate?: string, startDate?: string, endDate?: string, branchId?: string }) => {
     const supabase = createAdminClient()
-    let query = supabase.from('Fuel_Logs').select('*').order('Date_Time', { ascending: false })
-    if (args.vehiclePlate) query = query.eq('Vehicle_Plate', args.vehiclePlate)
-    if (args.branchId && args.branchId !== 'All') query = query.eq('Branch_ID', args.branchId)
-    if (args.startDate) query = query.gte('Date_Time', `${args.startDate}T00:00:00`)
-    if (args.endDate) query = query.lte('Date_Time', `${args.endDate}T23:59:59`)
-    
-    const { data: logs, error } = await query.limit(100)
-    if (error) return { error: error.message }
-    
+    // Page past the 1000-row cap so totals reflect the whole filtered range
+    // (the old .limit(100) only ever summed the 100 most-recent logs).
+    const logs = await fetchAllRows<Record<string, any>>(() => {
+      let query = supabase.from('Fuel_Logs').select('*').order('Date_Time', { ascending: false })
+      if (args.vehiclePlate) query = query.eq('Vehicle_Plate', args.vehiclePlate)
+      if (args.branchId && args.branchId !== 'All') query = query.eq('Branch_ID', args.branchId)
+      if (args.startDate) query = query.gte('Date_Time', `${args.startDate}T00:00:00`)
+      if (args.endDate) query = query.lte('Date_Time', `${args.endDate}T23:59:59`)
+      return query
+    })
+
     const totalLiters = (logs || []).reduce((s, l) => s + (l.Liters || 0), 0)
     const totalCost = (logs || []).reduce((s, l) => s + (l.Price_Total || 0), 0)
     const avgPricePerLiter = totalLiters > 0 ? +(totalCost / totalLiters).toFixed(2) : 0

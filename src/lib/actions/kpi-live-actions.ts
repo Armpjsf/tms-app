@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from '@/lib/permissions'
+import { fetchAllRows } from '@/lib/supabase/analytics-helpers'
 
 export type LiveKPIData = {
   today: {
@@ -28,24 +29,26 @@ export async function getLiveKPIData(branchId?: string): Promise<LiveKPIData> {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
   const effectiveBranch = branchId || userBranchId
 
-  let query = supabase
-    .from('Jobs_Main')
-    .select('Job_Status, Price_Cust_Total, Cost_Driver_Total, Plan_Date, Delivery_Date')
-    .eq('Plan_Date', today)
-
-  if (customerId) {
-    query = query.eq('Customer_ID', customerId)
-  } else if (!isSuper && effectiveBranch && effectiveBranch !== 'All') {
-    query = query.or(`Branch_ID.eq.${effectiveBranch},Branch_ID.is.null`)
-  } else if (isSuper && effectiveBranch && effectiveBranch !== 'All') {
-    query = query.eq('Branch_ID', effectiveBranch)
-  } else if (!isSuper && !isAdminUser) {
+  if (!customerId && !isSuper && !isAdminUser && !(effectiveBranch && effectiveBranch !== 'All')) {
     return emptyKPI()
   }
 
-  const { data: jobs, error } = await query
+  const jobs = await fetchAllRows<{ Job_Status?: string; Price_Cust_Total?: number; Cost_Driver_Total?: number; Plan_Date?: string; Delivery_Date?: string }>(() => {
+    let query = supabase
+      .from('Jobs_Main')
+      .select('Job_Status, Price_Cust_Total, Cost_Driver_Total, Plan_Date, Delivery_Date')
+      .eq('Plan_Date', today)
+    if (customerId) {
+      query = query.eq('Customer_ID', customerId)
+    } else if (!isSuper && effectiveBranch && effectiveBranch !== 'All') {
+      query = query.or(`Branch_ID.eq.${effectiveBranch},Branch_ID.is.null`)
+    } else if (isSuper && effectiveBranch && effectiveBranch !== 'All') {
+      query = query.eq('Branch_ID', effectiveBranch)
+    }
+    return query
+  })
 
-  if (error || !jobs) return emptyKPI()
+  if (!jobs) return emptyKPI()
 
   const delivered = jobs.filter(j =>
     j.Job_Status === 'Delivered' || j.Job_Status === 'Completed' || j.Job_Status === 'Verified'

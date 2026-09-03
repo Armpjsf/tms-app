@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getCustomerId } from "@/lib/permissions"
+import { fetchAllRows } from './analytics-helpers'
 
 export interface DamageReport {
   id: string
@@ -25,11 +26,10 @@ export async function getDamageReports(): Promise<DamageReport[]> {
     // Customer isolation: Damage_Reports has no Customer_ID column, so scope
     // via the customer's own Job_IDs. Admin behaviour is unchanged.
     if (customerId) {
-      const { data: jobRows } = await supabase
+      const jobRows = await fetchAllRows<{ Job_ID: string }>(() => supabase
         .from('Jobs_Main')
         .select('Job_ID')
-        .eq('Customer_ID', customerId)
-        .limit(2000)
+        .eq('Customer_ID', customerId))
 
       const jobIds = (jobRows || []).map((j: { Job_ID: string }) => j.Job_ID)
       if (jobIds.length === 0) return []

@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions"
+import { fetchAllRows } from './analytics-helpers'
 
 export type HealthAlert = {
     vehicle_plate: string
@@ -55,12 +56,13 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
         
         // 3. Fetch all completed repair tickets for these vehicles to calculate component health
         const vehiclePlates = vehicles.map((v: { Vehicle_Plate: string }) => v.Vehicle_Plate)
-        const { data: completedRepairs } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const completedRepairs = await fetchAllRows<any>(() => supabase
             .from('Repair_Tickets')
             .select('Vehicle_Plate, Issue_Type, Date_Finish, Date_Report, Odometer')
             .in('Vehicle_Plate', vehiclePlates)
             .eq('Status', 'Completed')
-            .order('Date_Report', { ascending: false })
+            .order('Date_Report', { ascending: false }))
 
         // 4. Fetch active repair tickets for current issues
         let repairQuery = supabase
