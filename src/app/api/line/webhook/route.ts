@@ -2412,6 +2412,41 @@ Provide JSON ONLY:
                             console.warn('[Line Driver Image Classify Error]', e)
                         }
 
+                        // 1b. Fuel fallback: the 3-way classifier above under-detects fuel
+                        // receipts (a driver often has an active job, biasing toward
+                        // "delivery_proof"/"other"). Admins use a dedicated fuel-only OCR
+                        // that is more reliable, so drivers' receipts in a group were being
+                        // dropped silently by the `if (inGroup) continue` below. Re-run the
+                        // same dedicated fuel prompt; if it reads as a receipt, treat it as
+                        // fuel so the normal handler (with reply) takes over.
+                        if (classification !== 'fuel_receipt') {
+                            try {
+                                const fuelOnlyPrompt = `
+You are a specialized Thai OCR engine for fuel receipts and tax invoices (ใบเสร็จรับเงิน/ใบกำกับภาษี).
+Analyze this image carefully. The image may be rotated sideways.
+If it is a fuel purchase receipt / gas station invoice, return JSON ONLY:
+{"classification":"fuel_receipt","stationName":"EXACT seller/issuer name at the TOP header (ผู้ขาย/ผู้ออกใบกำกับ), verbatim, no hallucination","taxIdSeller":"13-digit tax id or null","priceTotal":1200.00,"liters":45.5,"unitPrice":38.70,"odometer":123456,"vehiclePlate":"plate on receipt or null","dateTime":"YYYY-MM-DDTHH:mm:ss (convert Buddhist year e.g. 2569->2026); null if not printed"}
+If it is NOT a fuel receipt, return {"classification":"other"}. No markdown, JSON only.`.trim()
+                                const fuelText = await callGeminiMultimodal(
+                                    'You are an expert Thai document OCR AI.',
+                                    fuelOnlyPrompt,
+                                    mimeType,
+                                    buffer,
+                                    'gemini-3.5-flash',
+                                    { temperature: 0.0, responseMimeType: 'application/json', disableTools: true }
+                                )
+                                if (fuelText) {
+                                    const parsedFuel = JSON.parse(fuelText.replace(/```json/g, '').replace(/```/g, '').trim())
+                                    if (parsedFuel.classification === 'fuel_receipt') {
+                                        classification = 'fuel_receipt'
+                                        extracted = parsedFuel
+                                    }
+                                }
+                            } catch (e) {
+                                console.warn('[Line Driver Fuel Fallback Error]', e)
+                            }
+                        }
+
                         // 2. Handle Fuel Receipt
                         if (classification === 'fuel_receipt') {
                             const validation = await validateFuelSlip(supabase, extracted, {
@@ -2490,9 +2525,16 @@ Provide JSON ONLY:
                             continue
                         }
 
-                        // In a group chat, drivers may only submit fuel receipts —
-                        // ignore POD/other images silently (no reply to the whole group).
-                        if (inGroup) continue
+                        // In a group chat, drivers may only submit fuel receipts. The
+                        // image reached here without reading as fuel even after the
+                        // dedicated fallback above — so give the driver a short hint
+                        // instead of dropping it silently (the previous behaviour that
+                        // made fuel-bill submissions look "ignored"). Kept brief and only
+                        // for known drivers, so it doesn't spam the group.
+                        if (inGroup) {
+                            await replyToUser(replyToken, `⛽ พี่ ${boundDriver.Driver_Name} ครับ บอทอ่านรูปนี้เป็นใบเสร็จน้ำมันไม่ออก 🙏\nรบกวนถ่ายให้เห็น ชื่อปั๊ม / จำนวนลิตร / ยอดเงิน / วันที่ ให้ชัด แล้วส่งใหม่อีกครั้ง หรือส่งเข้าแชทส่วนตัวกับบอทก็ได้ครับ`)
+                            continue
+                        }
 
                         // 3. Handle Delivery Proof (ePOD)
                         if (classification === 'delivery_proof' || classification === 'other') {
